@@ -18,8 +18,15 @@ export default async function LoginPage({
     redirect(searchParams.next || "/");
   }
 
-  const userCount = await prisma.user.count();
-  const mode = userCount === 0 ? "setup" : "login";
+  let mode: "setup" | "login" = "login";
+  let databaseError = false;
+  try {
+    const userCount = await prisma.user.count();
+    mode = userCount === 0 ? "setup" : "login";
+  } catch (err) {
+    console.error("Login page could not reach the database:", err);
+    databaseError = true;
+  }
   const company = await getEffectiveCompany();
 
   return (
@@ -43,7 +50,7 @@ export default async function LoginPage({
           mode={mode}
           next={searchParams.next || "/"}
           googleEnabled={isGoogleLoginConfigured()}
-          errorCode={searchParams.error}
+          errorCode={databaseError ? "database" : searchParams.error}
         />
       </div>
     </div>

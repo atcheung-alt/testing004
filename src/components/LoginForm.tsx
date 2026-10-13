@@ -12,6 +12,8 @@ const ERROR_MESSAGES: Record<string, string> = {
   unverified_email: "That Google account's email isn't verified, so it can't be used to log in.",
   not_authorized:
     "That Google account isn't authorized for this app yet. Ask an admin to add your email in Settings → Staff accounts.",
+  database:
+    "The database is connected, but its tables are not ready yet. Reload this page after the latest deploy finishes.",
 };
 
 function GoogleIcon() {
