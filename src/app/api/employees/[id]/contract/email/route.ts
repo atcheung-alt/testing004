@@ -8,6 +8,7 @@ import { ensureEmployeeContractSigningToken, employeeContractSigningUrlFor } fro
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { pdfLanguageFromBody, pdfLanguageLabel, pdfLanguageSuffix } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: "This employee has no contract yet." }, { status: 404 });
   }
 
-  const built = await buildEmployeeContractPdf(params.id);
+  const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);
+  const built = await buildEmployeeContractPdf(params.id, pdfLanguage);
   if (!built) {
     return NextResponse.json({ error: "Could not generate the contract PDF." }, { status: 500 });
   }
@@ -60,7 +62,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       body:
         body.body ||
         `Hi ${employee.name},\n\nPlease review and sign your ${documentTitle.toLowerCase()} using the button below.`,
-      attachment: { filename: `${employee.name.replace(/\s+/g, "-")}-contract.pdf`, content: built.buffer },
+      attachment: {
+        filename: `${employee.name.replace(/\s+/g, "-")}-contract${pdfLanguageSuffix(pdfLanguage)}.pdf`,
+        content: built.buffer,
+      },
       extraAttachments,
       signingUrl,
       ctaLabel: "Review & Sign Online",
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     documentType: "employee",
     documentId: employee.id,
     type: "EMAIL_SENT",
-    description: `Contract emailed to ${to}`,
+    description: `Contract emailed to ${to} (${pdfLanguageLabel(pdfLanguage)})`,
   });
 
   if (employee.contract.status === "DRAFT") {

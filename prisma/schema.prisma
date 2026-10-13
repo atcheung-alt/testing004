@@ -352,7 +352,60 @@ model InvoiceExpense {
   label     String   @default("")
   amount    Float    @default(0)
   sortOrder Int      @default(0)
+  // Receipts, supplier invoices, and other supporting files kept with this
+  // expense. Internal record-keeping only — never shown on a client PDF.
+  documents ExpenseDocument[]
   createdAt DateTime @default(now())
+}
+
+// A file attached to an invoice expense (a receipt photo, a supplier PDF,
+// and so on). Stored as a data URL, same as signatures and signed uploads
+// elsewhere in this app, so there is no separate file host to configure.
+model ExpenseDocument {
+  id        String         @id @default(cuid())
+  expenseId String
+  expense   InvoiceExpense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  fileName  String
+  mimeType  String         @default("application/octet-stream")
+  data      String
+  createdAt DateTime       @default(now())
+}
+
+// A reusable quotation format. The next quotation started from it copies the
+// activity title, line items, and terms, then staff change the name, items,
+// and dates for that job. Customer details are never part of a template.
+model QuotationTemplate {
+  id             String                  @id @default(cuid())
+  name           String
+  title          String                  @default("")
+  notes          String?
+  terms          String?
+  reminder       String?
+  paymentDueDays Int                     @default(30)
+  language       String                  @default("EN")
+  taxRate        Float                   @default(0)
+  discount       Float                   @default(0)
+  repeatCount    Int                     @default(1)
+  items          QuotationTemplateItem[]
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model QuotationTemplateItem {
+  id          String            @id @default(cuid())
+  templateId  String
+  template    QuotationTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  name        String            @default("")
+  description String            @default("")
+  imageData   String?
+  unit        String            @default("")
+  quantity    Float             @default(1)
+  multipliers String            @default("[]")
+  unitPrice   Float             @default(0)
+  amount      Float             @default(0)
+  duration    String?
+  fees        String            @default("[]")
+  sortOrder   Int               @default(0)
 }
 
 // A staff-managed expense category (e.g. "Venue", "Staffing", "Transport"),

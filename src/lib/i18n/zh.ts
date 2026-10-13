@@ -179,4 +179,52 @@ export const ZH: Record<string, string> = {
   "Nothing here": "這裡沒有內容",
   "This page, quotation, or invoice doesn't exist.": "此頁面、報價單或發票不存在。",
   "Back to dashboard": "返回儀表板",
+
+  PDF: "PDF",
+  "PDF language": "PDF 語言",
+  "English PDF": "英文 PDF",
+  "Chinese PDF": "中文 PDF",
+  "The attached PDF is generated in this language. It does not change the saved document.":
+    "附件 PDF 會以這個語言產生，不會改動已儲存的文件。",
+  "Event expenses": "活動開支",
+  "Linked to this invoice — internal only": "連結至此發票 — 僅供內部使用",
+  "Log costs against this invoice and keep the receipts with the record. Clients never see this.":
+    "把成本記在這張發票上，並把收據一併保存。客戶不會看到。",
+  "Upload receipt": "上傳收據",
+  "Attach receipts": "附加收據",
+  "You can attach up to {count} files to one expense.": "每項開支最多可附加 {count} 個檔案。",
+  "\"{name}\" must be a PDF or an image.": "「{name}」必須是 PDF 或圖片。",
+  "Could not upload the file.": "無法上傳檔案。",
+  "Could not remove the file.": "無法移除檔案。",
+  "PDF or image, up to {count} files, {size}MB each. Kept with this invoice for your records.":
+    "PDF 或圖片，每項開支最多 {count} 個檔案，每個 {size}MB。會隨這張發票保存，供你留底。",
+  Templates: "範本",
+  "Quotation templates": "報價範本",
+  "Save a format once. Next time, change the activity name, the items, and the dates.":
+    "格式儲存一次。下次只需改活動名稱、項目和日期。",
+  "New template": "新增範本",
+  "No templates yet": "尚未有範本",
+  "Create one here, or open a quotation and choose Save as template.":
+    "在這裡建立，或打開一張報價單，選擇「儲存為範本」。",
+  "No activity name yet": "尚未有活動名稱",
+  "Use template": "使用範本",
+  "Edit template": "編輯範本",
+  "Save as template": "儲存為範本",
+  "Save template": "儲存範本",
+  "Create template": "建立範本",
+  "Template name": "範本名稱",
+  "Activity name": "活動名稱",
+  "Give this template a name.": "請為這個範本命名。",
+  "Could not save the template.": "無法儲存範本。",
+  "e.g. Wellness day package": "例如：健康日套餐",
+  "Default title — change it each time you use the template": "預設標題 — 每次使用範本時再改",
+  "Dates and the customer are filled in when you start a quotation from this template.":
+    "日期和客戶會在你用這個範本開新報價單時才填寫。",
+  "Set the format you reuse: activity name, line items, and the standard wording. Dates are chosen each time you use it.":
+    "設定會重用的格式：活動名稱、項目，以及標準條款。日期每次使用時再選。",
+  "Using template “{name}”. Change the activity name, the items, and the dates, then add the customer.":
+    "正在使用範本「{name}」。請修改活動名稱、項目和日期，然後填上客戶。",
+  "This quotation started from “{name}”. Update the activity name, items, and dates before you save.":
+    "這張報價單由範本「{name}」開始。儲存前請更新活動名稱、項目和日期。",
+  template: "範本",
 };

@@ -6,6 +6,7 @@ import { sendDocumentEmail } from "@/lib/mailer";
 import { isValidEmail } from "@/lib/settings";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { pdfLanguageFromBody, pdfLanguageLabel, pdfLanguageSuffix } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,8 @@ export async function POST(
 
   const body = await request.json().catch(() => ({}));
 
-  const built = await buildPayslipPdf(params.id, params.entryId);
+  const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);
+  const built = await buildPayslipPdf(params.id, params.entryId, pdfLanguage);
   if (!built) {
     return NextResponse.json({ error: "Payslip not found." }, { status: 404 });
   }
@@ -54,7 +56,10 @@ export async function POST(
       cc: ccList,
       subject: body.subject.trim(),
       body: body.body,
-      attachment: { filename: `${built.employeeName} - ${built.periodLabel}.pdf`, content: built.buffer },
+      attachment: {
+        filename: `${built.employeeName} - ${built.periodLabel}${pdfLanguageSuffix(pdfLanguage)}.pdf`,
+        content: built.buffer,
+      },
       extraAttachments,
     });
   } catch (err: any) {
@@ -70,7 +75,7 @@ export async function POST(
     documentType: "payroll",
     documentId: params.id,
     type: "EMAIL_SENT",
-    description: `Payslip for ${built.periodLabel} emailed to ${built.employeeName} (${to})`,
+    description: `Payslip for ${built.periodLabel} emailed to ${built.employeeName} (${to}, ${pdfLanguageLabel(pdfLanguage)})`,
   });
 
   return NextResponse.json({ success: true, to });

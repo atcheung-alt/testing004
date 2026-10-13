@@ -3,7 +3,9 @@
 import { useRef, useState } from "react";
 import { Mail, X, CheckCircle2, AlertCircle, Loader2, Paperclip } from "lucide-react";
 import Portal from "@/components/Portal";
-import { useT } from "@/lib/i18n/client";
+import { useAppLanguage, useT } from "@/lib/i18n/client";
+import { appLanguageToPdf } from "@/lib/i18n/language";
+import type { PdfDownloadLanguage } from "@/lib/pdf/language";
 
 // Mirrors the limits enforced server-side in src/lib/emailAttachments.ts —
 // duplicated as literals (rather than imported) so this client component
@@ -66,7 +68,9 @@ export default function SendEmailButton({
   isFollowUp = false,
 }: Props) {
   const t = useT();
+  const appLanguage = useAppLanguage();
   const [open, setOpen] = useState(false);
+  const [pdfLanguage, setPdfLanguage] = useState<PdfDownloadLanguage>(appLanguageToPdf(appLanguage));
   const [to, setTo] = useState(defaultTo);
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState(defaultSubject);
@@ -136,6 +140,7 @@ export default function SendEmailButton({
           subject,
           body,
           isFollowUp,
+          pdfLanguage,
           attachments: attachments.map((a) => ({ filename: a.name, data: a.dataUrl })),
         }),
       });
@@ -234,6 +239,34 @@ export default function SendEmailButton({
                     )}
                   </div>
                 )}
+
+                <div>
+                  <label className="label">{t("PDF language")}</label>
+                  <div className="inline-flex rounded-md border border-line overflow-hidden">
+                    {(
+                      [
+                        ["EN", "English PDF"],
+                        ["ZH_HANT", "Chinese PDF"],
+                      ] as const
+                    ).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setPdfLanguage(value)}
+                        className={`px-3 py-2 text-sm font-medium transition-colors ${
+                          pdfLanguage === value
+                            ? "bg-brand-600 text-white"
+                            : "bg-surface text-ink hover:bg-brand-50"
+                        }`}
+                      >
+                        {t(label)}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1.5 text-xs text-ink-faint">
+                    {t("The attached PDF is generated in this language. It does not change the saved document.")}
+                  </p>
+                </div>
 
                 <div>
                   <label className="label">{t("Subject")}</label>

@@ -5,6 +5,7 @@ import { getEffectiveDriveFolderId } from "@/lib/appSettings";
 import { EMPLOYMENT_TYPE_LABELS } from "@/lib/employees";
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
 import { logActivity } from "@/lib/activity";
+import { pdfFileName, pdfLanguageLabel } from "@/lib/pdf/language";
 
 /** Keep folder names filesystem/Drive-safe and reasonably short. */
 function sanitizeFolderName(name: string): string {
@@ -62,7 +63,10 @@ async function ensureRecordsTypeFolder(typeFolderName: string, issueDate: Date |
  * everything synced successfully / Drive isn't configured (a no-op — this
  * feature is entirely optional).
  */
-export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<string | null> {
+export async function syncInvoiceRecordToDrive(
+  invoiceId: string,
+  language?: string | null
+): Promise<string | null> {
   if (!isDriveConfigured()) return null;
 
   const invoice = await prisma.invoice.findUnique({
@@ -75,12 +79,12 @@ export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<strin
 
   if (invoice.quotation) {
     try {
-      const built = await buildQuotationPdf(invoice.quotation.id);
+      const built = await buildQuotationPdf(invoice.quotation.id, language);
       if (built) {
         const folderId = await ensureRecordsTypeFolder(QUOTATION_FOLDER_NAME, invoice.quotation.issueDate);
         const file = await upsertDriveFile({
           fileId: invoice.quotation.driveFileId,
-          name: `${built.number}.pdf`,
+          name: pdfFileName(built.number, language || built.data.language),
           folderId,
           buffer: built.buffer,
         });
@@ -93,7 +97,7 @@ export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<strin
           documentId: invoice.quotation.id,
           type: "DRIVE_UPLOAD",
           actor: "SYSTEM",
-          description: "Synced to Google Drive",
+          description: `Synced to Google Drive (${pdfLanguageLabel(language || built.data.language)})`,
         });
       }
     } catch (err: any) {
@@ -104,12 +108,12 @@ export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<strin
   }
 
   try {
-    const builtInvoice = await buildInvoicePdf(invoice.id);
+    const builtInvoice = await buildInvoicePdf(invoice.id, language);
     if (builtInvoice) {
       const folderId = await ensureRecordsTypeFolder(INVOICE_FOLDER_NAME, invoice.issueDate);
       const file = await upsertDriveFile({
         fileId: invoice.driveFileId,
-        name: `${builtInvoice.number}.pdf`,
+        name: pdfFileName(builtInvoice.number, language || builtInvoice.data.language),
         folderId,
         buffer: builtInvoice.buffer,
       });
@@ -122,7 +126,7 @@ export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<strin
         documentId: invoice.id,
         type: "DRIVE_UPLOAD",
         actor: "SYSTEM",
-        description: "Synced to Google Drive",
+        description: `Synced to Google Drive (${pdfLanguageLabel(language || builtInvoice.data.language)})`,
       });
     }
   } catch (err: any) {
@@ -133,12 +137,12 @@ export async function syncInvoiceRecordToDrive(invoiceId: string): Promise<strin
 
   if (invoice.receipt) {
     try {
-      const builtReceipt = await buildReceiptPdf(invoice.id);
+      const builtReceipt = await buildReceiptPdf(invoice.id, language);
       if (builtReceipt) {
         const folderId = await ensureRecordsTypeFolder(RECEIPT_FOLDER_NAME, invoice.receipt.issueDate);
         const file = await upsertDriveFile({
           fileId: invoice.receipt.driveFileId,
-          name: `${builtReceipt.number}.pdf`,
+          name: pdfFileName(builtReceipt.number, language || builtReceipt.data.language),
           folderId,
           buffer: builtReceipt.buffer,
         });

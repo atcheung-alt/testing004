@@ -5,13 +5,15 @@ import { isValidEmail } from "@/lib/settings";
 import { ensureInvoiceViewToken, invoiceViewUrlFor } from "@/lib/signing";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { pdfFileName, pdfLanguageFromBody, pdfLanguageLabel } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json().catch(() => ({}));
 
-  const built = await buildInvoicePdf(params.id);
+  const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);
+  const built = await buildInvoicePdf(params.id, pdfLanguage);
   if (!built) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
   }
@@ -55,7 +57,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       cc: ccList,
       subject: body.subject.trim(),
       body: body.body,
-      attachment: { filename: `${built.number}.pdf`, content: built.buffer },
+      attachment: {
+        filename: pdfFileName(built.number, pdfLanguage || built.data.language),
+        content: built.buffer,
+      },
       extraAttachments,
       signingUrl,
       ctaLabel: "View & Pay Invoice Online",
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     documentType: "invoice",
     documentId: params.id,
     type: "EMAIL_SENT",
-    description: body.isFollowUp ? `Follow-up reminder emailed to ${to}` : `Emailed to ${to}`,
+    description: `${body.isFollowUp ? "Follow-up reminder emailed" : "Emailed"} to ${to} (${pdfLanguageLabel(pdfLanguage || built.data.language)})`,
   });
 
   return NextResponse.json({ success: true, to, signingUrl });

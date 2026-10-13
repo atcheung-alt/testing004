@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Package,
   FileText,
+  LayoutTemplate,
   ReceiptText,
   Receipt as ReceiptIcon,
   BarChart3,
@@ -61,6 +62,7 @@ function buildNavGroups(t: (key: string) => string): { items: NavItem[]; boxed?:
       boxed: true,
       items: [
         { href: "/quotations", label: t("Quotations"), icon: FileText },
+        { href: "/quotations/templates", label: t("Templates"), icon: LayoutTemplate },
         { href: "/invoices", label: t("Invoices"), icon: ReceiptText },
         { href: "/receipts", label: t("Receipts"), icon: ReceiptIcon },
       ],
@@ -88,7 +90,12 @@ function NavLink({
   boxed?: boolean;
 }) {
   const { href, label, icon: Icon } = item;
-  const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const active =
+    href === "/"
+      ? pathname === "/"
+      : href === "/quotations"
+      ? pathname.startsWith("/quotations") && !pathname.startsWith("/quotations/templates")
+      : pathname.startsWith(href);
   return (
     <Link
       href={href}

@@ -16,14 +16,35 @@ import {
 import type { Quotation, LineItem, CustomerDetails } from "@/types";
 import { useT } from "@/lib/i18n/client";
 
+export type QuotationFormPreset = {
+  templateName: string;
+  title: string;
+  notes?: string | null;
+  terms?: string | null;
+  reminder?: string | null;
+  paymentDueDays?: number;
+  language?: string;
+  taxRate?: number;
+  discount?: number;
+  repeatCount?: number;
+  items?: LineItem[];
+};
+
 function toDateInput(value?: string | null) {
   if (!value) return "";
   return new Date(value).toISOString().slice(0, 10);
 }
 
-export default function QuotationForm({ quotation }: { quotation?: Quotation }) {
+export default function QuotationForm({
+  quotation,
+  preset,
+}: {
+  quotation?: Quotation;
+  preset?: QuotationFormPreset;
+}) {
   const t = useT();
   const router = useRouter();
+  const source = quotation || preset;
   const [customer, setCustomer] = useState<CustomerDetails>(
     quotation
       ? {
@@ -35,41 +56,41 @@ export default function QuotationForm({ quotation }: { quotation?: Quotation }) 
         }
       : emptyCustomer()
   );
-  const [title, setTitle] = useState(quotation?.title || "");
+  const [title, setTitle] = useState(source?.title || "");
   const [issueDate, setIssueDate] = useState(
     toDateInput(quotation?.issueDate) || toDateInput(new Date().toISOString())
   );
   const [expiryDate, setExpiryDate] = useState(toDateInput(quotation?.expiryDate));
   const [items, setItems] = useState<LineItem[]>(
-    quotation?.items?.length ? quotation.items.map((i) => ({ ...i })) : [emptyLineItem()]
+    source?.items?.length ? source.items.map((i) => ({ ...i })) : [emptyLineItem()]
   );
-  const [taxRate, setTaxRate] = useState(quotation?.taxRate ?? 0);
-  const [discount, setDiscount] = useState(quotation?.discount ?? 0);
-  const [repeatCount, setRepeatCount] = useState(quotation?.repeatCount ?? 1);
-  const [notes, setNotes] = useState(quotation?.notes || "");
+  const [taxRate, setTaxRate] = useState(source?.taxRate ?? 0);
+  const [discount, setDiscount] = useState(source?.discount ?? 0);
+  const [repeatCount, setRepeatCount] = useState(source?.repeatCount ?? 1);
+  const [notes, setNotes] = useState(source?.notes || "");
 
   // Which language the Reminder/Terms text (and the generated PDF's static
   // labels) are in — see DocumentLanguage in src/lib/settings.ts.
   const [language, setLanguage] = useState<DocumentLanguage>(
-    (quotation?.language as DocumentLanguage) || "EN"
+    (source?.language as DocumentLanguage) || "EN"
   );
 
   // Payment window drives the standardized terms wording.
-  const initialDueDays = quotation?.paymentDueDays ?? DEFAULT_PAYMENT_DUE_DAYS;
+  const initialDueDays = source?.paymentDueDays ?? DEFAULT_PAYMENT_DUE_DAYS;
   const [paymentDueDays, setPaymentDueDays] = useState(initialDueDays);
   const [reminder, setReminder] = useState(
-    quotation?.reminder || DEFAULT_REMINDER_TEMPLATES[language]
+    source?.reminder || DEFAULT_REMINDER_TEMPLATES[language]
   );
   const [terms, setTerms] = useState(
-    quotation?.terms || renderTerms(DEFAULT_TERMS_TEMPLATES[language], initialDueDays)
+    source?.terms || renderTerms(DEFAULT_TERMS_TEMPLATES[language], initialDueDays)
   );
   // Track whether the user has hand-edited the terms away from the standard
   // wording; if not (including on an existing quotation that still has the
   // untouched standard template), keep them in sync with the payment-due-days
   // field automatically.
   const [termsDirty, setTermsDirty] = useState(
-    Boolean(quotation?.terms) &&
-      quotation!.terms !== renderTerms(DEFAULT_TERMS_TEMPLATES[language], initialDueDays)
+    Boolean(source?.terms) &&
+      source!.terms !== renderTerms(DEFAULT_TERMS_TEMPLATES[language], initialDueDays)
   );
 
   const [error, setError] = useState<string | null>(null);
@@ -187,6 +208,14 @@ export default function QuotationForm({ quotation }: { quotation?: Quotation }) 
       {error && (
         <div className="bg-danger-50 border border-danger-500/30 text-danger-600 text-sm rounded-md px-3 py-2">
           {t(error)}
+        </div>
+      )}
+
+      {preset && !quotation && (
+        <div className="rounded-md border border-line bg-brand-50 px-4 py-3 text-sm text-ink">
+          {t("Using template “{name}”. Change the activity name, the items, and the dates, then add the customer.", {
+            name: preset.templateName,
+          })}
         </div>
       )}
 

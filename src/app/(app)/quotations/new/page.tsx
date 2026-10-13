@@ -1,19 +1,53 @@
-import QuotationForm from "@/components/QuotationForm";
+import QuotationForm, { type QuotationFormPreset } from "@/components/QuotationForm";
+import { prisma } from "@/lib/prisma";
+import { withParsedFeesList } from "@/lib/fees";
+import { withParsedMultipliersList } from "@/lib/multipliers";
 import { getT } from "@/lib/i18n/server";
 
-export default function NewQuotationPage() {
+export const dynamic = "force-dynamic";
+
+export default async function NewQuotationPage({
+  searchParams,
+}: {
+  searchParams: { template?: string };
+}) {
   const t = getT();
+  let preset: QuotationFormPreset | undefined;
+  if (searchParams.template) {
+    const template = await prisma.quotationTemplate.findUnique({
+      where: { id: searchParams.template },
+      include: { items: { orderBy: { sortOrder: "asc" } } },
+    });
+    if (template) {
+      preset = {
+        templateName: template.name,
+        title: template.title,
+        notes: template.notes,
+        terms: template.terms,
+        reminder: template.reminder,
+        paymentDueDays: template.paymentDueDays,
+        language: template.language,
+        taxRate: template.taxRate,
+        discount: template.discount,
+        repeatCount: template.repeatCount,
+        items: withParsedFeesList(withParsedMultipliersList(template.items)),
+      };
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New quotation")}</h1>
         <p className="text-sm text-ink-muted">
-          {t(
-            "Enter the customer details, add line items, and HR Plus will calculate totals automatically."
-          )}
+          {preset
+            ? t("This quotation started from “{name}”. Update the activity name, items, and dates before you save.", {
+                name: preset.templateName,
+              })
+            : t("Enter the customer details, add line items, and HR Plus will calculate totals automatically.")}
         </p>
       </div>
-      <QuotationForm />
+      <QuotationForm preset={preset} />
     </div>
   );
 }

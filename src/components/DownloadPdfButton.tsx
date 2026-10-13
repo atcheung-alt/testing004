@@ -1,22 +1,35 @@
 "use client";
 
 import { Download } from "lucide-react";
-import { appendPdfLanguage } from "@/lib/pdf/language";
-import { useAppLanguage, useT } from "@/lib/i18n/client";
-import { appLanguageToPdf } from "@/lib/i18n/language";
+import { appendPdfLanguage, type PdfDownloadLanguage } from "@/lib/pdf/language";
+import { useT } from "@/lib/i18n/client";
 
-/** One download. The file language follows the Language button and is not saved on the document. */
+const CHOICES: { lang: PdfDownloadLanguage; label: string }[] = [
+  { lang: "EN", label: "English" },
+  { lang: "ZH_HANT", label: "中文" },
+];
+
+/** Download this document as an English PDF or a Traditional Chinese PDF.
+ *  The choice is for this file only and is not saved on the record. */
 export default function DownloadPdfButton({ url }: { url: string }) {
-  const language = useAppLanguage();
   const t = useT();
   return (
-    <a
-      href={appendPdfLanguage(url, appLanguageToPdf(language))}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="btn-secondary whitespace-nowrap shrink-0"
-    >
-      <Download size={15} /> {t("Download PDF")}
-    </a>
+    <div className="inline-flex items-stretch rounded-md border border-line bg-surface overflow-hidden text-sm shrink-0">
+      <span className="inline-flex items-center gap-1.5 px-3 text-ink-muted">
+        <Download size={14} />
+        {t("PDF")}
+      </span>
+      {CHOICES.map((choice) => (
+        <a
+          key={choice.lang}
+          href={appendPdfLanguage(url, choice.lang)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center px-3 py-2 font-medium text-ink hover:bg-brand-50 border-l border-line transition-colors"
+        >
+          {choice.label}
+        </a>
+      ))}
+    </div>
   );
 }

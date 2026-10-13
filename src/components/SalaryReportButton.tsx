@@ -6,6 +6,7 @@ import Portal from "@/components/Portal";
 import { currentPeriod } from "@/lib/payroll";
 import { useAppLanguage, useT } from "@/lib/i18n/client";
 import { appLanguageToPdf } from "@/lib/i18n/language";
+import type { PdfDownloadLanguage } from "@/lib/pdf/language";
 
 /** Opens a small "pick a date range" modal, then downloads a PDF salary
  *  report for this employee covering every payroll run in that range (see
@@ -17,6 +18,7 @@ export default function SalaryReportButton({ employeeId }: { employeeId: string 
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState(currentPeriod());
   const [to, setTo] = useState(currentPeriod());
+  const [pdfLanguage, setPdfLanguage] = useState<PdfDownloadLanguage>(appLanguageToPdf(language));
   const [error, setError] = useState<string | null>(null);
 
   function download() {
@@ -30,7 +32,7 @@ export default function SalaryReportButton({ employeeId }: { employeeId: string 
     }
     setError(null);
     window.open(
-      `/api/employees/${employeeId}/salary-report/pdf?from=${from}&to=${to}&lang=${appLanguageToPdf(language)}`,
+      `/api/employees/${employeeId}/salary-report/pdf?from=${from}&to=${to}&lang=${pdfLanguage}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -78,6 +80,28 @@ export default function SalaryReportButton({ employeeId }: { employeeId: string 
                 <div>
                   <label className="label">{t("To")}</label>
                   <input type="month" className="input" value={to} onChange={(e) => setTo(e.target.value)} />
+                </div>
+              </div>
+              <div className="mb-3">
+                <label className="label">{t("PDF language")}</label>
+                <div className="inline-flex rounded-md border border-line overflow-hidden">
+                  {(
+                    [
+                      ["EN", "English PDF"],
+                      ["ZH_HANT", "Chinese PDF"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setPdfLanguage(value)}
+                      className={`px-3 py-2 text-sm font-medium transition-colors ${
+                        pdfLanguage === value ? "bg-brand-600 text-white" : "bg-surface text-ink hover:bg-brand-50"
+                      }`}
+                    >
+                      {t(label)}
+                    </button>
+                  ))}
                 </div>
               </div>
               <p className="text-xs text-ink-faint mb-4">

@@ -35,7 +35,15 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     where: { id: params.id },
     include: {
       items: { orderBy: { sortOrder: "asc" } },
-      expenses: { orderBy: { sortOrder: "asc" } },
+      expenses: {
+        orderBy: { sortOrder: "asc" },
+        include: {
+          documents: {
+            select: { id: true, fileName: true, mimeType: true, createdAt: true },
+            orderBy: { createdAt: "asc" },
+          },
+        },
+      },
       quotation: { select: { id: true, number: true, driveFileUrl: true } },
       receipt: { select: { id: true, number: true, issueDate: true, driveFileUrl: true } },
     },

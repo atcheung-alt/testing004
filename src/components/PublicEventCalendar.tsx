@@ -12,7 +12,8 @@ import { useAppLanguage, useT } from "@/lib/i18n/client";
 // where to look before drilling into a specific date's time list. Adapted
 // from the old single-resource booking calendar, now scoped per event and
 // bounded to that event's own bookable range rather than "any future day".
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LABELS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LABELS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
 
 const LEVEL_STYLES: Record<AvailabilityLevel, string> = {
   OPEN: "bg-brand-50 text-brand-700 border-brand-300 hover:border-brand-500 hover:bg-brand-100",
@@ -120,6 +121,7 @@ export default function PublicEventCalendar({
   }
 
   const monthLabel = new Intl.DateTimeFormat(language === "zh" ? "zh-HK" : "en-US", { month: "long", year: "numeric" }).format(monthDate);
+  const weekdayLabels = language === "zh" ? WEEKDAY_LABELS_ZH : WEEKDAY_LABELS_EN;
 
   return (
     <div>
@@ -131,7 +133,7 @@ export default function PublicEventCalendar({
             onClick={goPrevMonth}
             disabled={atFirstMonth}
             aria-label={t("Previous month")}
-            className="btn-secondary px-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-surface text-ink hover:bg-paper disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronLeft size={16} />
           </button>
@@ -140,7 +142,7 @@ export default function PublicEventCalendar({
             onClick={goNextMonth}
             disabled={atLastMonth}
             aria-label={t("Next month")}
-            className="btn-secondary px-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-surface text-ink hover:bg-paper disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ChevronRight size={16} />
           </button>
@@ -148,9 +150,9 @@ export default function PublicEventCalendar({
       </div>
 
       <div className="grid grid-cols-7 mb-1">
-        {WEEKDAY_LABELS.map((label) => (
-          <div key={label} className="text-center text-xs font-semibold uppercase tracking-wide text-ink-muted">
-            {t(label)}
+        {weekdayLabels.map((label) => (
+          <div key={label} className="text-center text-xs font-medium text-ink-muted">
+            {label}
           </div>
         ))}
       </div>
@@ -176,20 +178,32 @@ export default function PublicEventCalendar({
                 onClick={() => onSelectDate(key)}
                 title={level ? t(LEVEL_LABELS[level]) : undefined}
                 className={clsx(
-                  "flex flex-col items-center justify-center gap-0.5 rounded-lg border py-1.5 text-xs transition-colors min-h-[46px]",
-                  !inMonth && "border-transparent text-ink-faint/50 cursor-default",
-                  inMonth && outOfRange && "border-transparent text-ink-faint/70 cursor-not-allowed",
-                  inMonth && !outOfRange && !level && "border-line text-ink cursor-default",
-                  inMonth && !outOfRange && level && LEVEL_STYLES[level],
-                  isSelected && "ring-2 ring-brand-600 ring-offset-1"
+                  "flex flex-col items-center justify-center gap-1 rounded-md border text-sm transition-colors min-h-[52px]",
+                  !inMonth && "border-transparent text-ink-faint/40 cursor-default",
+                  inMonth && outOfRange && "border-transparent text-ink-faint/60 cursor-not-allowed",
+                  inMonth && !outOfRange && !isSelected && !level && "border-line bg-surface text-ink",
+                  inMonth && !outOfRange && !isSelected && level && LEVEL_STYLES[level],
+                  isSelected && "bg-brand-600 text-white border-brand-600"
                 )}
               >
-                <span className={clsx("font-medium", isToday && "text-brand-700")}>{d.getDate()}</span>
+                <span className={clsx("font-medium leading-none", isToday && !isSelected && "underline decoration-brand-600 underline-offset-2")}>
+                  {d.getDate()}
+                </span>
                 {showLoading ? (
                   <Loader2 size={10} className="animate-spin text-ink-faint" />
                 ) : inMonth && !outOfRange && level ? (
-                  <span className="text-[9px] leading-none">{t(LEVEL_LABELS[level])}</span>
-                ) : null}
+                  <span
+                    className={clsx(
+                      "w-1.5 h-1.5 rounded-full",
+                      isSelected && "bg-white",
+                      !isSelected && level === "OPEN" && "bg-brand-600",
+                      !isSelected && level === "FEW" && "bg-amber-500",
+                      !isSelected && level === "FULL" && "bg-ink-faint"
+                    )}
+                  />
+                ) : (
+                  <span className="w-1.5 h-1.5" />
+                )}
               </button>
             );
           })

@@ -33,6 +33,19 @@ export function appendPdfLanguage(url: string, language: PdfDownloadLanguage): s
   return `${url}${separator}lang=${language}`;
 }
 
+/** The language a staff member picked when sending a PDF, if they picked one. */
+export function pdfLanguageFromBody(value: unknown): PdfDownloadLanguage | undefined {
+  return typeof value === "string" ? pdfDownloadLanguage(value) : undefined;
+}
+
+export function pdfFileName(number: string, language?: string | null): string {
+  return `${number}${pdfLanguageSuffix(language)}.pdf`;
+}
+
+export function pdfLanguageLabel(language?: string | null): "Chinese PDF" | "English PDF" {
+  return language === "ZH_HANT" || language === "ZH_HANS" ? "Chinese PDF" : "English PDF";
+}
+
 export function pdfContentDisposition(filename: string, language?: string | null): string {
   const suffix = pdfLanguageSuffix(language);
   const named = filename.toLowerCase().endsWith(".pdf")

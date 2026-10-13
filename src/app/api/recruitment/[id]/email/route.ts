@@ -6,13 +6,15 @@ import { isValidEmail } from "@/lib/settings";
 import { ensureRecruitmentSigningToken, recruitmentSigningUrlFor } from "@/lib/signing";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { pdfFileName, pdfLanguageFromBody, pdfLanguageLabel } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json().catch(() => ({}));
 
-  const built = await buildRecruitmentAgreementPdf(params.id);
+  const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);
+  const built = await buildRecruitmentAgreementPdf(params.id, pdfLanguage);
   if (!built) {
     return NextResponse.json({ error: "Recruitment agreement not found." }, { status: 404 });
   }
@@ -55,7 +57,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       cc: ccList,
       subject: body.subject.trim(),
       body: body.body,
-      attachment: { filename: `${built.number}.pdf`, content: built.buffer },
+      attachment: {
+        filename: pdfFileName(built.number, pdfLanguage || built.data.language),
+        content: built.buffer,
+      },
       extraAttachments,
       signingUrl,
       ctaLabel: "Review & Sign Online",
@@ -71,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     documentType: "recruitment",
     documentId: params.id,
     type: "EMAIL_SENT",
-    description: `Emailed to ${to}`,
+    description: `Emailed to ${to} (${pdfLanguageLabel(pdfLanguage || built.data.language)})`,
   });
 
   // Sending the agreement for the first time moves it from Draft to Sent.

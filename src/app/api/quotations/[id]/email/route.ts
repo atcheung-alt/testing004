@@ -6,13 +6,15 @@ import { isValidEmail } from "@/lib/settings";
 import { ensureSigningToken, signingUrlFor } from "@/lib/signing";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { pdfFileName, pdfLanguageFromBody, pdfLanguageLabel } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json().catch(() => ({}));
 
-  const built = await buildQuotationPdf(params.id);
+  const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);
+  const built = await buildQuotationPdf(params.id, pdfLanguage);
   if (!built) {
     return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
   }
@@ -55,7 +57,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       cc: ccList,
       subject: body.subject.trim(),
       body: body.body,
-      attachment: { filename: `${built.number}.pdf`, content: built.buffer },
+      attachment: {
+        filename: pdfFileName(built.number, pdfLanguage || built.data.language),
+        content: built.buffer,
+      },
       extraAttachments,
       signingUrl,
     });
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     documentType: "quotation",
     documentId: params.id,
     type: "EMAIL_SENT",
-    description: `Emailed to ${to}`,
+    description: `Emailed to ${to} (${pdfLanguageLabel(pdfLanguage || built.data.language)})`,
   });
 
   // Sending the quotation for the first time moves it from Draft to Sent.

@@ -60,7 +60,15 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ["var(--font-fraunces)", "Georgia", "serif"],
+        display: [
+          "var(--font-inter)",
+          "PingFang HK",
+          "PingFang TC",
+          "Noto Sans TC",
+          "Microsoft JhengHei",
+          "system-ui",
+          "sans-serif",
+        ],
         sans: [
           "var(--font-inter)",
           "PingFang HK",
@@ -74,17 +82,16 @@ module.exports = {
         signature: ["var(--font-signature)", "cursive"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(41,58,110,0.04), 0 8px 24px rgba(41,58,110,0.07)",
-        soft: "0 12px 32px rgba(79,124,255,0.12)",
+        card: "0 1px 1px rgba(0,0,0,0.03), 0 2px 5px rgba(50,50,93,0.08)",
+        soft: "0 2px 5px rgba(50,50,93,0.12), 0 1px 1px rgba(0,0,0,0.05)",
         stamp: "0 0 0 1.5px currentColor inset",
       },
       borderRadius: {
-        card: "16px",
+        card: "12px",
       },
       backgroundImage: {
-        "brand-gradient": "linear-gradient(135deg, #4F7CFF 0%, #7F9BFA 45%, #9B6BEA 100%)",
-        "app-gradient":
-          "radial-gradient(circle at 0% 0%, rgba(79,124,255,0.10), transparent 45%), radial-gradient(circle at 100% 0%, rgba(155,107,234,0.10), transparent 45%), radial-gradient(circle at 50% 100%, rgba(34,211,238,0.08), transparent 50%)",
+        "brand-gradient": "linear-gradient(180deg, #635bff 0%, #635bff 100%)",
+        "app-gradient": "none",
       },
     },
   },

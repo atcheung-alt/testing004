@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AlertCircle, Ban, CheckCircle2, Loader2 } from "lucide-react";
-import PublicCompanyHeader, { type PublicCompany } from "@/components/PublicCompanyHeader";
+import PublicBookingShell from "@/components/PublicBookingShell";
+import type { PublicCompany } from "@/components/PublicCompanyHeader";
 import { useT } from "@/lib/i18n/client";
 import { formatSlotLabel, readJsonOrThrow } from "@/lib/bookingFormat";
 
@@ -46,10 +47,8 @@ export default function BookingCancelClient({ booking, company }: { booking: Can
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-6">
-      <PublicCompanyHeader company={company} />
-
-      <div className="card p-6 flex flex-col items-center text-center gap-3">
+    <PublicBookingShell company={company}>
+      <div className="max-w-lg mx-auto card p-8 flex flex-col items-center text-center gap-3">
         {status === "CANCELLED" ? (
           <>
             <CheckCircle2 size={40} className="text-emerald-500" />
@@ -98,6 +97,6 @@ export default function BookingCancelClient({ booking, company }: { booking: Can
           </>
         )}
       </div>
-    </div>
+    </PublicBookingShell>
   );
 }

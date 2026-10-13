@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, FileText, Download } from "lucide-react";
+import { Plus, FileText, Download, LayoutTemplate } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { dateRangeFilter } from "@/lib/dateRange";
@@ -121,6 +121,9 @@ export default function QuotationsPage({
           <a href={exportHref} className="btn-secondary">
             <Download size={15} /> {t("Export CSV")}
           </a>
+          <Link href="/quotations/templates" className="btn-secondary">
+            <LayoutTemplate size={15} /> {t("Templates")}
+          </Link>
           <Link href="/quotations/new" className="btn-primary">
             <Plus size={15} /> {t("New quotation")}
           </Link>

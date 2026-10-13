@@ -28,6 +28,7 @@ export default async function BookEventPage({ params }: { params: { id: string }
       event={{
         id: event.id,
         name: event.name,
+        companyName: event.companyName,
         description: event.description,
         startDate: event.startDate.toISOString(),
         endDate: event.endDate.toISOString(),

@@ -11,6 +11,7 @@ import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import DeleteButton from "@/components/DeleteButton";
 import DuplicateButton from "@/components/DuplicateButton";
 import ConvertToInvoiceButton from "@/components/ConvertToInvoiceButton";
+import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DocumentItemsTable from "@/components/DocumentItemsTable";
 import QuotationCommentsCard from "@/components/QuotationCommentsCard";
 import ActivityTimeline from "@/components/ActivityTimeline";
@@ -108,6 +109,10 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             </Link>
           )}
           <DuplicateButton kind="quotation" id={quotation.id} />
+          <SaveAsTemplateButton
+            quotationId={quotation.id}
+            suggestedName={quotation.title || quotation.customerName || quotation.number}
+          />
           <DeleteButton
             url={`/api/quotations/${quotation.id}`}
             confirmNumber={quotation.number}
