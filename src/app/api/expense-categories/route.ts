@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  await ensureDefaultExpenseCategories();
   const categories = await prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" } });
   return NextResponse.json(categories);
 }

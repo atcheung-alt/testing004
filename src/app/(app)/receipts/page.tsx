@@ -104,7 +104,7 @@ async function MoneyList({
       when: expense.createdAt,
       kind: "expense" as const,
       href: `/invoices/${expense.invoice.id}`,
-      title: expense.category === "Others" ? expense.label || t("Others") : expense.category,
+      title: expense.category === "Others" ? expense.label || t("Others") : t(expense.category),
       subtitle: `${expense.invoice.number} · ${expense.invoice.customerName} · ${formatDate(expense.createdAt)}`,
       amount: expense.amount,
     })),
@@ -190,6 +190,7 @@ export default function ReceiptsPage({
   if (searchParams.q) exportParams.set("q", searchParams.q);
   if (searchParams.from) exportParams.set("from", searchParams.from);
   if (searchParams.to) exportParams.set("to", searchParams.to);
+  if (view !== "receipts") exportParams.set("view", view);
   const exportHref = `/api/receipts/export${exportParams.toString() ? `?${exportParams}` : ""}`;
 
   function viewHref(next: View) {
@@ -204,7 +205,7 @@ export default function ReceiptsPage({
 
   const views: { id: View; label: string }[] = [
     { id: "receipts", label: t("Receipts") },
-    { id: "expenses", label: t("Expenses only") },
+    { id: "expenses", label: t("Expense") },
     { id: "all", label: t("All together") },
   ];
 
@@ -217,11 +218,9 @@ export default function ReceiptsPage({
             {t("Look at receipts, expenses, or both together for the dates you choose.")}
           </p>
         </div>
-        {view === "receipts" && (
-          <a href={exportHref} className="btn-secondary shrink-0">
-            <Download size={15} /> {t("Export CSV")}
-          </a>
-        )}
+        <a href={exportHref} className="btn-secondary shrink-0">
+          <Download size={15} /> {t("Export CSV")}
+        </a>
       </div>
 
       <div className="flex flex-wrap gap-2">

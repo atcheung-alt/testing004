@@ -217,7 +217,7 @@ export default function ExpenseWorkspace({
               <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
                 {options.map((name) => (
                   <option key={name} value={name}>
-                    {name === "Others" ? t("Others") : name}
+                    {t(name)}
                   </option>
                 ))}
               </select>
@@ -315,7 +315,7 @@ export default function ExpenseWorkspace({
                     <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600">
                       {row.invoice.number}
                     </Link>
-                    <span className="text-sm text-ink">{row.category === "Others" ? row.label || t("Others") : row.category}</span>
+                    <span className="text-sm text-ink">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
                   </div>
                   <p className="text-xs text-ink-muted mt-0.5">
                     {row.invoice.customerName} · {row.createdLabel}

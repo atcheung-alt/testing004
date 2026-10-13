@@ -214,6 +214,7 @@ export const ZH: Record<string, string> = {
   "Invoices, payments, expenses, and what is still outstanding.": "發票、已收款、開支，以及尚未收取的金額。",
   "{count} invoices": "{count} 張發票",
   "Expenses only": "只看開支",
+  "Record type": "類型",
   "All together": "全部一起看",
   Together: "合計",
   Expense: "開支",

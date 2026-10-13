@@ -142,7 +142,7 @@ export default async function DashboardPage() {
                 >
                   <span className="font-mono text-sm font-medium">{expense.invoice.number}</span>
                   <span className="text-sm text-ink-muted truncate">{expense.invoice.customerName}</span>
-                  <span className="text-sm">{expense.category === "Others" ? expense.label || t("Others") : expense.category}</span>
+                  <span className="text-sm">{expense.category === "Others" ? expense.label || t("Others") : t(expense.category)}</span>
                   <span className="font-mono text-sm sm:text-right">{formatCurrency(expense.amount)}</span>
                 </Link>
               ))}

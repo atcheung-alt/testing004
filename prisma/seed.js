@@ -123,6 +123,26 @@ async function main() {
     },
   });
 
+  const expenseCategories = [
+    "Venue",
+    "Staffing",
+    "Transport",
+    "Meals",
+    "Equipment",
+    "Materials",
+    "Uniform",
+    "Accommodation",
+    "Subcontractor",
+  ];
+  const existingCategories = await prisma.expenseCategory.findMany({ select: { name: true } });
+  const haveCategories = new Set(existingCategories.map((row) => row.name.trim().toLowerCase()));
+  let sortOrder = existingCategories.length;
+  for (const name of expenseCategories) {
+    if (haveCategories.has(name.toLowerCase())) continue;
+    await prisma.expenseCategory.create({ data: { name, sortOrder } });
+    sortOrder += 1;
+  }
+
   console.log("Seed complete.");
 }
 

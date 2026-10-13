@@ -208,7 +208,7 @@ export default async function AnalysisPage({
               <div className="flex flex-col gap-1.5">
                 {expenseBreakdown.categories.map((c) => (
                   <div key={c.category} className="flex items-center justify-between pl-3">
-                    <span className="text-ink-muted">{c.category}</span>
+                    <span className="text-ink-muted">{t(c.category)}</span>
                     <span className="font-mono">
                       {formatCurrency(c.amount)}
                       {c.pctOfRevenue !== null && (

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import ExpenseWorkspace from "@/components/ExpenseWorkspace";
 import { getT } from "@/lib/i18n/server";
+import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function ExpensesPage({
   searchParams: { invoice?: string };
 }) {
   const t = getT();
+  await ensureDefaultExpenseCategories();
   const [invoices, categories, expenses] = await Promise.all([
     prisma.invoice.findMany({
       select: { id: true, number: true, customerName: true },
