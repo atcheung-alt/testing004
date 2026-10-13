@@ -6,11 +6,13 @@ export default function StatCard({
   value,
   icon: Icon,
   accent = "brand",
+  detail,
 }: {
   label: string;
   value: string;
   icon: LucideIcon;
   accent?: "brand" | "accent" | "ink" | "danger";
+  detail?: string;
 }) {
   const t = getT();
   const accentClasses =
@@ -29,6 +31,7 @@ export default function StatCard({
           {t(label)}
         </p>
         <p className="font-mono text-2xl font-semibold text-ink">{value}</p>
+        {detail ? <p className="text-xs text-ink-muted mt-1">{detail}</p> : null}
       </div>
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accentClasses}`}>
         <Icon size={18} />

@@ -13,14 +13,26 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const t = getT();
-  const [quotations, invoices, recentQuotations, recentInvoices, thisMonth] =
+  const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, recentExpenses] =
     await Promise.all([
       prisma.quotation.findMany({ select: { status: true, total: true } }),
       prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true } }),
       prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
       getCurrentMonthFinance(),
+      prisma.invoiceExpense.aggregate({ _sum: { amount: true } }),
+      prisma.invoiceExpense.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: { invoice: { select: { id: true, number: true, customerName: true } } },
+      }),
     ]);
+
+  const invoiced = invoices
+    .filter((i) => i.status !== "CANCELLED")
+    .reduce((sum, i) => sum + i.total, 0);
+  const paid = invoices.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.total, 0);
+  const expenseSum = expenseTotal._sum.amount || 0;
 
   const outstanding = invoices
     .filter(
@@ -41,8 +53,26 @@ export default async function DashboardPage() {
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Dashboard")}</h1>
         <p className="text-sm text-ink-muted">
-          {t("A quick look at your pipeline of quotations and invoices.")}
+          {t("Invoices, payments, expenses, and what is still outstanding.")}
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          label={t("Invoices")}
+          value={formatCurrency(invoiced)}
+          detail={t("{count} invoices", { count: invoices.length })}
+          icon={ReceiptText}
+        />
+        <StatCard label={t("Paid")} value={formatCurrency(paid)} icon={TrendingUp} accent="accent" />
+        <StatCard
+          label={t("Expenses")}
+          value={formatCurrency(expenseSum)}
+          detail={t("Logged against invoices")}
+          icon={Wallet}
+          accent="danger"
+        />
+        <StatCard label={t("Outstanding")} value={formatCurrency(outstanding)} icon={AlertTriangle} accent="accent" />
       </div>
 
       <div>
@@ -80,26 +110,46 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
-          <StatCard label={t("Quotations")} value={String(quotations.length)} icon={FileText} />
-          <StatCard label={t("Invoices")} value={String(invoices.length)} icon={ReceiptText} />
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-display text-lg font-semibold">{t("Recent expenses")}</h2>
+          <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1">
+            {t("View all")} <ArrowRight size={14} />
+          </Link>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <StatCard
-            label={t("Outstanding")}
-            value={formatCurrency(outstanding)}
+        {recentExpenses.length === 0 ? (
+          <EmptyState
             icon={Wallet}
-            accent="accent"
+            title={t("No expenses yet")}
+            description={t("Record a cost against an invoice and upload the receipt.")}
+            actionHref="/expenses"
+            actionLabel={t("Record an expense")}
           />
-          <StatCard
-            label={t("Overdue")}
-            value={formatCurrency(overdueAmount)}
-            icon={AlertTriangle}
-            accent="danger"
-          />
-        </div>
-      </div>
+        ) : (
+          <div className="card overflow-hidden">
+            <div className="hidden sm:grid grid-cols-[8rem_1fr_8rem_7rem] gap-3 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-ink-faint border-b border-line">
+              <span>{t("Invoice")}</span>
+              <span>{t("Customer")}</span>
+              <span>{t("Category")}</span>
+              <span className="text-right">{t("Amount")}</span>
+            </div>
+            <div className="divide-y divide-line">
+              {recentExpenses.map((expense) => (
+                <Link
+                  key={expense.id}
+                  href={`/invoices/${expense.invoice.id}`}
+                  className="grid grid-cols-1 sm:grid-cols-[8rem_1fr_8rem_7rem] gap-1 sm:gap-3 px-4 py-3 hover:bg-paper"
+                >
+                  <span className="font-mono text-sm font-medium">{expense.invoice.number}</span>
+                  <span className="text-sm text-ink-muted truncate">{expense.invoice.customerName}</span>
+                  <span className="text-sm">{expense.category === "Others" ? expense.label || t("Others") : expense.category}</span>
+                  <span className="font-mono text-sm sm:text-right">{formatCurrency(expense.amount)}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>

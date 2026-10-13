@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/calculations";
+import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, normalizeInvoiceStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
 import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
@@ -16,7 +16,6 @@ import DuplicateButton from "@/components/DuplicateButton";
 import DocumentItemsTable from "@/components/DocumentItemsTable";
 import BackButton from "@/components/BackButton";
 import ActivityTimeline from "@/components/ActivityTimeline";
-import InvoiceExpensesCard from "@/components/InvoiceExpensesCard";
 import MarkOnCalendarButton from "@/components/MarkOnCalendarButton";
 import { getEventForInvoice } from "@/lib/events";
 import { defaultEmailContent, followUpEmailContent, isValidEmail } from "@/lib/settings";
@@ -35,15 +34,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     where: { id: params.id },
     include: {
       items: { orderBy: { sortOrder: "asc" } },
-      expenses: {
-        orderBy: { sortOrder: "asc" },
-        include: {
-          documents: {
-            select: { id: true, fileName: true, mimeType: true, createdAt: true },
-            orderBy: { createdAt: "asc" },
-          },
-        },
-      },
+      expenses: { select: { amount: true } },
       quotation: { select: { id: true, number: true, driveFileUrl: true } },
       receipt: { select: { id: true, number: true, issueDate: true, driveFileUrl: true } },
     },
@@ -53,7 +44,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);
-  const expenseCategories = await prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" } });
+  const expenseTotal = invoice.expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const locked = invoice.status === "CANCELLED";
   const token = await ensureInvoiceViewToken(invoice.id);
@@ -249,12 +240,23 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         total={invoice.total}
       />
 
-      <InvoiceExpensesCard
-        invoiceId={invoice.id}
-        expenses={invoice.expenses}
-        invoiceTotal={invoice.total}
-        categories={expenseCategories.map((c) => c.name)}
-      />
+      <Link
+        href={`/expenses?invoice=${invoice.id}`}
+        className="card px-5 py-4 flex items-center justify-between gap-4 hover:bg-paper transition-colors"
+      >
+        <div>
+          <p className="font-medium text-ink">{t("Expenses")}</p>
+          <p className="text-sm text-ink-muted mt-0.5">
+            {invoice.expenses.length === 0
+              ? t("Record a cost and upload a receipt for this invoice.")
+              : t("{count} logged · {amount}", {
+                  count: invoice.expenses.length,
+                  amount: formatCurrency(expenseTotal),
+                })}
+          </p>
+        </div>
+        <span className="text-sm font-medium text-brand-500 shrink-0">{t("Open expenses")}</span>
+      </Link>
 
       {invoice.notes && (
         <div className="card p-5">
