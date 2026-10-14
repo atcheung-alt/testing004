@@ -13,7 +13,7 @@ export async function GET() {
   if ("error" in gate) return gate.error;
   const companies = await prisma.company.findMany({
     orderBy: { label: "asc" },
-    include: { _count: { select: { users: true } } },
+    include: { _count: { select: { users: true } }, groups: { orderBy: { number: "asc" } } },
   });
   return NextResponse.json(companies);
 }
@@ -28,7 +28,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Enter a company name and a label." }, { status: 400 });
   }
   try {
-    const company = await prisma.company.create({ data: { name, label } });
+    const company = await prisma.company.create({
+      data: { name, label, groups: { create: [{ number: 1 }, { number: 2 }, { number: 3 }] } },
+      include: { groups: { orderBy: { number: "asc" } } },
+    });
     return NextResponse.json(company, { status: 201 });
   } catch {
     return NextResponse.json({ error: "That label is already used." }, { status: 409 });

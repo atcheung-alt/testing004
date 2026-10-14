@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAccount, isCompanyAdmin, isSuper, parseSections } from "@/lib/access";
+import { getAccount, isCompanyAdmin, isSuper } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +21,11 @@ export async function GET() {
     return NextResponse.json({ error: "Only a company admin can do this." }, { status: 403 });
   }
   const [company, users] = await Promise.all([
-    prisma.company.findUnique({ where: { id: account.companyId } }),
+    prisma.company.findUnique({ where: { id: account.companyId }, include: { groups: { orderBy: { number: "asc" } } } }),
     prisma.user.findMany({
       where: { companyId: account.companyId },
       orderBy: { createdAt: "asc" },
-      select: { id: true, name: true, email: true, status: true, role: true, sections: true },
+      select: { id: true, name: true, email: true, status: true, role: true, sections: true, groupId: true },
     }),
   ]);
   return NextResponse.json({ company, users });
@@ -45,14 +45,22 @@ export async function PATCH(request: NextRequest) {
     }
     const role = body.role === "COMPANY_ADMIN" || body.role === "MEMBER" ? body.role : user.role === "SUPER" ? "COMPANY_ADMIN" : user.role;
     const status = body.status === "ACTIVE" || body.status === "CANCELLED" || body.status === "PENDING" ? body.status : user.status;
-    const company = await prisma.company.findUnique({ where: { id: account.companyId }, select: { sections: true } });
-    const allowed = parseSections(company?.sections);
-    const sections = Array.isArray(body.sections)
-      ? JSON.stringify(parseSections(JSON.stringify(body.sections)).filter((id) => allowed.includes(id)))
-      : user.sections;
+    let groupId = user.groupId;
+    let sections = user.sections;
+    if (body.groupId === null || typeof body.groupId === "string") {
+      if (body.groupId === null) {
+        groupId = null;
+        sections = "[]";
+      } else {
+        const group = await prisma.companyGroup.findFirst({ where: { id: body.groupId, companyId: account.companyId } });
+        if (!group) return NextResponse.json({ error: "Choose a group in this company." }, { status: 400 });
+        groupId = group.id;
+        sections = group.sections;
+      }
+    }
     const saved = await prisma.user.update({
       where: { id: user.id },
-      data: { role: role === "SUPER" ? "COMPANY_ADMIN" : role, status, sections, isAdmin: false },
+      data: { role: role === "SUPER" ? "COMPANY_ADMIN" : role, status, groupId, sections, isAdmin: false },
     });
     return NextResponse.json({ id: saved.id });
   }

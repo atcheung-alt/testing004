@@ -18,7 +18,9 @@ export async function GET() {
       sections: true,
       isAdmin: true,
       companyId: true,
+      groupId: true,
       company: { select: { id: true, name: true, label: true } },
+      group: { select: { id: true, number: true } },
     },
   });
   return NextResponse.json(users);

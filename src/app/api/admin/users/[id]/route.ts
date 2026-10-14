@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { parseSections } from "@/lib/access";
 import { requireSuperWithGate } from "@/lib/adminGate";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +19,19 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const status = typeof body.status === "string" && STATUSES.has(body.status) ? body.status : existing.status;
   const name = typeof body.name === "string" ? body.name.trim() : existing.name;
   const companyId = body.companyId === null ? null : typeof body.companyId === "string" ? body.companyId : existing.companyId;
-  let sections = Array.isArray(body.sections) ? JSON.stringify(parseSections(JSON.stringify(body.sections))) : existing.sections;
-  if (role !== "SUPER" && companyId) {
-    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { sections: true } });
-    const allowed = parseSections(company?.sections);
-    if (Array.isArray(body.sections) || body.companyId) {
-      const requested = Array.isArray(body.sections) ? parseSections(JSON.stringify(body.sections)) : allowed;
-      sections = JSON.stringify(requested.filter((id) => allowed.includes(id)));
-    }
+  let groupId = body.groupId === null ? null : typeof body.groupId === "string" ? body.groupId : existing.groupId;
+  let sections = existing.sections;
+  if (role === "SUPER" || !companyId) {
+    groupId = null;
+  } else if (companyId !== existing.companyId && body.groupId === undefined) {
+    groupId = null;
+  }
+  if (groupId) {
+    const group = await prisma.companyGroup.findFirst({ where: { id: groupId, companyId } });
+    if (!group) return NextResponse.json({ error: "Choose a group in this company." }, { status: 400 });
+    sections = group.sections;
+  } else if (role !== "SUPER") {
+    sections = "[]";
   }
 
   if (role !== "SUPER" && !companyId && existing.role !== "SUPER" && existing.companyId) {
@@ -44,6 +48,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       role,
       status,
       companyId: role === "SUPER" ? null : companyId,
+      groupId: role === "SUPER" ? null : groupId,
       sections,
       isAdmin: role === "SUPER",
     },

@@ -5,7 +5,8 @@ import { Loader2 } from "lucide-react";
 import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
-type CompanyRow = { id: string; name: string; label: string; sections: string; _count?: { users: number } };
+type GroupRow = { id: string; number: number; sections: string };
+type CompanyRow = { id: string; name: string; label: string; sections: string; groups?: GroupRow[]; _count?: { users: number } };
 type UserRow = {
   id: string;
   name: string;
@@ -14,7 +15,9 @@ type UserRow = {
   role: string;
   sections: string;
   companyId: string | null;
+  groupId: string | null;
   company: { id: string; name: string; label: string } | null;
+  group: { id: string; number: number } | null;
 };
 
 function sectionList(raw: string): SectionId[] {
@@ -91,7 +94,7 @@ export default function AdminAccess() {
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Companies")}</h2>
           <p className="text-sm text-ink-muted mt-1">
-            {t("Each company has its own label. Its documents stay separate, and the ticks below are the only parts that company can open.")}
+            {t("Each company keeps its own documents. Groups 1, 2 and 3 share that company, and each group opens different parts.")}
           </p>
         </div>
         <form onSubmit={addCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
@@ -103,7 +106,7 @@ export default function AdminAccess() {
             <label className="label">{t("Label")}</label>
             <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="ACME" />
           </div>
-          <button type="submit" className="btn-primary" disabled={saving}>
+          <button type="submit" className="btn-primary" disabled={saving || !name.trim() || !label.trim()}>
             {saving ? <Loader2 size={15} className="animate-spin" /> : null}
             {t("Add company")}
           </button>
@@ -128,7 +131,7 @@ export default function AdminAccess() {
         <h2 className="font-display text-lg font-semibold">{t("Accounts")}</h2>
         <div className="card divide-y divide-line">
           {users.map((user) => {
-            const selected = new Set(sectionList(user.sections));
+            const groups = companies.find((item) => item.id === user.companyId)?.groups || [];
             return (
               <div key={user.id} className="px-4 py-4 flex flex-col gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -169,6 +172,21 @@ export default function AdminAccess() {
                         ))}
                       </select>
                     </label>
+                    <label className="text-sm">
+                      <span className="label">{t("Group")}</span>
+                      <select
+                        className="input"
+                        value={user.groupId || ""}
+                        onChange={(e) => saveUser(user, { groupId: e.target.value || null })}
+                      >
+                        <option value="">{t("No group")}</option>
+                        {groups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {t("Group")} {group.number}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <div className="flex flex-wrap gap-3 text-sm">
                       <label className="flex items-center gap-2">
                         <input
@@ -189,29 +207,7 @@ export default function AdminAccess() {
                         {t("Member")}
                       </label>
                     </div>
-                    {user.companyId && sectionList(companies.find((item) => item.id === user.companyId)?.sections || "[]").length === 0 && (
-                      <p className="text-xs text-ink-muted">{t("Tick what this company can open on its label above.")}</p>
-                    )}
-                    <div className="flex flex-wrap gap-x-4 gap-y-2">
-                      {SECTIONS.filter((section) => {
-                        const company = companies.find((item) => item.id === user.companyId);
-                        return company ? sectionList(company.sections).includes(section.id) : false;
-                      }).map((section) => (
-                        <label key={section.id} className="flex items-center gap-2 text-sm text-ink-muted">
-                          <input
-                            type="checkbox"
-                            checked={selected.has(section.id)}
-                            onChange={() => {
-                              const next = new Set(selected);
-                              if (next.has(section.id)) next.delete(section.id);
-                              else next.add(section.id);
-                              saveUser(user, { sections: Array.from(next) });
-                            }}
-                          />
-                          {t(section.label)}
-                        </label>
-                      ))}
-                    </div>
+                    <p className="text-xs text-ink-muted">{t("Access follows the group. Change the ticks on that group above.")}</p>
                   </div>
                 )}
               </div>
@@ -235,14 +231,13 @@ function CompanyEditor({
   const t = useT();
   const [name, setName] = useState(company.name);
   const [label, setLabel] = useState(company.label);
-  const [selected, setSelected] = useState<SectionId[]>(sectionList(company.sections || "[]"));
   const [saving, setSaving] = useState(false);
+  const groups = company.groups || [];
 
   useEffect(() => {
     setName(company.name);
     setLabel(company.label);
-    setSelected(sectionList(company.sections || "[]"));
-  }, [company.id, company.name, company.label, company.sections]);
+  }, [company.id, company.name, company.label]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -250,7 +245,7 @@ function CompanyEditor({
     const res = await fetch(`/api/admin/companies/${company.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, label, sections: selected }),
+      body: JSON.stringify({ name, label }),
     });
     const data = await res.json().catch(() => ({}));
     setSaving(false);
@@ -261,9 +256,25 @@ function CompanyEditor({
     onSaved();
   }
 
+  async function addGroups(preset: boolean) {
+    setSaving(true);
+    const res = await fetch(`/api/admin/companies/${company.id}/groups`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(preset ? { preset: true } : {}),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      onError(data.error || t("Could not save."));
+      return;
+    }
+    onSaved();
+  }
+
   return (
-    <form onSubmit={save} className="px-4 py-4 flex flex-col gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
         <div>
           <label className="label">{t("Company name")}</label>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
@@ -272,13 +283,64 @@ function CompanyEditor({
           <label className="label">{t("Label")}</label>
           <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} />
         </div>
-        <button type="submit" className="btn-primary" disabled={saving}>
+        <button type="submit" className="btn-primary" disabled={saving || !name.trim() || !label.trim()}>
           {saving ? <Loader2 size={15} className="animate-spin" /> : null}
           {t("Save")}
         </button>
+      </form>
+      <div className="flex flex-col gap-3">
+        {groups.map((group) => (
+          <GroupEditor key={group.id} companyId={company.id} group={group} onSaved={onSaved} onError={onError} />
+        ))}
+        <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => addGroups(groups.length === 0)}>
+          {groups.length === 0 ? t("Add groups 1, 2 and 3") : t("Add group")}
+        </button>
       </div>
-      <p className="text-xs text-ink-muted">
-        {t("Accounts")}: {company._count?.users || 0}
+    </div>
+  );
+}
+
+function GroupEditor({
+  companyId,
+  group,
+  onSaved,
+  onError,
+}: {
+  companyId: string;
+  group: GroupRow;
+  onSaved: () => void;
+  onError: (message: string) => void;
+}) {
+  const t = useT();
+  const [selected, setSelected] = useState<SectionId[]>(sectionList(group.sections || "[]"));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSelected(sectionList(group.sections || "[]"));
+  }, [group.id, group.sections]);
+
+  async function save(next: SectionId[]) {
+    setSelected(next);
+    setSaving(true);
+    const res = await fetch(`/api/admin/companies/${companyId}/groups/${group.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sections: next }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      onError(data.error || t("Could not save."));
+      return;
+    }
+    onSaved();
+  }
+
+  return (
+    <div className="rounded-lg border border-line px-3 py-3 flex flex-col gap-2">
+      <p className="text-sm font-medium">
+        {t("Group")} {group.number}
+        {saving ? <Loader2 size={14} className="inline ml-2 animate-spin" /> : null}
       </p>
       <div className="flex flex-wrap gap-x-4 gap-y-2">
         {SECTIONS.map((section) => (
@@ -287,15 +349,16 @@ function CompanyEditor({
               type="checkbox"
               checked={selected.includes(section.id)}
               onChange={() => {
-                setSelected((current) =>
-                  current.includes(section.id) ? current.filter((id) => id !== section.id) : [...current, section.id]
-                );
+                const next = selected.includes(section.id)
+                  ? selected.filter((id) => id !== section.id)
+                  : [...selected, section.id];
+                save(next);
               }}
             />
             {t(section.label)}
           </label>
         ))}
       </div>
-    </form>
+    </div>
   );
 }

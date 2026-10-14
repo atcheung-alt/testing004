@@ -15,8 +15,10 @@ export type AccountRecord = {
   status: string;
   role: string;
   companyId: string | null;
+  groupId: string | null;
   sections: string;
   company: { id: string; name: string; label: string; sections: string } | null;
+  group: { id: string; number: number; sections: string } | null;
 };
 
 export function isSuper(account: { role: string; isAdmin: boolean }) {
@@ -41,9 +43,8 @@ export function parseSections(raw: string | null | undefined): SectionId[] {
 export function allowedSections(account: AccountRecord): SectionId[] | "all" {
   if (isSuper(account)) return "all";
   if (!account.companyId && account.status === "ACTIVE") return "all";
-  const own = parseSections(account.sections);
-  const companyAllowed = parseSections(account.company?.sections);
-  return own.filter((id) => companyAllowed.includes(id));
+  if (account.group) return parseSections(account.group.sections);
+  return [];
 }
 
 export function canSeeSection(account: AccountRecord, section: SectionId) {
@@ -73,7 +74,10 @@ export async function getAccount(): Promise<AccountRecord | null> {
   if (!session) return null;
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    include: { company: { select: { id: true, name: true, label: true, sections: true } } },
+    include: {
+      company: { select: { id: true, name: true, label: true, sections: true } },
+      group: { select: { id: true, number: true, sections: true } },
+    },
   });
   if (!user) return null;
   if (user.isAdmin && user.role !== "SUPER") {

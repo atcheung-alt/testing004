@@ -237,6 +237,14 @@ export const ZH: Record<string, string> = {
     "每間公司有自己的標籤。註冊時要選擇。",
   "Each company has its own label. Its documents stay separate, and the ticks below are the only parts that company can open.":
     "每間公司有自己的標籤。文件只留在該標籤內，下面勾選的部分才是這間公司可以開啟的。",
+  "Each company keeps its own documents. Groups 1, 2 and 3 share that company, and each group opens different parts.":
+    "每間公司的文件分開存放。第 1、2、3 組共用這間公司，但每組可以開啟不同部分。",
+  "Add groups 1, 2 and 3": "新增第 1、2、3 組",
+  "Add group": "新增組別",
+  Group: "組別",
+  "No group": "沒有組別",
+  "Access follows the group. Change the ticks on that group above.": "權限跟組別走。請在上面該組別勾選。",
+  "Choose a group in this company.": "請選擇這間公司裡的組別。",
   "Tick what this company can open on its label above.": "請在上面該公司的標籤勾選它可以開啟的部分。",
   "No companies yet.": "尚未有公司。",
   Accounts: "帳戶",

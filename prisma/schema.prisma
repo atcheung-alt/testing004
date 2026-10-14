@@ -27,9 +27,25 @@ model Company {
   // JSON array of section keys this company may open. People in the
   // company only see a section when it is ticked here.
   sections  String   @default("[]")
+  groups    CompanyGroup[]
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// A numbered group inside one company. Group 1 and group 2 share the
+// company's documents, but each group opens different parts of the site.
+model CompanyGroup {
+  id        String   @id @default(cuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  number    Int
+  sections  String   @default("[]")
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([companyId, number])
 }
 
 model User {
@@ -46,6 +62,8 @@ model User {
   role      String   @default("MEMBER")
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+  groupId   String?
+  group     CompanyGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   // JSON array of section keys the account may open. Empty means none,
   // except the top admin and the original staff (no company), who see all.
   sections  String   @default("[]")

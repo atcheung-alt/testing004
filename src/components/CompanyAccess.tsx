@@ -2,20 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
-type CompanyRow = { id: string; name: string; label: string; sections?: string };
-type UserRow = { id: string; name: string; email: string; status: string; role: string; sections: string };
-
-function sectionList(raw: string): SectionId[] {
-  try {
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
+type GroupRow = { id: string; number: number; sections: string };
+type CompanyRow = { id: string; name: string; label: string; sections?: string; groups?: GroupRow[] };
+type UserRow = { id: string; name: string; email: string; status: string; role: string; sections: string; groupId?: string | null };
 
 export default function CompanyAccess() {
   const t = useT();
@@ -98,7 +89,7 @@ export default function CompanyAccess() {
 
       <section className="card divide-y divide-line">
         {users.map((user) => {
-          const selected = new Set(sectionList(user.sections));
+          const groups = company?.groups || [];
           return (
             <div key={user.id} className="px-4 py-4 flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -130,23 +121,21 @@ export default function CompanyAccess() {
                   {t("Member")}
                 </label>
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {SECTIONS.filter((section) => sectionList(company?.sections || "[]").includes(section.id)).map((section) => (
-                  <label key={section.id} className="flex items-center gap-2 text-sm text-ink-muted">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(section.id)}
-                      onChange={() => {
-                        const next = new Set(selected);
-                        if (next.has(section.id)) next.delete(section.id);
-                        else next.add(section.id);
-                        saveUser(user.id, { sections: Array.from(next) });
-                      }}
-                    />
-                    {t(section.label)}
-                  </label>
-                ))}
-              </div>
+              <label className="text-sm">
+                <span className="label">{t("Group")}</span>
+                <select
+                  className="input"
+                  value={user.groupId || ""}
+                  onChange={(e) => saveUser(user.id, { groupId: e.target.value || null })}
+                >
+                  <option value="">{t("No group")}</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {t("Group")} {group.number}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           );
         })}
