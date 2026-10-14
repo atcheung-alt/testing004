@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { companyWhere } from "@/lib/access";
 
 export type MonthlyFinance = {
   month: string; // "2026-07", sortable
@@ -35,7 +36,7 @@ export async function getMonthlyFinance(monthsBack: number): Promise<MonthlyFina
   since.setMonth(since.getMonth() - (monthsBack - 1));
 
   const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: since } },
+    where: { ...(await companyWhere()), status: "PAID", paidAt: { gte: since } },
     select: { total: true, paidAt: true, expenses: { select: { amount: true } } },
   });
 
@@ -179,7 +180,7 @@ export async function getFinanceByPeriod(
   );
 
   const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+    where: { ...(await companyWhere()), status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
     select: { total: true, paidAt: true, expenses: { select: { amount: true } } },
   });
 
@@ -207,7 +208,7 @@ export async function getPeriodTotals(
 ): Promise<PeriodTotals> {
   const { rangeStart, rangeEndExclusive, rangeLabel } = periodRange(granularity, referenceDate, locale);
   const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+    where: { ...(await companyWhere()), status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
     select: { total: true, expenses: { select: { amount: true } } },
   });
   const revenue = invoices.reduce((sum, i) => sum + i.total, 0);
@@ -234,7 +235,7 @@ export async function getExpenseBreakdown(
 ): Promise<{ revenue: number; categories: ExpenseCategoryBreakdown[] }> {
   const { rangeStart, rangeEndExclusive } = periodRange(granularity, referenceDate);
   const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+    where: { ...(await companyWhere()), status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
     select: { total: true, expenses: { select: { category: true, amount: true } } },
   });
   const revenue = invoices.reduce((sum, i) => sum + i.total, 0);
@@ -301,7 +302,7 @@ export async function getAccountsReceivable(): Promise<{
   invoices: ArInvoice[];
 }> {
   const invoices = await prisma.invoice.findMany({
-    where: { status: { in: ["UNPAID", "PENDING_VERIFICATION"] } },
+    where: { ...(await companyWhere()), status: { in: ["UNPAID", "PENDING_VERIFICATION"] } },
     orderBy: { dueDate: "asc" },
     select: { id: true, number: true, customerName: true, total: true, dueDate: true, status: true },
   });

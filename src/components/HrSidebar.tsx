@@ -100,11 +100,11 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "flex items-center rounded-lg py-2 text-sm transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
         collapsed ? "justify-center px-0" : "gap-3 px-3",
         active
-          ? "bg-brand-gradient text-white shadow-soft"
-          : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+          ? "bg-brand-50 text-brand-700 font-semibold"
+          : "font-medium text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />

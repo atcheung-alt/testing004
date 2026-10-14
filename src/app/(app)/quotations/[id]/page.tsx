@@ -23,6 +23,7 @@ import { withParsedFeesList } from "@/lib/fees";
 import { getActivityTimeline } from "@/lib/activity";
 import { computeTotals } from "@/lib/calculations";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
+import { canSeeCompany } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
     },
   });
 
-  if (!raw) notFound();
+  if (!raw || !(await canSeeCompany(raw.companyId))) notFound();
   const quotation = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("quotation", quotation.id);
 

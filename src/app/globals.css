@@ -265,7 +265,7 @@ html[data-theme="dark"] .theme-logo-dark {
      `overflow`, so both `shadow-card` and `shadow-soft` still render fully
      rounded and unclipped. */
   .card {
-    @apply bg-surface border border-line rounded-card shadow-card overflow-hidden;
+    @apply bg-surface border border-line rounded-lg overflow-hidden;
   }
 
   .btn {

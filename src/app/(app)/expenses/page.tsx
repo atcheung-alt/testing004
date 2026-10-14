@@ -4,6 +4,7 @@ import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import ExpenseWorkspace from "@/components/ExpenseWorkspace";
 import { getT } from "@/lib/i18n/server";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
+import { companyWhere } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,10 @@ export default async function ExpensesPage({
 }) {
   const t = getT();
   await ensureDefaultExpenseCategories();
+  const scope = await companyWhere();
   const [invoices, categories, expenses] = await Promise.all([
     prisma.invoice.findMany({
+      where: scope,
       select: {
         id: true,
         number: true,
@@ -32,6 +35,7 @@ export default async function ExpensesPage({
     }),
     prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" }, select: { name: true } }),
     prisma.invoiceExpense.findMany({
+      where: { invoice: scope },
       orderBy: { createdAt: "desc" },
       take: 200,
       include: {

@@ -63,11 +63,18 @@ export async function GET(request: NextRequest) {
       // salary, bank details) or create/edit/delete employee records. Every
       // account added afterwards starts as a non-admin.
       user = await prisma.user.create({
-        data: { email: profile.email, name: profile.name, isAdmin: true },
+        data: { email: profile.email, name: profile.name, isAdmin: true, role: "SUPER", status: "ACTIVE" },
       });
     } else {
       return fail(request, "not_authorized");
     }
+  }
+
+  if (user.status === "CANCELLED") {
+    return fail(request, "cancelled");
+  }
+  if (user.status === "PENDING") {
+    return fail(request, "pending");
   }
 
   await createSession(user);

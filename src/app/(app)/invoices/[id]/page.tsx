@@ -25,6 +25,7 @@ import { withParsedMultipliersList } from "@/lib/multipliers";
 import { withParsedFeesList } from "@/lib/fees";
 import { getActivityTimeline } from "@/lib/activity";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
+import { canSeeCompany } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     },
   });
 
-  if (!raw) notFound();
+  if (!raw || !(await canSeeCompany(raw.companyId))) notFound();
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);

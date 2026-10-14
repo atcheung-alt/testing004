@@ -9,20 +9,23 @@ import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import { getT } from "@/lib/i18n/server";
+import { companyWhere } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const t = getT();
+  const scope = await companyWhere();
   const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, recentExpenses] =
     await Promise.all([
-      prisma.quotation.findMany({ select: { status: true, total: true } }),
-      prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true } }),
-      prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
+      prisma.quotation.findMany({ where: scope, select: { status: true, total: true } }),
+      prisma.invoice.findMany({ where: scope, select: { status: true, total: true, dueDate: true } }),
+      prisma.quotation.findMany({ where: scope, orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.invoice.findMany({ where: scope, orderBy: { createdAt: "desc" }, take: 6 }),
       getCurrentMonthFinance(),
-      prisma.invoiceExpense.aggregate({ _sum: { amount: true } }),
+      prisma.invoiceExpense.aggregate({ _sum: { amount: true }, where: { invoice: scope } }),
       prisma.invoiceExpense.findMany({
+        where: { invoice: scope },
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { invoice: { select: { id: true, number: true, customerName: true } } },

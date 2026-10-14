@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { nextDocumentNumber } from "@/lib/numbering";
 import { generateSigningToken } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
+import { companyWhere, ownerCompanyId } from "@/lib/access";
 import { dateRangeFilter } from "@/lib/dateRange";
 import {
   RECRUITMENT_TERMS_TEMPLATES,
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
 
   const agreements = await prisma.recruitmentAgreement.findMany({
     where: {
+      ...(await companyWhere()),
       status: status || undefined,
       createdAt: dateRangeFilter(from, to),
       OR: q
@@ -84,6 +86,7 @@ export async function POST(request: NextRequest) {
   const agreement = await prisma.recruitmentAgreement.create({
     data: {
       number,
+      companyId: await ownerCompanyId(),
       companyName,
       companyEmail,
       paymentDueDays,

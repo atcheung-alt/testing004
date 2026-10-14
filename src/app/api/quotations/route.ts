@@ -5,6 +5,7 @@ import { nextDocumentNumber } from "@/lib/numbering";
 import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, withParsedItems, VALID_QUOTATION_STATUSES } from "@/lib/document-helpers";
 import { generateSigningToken } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
+import { companyWhere, ownerCompanyId } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status");
 
   const quotations = await prisma.quotation.findMany({
-    where: { status: status || undefined },
+    where: { status: status || undefined, ...(await companyWhere()) },
     orderBy: { createdAt: "desc" },
     include: {
       invoice: { select: { id: true, number: true } },
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
   const quotation = await prisma.quotation.create({
     data: {
       number,
+      companyId: await ownerCompanyId(),
       title: (body.title || "").trim(),
       ...customer,
       issueDate: body.issueDate ? new Date(body.issueDate) : new Date(),

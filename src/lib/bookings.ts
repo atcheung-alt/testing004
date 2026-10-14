@@ -80,6 +80,7 @@ export {
 
 export type BookingEventRecord = {
   id: string;
+  companyId: string | null;
   name: string;
   description: string;
   companyName: string;
@@ -186,14 +187,15 @@ export async function createBookingEvent(fields: {
   endDate: Date;
   active?: boolean;
   requiresConfirmation?: boolean;
+  companyId?: string | null;
 }): Promise<BookingEventRecord> {
   const id = randomUUID();
   const active = fields.active ?? true;
   const requiresConfirmation = fields.requiresConfirmation ?? false;
   const manageToken = generateSigningToken();
   const rows = await prisma.$queryRaw<BookingEventRecord[]>`
-    INSERT INTO "BookingEvent" ("id", "name", "description", "companyName", "startDate", "endDate", "active", "requiresConfirmation", "manageToken", "createdAt", "updatedAt")
-    VALUES (${id}, ${fields.name}, ${fields.description}, ${fields.companyName}, ${fields.startDate}, ${fields.endDate}, ${active}, ${requiresConfirmation}, ${manageToken}, now(), now())
+    INSERT INTO "BookingEvent" ("id", "name", "description", "companyName", "companyId", "startDate", "endDate", "active", "requiresConfirmation", "manageToken", "createdAt", "updatedAt")
+    VALUES (${id}, ${fields.name}, ${fields.description}, ${fields.companyName}, ${fields.companyId || null}, ${fields.startDate}, ${fields.endDate}, ${active}, ${requiresConfirmation}, ${manageToken}, now(), now())
     RETURNING *
   `;
   return rows[0];

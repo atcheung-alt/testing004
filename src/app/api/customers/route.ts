@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { loadDocumentIndex, summarizeClient } from "@/lib/clientWork";
+import { companyWhere, ownerCompanyId } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +12,14 @@ export async function GET(request: NextRequest) {
     prisma.customer.findMany({
       where: q
         ? {
+            ...(await companyWhere()),
             OR: [
               { name: { contains: q, mode: "insensitive" } },
               { contacts: { some: { name: { contains: q, mode: "insensitive" } } } },
               { contacts: { some: { email: { contains: q, mode: "insensitive" } } } },
             ],
           }
-        : undefined,
+        : await companyWhere(),
       include: { contacts: { orderBy: { createdAt: "asc" } } },
       orderBy: { name: "asc" },
     }),
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
   const customer = await prisma.customer.create({
     data: {
       name,
+      companyId: await ownerCompanyId(),
       address: typeof body.address === "string" ? body.address.trim() || null : null,
       contacts: {
         create: { name: contactName || null, email: contactEmail || null },

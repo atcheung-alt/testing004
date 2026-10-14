@@ -10,6 +10,7 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import DeleteButton from "@/components/DeleteButton";
 import { getT } from "@/lib/i18n/server";
+import { companyWhere } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ async function MoneyList({
   to?: string;
 }) {
   const t = getT();
+  const scope = await companyWhere();
   const range = dateRangeFilter(from, to);
   const customerFilter = q
     ? {
@@ -49,7 +51,7 @@ async function MoneyList({
       : await prisma.receipt.findMany({
           where: {
             issueDate: range,
-            invoice: customerFilter,
+            invoice: { AND: [customerFilter || {}, scope] },
           },
           include: {
             invoice: { select: { id: true, number: true, customerName: true, total: true } },
@@ -63,7 +65,7 @@ async function MoneyList({
       : await prisma.invoiceExpense.findMany({
           where: {
             createdAt: range,
-            invoice: customerFilter,
+            invoice: { AND: [customerFilter || {}, scope] },
           },
           include: {
             invoice: { select: { id: true, number: true, customerName: true } },

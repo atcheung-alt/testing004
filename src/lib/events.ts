@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 
 export type EventRecord = {
   id: string;
+  companyId: string | null;
   invoiceId: string;
   name: string;
   startDate: Date;
@@ -77,14 +78,15 @@ export async function createEventForInvoice(params: {
   endTime: string | null;
   contactPerson: string | null;
   companyName: string;
+  companyId?: string | null;
 }): Promise<EventRecord> {
   const id = randomUUID();
   const durationMins = computeDurationMins(params.startDate, params.startTime, params.endDate, params.endTime);
   const rows = await prisma.$queryRaw<EventRecord[]>`
     INSERT INTO "Event"
-      ("id", "invoiceId", "name", "startDate", "startTime", "endDate", "endTime", "durationMins", "contactPerson", "companyName", "createdAt", "updatedAt")
+      ("id", "invoiceId", "companyId", "name", "startDate", "startTime", "endDate", "endTime", "durationMins", "contactPerson", "companyName", "createdAt", "updatedAt")
     VALUES
-      (${id}, ${params.invoiceId}, ${params.name}, ${params.startDate}, ${params.startTime}, ${params.endDate}, ${params.endTime}, ${durationMins}, ${params.contactPerson}, ${params.companyName}, now(), now())
+      (${id}, ${params.invoiceId}, ${params.companyId || null}, ${params.name}, ${params.startDate}, ${params.startTime}, ${params.endDate}, ${params.endTime}, ${durationMins}, ${params.contactPerson}, ${params.companyName}, now(), now())
     RETURNING *
   `;
   return rows[0];

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { companyWhere } from "@/lib/access";
 
 export type ClientMatch = {
   name: string;
@@ -62,9 +63,11 @@ export function summarizeClient(client: ClientMatch, quotes: QuoteRow[], invoice
 export async function loadDocumentIndex() {
   const [quotes, invoices] = await Promise.all([
     prisma.quotation.findMany({
+      where: await companyWhere(),
       select: { customerName: true, customerEmail: true },
     }),
     prisma.invoice.findMany({
+      where: await companyWhere(),
       select: { customerName: true, customerEmail: true, status: true, total: true },
     }),
   ]);
@@ -91,6 +94,7 @@ export async function customerFieldsForClient(id: string) {
 export async function loadAllDocuments() {
   const [quotations, invoices] = await Promise.all([
     prisma.quotation.findMany({
+      where: await companyWhere(),
       select: {
         id: true,
         number: true,
@@ -104,6 +108,7 @@ export async function loadAllDocuments() {
       orderBy: { issueDate: "desc" },
     }),
     prisma.invoice.findMany({
+      where: await companyWhere(),
       select: {
         id: true,
         number: true,

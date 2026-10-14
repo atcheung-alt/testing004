@@ -28,17 +28,13 @@ import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
+import type { SectionId } from "@/lib/access";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
+type NavGroup = { label?: string; items: NavItem[] };
 
-// Groups with `boxed: true` render inside a bordered container so related
-// pages read as one bundled section rather than a flat list — currently the
-// Quotation → Invoice → Receipt document pipeline, and Recruitment (kept in
-// its own matching box for the same "this is its own subsystem" visual cue,
-// even though it's a single link today).
-//
 // The HR System entry point is NOT in this list — it's rendered as a
 // SwitchSystemLink (see below), the same shared component HrSidebar uses
 // for its own "back to Resource Management" link, so both point back and
@@ -47,12 +43,28 @@ type NavItem = { href: string; label: string; icon: LucideIcon };
 // (HrSidebar) with its own nav and a re-tinted accent color (see the
 // `data-product="hr"` scoping in globals.css) — same app/database/session
 // underneath, deliberately distinct once you're in it.
-function buildNavGroups(t: (key: string) => string): { items: NavItem[]; boxed?: boolean }[] {
+const ITEM_SECTION: Record<string, SectionId> = {
+  "/": "dashboard",
+  "/bookings": "bookings",
+  "/quotations": "quotations",
+  "/quotations/templates": "templates",
+  "/invoices": "invoices",
+  "/expenses": "expenses",
+  "/receipts": "receipts",
+  "/recruitment": "recruitment",
+  "/clients": "clients",
+};
+
+function buildNavGroups(t: (key: string) => string, sections: SectionId[] | "all"): NavGroup[] {
   return [
-    { items: [{ href: "/", label: t("Dashboard"), icon: LayoutDashboard }] },
-    { items: [{ href: "/bookings", label: t("Bookings"), icon: CalendarCheck }] },
     {
-      boxed: true,
+      items: [
+        { href: "/", label: t("Dashboard"), icon: LayoutDashboard },
+        { href: "/bookings", label: t("Bookings"), icon: CalendarCheck },
+      ],
+    },
+    {
+      label: t("Billing"),
       items: [
         { href: "/quotations", label: t("Quotations"), icon: FileText },
         { href: "/quotations/templates", label: t("Templates"), icon: LayoutTemplate },
@@ -62,11 +74,18 @@ function buildNavGroups(t: (key: string) => string): { items: NavItem[]; boxed?:
       ],
     },
     {
-      boxed: true,
-      items: [{ href: "/recruitment", label: t("Recruitment"), icon: Briefcase }],
+      label: t("People"),
+      items: [
+        { href: "/recruitment", label: t("Recruitment"), icon: Briefcase },
+        { href: "/clients", label: t("Clients"), icon: Users },
+      ],
     },
-    { items: [{ href: "/clients", label: t("Clients"), icon: Users }] },
-  ];
+  ]
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => sections === "all" || sections.includes(ITEM_SECTION[item.href])),
+    }))
+    .filter((group) => group.items.length > 0);
 }
 
 function NavLink({
@@ -74,13 +93,11 @@ function NavLink({
   pathname,
   collapsed,
   onNavigate,
-  boxed,
 }: {
   item: NavItem;
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
-  boxed?: boolean;
 }) {
   const { href, label, icon: Icon } = item;
   const active =
@@ -96,13 +113,11 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "flex items-center rounded-lg py-2 text-sm transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
         collapsed ? "justify-center px-0" : "gap-3 px-3",
         active
-          ? "bg-brand-gradient text-white shadow-soft"
-          : boxed
-          ? "text-ink-muted hover:bg-brand-100/90 hover:text-brand-600"
-          : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+          ? "bg-brand-50 text-brand-700 font-semibold"
+          : "font-medium text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />
@@ -117,41 +132,30 @@ function NavLinks({
   collapsed,
   onNavigate,
 }: {
-  navGroups: { items: NavItem[]; boxed?: boolean }[];
+  navGroups: NavGroup[];
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex flex-col gap-2 px-3">
-      {navGroups.map((group, gi) =>
-        group.boxed ? (
-          <div
-            key={gi}
-            className={clsx(
-              "flex flex-col gap-0.5 rounded-xl bg-brand-50/70",
-              collapsed ? "p-1" : "p-1.5"
-            )}
-          >
-            {group.items.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                pathname={pathname}
-                collapsed={collapsed}
-                onNavigate={onNavigate}
-                boxed
-              />
-            ))}
-          </div>
-        ) : (
-          <div key={gi} className="flex flex-col gap-1">
-            {group.items.map((item) => (
-              <NavLink key={item.href} item={item} pathname={pathname} collapsed={collapsed} onNavigate={onNavigate} />
-            ))}
-          </div>
-        )
-      )}
+    <nav className="flex flex-col gap-5 px-3">
+      {navGroups.map((group, gi) => (
+        <div key={group.label || gi} className="flex flex-col gap-0.5">
+          {group.label && !collapsed && (
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{group.label}</p>
+          )}
+          {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line" />}
+          {group.items.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -219,11 +223,11 @@ function BottomLinks({
         prefetch={false}
         title={collapsed ? t("Settings") : undefined}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors",
+          "flex items-center rounded-lg py-2 text-sm transition-colors",
           collapsed ? "justify-center px-0" : "gap-3 px-3",
           settingsActive
-            ? "bg-brand-gradient text-white shadow-soft"
-            : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+            ? "bg-brand-50 text-brand-700 font-semibold"
+            : "font-medium text-ink-muted hover:bg-paper hover:text-ink"
         )}
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />
@@ -255,17 +259,23 @@ export default function Sidebar({
   logoDataDark,
   companyName,
   isAdmin = false,
+  sections = "all",
+  showAdmin = false,
+  showCompany = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
   companyName?: string;
   isAdmin?: boolean;
+  sections?: SectionId[] | "all";
+  showAdmin?: boolean;
+  showCompany?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const navGroups = buildNavGroups(t);
+  const navGroups = buildNavGroups(t, sections);
 
   // Restore the user's last choice — read after mount so server/client
   // markup matches on first paint (avoids a hydration mismatch), then
@@ -291,7 +301,7 @@ export default function Sidebar({
           stretching to the full page height and scrolling out of view. */}
       <aside
         className={clsx(
-          "hidden lg:flex shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface/90 backdrop-blur-sm py-6 transition-[width] duration-200",
+          "hidden lg:flex shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-5 transition-[width] duration-200",
           collapsed ? "w-20" : "w-64"
         )}
       >
@@ -330,8 +340,23 @@ export default function Sidebar({
           </div>
         )}
 
-        <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />
+        {isAdmin && <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />}
         <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} />
+        {(showAdmin || showCompany) && !collapsed && (
+          <div className="px-3 mt-4 flex flex-col gap-0.5">
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Admin")}</p>
+            {showAdmin && (
+              <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-muted hover:bg-paper hover:text-ink">
+                {t("All companies")}
+              </Link>
+            )}
+            {showCompany && (
+              <Link href="/company" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-muted hover:bg-paper hover:text-ink">
+                {t("My company")}
+              </Link>
+            )}
+          </div>
+        )}
         <BottomLinks pathname={pathname} collapsed={collapsed} />
       </aside>
 

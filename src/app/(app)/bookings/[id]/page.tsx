@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireAdminPage } from "@/lib/auth";
+import { canSeeCompany } from "@/lib/access";
 import { ensureBookingEventManageToken, getBookingEvent, listBookingEvents, listBookingsForEvent, listSlotsForEvent } from "@/lib/bookings";
 import { bookingEventUrlFromHeaders, manageBookingEventUrlFromHeaders } from "@/lib/signing";
 import BookingEventDetailClient from "@/components/BookingEventDetailClient";
@@ -7,10 +7,8 @@ import BookingEventDetailClient from "@/components/BookingEventDetailClient";
 export const dynamic = "force-dynamic";
 
 export default async function BookingEventDetailPage({ params }: { params: { id: string } }) {
-  await requireAdminPage();
-
   const event = await getBookingEvent(params.id);
-  if (!event) notFound();
+  if (!event || !(await canSeeCompany(event.companyId))) notFound();
 
   const [slots, bookings, manageToken, events] = await Promise.all([
     listSlotsForEvent(params.id),

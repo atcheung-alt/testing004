@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import HrSidebar from "@/components/HrSidebar";
 import PageTransition from "@/components/PageTransition";
 import { getCurrentUser } from "@/lib/auth";
+import { getAccount, isSuper } from "@/lib/access";
 import { getEffectiveCompany } from "@/lib/appSettings";
 
 // Wraps every page under /hr (the HR Management System) — a deliberately
@@ -22,6 +23,8 @@ export default async function HrLayout({ children }: { children: React.ReactNode
   if (!user) {
     redirect("/login");
   }
+  const account = await getAccount();
+  if (account?.companyId && !isSuper(account)) redirect("/");
   const company = await getEffectiveCompany();
 
   return (

@@ -4,6 +4,7 @@ import { computeTotals } from "@/lib/calculations";
 import { nextDocumentNumber } from "@/lib/numbering";
 import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, eventFieldsFrom, computeDueDate, withParsedItems, VALID_INVOICE_STATUSES } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
+import { companyWhere, ownerCompanyId } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status");
 
   const invoices = await prisma.invoice.findMany({
-    where: { status: status || undefined },
+    where: { status: status || undefined, ...(await companyWhere()) },
     orderBy: { createdAt: "desc" },
     include: {
       quotation: { select: { id: true, number: true } },
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
   const invoice = await prisma.invoice.create({
     data: {
       number,
+      companyId: await ownerCompanyId(),
       title: (body.title || "").trim(),
       poNumber: body.poNumber?.trim() || null,
       ...customer,

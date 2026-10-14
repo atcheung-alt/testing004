@@ -186,8 +186,8 @@ export default function ExpenseWorkspace({
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="relative">
+        <div className="flex flex-col gap-4">
+          <div>
             <label className="label">{t("Related invoice")}</label>
             <input
               className="input"
@@ -353,45 +353,47 @@ export default function ExpenseWorkspace({
           </div>
         ) : (
           <div className="card divide-y divide-line">
+            <div className="hidden sm:grid grid-cols-[9rem_1fr_8rem_7rem_2rem] gap-3 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+              <span>{t("Invoice")}</span>
+              <span>{t("Customer")}</span>
+              <span>{t("Category")}</span>
+              <span className="text-right">{t("Amount")}</span>
+              <span />
+            </div>
             {shown.map((row) => (
-              <div key={row.id} className="px-4 sm:px-5 py-4 flex flex-col sm:flex-row sm:items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600">
-                      {row.invoice.number}
-                    </Link>
-                    <span className="text-sm text-ink">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
-                  </div>
-                  <p className="text-xs text-ink-muted mt-0.5">
-                    {row.invoice.customerName} · {row.createdLabel}
-                  </p>
+              <div key={row.id} className="px-4 sm:px-5 py-3 sm:grid sm:grid-cols-[9rem_1fr_8rem_7rem_2rem] sm:items-center sm:gap-3">
+                <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600">
+                  {row.invoice.number}
+                </Link>
+                <div className="min-w-0">
+                  <p className="text-sm text-ink truncate">{row.invoice.customerName}</p>
+                  <p className="text-xs text-ink-faint">{row.createdLabel}</p>
                   {row.documents.length > 0 && (
-                    <ul className="mt-2 flex flex-col gap-1">
+                    <ul className="mt-1 flex flex-col gap-0.5">
                       {row.documents.map((doc) => (
                         <li key={doc.id}>
                           <a
                             href={`/api/invoices/${row.invoice.id}/expenses/${row.id}/documents/${doc.id}`}
-                            className="text-sm text-brand-500 hover:text-brand-600 inline-flex items-center gap-1.5"
+                            className="text-xs text-brand-500 hover:text-brand-600 inline-flex items-center gap-1.5"
                           >
-                            <FileText size={14} /> {doc.fileName}
+                            <FileText size={12} /> {doc.fileName}
                           </a>
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-mono text-sm font-medium">{formatCurrency(row.amount)}</span>
-                  <button
-                    type="button"
-                    className="text-ink-faint hover:text-danger-500"
-                    disabled={deletingId === row.id}
-                    onClick={() => void removeExpense(row)}
-                    aria-label={t("Remove expense")}
-                  >
-                    {deletingId === row.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                  </button>
-                </div>
+                <span className="text-sm text-ink-muted">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
+                <span className="font-mono text-sm sm:text-right">{formatCurrency(row.amount)}</span>
+                <button
+                  type="button"
+                  className="text-ink-faint hover:text-danger-500 justify-self-end"
+                  disabled={deletingId === row.id}
+                  onClick={() => void removeExpense(row)}
+                  aria-label={t("Remove expense")}
+                >
+                  {deletingId === row.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                </button>
               </div>
             ))}
           </div>
