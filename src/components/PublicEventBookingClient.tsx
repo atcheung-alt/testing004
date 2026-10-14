@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, Loader2, AlertCircle, CheckCircle2, CalendarDays, ChevronLeft, Check } from "lucide-react";
 import clsx from "clsx";
 import PublicBookingShell from "@/components/PublicBookingShell";
 import type { PublicCompany } from "@/components/PublicCompanyHeader";
 import PublicEventCalendar from "@/components/PublicEventCalendar";
-import { formatTimeRangeLabel, formatSlotLabel, readJsonOrThrow } from "@/lib/bookingFormat";
+import { formatDateLabel, formatTimeRangeLabel, formatSlotLabel, readJsonOrThrow } from "@/lib/bookingFormat";
 import { useT } from "@/lib/i18n/client";
 
 type EventInfo = {
@@ -61,11 +61,10 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
     status: string;
     email: string;
   } | null>(null);
-  const timesRef = useRef<HTMLDivElement>(null);
-  const detailsRef = useRef<HTMLDivElement>(null);
 
   const selectedSlot = slots.find((s) => s.id === selectedSlotId) || null;
-  const step = !date ? 1 : !selectedSlot ? 2 : 3;
+  const [screen, setScreen] = useState<"date" | "time" | "details">(date ? "time" : "date");
+  const step = screen === "date" ? 1 : screen === "time" ? 2 : 3;
 
   async function refreshSlots(forDate: string) {
     setLoadingSlots(true);
@@ -89,16 +88,8 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
       return;
     }
     refreshSlots(date);
-    if (window.matchMedia("(max-width: 1023px)").matches) {
-      timesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date]);
-
-  useEffect(() => {
-    if (!selectedSlotId) return;
-    detailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [selectedSlotId]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -213,60 +204,78 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
           )}
         </div>
 
-        <ol className="flex items-center gap-2 text-sm">
+        <ol className="flex flex-wrap items-center gap-2 text-sm">
           {(
             [
-              [1, "Date"],
-              [2, "Time"],
-              [3, "Your details"],
+              [1, "Date", "date"],
+              [2, "Time", "time"],
+              [3, "Your details", "details"],
             ] as const
-          ).map(([n, label], index) => (
-            <li key={n} className="flex items-center gap-2 min-w-0">
-              {index > 0 && <span className="hidden sm:block w-6 h-px bg-line" />}
-              <span
-                className={clsx(
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1",
-                  step === n
-                    ? "border-brand-600 bg-brand-50 text-ink font-medium"
-                    : step > n
-                      ? "border-line bg-surface text-ink"
-                      : "border-line text-ink-faint"
-                )}
-              >
-                <span
+          ).map(([n, label, name], index) => {
+            const open = name === "date" || (name === "time" && !!date) || (name === "details" && !!date && !!selectedSlot);
+            return (
+              <li key={n} className="flex items-center gap-2 min-w-0">
+                {index > 0 && <span className="hidden sm:block w-6 h-px bg-line" />}
+                <button
+                  type="button"
+                  disabled={!open}
+                  onClick={() => open && setScreen(name)}
                   className={clsx(
-                    "inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px]",
-                    step === n ? "bg-brand-600 text-white" : step > n ? "bg-brand-100 text-brand-700" : "bg-paper text-ink-faint"
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1",
+                    step === n
+                      ? "border-brand-600 bg-brand-50 text-ink font-medium"
+                      : step > n
+                        ? "border-line bg-surface text-ink"
+                        : "border-line text-ink-faint"
                   )}
                 >
-                  {step > n ? <Check size={12} /> : n}
-                </span>
-                {t(label)}
-              </span>
-            </li>
-          ))}
+                  <span
+                    className={clsx(
+                      "inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px]",
+                      step === n ? "bg-brand-600 text-white" : step > n ? "bg-brand-100 text-brand-700" : "bg-paper text-ink-faint"
+                    )}
+                  >
+                    {step > n ? <Check size={12} /> : n}
+                  </span>
+                  {t(label)}
+                </button>
+              </li>
+            );
+          })}
         </ol>
 
-        <form onSubmit={submit} className="card p-5 sm:p-6 flex flex-col gap-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <form onSubmit={submit} className="card p-5 sm:p-6 flex flex-col gap-5 max-w-xl">
+          {screen === "date" && (
             <div>
-              <label className="label mb-2">{t("Pick a date")}</label>
+              <h2 className="font-display text-xl font-semibold text-ink">{t("Pick a date")}</h2>
+              <p className="text-sm text-ink-muted mt-1 mb-4">{t("Choose a day. Coloured days still have space.")}</p>
               <PublicEventCalendar
                 eventId={event.id}
                 minDate={new Date(event.startDate)}
                 maxDate={new Date(event.endDate)}
                 selectedDate={date}
-                onSelectDate={setDate}
+                onSelectDate={(next) => {
+                  setDate(next);
+                  setScreen("time");
+                }}
               />
             </div>
+          )}
 
-            <div ref={timesRef} className="flex flex-col gap-3 lg:border-l lg:border-line lg:pl-6 scroll-mt-4">
-              <label className="label flex items-center gap-1.5">
-                <Clock size={13} /> {t("Available times")}
-              </label>
-              {!date ? (
-                <p className="text-sm text-ink-muted">{t("Select a date on the calendar to see available times.")}</p>
-              ) : loadingSlots ? (
+          {screen === "time" && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-xl font-semibold text-ink flex items-center gap-1.5">
+                    <Clock size={18} /> {t("Choose a time.")}
+                  </h2>
+                  {date && <p className="text-sm text-ink-muted mt-1">{formatDateLabel(date)}</p>}
+                </div>
+                <button type="button" onClick={() => setScreen("date")} className="btn-secondary shrink-0">
+                  {t("Change day")}
+                </button>
+              </div>
+              {loadingSlots ? (
                 <div className="flex items-center gap-2 text-sm text-ink-muted py-3">
                   <Loader2 size={15} className="animate-spin" /> {t("Loading times…")}
                 </div>
@@ -277,16 +286,19 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                   {t("No times available that day — please pick another date on the calendar.")}
                 </p>
               ) : (
-                <div className="flex flex-col gap-2 max-h-[420px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {slots.map((slot) => {
-                    const isSelected = slot.id === selectedSlotId;
                     const full = slot.available <= 0;
+                    const isSelected = slot.id === selectedSlotId;
                     return (
                       <button
                         key={slot.id}
                         type="button"
                         disabled={full}
-                        onClick={() => setSelectedSlotId(slot.id)}
+                        onClick={() => {
+                          setSelectedSlotId(slot.id);
+                          setScreen("details");
+                        }}
                         className={clsx(
                           "flex items-center justify-between gap-3 rounded-md border px-3 py-3 text-left text-sm transition-colors",
                           isSelected
@@ -308,12 +320,21 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                 </div>
               )}
             </div>
-          </div>
+          )}
 
-          {date && selectedSlot && (
-            <div ref={detailsRef} className="flex flex-col gap-4 border-t border-line pt-5 scroll-mt-4">
-              <div className="flex items-center gap-2 text-sm text-ink">
-                <CalendarDays size={15} className="text-brand-600" />
+          {screen === "details" && date && selectedSlot && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-display text-xl font-semibold text-ink">{t("Your details")}</h2>
+                  <p className="text-sm text-ink-muted mt-1">{t("Check this time, then leave your name and email.")}</p>
+                </div>
+                <button type="button" onClick={() => setScreen("time")} className="btn-secondary shrink-0">
+                  {t("Change time")}
+                </button>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-ink rounded-md border border-line bg-paper px-3 py-2">
+                <CalendarDays size={15} className="text-brand-600 shrink-0" />
                 {formatSlotLabel(date, selectedSlot.startTime, selectedSlot.durationMins)}
               </div>
 

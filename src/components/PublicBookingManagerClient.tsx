@@ -18,6 +18,7 @@ import {
 import Portal from "@/components/Portal";
 import PublicCompanyHeader, { type PublicCompany } from "@/components/PublicCompanyHeader";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
+import BookingTimeField from "@/components/BookingTimeField";
 import {
   DEFAULT_SLOT_DURATION_MINUTES,
   MAX_SLOT_QUOTA,
@@ -524,25 +525,35 @@ export default function PublicBookingManagerClient({
         <h2 className="font-display text-lg font-semibold text-ink">{t("Time slots")}</h2>
 
         <form onSubmit={submitAddSlot} className="rounded-xl border border-line p-4 flex flex-col gap-4">
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setAddMode("single")}
-              className={clsx("stamp", addMode === "single" ? "border-brand-500 text-brand-600 bg-brand-50" : "border-line text-ink-muted")}
+              className={clsx(
+                "rounded-md border px-3 py-3 text-left",
+                addMode === "single" ? "border-brand-600 bg-brand-50" : "border-line bg-surface hover:bg-paper"
+              )}
             >
-              {t("One slot")}
+              <span className="block text-sm font-medium text-ink">{t("One time")}</span>
+              <span className="block text-xs text-ink-muted mt-0.5">{t("Add a single appointment on this day.")}</span>
             </button>
             <button
               type="button"
               onClick={() => setAddMode("bulk")}
-              className={clsx("stamp", addMode === "bulk" ? "border-brand-500 text-brand-600 bg-brand-50" : "border-line text-ink-muted")}
+              className={clsx(
+                "rounded-md border px-3 py-3 text-left",
+                addMode === "bulk" ? "border-brand-600 bg-brand-50" : "border-line bg-surface hover:bg-paper"
+              )}
             >
-              {t("Fill a shift")}
+              <span className="block text-sm font-medium text-ink">{t("Repeat until")}</span>
+              <span className="block text-xs text-ink-muted mt-0.5">
+                {t("Add the same length of appointment from the start time until the end time.")}
+              </span>
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
+          <div className="flex flex-col gap-4">
+            <div className="max-w-xs">
               <label className="label">{t("Date")}</label>
               <input
                 type="date"
@@ -555,19 +566,19 @@ export default function PublicBookingManagerClient({
               />
             </div>
             <div>
-              <label className="label">{addMode === "single" ? t("Start time") : t("Shift start")}</label>
-              <input type="time" className="input" value={addStartTime} onChange={(e) => setAddStartTime(e.target.value)} required />
+              <label className="label">{t("Start time")}</label>
+              <BookingTimeField value={addStartTime} onChange={setAddStartTime} />
             </div>
             {addMode === "bulk" && (
               <div>
-                <label className="label">{t("Shift end")}</label>
-                <input type="time" className="input" value={addEndTime} onChange={(e) => setAddEndTime(e.target.value)} required />
+                <label className="label">{t("End time")}</label>
+                <BookingTimeField value={addEndTime} onChange={setAddEndTime} />
               </div>
             )}
           </div>
 
-          <div className="max-w-[200px]">
-            <label className="label">{addMode === "single" ? t("Duration (minutes)") : t("Duration per slot (minutes)")}</label>
+          <div className="max-w-[220px]">
+            <label className="label">{t("How long is each appointment?")}</label>
             <input
               type="number"
               className="input"
@@ -581,8 +592,8 @@ export default function PublicBookingManagerClient({
             <p className="mt-1 text-xs text-ink-faint">{formatDurationLabel(addDuration)}</p>
           </div>
 
-          <div className="max-w-[160px]">
-            <label className="label">{t("Quota (bookings per slot)")}</label>
+          <div className="max-w-xs">
+            <label className="label">{t("How many people can book each time?")}</label>
             <input
               type="number"
               className="input"
@@ -603,7 +614,7 @@ export default function PublicBookingManagerClient({
 
           <button type="submit" disabled={addBusy} className="btn-primary self-start">
             {addBusy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-            {addMode === "single" ? t("Add slot") : t("Generate slots")}
+            {addMode === "single" ? t("Add this time") : t("Add these times")}
           </button>
         </form>
 
