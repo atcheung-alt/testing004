@@ -141,7 +141,7 @@ async function MoneyList({
         )}
         {view === "all" && (
           <div className="card px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Together")}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Net")}</p>
             <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal - expenseTotal)}</p>
           </div>
         )}
@@ -206,7 +206,7 @@ export default function ReceiptsPage({
   const views: { id: View; label: string }[] = [
     { id: "receipts", label: t("Receipts") },
     { id: "expenses", label: t("Expense") },
-    { id: "all", label: t("All together") },
+    { id: "all", label: t("Consolidated") },
   ];
 
   return (
@@ -215,7 +215,7 @@ export default function ReceiptsPage({
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Receipts")}</h1>
           <p className="text-sm text-ink-muted">
-            {t("Look at receipts, expenses, or both together for the dates you choose.")}
+            {t("Look at receipts, expenses, or the consolidated record for the dates you choose.")}
           </p>
         </div>
         <a href={exportHref} className="btn-secondary shrink-0">

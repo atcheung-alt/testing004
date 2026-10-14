@@ -409,6 +409,57 @@ html[data-theme="dark"] .theme-logo-dark {
   .animate-slide-in-right {
     animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+  .animate-rise {
+    animation: rise-in 0.65s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .animate-fill-bar {
+    animation: fill-bar 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .animate-sheen {
+    animation: sheen 4.8s ease-in-out infinite;
+  }
+  .animate-soft-pulse {
+    animation: soft-pulse 2.8s ease-in-out infinite;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fill-bar {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--bar);
+  }
+}
+
+@keyframes sheen {
+  0% {
+    transform: translateX(-140%);
+  }
+  100% {
+    transform: translateX(460%);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

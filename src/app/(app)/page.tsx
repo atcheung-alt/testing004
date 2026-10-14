@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { FileText, ReceiptText, Wallet, AlertTriangle, ArrowRight, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
+import { FileText, ReceiptText, Wallet, AlertTriangle, ArrowRight, TrendingUp } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
 import { getCurrentMonthFinance } from "@/lib/finance";
 import StatCard from "@/components/StatCard";
+import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import { getT } from "@/lib/i18n/server";
@@ -47,11 +48,25 @@ export default async function DashboardPage() {
   const overdueInvoices = invoices.filter(isOverdueInvoice);
   const overdueCount = overdueInvoices.length;
   const overdueAmount = overdueInvoices.reduce((sum, i) => sum + i.total, 0);
+  const collected = invoiced > 0 ? Math.round((paid / invoiced) * 100) : 0;
+  const monthMax = Math.max(thisMonth.revenue, thisMonth.expenses, Math.abs(thisMonth.profit), 1);
+  const monthRows = [
+    { label: t("Revenue"), amount: thisMonth.revenue, color: "bg-brand-500" },
+    { label: t("Expenses"), amount: thisMonth.expenses, color: "bg-danger-500" },
+    {
+      label: t("Net profit"),
+      amount: thisMonth.profit,
+      color: thisMonth.profit < 0 ? "bg-danger-500" : "bg-accent-500",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Dashboard")}</h1>
+      <div className="animate-rise">
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("Dashboard")}</h1>
+          <span className="h-2 w-2 rounded-full bg-brand-500 animate-soft-pulse" aria-hidden />
+        </div>
         <p className="text-sm text-ink-muted">
           {t("Invoices, payments, expenses, and what is still outstanding.")}
         </p>
@@ -61,50 +76,82 @@ export default async function DashboardPage() {
         <StatCard
           label={t("Invoices")}
           value={formatCurrency(invoiced)}
+          amount={invoiced}
           detail={t("{count} invoices", { count: invoices.length })}
           icon={ReceiptText}
+          style={{ animationDelay: "40ms" }}
         />
-        <StatCard label={t("Paid")} value={formatCurrency(paid)} icon={TrendingUp} accent="accent" />
+        <StatCard
+          label={t("Paid")}
+          value={formatCurrency(paid)}
+          amount={paid}
+          icon={TrendingUp}
+          accent="accent"
+          style={{ animationDelay: "110ms" }}
+        />
         <StatCard
           label={t("Expenses")}
           value={formatCurrency(expenseSum)}
+          amount={expenseSum}
           detail={t("Logged against invoices")}
           icon={Wallet}
           accent="danger"
+          style={{ animationDelay: "180ms" }}
         />
-        <StatCard label={t("Outstanding")} value={formatCurrency(outstanding)} icon={AlertTriangle} accent="accent" />
+        <StatCard
+          label={t("Outstanding")}
+          value={formatCurrency(outstanding)}
+          amount={outstanding}
+          icon={AlertTriangle}
+          accent="accent"
+          style={{ animationDelay: "250ms" }}
+        />
       </div>
 
-      <div>
+      <div className="card px-5 py-4 animate-rise" style={{ animationDelay: "300ms" }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-lg font-semibold">{t("This month")}</h2>
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Collected")}</p>
+          <p className="font-mono text-sm text-ink">{collected}%</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCard
-            label={t("Revenue")}
-            value={formatCurrency(thisMonth.revenue)}
-            icon={TrendingUp}
-            accent="brand"
+        <div className="relative h-1.5 rounded-full bg-paper overflow-hidden">
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-brand-500 animate-fill-bar"
+            style={{ ["--bar" as string]: `${collected}%` }}
           />
-          <StatCard
-            label={t("Expenses")}
-            value={formatCurrency(thisMonth.expenses)}
-            icon={TrendingDown}
-            accent="danger"
-          />
-          <StatCard
-            label={t("Net profit")}
-            value={formatCurrency(thisMonth.profit)}
-            icon={PiggyBank}
-            accent={thisMonth.profit < 0 ? "danger" : "accent"}
-          />
+          <span className="pointer-events-none absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/55 to-transparent animate-sheen" />
         </div>
-        <p className="text-xs text-ink-faint mt-2">
+      </div>
+
+      <div className="card p-5 animate-rise" style={{ animationDelay: "360ms" }}>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("This month")}</h2>
+        <div className="flex flex-col gap-4">
+          {monthRows.map((row) => {
+            const width = row.amount === 0 ? "0%" : `${Math.max(8, Math.round((Math.abs(row.amount) / monthMax) * 100))}%`;
+            return (
+              <div key={row.label}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{row.label}</p>
+                  <AnimatedAmount value={row.amount} className="font-mono text-sm text-ink" />
+                </div>
+                <div className="relative h-1.5 rounded-full bg-paper overflow-hidden">
+                  <div
+                    className={`absolute inset-y-0 left-0 rounded-full animate-fill-bar ${row.color}`}
+                    style={{ ["--bar" as string]: width }}
+                  />
+                  {row.amount !== 0 && (
+                    <span className="pointer-events-none absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/45 to-transparent animate-sheen" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-ink-faint mt-4">
           {t("Based on invoices paid this calendar month, minus their logged expenses.")}
         </p>
       </div>
 
-      <section>
+      <section className="animate-rise" style={{ animationDelay: "420ms" }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">{t("Recent expenses")}</h2>
           <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1">
@@ -146,7 +193,7 @@ export default async function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section>
+        <section className="animate-rise" style={{ animationDelay: "480ms" }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-lg font-semibold">{t("Recent quotations")}</h2>
             <Link
@@ -188,7 +235,7 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <section>
+        <section className="animate-rise" style={{ animationDelay: "540ms" }}>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-lg font-semibold">{t("Recent invoices")}</h2>
             <Link

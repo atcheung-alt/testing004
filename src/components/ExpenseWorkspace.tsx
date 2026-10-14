@@ -6,11 +6,17 @@ import { useRouter } from "next/navigation";
 import { FileText, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
+import StatusBadge from "@/components/StatusBadge";
 
 export type ExpenseInvoiceChoice = {
   id: string;
   number: string;
   customerName: string;
+  title?: string;
+  total?: number;
+  issueLabel?: string;
+  poNumber?: string | null;
+  displayStatus?: string;
 };
 
 export type ExpenseListRow = {
@@ -68,10 +74,18 @@ export default function ExpenseWorkspace({
   const matches = useMemo(() => {
     const q = invoiceQuery.trim().toLowerCase();
     const pool = q
-      ? invoices.filter((invoice) => `${invoice.number} ${invoice.customerName}`.toLowerCase().includes(q))
+      ? invoices.filter((invoice) =>
+          [invoice.number, invoice.customerName, invoice.title, invoice.poNumber, invoice.issueLabel]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(q)
+        )
       : invoices;
     return pool.slice(0, 8);
   }, [invoiceQuery, invoices]);
+
+  const selected = invoices.find((invoice) => invoice.id === invoiceId) || null;
 
   const shown = initialInvoiceId ? expenses.filter((row) => row.invoice.id === initialInvoiceId) : expenses;
   const isOthers = category === "Others";
@@ -178,16 +192,33 @@ export default function ExpenseWorkspace({
             <input
               className="input"
               value={invoiceQuery}
-              placeholder={t("Search invoice number or customer")}
+              placeholder={t("Search number, customer, or activity")}
               onChange={(e) => {
                 setInvoiceQuery(e.target.value);
                 setInvoiceId("");
                 setOpenList(true);
               }}
               onFocus={() => setOpenList(true)}
+              onBlur={() => window.setTimeout(() => setOpenList(false), 150)}
             />
+            {selected && (
+              <div className="mt-2 rounded-md bg-paper px-3 py-2 text-sm">
+                <p className="font-medium text-ink truncate">{selected.customerName}</p>
+                <p className="text-ink-muted truncate">{selected.title || t("No activity name")}</p>
+                <p className="text-xs text-ink-faint mt-0.5">
+                  {[selected.issueLabel, typeof selected.total === "number" ? formatCurrency(selected.total) : "", selected.poNumber ? `PO ${selected.poNumber}` : ""]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              </div>
+            )}
             {openList && (
-              <div className="absolute z-20 mt-1 w-full card max-h-56 overflow-auto py-1">
+              <div className="mt-1 w-full card max-h-80 overflow-auto py-1">
+                {!invoiceQuery.trim() && matches.length > 0 && (
+                  <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                    {t("Recent invoices")}
+                  </p>
+                )}
                 {matches.length === 0 ? (
                   <p className="px-3 py-2 text-sm text-ink-muted">{t("No matching invoice.")}</p>
                 ) : (
@@ -195,15 +226,29 @@ export default function ExpenseWorkspace({
                     <button
                       key={invoice.id}
                       type="button"
-                      className="w-full text-left px-3 py-2 hover:bg-paper text-sm"
+                      className="w-full text-left px-3 py-2 hover:bg-paper"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setInvoiceId(invoice.id);
                         setInvoiceQuery(`${invoice.number} · ${invoice.customerName}`);
                         setOpenList(false);
                       }}
                     >
-                      <span className="font-mono font-medium">{invoice.number}</span>
-                      <span className="text-ink-muted"> · {invoice.customerName}</span>
+                      <span className="flex items-center justify-between gap-3">
+                        <span className="flex items-center gap-2 min-w-0">
+                          <span className="font-mono text-sm font-medium">{invoice.number}</span>
+                          {invoice.displayStatus && <StatusBadge status={invoice.displayStatus} />}
+                        </span>
+                        {typeof invoice.total === "number" && (
+                          <span className="font-mono text-sm shrink-0">{formatCurrency(invoice.total)}</span>
+                        )}
+                      </span>
+                      <span className="block text-sm text-ink truncate">{invoice.customerName}</span>
+                      <span className="block text-xs text-ink-muted truncate">
+                        {[invoice.title, invoice.issueLabel, invoice.poNumber ? `PO ${invoice.poNumber}` : ""]
+                          .filter(Boolean)
+                          .join(" · ") || t("No activity name")}
+                      </span>
                     </button>
                   ))
                 )}

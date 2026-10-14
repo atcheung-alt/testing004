@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
+import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import ExpenseWorkspace from "@/components/ExpenseWorkspace";
 import { getT } from "@/lib/i18n/server";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
@@ -15,7 +16,17 @@ export default async function ExpensesPage({
   await ensureDefaultExpenseCategories();
   const [invoices, categories, expenses] = await Promise.all([
     prisma.invoice.findMany({
-      select: { id: true, number: true, customerName: true },
+      select: {
+        id: true,
+        number: true,
+        customerName: true,
+        title: true,
+        total: true,
+        issueDate: true,
+        dueDate: true,
+        status: true,
+        poNumber: true,
+      },
       orderBy: { issueDate: "desc" },
       take: 400,
     }),
@@ -42,7 +53,16 @@ export default async function ExpensesPage({
         </p>
       </div>
       <ExpenseWorkspace
-        invoices={invoices}
+        invoices={invoices.map((invoice) => ({
+          id: invoice.id,
+          number: invoice.number,
+          customerName: invoice.customerName,
+          title: invoice.title,
+          total: invoice.total,
+          issueLabel: formatDate(invoice.issueDate),
+          poNumber: invoice.poNumber,
+          displayStatus: getInvoiceDisplayStatus(invoice),
+        }))}
         categories={categories.map((category) => category.name)}
         initialInvoiceId={searchParams.invoice}
         expenses={expenses.map((expense) => ({
