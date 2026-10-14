@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { Plus, Trash2, PackagePlus, X, Search, ChevronUp, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import ItemImageUpload from "@/components/ItemImageUpload";
@@ -622,17 +621,7 @@ export default function LineItemsEditor({
             </div>
 
             {presets.length === 0 ? (
-              <p className="text-sm text-ink-muted">
-                {t("No preset items yet. Save standardized items in the")}{" "}
-                <Link
-                  href="/items"
-                  className="text-brand-500 hover:underline"
-                  onClick={() => setPickerOpen(false)}
-                >
-                  {t("item library")}
-                </Link>{" "}
-                {t("to pick them from here.")}
-              </p>
+              <p className="text-sm text-ink-muted">{t("No saved items yet. Type the line on the activity, or pick one you have used before.")}</p>
             ) : (
               <>
                 <div className="relative mb-3 shrink-0">

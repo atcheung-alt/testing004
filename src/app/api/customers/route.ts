@@ -1,25 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { loadDocumentIndex, summarizeClient } from "@/lib/clientWork";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q") || undefined;
 
-  const customers = await prisma.customer.findMany({
-    where: q
-      ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" } },
-            { contacts: { some: { name: { contains: q, mode: "insensitive" } } } },
-            { contacts: { some: { email: { contains: q, mode: "insensitive" } } } },
-          ],
-        }
-      : undefined,
-    include: { contacts: { orderBy: { createdAt: "asc" } } },
-    orderBy: { name: "asc" },
-  });
-  return NextResponse.json(customers);
+  const [customers, documents] = await Promise.all([
+    prisma.customer.findMany({
+      where: q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { contacts: { some: { name: { contains: q, mode: "insensitive" } } } },
+              { contacts: { some: { email: { contains: q, mode: "insensitive" } } } },
+            ],
+          }
+        : undefined,
+      include: { contacts: { orderBy: { createdAt: "asc" } } },
+      orderBy: { name: "asc" },
+    }),
+    loadDocumentIndex(),
+  ]);
+
+  return NextResponse.json(
+    customers.map((customer) => ({
+      ...customer,
+      ...summarizeClient(customer, documents.quotes, documents.invoices),
+    }))
+  );
 }
 
 export async function POST(request: NextRequest) {

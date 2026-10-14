@@ -78,12 +78,6 @@ export default async function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">{t("This month")}</h2>
-          <Link
-            href="/analysis"
-            className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
-          >
-            {t("Full analysis")} <ArrowRight size={14} />
-          </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatCard

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, CalendarCheck } from "lucide-react";
 import { requireAdminPage } from "@/lib/auth";
 import { listBookingEvents } from "@/lib/bookings";
+import { listEvents } from "@/lib/events";
 import EmptyState from "@/components/EmptyState";
 import BookingEventListClient from "@/components/BookingEventListClient";
 import BookingEventsCalendar from "@/components/BookingEventsCalendar";
@@ -21,7 +22,7 @@ export default async function BookingsPage() {
   const t = getT();
   await requireAdminPage();
 
-  const events = await listBookingEvents();
+  const [events, jobs] = await Promise.all([listBookingEvents(), listEvents()]);
   const serializedEvents = events.map((e) => ({
     id: e.id,
     name: e.name,
@@ -29,7 +30,21 @@ export default async function BookingsPage() {
     startDate: e.startDate.toISOString(),
     endDate: e.endDate.toISOString(),
     active: e.active,
+    kind: "booking" as const,
   }));
+  const calendarItems = [
+    ...serializedEvents,
+    ...jobs.map((job) => ({
+      id: job.id,
+      name: job.name,
+      description: job.companyName,
+      startDate: job.startDate.toISOString(),
+      endDate: job.endDate.toISOString(),
+      active: true,
+      kind: "job" as const,
+      href: `/invoices/${job.invoiceId}`,
+    })),
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -37,15 +52,15 @@ export default async function BookingsPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Bookings")}</h1>
           <p className="text-sm text-ink-muted">
-            {t(
-              "Create a bookable event — a massage day, a DIY workshop, anything with its own time slots and quota — then share its own booking page with clients."
-            )}
+            {t("Coloured bars are bookings. Grey bars are jobs marked from an invoice.")}
           </p>
         </div>
         <Link href="/bookings/new" className="btn-primary shrink-0">
           <Plus size={15} /> {t("New event")}
         </Link>
       </div>
+
+      <BookingEventsCalendar events={calendarItems} />
 
       {events.length === 0 ? (
         <EmptyState
@@ -56,10 +71,7 @@ export default async function BookingsPage() {
           actionLabel={t("New event")}
         />
       ) : (
-        <>
-          <BookingEventsCalendar events={serializedEvents} />
-          <BookingEventListClient events={serializedEvents} />
-        </>
+        <BookingEventListClient events={serializedEvents} />
       )}
     </div>
   );

@@ -21,6 +21,9 @@ export type BookingEventCalendarItem = {
   startDate: string;
   endDate: string;
   active: boolean;
+  /** Booking events are coloured. Jobs marked from an invoice use one grey bar. */
+  kind?: "booking" | "job";
+  href?: string;
 };
 
 type NormEvent = BookingEventCalendarItem & { start: Date; end: Date };
@@ -50,10 +53,13 @@ const EVENT_COLORS: { bg: string; text: string }[] = [
   { bg: "#66708A", text: "#FFFFFF" },
 ];
 
-function colorFor(eventId: string) {
+const JOB_COLOR = { bg: "#66708A", text: "#FFFFFF" };
+
+function colorFor(event: { id: string; kind?: "booking" | "job" }) {
+  if (event.kind === "job") return JOB_COLOR;
   let hash = 0;
-  for (let i = 0; i < eventId.length; i++) {
-    hash = (hash * 31 + eventId.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < event.id.length; i++) {
+    hash = (hash * 31 + event.id.charCodeAt(i)) >>> 0;
   }
   return EVENT_COLORS[hash % EVENT_COLORS.length];
 }
@@ -203,7 +209,7 @@ function WeekRow({
       })}
 
       {visible.map((s) => {
-        const color = colorFor(s.ev.id);
+        const color = colorFor(s.ev);
         return (
           <button
             key={`${s.ev.id}-${s.startCol}`}
@@ -262,7 +268,8 @@ function WeekRow({
 function BookingEventDetail({ ev }: { ev: NormEvent }) {
   const t = useT();
   const spansDays = !isSameDay(ev.start, ev.end);
-  const color = colorFor(ev.id);
+  const color = colorFor(ev);
+  const isJob = ev.kind === "job";
 
   return (
     <div className="flex flex-col gap-4">
@@ -270,9 +277,13 @@ function BookingEventDetail({ ev }: { ev: NormEvent }) {
         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color.bg }} aria-hidden="true" />
         <div className="min-w-0 flex items-center gap-2">
           <p className="text-sm font-medium text-ink truncate">{ev.name}</p>
-          <span className={`stamp ${ev.active ? "border-brand-500 text-brand-500 bg-brand-50" : "border-ink-faint text-ink-faint"}`}>
-            {ev.active ? t("Active") : t("Hidden")}
-          </span>
+          {isJob ? (
+            <span className="stamp border-ink-faint text-ink-faint">{t("Invoice job")}</span>
+          ) : (
+            <span className={`stamp ${ev.active ? "border-brand-500 text-brand-500 bg-brand-50" : "border-ink-faint text-ink-faint"}`}>
+              {ev.active ? t("Active") : t("Hidden")}
+            </span>
+          )}
         </div>
       </div>
 
@@ -288,8 +299,8 @@ function BookingEventDetail({ ev }: { ev: NormEvent }) {
         </div>
       )}
 
-      <Link href={`/bookings/${ev.id}`} className="btn-secondary self-start">
-        <ExternalLink size={15} /> {t("Open event")}
+      <Link href={ev.href || `/bookings/${ev.id}`} className="btn-secondary self-start">
+        <ExternalLink size={15} /> {isJob ? t("Open invoice") : t("Open event")}
       </Link>
     </div>
   );
@@ -403,7 +414,11 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
             <div className="card p-6 max-w-sm w-full animate-scale-in" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-display text-lg font-semibold text-ink">
-                  {modal.mode === "event" ? t("Booking event") : formatDateLabel(modal.date)}
+                  {modal.mode === "event"
+                    ? modal.event.kind === "job"
+                      ? t("Invoice job")
+                      : t("Booking event")
+                    : formatDateLabel(modal.date)}
                 </h2>
                 <button
                   type="button"
@@ -420,7 +435,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
               ) : (
                 <div className="flex flex-col divide-y divide-line">
                   {modal.events.map((ev) => {
-                    const color = colorFor(ev.id);
+                    const color = colorFor(ev);
                     return (
                       <button
                         key={ev.id}

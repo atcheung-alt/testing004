@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Pencil, Loader2, AlertCircle, Search, Building2, UserRound, ChevronDown, ChevronUp } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2, Pencil, Loader2, AlertCircle, Search, Building2, UserRound } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
+import { formatCurrency } from "@/lib/calculations";
+import ClickableTableRow from "@/components/ClickableTableRow";
 
 export type ContactPerson = {
   id: string;
@@ -15,6 +19,10 @@ export type Customer = {
   name: string;
   address: string | null;
   contacts: ContactPerson[];
+  quoteCount?: number;
+  invoiceCount?: number;
+  outstanding?: number;
+  paid?: number;
 };
 
 function CustomerForm({
@@ -119,7 +127,7 @@ function CustomerForm({
   );
 }
 
-function ContactsPanel({
+export function ContactsPanel({
   customerId,
   contacts,
   onChanged,
@@ -253,13 +261,75 @@ function ContactsPanel({
   );
 }
 
+export function ClientRecordEditor({ customer }: { customer: Customer }) {
+  const [editing, setEditing] = useState(false);
+  const [current, setCurrent] = useState(customer);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const t = useT();
+
+  async function refresh() {
+    const res = await fetch(`/api/customers/${customer.id}`);
+    const data = await res.json();
+    if (res.ok) setCurrent(data);
+    router.refresh();
+  }
+
+  async function remove() {
+    setDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/customers/${customer.id}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t("Could not remove this client."));
+      router.push("/clients");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message);
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {error && (
+        <div className="flex items-start gap-2 bg-danger-50 border border-danger-500/30 text-danger-600 text-sm rounded-xl px-3 py-2">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+      {editing ? (
+        <CustomerForm
+          initial={current}
+          onCancel={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            refresh();
+          }}
+        />
+      ) : (
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setEditing(true)} className="btn-secondary">
+            <Pencil size={15} /> {t("Edit")}
+          </button>
+          <button type="button" onClick={remove} disabled={deleting} className="btn-secondary text-danger-500">
+            {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+            {t("Remove")}
+          </button>
+        </div>
+      )}
+      <ContactsPanel customerId={current.id} contacts={current.contacts} onChanged={refresh} />
+    </div>
+  );
+}
+
 export default function ClientsManager() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const t = useT();
@@ -293,6 +363,11 @@ export default function ClientsManager() {
     }
   }
 
+  const outstanding = customers.reduce((sum, customer) => sum + (customer.outstanding || 0), 0);
+  const paid = customers.reduce((sum, customer) => sum + (customer.paid || 0), 0);
+  const quoteCount = customers.reduce((sum, customer) => sum + (customer.quoteCount || 0), 0);
+  const editing = customers.find((customer) => customer.id === editingId);
+
   return (
     <div className="flex flex-col gap-4">
       {error && (
@@ -301,6 +376,25 @@ export default function ClientsManager() {
           <span>{error}</span>
         </div>
       )}
+
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Clients")}</p>
+          <p className="font-mono text-xl font-semibold text-ink mt-1">{loading ? "—" : customers.length}</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Quotations")}</p>
+          <p className="font-mono text-xl font-semibold text-ink mt-1">{loading ? "—" : quoteCount}</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Outstanding")}</p>
+          <p className="font-mono text-xl font-semibold text-ink mt-1">{loading ? "—" : formatCurrency(outstanding)}</p>
+        </div>
+        <div className="card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Paid")}</p>
+          <p className="font-mono text-xl font-semibold text-ink mt-1">{loading ? "—" : formatCurrency(paid)}</p>
+        </div>
+      </div>
 
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="relative w-full sm:w-72">
@@ -327,6 +421,17 @@ export default function ClientsManager() {
         />
       )}
 
+      {editing && (
+        <CustomerForm
+          initial={editing}
+          onCancel={() => setEditingId(null)}
+          onSaved={() => {
+            setEditingId(null);
+            load(query);
+          }}
+        />
+      )}
+
       {loading ? (
         <p className="text-sm text-ink-muted">{t("Loading…")}</p>
       ) : customers.length === 0 ? (
@@ -334,77 +439,79 @@ export default function ClientsManager() {
           {query ? t("No clients match your search.") : t("No clients saved yet — add your first one above.")}
         </p>
       ) : (
-        <div className="card divide-y divide-line">
-          {customers.map((c) =>
-            editingId === c.id ? (
-              <div key={c.id} className="p-4">
-                <CustomerForm
-                  initial={c}
-                  onCancel={() => setEditingId(null)}
-                  onSaved={() => {
-                    setEditingId(null);
-                    load(query);
-                  }}
-                />
-              </div>
-            ) : (
-              <div key={c.id} className="px-4 sm:px-5 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                    className="flex items-center gap-3 min-w-0 flex-1 text-left"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-paper flex items-center justify-center text-ink-faint shrink-0">
-                      <Building2 size={14} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm text-ink truncate">{c.name}</p>
-                      <p className="text-xs text-ink-faint truncate">
-                        {c.address || t("No address on file")} ·{" "}
-                        {c.contacts.length === 1
-                          ? t("{count} contact", { count: c.contacts.length })
-                          : t("{count} contacts", { count: c.contacts.length })}
-                      </p>
-                    </div>
-                    {expandedId === c.id ? (
-                      <ChevronUp size={15} className="text-ink-faint shrink-0" />
-                    ) : (
-                      <ChevronDown size={15} className="text-ink-faint shrink-0" />
-                    )}
-                  </button>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(c.id)}
-                      aria-label={t("Edit {name}", { name: c.name })}
-                      className="text-ink-faint hover:text-ink transition-colors"
-                    >
-                      <Pencil size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeCustomer(c.id)}
-                      disabled={deletingId === c.id}
-                      aria-label={t("Remove {name}", { name: c.name })}
-                      className="text-ink-faint hover:text-danger-500 transition-colors"
-                    >
-                      {deletingId === c.id ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={15} />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                {expandedId === c.id && (
-                  <div className="mt-3">
-                    <ContactsPanel customerId={c.id} contacts={c.contacts} onChanged={() => load(query)} />
-                  </div>
-                )}
-              </div>
-            )
-          )}
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[720px]">
+              <thead className="bg-paper text-left text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">{t("Clients")}</th>
+                  <th className="px-4 py-3 font-semibold">{t("Contact")}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t("Quotations")}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t("Invoices")}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t("Outstanding")}</th>
+                  <th className="px-4 py-3 font-semibold text-right">{t("Paid")}</th>
+                  <th className="px-4 py-3 font-semibold" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {customers.map((c) => {
+                  const contact = c.contacts[0];
+                  return (
+                    <ClickableTableRow key={c.id} href={`/clients/${c.id}`} className="hover:bg-paper">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-paper flex items-center justify-center text-ink-faint shrink-0">
+                            <Building2 size={14} />
+                          </div>
+                          <div className="min-w-0">
+                            <Link href={`/clients/${c.id}`} className="text-sm font-medium text-ink hover:text-brand-500 truncate block">
+                              {c.name}
+                            </Link>
+                            <p className="text-xs text-ink-faint truncate">{c.address || t("No address on file")}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-sm text-ink truncate">{contact?.name || contact?.email || "—"}</p>
+                        {contact?.name && contact.email && (
+                          <p className="text-xs text-ink-faint truncate">{contact.email}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono">{c.quoteCount || 0}</td>
+                      <td className="px-4 py-3 text-right font-mono">{c.invoiceCount || 0}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(c.outstanding || 0)}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(c.paid || 0)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(c.id)}
+                            aria-label={t("Edit {name}", { name: c.name })}
+                            className="text-ink-faint hover:text-ink transition-colors"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeCustomer(c.id)}
+                            disabled={deletingId === c.id}
+                            aria-label={t("Remove {name}", { name: c.name })}
+                            className="text-ink-faint hover:text-danger-500 transition-colors"
+                          >
+                            {deletingId === c.id ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={15} />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </ClickableTableRow>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -2,6 +2,13 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "A quick look at your pipeline of quotations and invoices.": "快速查看報價單及發票的進度。",
   "This month": "本月",
   "Full analysis": "完整分析",
+  "Coloured bars are bookings. Grey bars are jobs marked from an invoice.":
+    "彩色長條是預約。灰色長條是從發票標記的工作。",
+  "Invoice job": "發票工作",
+  "Open invoice": "開啟發票",
+  "view on Bookings": "在預約頁查看",
+  "No saved items yet. Type the line on the activity, or pick one you have used before.":
+    "尚未有已儲存的項目。在活動上直接輸入，或選一個以前用過的。",
   "Net profit": "純利",
   "Based on invoices paid this calendar month, minus their logged expenses.":
     "按本曆月已付款發票計算，並扣除已記錄的支出。",
@@ -37,8 +44,15 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Configure appearance, Google Drive sync, company branding, and email CC preferences.":
     "設定外觀、Google Drive 同步、公司品牌及電郵副本偏好。",
 
-  "Your client library — companies and individuals you've worked with. Quotations and invoices still store their own customer details independently, so editing a client here never changes an already-created document.":
-    "客戶資料庫——曾合作的公司及個人。報價單及發票仍各自儲存客戶資料，因此在這裡修改客戶不會影響已建立的文件。",
+  "Open a client to see their quotations and invoices. A document is linked when the company name or a contact email matches. Editing a client here does not change a document you already saved.":
+    "開啟客戶即可查看其報價單及發票。公司名稱或聯絡人電郵相符的文件會連在一起。在此修改客戶不會改動已儲存的文件。",
+  "No quotations for this client yet.": "此客戶尚未有報價單。",
+  "No invoices for this client yet.": "此客戶尚未有發票。",
+  "{count} quotations": "{count} 張報價單",
+  "Linked by company name or contact email.": "按公司名稱或聯絡人電郵連上。",
+  "This quotation is for {name}. Add the activity and line items.": "這張報價單的客戶是 {name}。請加上活動及項目。",
+  "This invoice is for {name}.": "這張發票的客戶是 {name}。",
+  Remove: "移除",
 
   "Every event marked on the calendar from an invoice — click one to see its details.":
     "由發票標記到日曆的所有活動——按一下即可查看詳情。",

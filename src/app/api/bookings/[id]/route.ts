@@ -9,9 +9,12 @@ import {
   DECIDABLE_FROM_STATUS,
   VALID_BOOKING_STATUSES,
   buildGoogleCalendarUrl,
+  countActiveBookingsForSlot,
   deleteBooking,
   formatSlotLabel,
   getBookingWithSlotAndEvent,
+  getSlot,
+  moveBookingToSlot,
   updateBookingStatus,
   type BookingStatus,
 } from "@/lib/bookings";
@@ -28,6 +31,43 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (denied) return denied;
 
   const body = await request.json().catch(() => ({}));
+
+  if (typeof body.slotId === "string" && body.slotId && body.status === undefined) {
+    const existing = await getBookingWithSlotAndEvent(params.id);
+    if (!existing) {
+      return NextResponse.json({ error: "Booking not found." }, { status: 404 });
+    }
+    if (existing.status !== "PENDING" && existing.status !== "CONFIRMED") {
+      return NextResponse.json({ error: "Only an open booking can be moved to another time." }, { status: 409 });
+    }
+    if (existing.slotId === body.slotId) {
+      return NextResponse.json(existing);
+    }
+    const target = await getSlot(body.slotId);
+    if (!target || target.eventId !== existing.eventId) {
+      return NextResponse.json({ error: "Choose a time on this same event." }, { status: 400 });
+    }
+    const taken = await countActiveBookingsForSlot(target.id);
+    if (taken >= target.quota) {
+      return NextResponse.json({ error: "That time is already full." }, { status: 409 });
+    }
+    await moveBookingToSlot(params.id, target.id);
+    await logActivity({
+      documentType: "booking",
+      documentId: params.id,
+      type: "EDITED",
+      description: `Booking for ${existing.clientName} moved to ${formatSlotLabel(target.date, target.startTime, target.durationMins)}`,
+    });
+    return NextResponse.json({
+      id: existing.id,
+      slotId: target.id,
+      status: existing.status,
+      slotDate: target.date,
+      slotStartTime: target.startTime,
+      slotDurationMins: target.durationMins,
+    });
+  }
+
   const nextStatus: BookingStatus | undefined = VALID_BOOKING_STATUSES.includes(body.status)
     ? body.status
     : undefined;

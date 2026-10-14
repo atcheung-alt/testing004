@@ -6,14 +6,11 @@ import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
-  Package,
   FileText,
   LayoutTemplate,
   ReceiptText,
   Receipt as ReceiptIcon,
   Wallet,
-  BarChart3,
-  CalendarDays,
   CalendarCheck,
   Menu,
   X,
@@ -53,11 +50,6 @@ type NavItem = { href: string; label: string; icon: LucideIcon };
 function buildNavGroups(t: (key: string) => string): { items: NavItem[]; boxed?: boolean }[] {
   return [
     { items: [{ href: "/", label: t("Dashboard"), icon: LayoutDashboard }] },
-    { items: [{ href: "/analysis", label: t("Analysis"), icon: BarChart3 }] },
-    { items: [{ href: "/calendar", label: t("Calendar"), icon: CalendarDays }] },
-    // Moved here from the HR System's own sidebar — see the note on
-    // src/app/(app)/bookings/page.tsx. It's the staff side of the public
-    // massage-booking calendar (src/app/book), not an HR-specific feature.
     { items: [{ href: "/bookings", label: t("Bookings"), icon: CalendarCheck }] },
     {
       boxed: true,
@@ -74,7 +66,6 @@ function buildNavGroups(t: (key: string) => string): { items: NavItem[]; boxed?:
       items: [{ href: "/recruitment", label: t("Recruitment"), icon: Briefcase }],
     },
     { items: [{ href: "/clients", label: t("Clients"), icon: Users }] },
-    { items: [{ href: "/items", label: t("Item library"), icon: Package }] },
   ];
 }
 

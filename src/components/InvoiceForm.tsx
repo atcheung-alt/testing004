@@ -37,7 +37,13 @@ function computeDueDateLabel(issueDateInput: string, paymentDueDays: number): st
   return formatDate(due);
 }
 
-export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
+export default function InvoiceForm({
+  invoice,
+  customer: initialCustomer,
+}: {
+  invoice?: Invoice;
+  customer?: CustomerDetails;
+}) {
   const router = useRouter();
   const t = useT();
   const [customer, setCustomer] = useState<CustomerDetails>(
@@ -49,7 +55,9 @@ export default function InvoiceForm({ invoice }: { invoice?: Invoice }) {
           customerPhone: invoice.customerPhone || "",
           customerAddress: invoice.customerAddress || "",
         }
-      : emptyCustomer()
+      : initialCustomer
+        ? { ...emptyCustomer(), ...initialCustomer }
+        : emptyCustomer()
   );
   const [title, setTitle] = useState(invoice?.title || "");
   const [poNumber, setPoNumber] = useState(invoice?.poNumber || "");

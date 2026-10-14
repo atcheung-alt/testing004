@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireAdminPage } from "@/lib/auth";
-import { ensureBookingEventManageToken, getBookingEvent, listBookingsForEvent, listSlotsForEvent } from "@/lib/bookings";
+import { ensureBookingEventManageToken, getBookingEvent, listBookingEvents, listBookingsForEvent, listSlotsForEvent } from "@/lib/bookings";
 import { bookingEventUrlFromHeaders, manageBookingEventUrlFromHeaders } from "@/lib/signing";
 import BookingEventDetailClient from "@/components/BookingEventDetailClient";
 
@@ -12,13 +12,14 @@ export default async function BookingEventDetailPage({ params }: { params: { id:
   const event = await getBookingEvent(params.id);
   if (!event) notFound();
 
-  const [slots, bookings, manageToken] = await Promise.all([
+  const [slots, bookings, manageToken, events] = await Promise.all([
     listSlotsForEvent(params.id),
     listBookingsForEvent(params.id),
     // Older events created before the public manage link shipped won't have
     // one yet — generate and persist it now, the first time staff opens this
     // page, rather than a separate one-off backfill script.
     ensureBookingEventManageToken(params.id),
+    listBookingEvents(),
   ]);
 
   const bookingUrl = bookingEventUrlFromHeaders(event.id);
@@ -60,6 +61,7 @@ export default async function BookingEventDetailPage({ params }: { params: { id:
         slotStartTime: b.slotStartTime,
         slotDurationMins: b.slotDurationMins,
       }))}
+      otherEvents={events.filter((item) => item.id !== event.id).map((item) => ({ id: item.id, name: item.name }))}
     />
   );
 }

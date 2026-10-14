@@ -492,6 +492,46 @@ export async function deleteSlot(id: string): Promise<void> {
   await prisma.$executeRaw`DELETE FROM "BookingSlot" WHERE "id" = ${id}`;
 }
 
+/** Updates the columns a slot already has. Callers must refuse a quota below the number of active bookings. */
+export async function updateSlot(
+  id: string,
+  fields: { date: Date; startTime: string; durationMins: number; quota: number }
+): Promise<BookingSlotRecord | null> {
+  const rows = await prisma.$queryRaw<BookingSlotRecord[]>`
+    UPDATE "BookingSlot"
+    SET "date" = ${fields.date}, "startTime" = ${fields.startTime}, "durationMins" = ${fields.durationMins}, "quota" = ${fields.quota}
+    WHERE "id" = ${id}
+    RETURNING *
+  `;
+  return rows[0] || null;
+}
+
+/** Copies the first day's times from another event (or this one) onto a date. Skips a time that is already on that date. */
+export async function copyFirstDaySlots(
+  targetEventId: string,
+  sourceEventId: string,
+  date: Date
+): Promise<BookingSlotRecord[]> {
+  const sourceSlots = await listSlotsForEvent(sourceEventId);
+  if (sourceSlots.length === 0) return [];
+  const firstDay = dateKey(sourceSlots[0].date);
+  const daySlots = sourceSlots.filter((slot) => dateKey(slot.date) === firstDay);
+  const existing = await listSlotsForEventOnDate(targetEventId, date);
+  const created: BookingSlotRecord[] = [];
+  for (const slot of daySlots) {
+    if (existing.some((row) => row.startTime === slot.startTime && row.durationMins === slot.durationMins)) continue;
+    created.push(
+      await createSlot(targetEventId, {
+        date,
+        startTime: slot.startTime,
+        durationMins: slot.durationMins,
+        quota: slot.quota,
+      })
+    );
+  }
+  return created;
+}
+
 // -----------------------------------------------------------------------------
 // Booking
 // -----------------------------------------------------------------------------
@@ -656,4 +696,12 @@ export async function updateBookingStatus(
 
 export async function deleteBooking(id: string): Promise<void> {
   await prisma.$executeRaw`DELETE FROM "Booking" WHERE "id" = ${id}`;
+}
+
+/** Points an existing booking at another slot. Both rows already exist; only slotId changes. */
+export async function moveBookingToSlot(bookingId: string, slotId: string): Promise<BookingRecord | null> {
+  const rows = await prisma.$queryRaw<BookingRecord[]>`
+    UPDATE "Booking" SET "slotId" = ${slotId}, "updatedAt" = now() WHERE "id" = ${bookingId} RETURNING *
+  `;
+  return rows[0] || null;
 }

@@ -38,9 +38,11 @@ function toDateInput(value?: string | null) {
 export default function QuotationForm({
   quotation,
   preset,
+  customer: initialCustomer,
 }: {
   quotation?: Quotation;
   preset?: QuotationFormPreset;
+  customer?: CustomerDetails;
 }) {
   const t = useT();
   const router = useRouter();
@@ -54,7 +56,9 @@ export default function QuotationForm({
           customerPhone: quotation.customerPhone || "",
           customerAddress: quotation.customerAddress || "",
         }
-      : emptyCustomer()
+      : initialCustomer
+        ? { ...emptyCustomer(), ...initialCustomer }
+        : emptyCustomer()
   );
   const [title, setTitle] = useState(source?.title || "");
   const [issueDate, setIssueDate] = useState(

@@ -318,6 +318,7 @@ export default function BookingEventDetailClient({
   bookings: initialBookings,
   bookingUrl,
   manageUrl,
+  otherEvents = [],
 }: {
   event: BookingEventInfo;
   slots: SlotItem[];
@@ -331,6 +332,7 @@ export default function BookingEventDetailClient({
    *  bookings) to someone without an HR Plus login, scoped to this one
    *  event only. Null only if a manage token somehow couldn't be generated. */
   manageUrl: string | null;
+  otherEvents?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const t = useT();
@@ -475,6 +477,145 @@ export default function BookingEventDetailClient({
   }
 
   const [slotAction, setSlotAction] = useState<Record<string, { busy: boolean; error: string | null }>>({});
+  const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
+  const [editSlotDate, setEditSlotDate] = useState("");
+  const [editSlotTime, setEditSlotTime] = useState("09:00");
+  const [editSlotDuration, setEditSlotDuration] = useState(DEFAULT_SLOT_DURATION_MINUTES);
+  const [editSlotQuota, setEditSlotQuota] = useState(1);
+  const [copySourceId, setCopySourceId] = useState(event.id);
+  const [copyBusy, setCopyBusy] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
+
+  function startSlotEdit(slot: SlotItem) {
+    setEditingSlotId(slot.id);
+    setEditSlotDate(isoDateOnly(slot.date));
+    setEditSlotTime(slot.startTime.slice(0, 5));
+    setEditSlotDuration(slot.durationMins);
+    setEditSlotQuota(slot.quota);
+  }
+
+  async function saveSlotEdit(id: string) {
+    setSlotAction((prev) => ({ ...prev, [id]: { busy: true, error: null } }));
+    try {
+      const res = await fetch(`/api/bookings/events/${event.id}/slots/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: editSlotDate,
+          startTime: editSlotTime,
+          durationMins: editSlotDuration,
+          quota: editSlotQuota,
+        }),
+      });
+      const data = await readJsonOrThrow(res, t("Could not save this time."));
+      setSlots((prev) =>
+        sortSlots(
+          prev.map((slot) =>
+            slot.id === id
+              ? {
+                  ...slot,
+                  date: data.date,
+                  startTime: data.startTime,
+                  durationMins: data.durationMins,
+                  quota: data.quota,
+                  taken: data.taken,
+                  available: data.available,
+                }
+              : slot
+          )
+        )
+      );
+      setBookings((prev) =>
+        prev.map((booking) =>
+          booking.slotId === id
+            ? {
+                ...booking,
+                slotDate: data.date,
+                slotStartTime: data.startTime,
+                slotDurationMins: data.durationMins,
+              }
+            : booking
+        )
+      );
+      setEditingSlotId(null);
+      setSlotAction((prev) => ({ ...prev, [id]: { busy: false, error: null } }));
+    } catch (err: any) {
+      setSlotAction((prev) => ({ ...prev, [id]: { busy: false, error: err.message } }));
+    }
+  }
+
+  async function copyTimes() {
+    setCopyBusy(true);
+    setCopyError(null);
+    try {
+      const res = await fetch(`/api/bookings/events/${event.id}/slots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "copy", sourceEventId: copySourceId, date: addDate }),
+      });
+      const data = await readJsonOrThrow(res, t("Could not copy those times."));
+      const created: { id: string; date: string; startTime: string; durationMins: number; quota: number }[] = data.slots || [];
+      setSlots((prev) =>
+        sortSlots([
+          ...prev,
+          ...created.map((slot) => ({
+            id: slot.id,
+            date: slot.date,
+            startTime: slot.startTime,
+            durationMins: slot.durationMins,
+            quota: slot.quota,
+            taken: 0,
+            available: slot.quota,
+          })),
+        ])
+      );
+    } catch (err: any) {
+      setCopyError(err.message);
+    } finally {
+      setCopyBusy(false);
+    }
+  }
+
+  async function moveBooking(booking: BookingItem, slotId: string) {
+    if (!slotId || slotId === booking.slotId) return;
+    setQuickActionId(booking.id);
+    setQuickActionError(null);
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slotId }),
+      });
+      const data = await readJsonOrThrow(res, t("Could not move this booking."));
+      const active = booking.status === "PENDING" || booking.status === "CONFIRMED";
+      setBookings((prev) =>
+        prev.map((row) =>
+          row.id === booking.id
+            ? {
+                ...row,
+                slotId: data.slotId,
+                slotDate: data.slotDate,
+                slotStartTime: data.slotStartTime,
+                slotDurationMins: data.slotDurationMins,
+              }
+            : row
+        )
+      );
+      if (active) {
+        setSlots((prev) =>
+          prev.map((slot) => {
+            if (slot.id !== booking.slotId && slot.id !== data.slotId) return slot;
+            const taken = Math.max(0, slot.taken + (slot.id === data.slotId ? 1 : -1));
+            return { ...slot, taken, available: Math.max(0, slot.quota - taken) };
+          })
+        );
+      }
+    } catch (err: any) {
+      setQuickActionError({ id: booking.id, message: err.message });
+    } finally {
+      setQuickActionId(null);
+    }
+  }
 
   async function removeSlot(id: string) {
     if (!window.confirm(t("Remove this time slot? Only possible if no one has ever booked it."))) return;
@@ -861,6 +1002,30 @@ export default function BookingEventDetailClient({
           </button>
         </form>
 
+        <div className="rounded-xl border border-line p-4 flex flex-col gap-3">
+          <div>
+            <p className="text-sm font-medium text-ink">{t("Copy times from another event")}</p>
+            <p className="text-xs text-ink-muted mt-0.5">
+              {t("Copies the first day's times onto the date above. Change the date first if you need a different day.")}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <select className="input sm:max-w-xs" value={copySourceId} onChange={(e) => setCopySourceId(e.target.value)}>
+              <option value={event.id}>{t("This event's first day")}</option>
+              {otherEvents.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+            <button type="button" onClick={copyTimes} disabled={copyBusy} className="btn-secondary shrink-0">
+              {copyBusy && <Loader2 size={14} className="animate-spin" />}
+              {t("Copy times")}
+            </button>
+          </div>
+          {copyError && <p className="text-sm text-danger-600">{t(copyError)}</p>}
+        </div>
+
         {slotGroups.length === 0 ? (
           <p className="text-sm text-ink-muted">{t("No time slots yet — add one above to start taking bookings.")}</p>
         ) : (
@@ -873,25 +1038,143 @@ export default function BookingEventDetailClient({
                 <div className="flex flex-col divide-y divide-line rounded-xl border border-line overflow-hidden">
                   {group.map((s) => {
                     const action = slotAction[s.id];
+                    const people = bookings.filter(
+                      (booking) => booking.slotId === s.id && (booking.status === "PENDING" || booking.status === "CONFIRMED")
+                    );
+                    const moveTargets = slots.filter((slot) => slot.id !== s.id && slot.available > 0);
                     return (
-                      <div key={s.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-ink">{formatTimeRangeLabel(s.startTime, s.durationMins)}</p>
-                          <p className="text-xs text-ink-muted">
-                            {t("{taken}/{quota} booked", { taken: s.taken, quota: s.quota })}{s.available <= 0 ? t(" · Full") : ""}
-                          </p>
-                          {action?.error && <p className="text-xs text-danger-600 mt-0.5">{action.error}</p>}
+                      <div key={s.id} className="flex flex-col gap-2 px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-ink">{formatTimeRangeLabel(s.startTime, s.durationMins)}</p>
+                            <p className="text-xs text-ink-muted">
+                              {t("{taken}/{quota} booked", { taken: s.taken, quota: s.quota })}
+                              {s.available <= 0 ? t(" · Full") : ""}
+                            </p>
+                            {action?.error && <p className="text-xs text-danger-600 mt-0.5">{action.error}</p>}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => (editingSlotId === s.id ? setEditingSlotId(null) : startSlotEdit(s))}
+                              className="text-ink-faint hover:text-ink transition-colors p-2"
+                              aria-label={t("Change this time")}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeSlot(s.id)}
+                              disabled={action?.busy}
+                              title={t("Remove slot")}
+                              aria-label={t("Remove slot")}
+                              className="text-ink-faint hover:text-danger-600 transition-colors disabled:opacity-50 p-2"
+                            >
+                              {action?.busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                            </button>
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeSlot(s.id)}
-                          disabled={action?.busy}
-                          title={t("Remove slot")}
-                          aria-label={t("Remove slot")}
-                          className="text-ink-faint hover:text-danger-600 transition-colors disabled:opacity-50 shrink-0"
-                        >
-                          {action?.busy ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        </button>
+                        {editingSlotId === s.id && (
+                          <div className="flex flex-col gap-3 rounded-md border border-line bg-paper p-3">
+                            <div className="max-w-xs">
+                              <label className="label">{t("Date")}</label>
+                              <input
+                                type="date"
+                                className="input"
+                                value={editSlotDate}
+                                min={isoDateOnly(event.startDate)}
+                                max={isoDateOnly(event.endDate)}
+                                onChange={(e) => setEditSlotDate(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="label">{t("Start time")}</label>
+                              <BookingTimeField value={editSlotTime} onChange={setEditSlotTime} />
+                            </div>
+                            <div className="max-w-[220px]">
+                              <label className="label">{t("How long is each appointment?")}</label>
+                              <input
+                                type="number"
+                                className="input"
+                                min={SLOT_DURATION_MIN_MINUTES}
+                                max={SLOT_DURATION_MAX_MINUTES}
+                                step={SLOT_DURATION_STEP_MINUTES}
+                                value={editSlotDuration}
+                                onChange={(e) =>
+                                  setEditSlotDuration(
+                                    Math.min(
+                                      SLOT_DURATION_MAX_MINUTES,
+                                      Math.max(SLOT_DURATION_MIN_MINUTES, Number(e.target.value) || 0)
+                                    )
+                                  )
+                                }
+                              />
+                            </div>
+                            <div className="max-w-[160px]">
+                              <label className="label">{t("How many people can book each time?")}</label>
+                              <input
+                                type="number"
+                                className="input"
+                                min={Math.max(1, s.taken)}
+                                max={MAX_SLOT_QUOTA}
+                                value={editSlotQuota}
+                                onChange={(e) => setEditSlotQuota(Math.max(1, Number(e.target.value) || 1))}
+                              />
+                            </div>
+                            <p className="text-xs text-ink-muted">
+                              {t("People already booked stay on this time. They are not emailed.")}
+                            </p>
+                            <div className="flex gap-2">
+                              <button type="button" onClick={() => saveSlotEdit(s.id)} disabled={action?.busy} className="btn-primary">
+                                {action?.busy && <Loader2 size={14} className="animate-spin" />}
+                                {t("Save time")}
+                              </button>
+                              <button type="button" onClick={() => setEditingSlotId(null)} className="btn-secondary">
+                                {t("Cancel")}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        {people.length > 0 && (
+                          <ul className="flex flex-col gap-2 border-t border-line pt-2">
+                            {people.map((person) => (
+                              <li key={person.id} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <button type="button" onClick={() => setModalBooking(person)} className="text-sm font-medium text-ink text-left hover:underline">
+                                  {person.clientName}
+                                </button>
+                                <span className={clsx("stamp", STATUS_BADGE_STYLES[person.status])}>{t(person.status)}</span>
+                                {person.status === "PENDING" && (
+                                  <span className="flex gap-1">
+                                    <button type="button" onClick={() => quickConfirm(person.id)} className="btn-primary !py-1 !px-2 text-xs">
+                                      {t("Confirm")}
+                                    </button>
+                                    <button type="button" onClick={() => quickReject(person)} className="btn-secondary !py-1 !px-2 text-xs">
+                                      {t("Reject")}
+                                    </button>
+                                  </span>
+                                )}
+                                {moveTargets.length > 0 && (
+                                  <select
+                                    className="input sm:ml-auto sm:max-w-[220px] !py-1 text-xs"
+                                    defaultValue=""
+                                    onChange={(e) => {
+                                      const next = e.target.value;
+                                      e.target.value = "";
+                                      void moveBooking(person, next);
+                                    }}
+                                  >
+                                    <option value="">{t("Move to another time")}</option>
+                                    {moveTargets.map((slot) => (
+                                      <option key={slot.id} value={slot.id}>
+                                        {formatDateLabel(slot.date)} · {formatTimeRangeLabel(slot.startTime, slot.durationMins)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     );
                   })}

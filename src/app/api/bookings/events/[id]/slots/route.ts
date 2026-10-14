@@ -3,10 +3,12 @@ import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import {
   bulkSlotFieldsFrom,
+  copyFirstDaySlots,
   createSlot,
   createSlotsBulk,
   formatDateLabel,
   getBookingEvent,
+  parseDateOnly,
   slotFieldsFrom,
 } from "@/lib/bookings";
 
@@ -34,6 +36,38 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   const body = await request.json().catch(() => ({}));
+
+  if (body.mode === "copy") {
+    const sourceEventId = typeof body.sourceEventId === "string" ? body.sourceEventId : "";
+    const date = parseDateOnly(body.date);
+    if (!sourceEventId) {
+      return NextResponse.json({ error: "Choose the event to copy times from." }, { status: 400 });
+    }
+    if (!date) {
+      return NextResponse.json({ error: "Please pick a valid date." }, { status: 400 });
+    }
+    if (date.getTime() < event.startDate.getTime() || date.getTime() > event.endDate.getTime()) {
+      return NextResponse.json({ error: "That date is outside this event's date range." }, { status: 400 });
+    }
+    const source = await getBookingEvent(sourceEventId);
+    if (!source) {
+      return NextResponse.json({ error: "That event was not found." }, { status: 404 });
+    }
+    const slots = await copyFirstDaySlots(params.id, sourceEventId, date);
+    if (slots.length === 0) {
+      return NextResponse.json(
+        { error: "No new times were added. That event has no times, or these times are already on the date." },
+        { status: 409 }
+      );
+    }
+    await logActivity({
+      documentType: "booking",
+      documentId: params.id,
+      type: "EDITED",
+      description: `${slots.length} time${slots.length === 1 ? "" : "s"} copied from "${source.name}" onto ${formatDateLabel(date)}`,
+    });
+    return NextResponse.json({ slots }, { status: 201 });
+  }
 
   if (body.mode === "bulk") {
     const fields = bulkSlotFieldsFrom(body, event);

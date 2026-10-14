@@ -30,8 +30,8 @@ export default function MarkOnCalendarButton({
     return (
       <p className="text-sm text-brand-600 flex items-center gap-1.5">
         <CalendarCheck size={15} /> {t("On the calendar as \"{name}\" —", { name: marked })}{" "}
-        <Link href="/calendar" className="underline">
-          {t("view calendar")}
+        <Link href="/bookings" className="underline">
+          {t("view on Bookings")}
         </Link>
       </p>
     );
