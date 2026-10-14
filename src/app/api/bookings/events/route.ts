@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { companyWhere, ownerCompanyId, requireSectionApi } from "@/lib/access";
+import { companyWhere, ownerCompanyId, requireSectionApi, rowInCompanyScope } from "@/lib/access";
 import { logActivity } from "@/lib/activity";
 import { bookingEventFieldsFrom, createBookingEvent, listBookingEvents } from "@/lib/bookings";
 
@@ -13,7 +13,7 @@ export async function GET() {
 
   const scope = await companyWhere();
   const events = await listBookingEvents();
-  return NextResponse.json({ events: scope.companyId ? events.filter((event) => event.companyId === scope.companyId) : events });
+  return NextResponse.json({ events: events.filter((event) => rowInCompanyScope(scope, event.companyId)) });
 }
 
 /** POST — create a new bookable event (e.g. "Massage", "DIY Workshop").

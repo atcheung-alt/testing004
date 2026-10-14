@@ -13,7 +13,6 @@ export default function CompanyAccess() {
   const [company, setCompany] = useState<CompanyRow | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [name, setName] = useState("");
-  const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -23,7 +22,6 @@ export default function CompanyAccess() {
       .then((data) => {
         setCompany(data.company || null);
         setName(data.company?.name || "");
-        setLabel(data.company?.label || "");
         setUsers(Array.isArray(data.users) ? data.users : []);
       });
   }
@@ -39,7 +37,7 @@ export default function CompanyAccess() {
     const res = await fetch("/api/company", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, label }),
+      body: JSON.stringify({ name }),
     });
     const data = await res.json();
     setSaving(false);
@@ -71,14 +69,11 @@ export default function CompanyAccess() {
       <section className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-1">{company?.label || t("Company")}</h2>
         <p className="text-sm text-ink-muted mb-4">{t("You can change this company only.")}</p>
-        <form onSubmit={saveCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+        <p className="text-xs text-ink-faint mb-3">{t("Label")} {company?.label}</p>
+        <form onSubmit={saveCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
           <div>
             <label className="label">{t("Company name")}</label>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <label className="label">{t("Label")}</label>
-            <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} />
           </div>
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? <Loader2 size={15} className="animate-spin" /> : null}

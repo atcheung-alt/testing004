@@ -14,10 +14,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if ("error" in gate) return gate.error;
   const body = await request.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const label = cleanLabel(typeof body.label === "string" ? body.label : "");
-  if (!name || !label) {
-    return NextResponse.json({ error: "Enter a company name and a label." }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: "Enter a company name." }, { status: 400 });
   }
+  const current = await prisma.company.findUnique({ where: { id: params.id } });
+  if (!current) return NextResponse.json({ error: "Company not found." }, { status: 404 });
+  const label = typeof body.label === "string" && body.label.trim() ? cleanLabel(body.label) : current.label;
   const sections = Array.isArray(body.sections) ? JSON.stringify(parseSections(JSON.stringify(body.sections))) : undefined;
   try {
     const company = await prisma.company.update({

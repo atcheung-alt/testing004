@@ -6,7 +6,7 @@ import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
 type GroupRow = { id: string; number: number; sections: string };
-type CompanyRow = { id: string; name: string; label: string; sections: string; groups?: GroupRow[]; _count?: { users: number } };
+type CompanyRow = { id: string; name: string; label: string; isHome?: boolean; sections: string; groups?: GroupRow[]; _count?: { users: number } };
 type UserRow = {
   id: string;
   name: string;
@@ -34,7 +34,6 @@ export default function AdminAccess() {
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [name, setName] = useState("");
-  const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -58,7 +57,7 @@ export default function AdminAccess() {
     const res = await fetch("/api/admin/companies", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, label }),
+      body: JSON.stringify({ name }),
     });
     const data = await res.json();
     setSaving(false);
@@ -67,7 +66,6 @@ export default function AdminAccess() {
       return;
     }
     setName("");
-    setLabel("");
     load();
   }
 
@@ -94,19 +92,15 @@ export default function AdminAccess() {
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Companies")}</h2>
           <p className="text-sm text-ink-muted mt-1">
-            {t("Each company keeps its own documents. Groups 1, 2 and 3 share that company, and each group opens different parts.")}
+            {t("HR Plus is the default company and sees the same records as the admin. Other companies stay separate. The label is created for you. Add groups one at a time.")}
           </p>
         </div>
-        <form onSubmit={addCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+        <form onSubmit={addCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
           <div>
             <label className="label">{t("Company name")}</label>
             <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div>
-            <label className="label">{t("Label")}</label>
-            <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="ACME" />
-          </div>
-          <button type="submit" className="btn-primary" disabled={saving || !name.trim() || !label.trim()}>
+          <button type="submit" className="btn-primary" disabled={saving || !name.trim()}>
             {saving ? <Loader2 size={15} className="animate-spin" /> : null}
             {t("Add company")}
           </button>
@@ -230,14 +224,12 @@ function CompanyEditor({
 }) {
   const t = useT();
   const [name, setName] = useState(company.name);
-  const [label, setLabel] = useState(company.label);
   const [saving, setSaving] = useState(false);
   const groups = company.groups || [];
 
   useEffect(() => {
     setName(company.name);
-    setLabel(company.label);
-  }, [company.id, company.name, company.label]);
+  }, [company.id, company.name]);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -245,7 +237,7 @@ function CompanyEditor({
     const res = await fetch(`/api/admin/companies/${company.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, label }),
+      body: JSON.stringify({ name }),
     });
     const data = await res.json().catch(() => ({}));
     setSaving(false);
@@ -256,12 +248,12 @@ function CompanyEditor({
     onSaved();
   }
 
-  async function addGroups(preset: boolean) {
+  async function addGroup() {
     setSaving(true);
     const res = await fetch(`/api/admin/companies/${company.id}/groups`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(preset ? { preset: true } : {}),
+      body: JSON.stringify({}),
     });
     setSaving(false);
     if (!res.ok) {
@@ -274,16 +266,16 @@ function CompanyEditor({
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-[1fr_10rem_auto] gap-3 items-end">
+      <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
         <div>
           <label className="label">{t("Company name")}</label>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+          <p className="text-xs text-ink-faint mt-1">
+            {t("Label")} {company.label}
+            {company.isHome ? ` · ${t("Default company. Sees the same records as the admin.")}` : ""}
+          </p>
         </div>
-        <div>
-          <label className="label">{t("Label")}</label>
-          <input className="input" value={label} onChange={(e) => setLabel(e.target.value)} />
-        </div>
-        <button type="submit" className="btn-primary" disabled={saving || !name.trim() || !label.trim()}>
+        <button type="submit" className="btn-primary" disabled={saving || !name.trim()}>
           {saving ? <Loader2 size={15} className="animate-spin" /> : null}
           {t("Save")}
         </button>
@@ -292,8 +284,8 @@ function CompanyEditor({
         {groups.map((group) => (
           <GroupEditor key={group.id} companyId={company.id} group={group} onSaved={onSaved} onError={onError} />
         ))}
-        <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => addGroups(groups.length === 0)}>
-          {groups.length === 0 ? t("Add groups 1, 2 and 3") : t("Add group")}
+        <button type="button" className="btn-secondary self-start" disabled={saving} onClick={addGroup}>
+          {t("Add group")}
         </button>
       </div>
     </div>

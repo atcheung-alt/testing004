@@ -24,6 +24,8 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   label     String   @unique
+  // The original HR Plus company. Its people see the same records as the top admin.
+  isHome    Boolean  @default(false)
   // JSON array of section keys this company may open. People in the
   // company only see a section when it is ticked here.
   sections  String   @default("[]")

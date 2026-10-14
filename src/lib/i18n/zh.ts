@@ -239,6 +239,10 @@ export const ZH: Record<string, string> = {
     "每間公司有自己的標籤。文件只留在該標籤內，下面勾選的部分才是這間公司可以開啟的。",
   "Each company keeps its own documents. Groups 1, 2 and 3 share that company, and each group opens different parts.":
     "每間公司的文件分開存放。第 1、2、3 組共用這間公司，但每組可以開啟不同部分。",
+  "HR Plus is the default company and sees the same records as the admin. Other companies stay separate. The label is created for you. Add groups one at a time.":
+    "HR Plus 是預設公司，可以看到和管理員一樣的紀錄。其他公司的文件分開。標籤會自動產生。組別要一組一組新增。",
+  "Default company. Sees the same records as the admin.": "預設公司。可以看到和管理員一樣的紀錄。",
+  "Enter a company name.": "請輸入公司名稱。",
   "Add groups 1, 2 and 3": "新增第 1、2、3 組",
   "Add group": "新增組別",
   Group: "組別",

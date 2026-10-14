@@ -4,10 +4,6 @@ import { getAccount, isCompanyAdmin, isSuper } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
-function cleanLabel(value: string) {
-  return value.trim().toUpperCase().replace(/\s+/g, "-").slice(0, 24);
-}
-
 async function ownCompany() {
   const account = await getAccount();
   if (!account || !account.companyId || !(isCompanyAdmin(account) || isSuper(account))) return null;
@@ -66,12 +62,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const label = cleanLabel(typeof body.label === "string" ? body.label : "");
-  if (!name || !label) {
-    return NextResponse.json({ error: "Enter a company name and a label." }, { status: 400 });
+  if (!name) {
+    return NextResponse.json({ error: "Enter a company name." }, { status: 400 });
   }
   try {
-    const company = await prisma.company.update({ where: { id: account.companyId }, data: { name, label } });
+    const company = await prisma.company.update({ where: { id: account.companyId }, data: { name } });
     return NextResponse.json(company);
   } catch {
     return NextResponse.json({ error: "That label is already used." }, { status: 409 });

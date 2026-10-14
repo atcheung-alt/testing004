@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, CalendarCheck } from "lucide-react";
 import { listBookingEvents } from "@/lib/bookings";
-import { companyWhere } from "@/lib/access";
+import { companyWhere, rowInCompanyScope } from "@/lib/access";
 import { listEvents } from "@/lib/events";
 import EmptyState from "@/components/EmptyState";
 import BookingEventListClient from "@/components/BookingEventListClient";
@@ -23,8 +23,8 @@ export default async function BookingsPage() {
   const scope = await companyWhere();
 
   const [events, jobs] = await Promise.all([listBookingEvents(), listEvents()]);
-  const ownEvents = scope.companyId ? events.filter((event) => event.companyId === scope.companyId) : events;
-  const ownJobs = scope.companyId ? jobs.filter((job) => job.companyId === scope.companyId) : jobs;
+  const ownEvents = events.filter((event) => rowInCompanyScope(scope, event.companyId));
+  const ownJobs = jobs.filter((job) => rowInCompanyScope(scope, job.companyId));
   const serializedEvents = ownEvents.map((e) => ({
     id: e.id,
     name: e.name,
