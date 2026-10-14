@@ -245,6 +245,11 @@ export const ZH: Record<string, string> = {
   "Enter a company name.": "請輸入公司名稱。",
   "Add groups 1, 2 and 3": "新增第 1、2、3 組",
   "Add group": "新增組別",
+  "Search companies or people": "搜尋公司或人員",
+  "No matches.": "沒有符合的結果。",
+  groups: "組",
+  "Search people": "搜尋人員",
+  "No accounts yet.": "尚未有帳戶。",
   Group: "組別",
   "No group": "沒有組別",
   "Delete this group? People in it will lose access until you choose another group.":

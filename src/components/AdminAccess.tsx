@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
@@ -34,6 +34,9 @@ export default function AdminAccess() {
   const [companies, setCompanies] = useState<CompanyRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [name, setName] = useState("");
+  const [query, setQuery] = useState("");
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
+  const [openUserId, setOpenUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -66,8 +69,22 @@ export default function AdminAccess() {
       return;
     }
     setName("");
+    if (data?.id) setOpenCompanyId(data.id);
     load();
   }
+
+  const needle = query.trim().toLowerCase();
+  const visibleCompanies = companies.filter((company) => {
+    if (!needle) return true;
+    const groups = (company.groups || []).map((group) => group.name || `${t("Group")} ${group.number}`).join(" ");
+    return `${company.name} ${company.label} ${groups}`.toLowerCase().includes(needle);
+  });
+  const visibleUsers = users.filter((user) => {
+    if (!needle) return true;
+    const group = companies.find((company) => company.id === user.companyId)?.groups?.find((item) => item.id === user.groupId);
+    const groupName = group?.name || (group ? `${t("Group")} ${group.number}` : "");
+    return `${user.name} ${user.email} ${user.company?.name || ""} ${user.company?.label || ""} ${groupName}`.toLowerCase().includes(needle);
+  });
 
   async function saveUser(user: UserRow, patch: Record<string, unknown>) {
     setError(null);
@@ -95,6 +112,12 @@ export default function AdminAccess() {
             {t("HR Plus is the default company and sees the same records as the admin. Other companies stay separate. The label is created for you. Add groups one at a time.")}
           </p>
         </div>
+        <input
+          className="input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("Search companies or people")}
+        />
         <form onSubmit={addCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
           <div>
             <label className="label">{t("Company name")}</label>
@@ -108,15 +131,32 @@ export default function AdminAccess() {
         <div className="divide-y divide-line border border-line rounded-lg">
           {companies.length === 0 ? (
             <p className="px-4 py-3 text-sm text-ink-muted">{t("No companies yet.")}</p>
+          ) : visibleCompanies.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-ink-muted">{t("No matches.")}</p>
           ) : (
-            companies.map((company) => (
-              <CompanyEditor
-                key={company.id}
-                company={company}
-                onSaved={load}
-                onError={(message) => setError(message)}
-              />
-            ))
+            visibleCompanies.map((company) => {
+              const open = openCompanyId === company.id;
+              return (
+                <div key={company.id}>
+                  <button
+                    type="button"
+                    className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-paper"
+                    onClick={() => setOpenCompanyId(open ? null : company.id)}
+                  >
+                    <span>
+                      <span className="block text-sm font-medium">{company.name}</span>
+                      <span className="block text-xs text-ink-faint">
+                        {company.label} · {(company.groups || []).length} {t("groups")} · {company._count?.users || 0} {t("Accounts")}
+                      </span>
+                    </span>
+                    <ChevronDown size={16} className={open ? "rotate-180 shrink-0" : "shrink-0"} />
+                  </button>
+                  {open && (
+                    <CompanyEditor company={company} onSaved={load} onError={(message) => setError(message)} />
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </section>
@@ -124,10 +164,29 @@ export default function AdminAccess() {
       <section className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold">{t("Accounts")}</h2>
         <div className="card divide-y divide-line">
-          {users.map((user) => {
+          {users.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-ink-muted">{t("No accounts yet.")}</p>
+          ) : visibleUsers.length === 0 ? (
+            <p className="px-4 py-3 text-sm text-ink-muted">{t("No matches.")}</p>
+          ) : visibleUsers.map((user) => {
+            const open = openUserId === user.id;
             const groups = companies.find((item) => item.id === user.companyId)?.groups || [];
             return (
-              <div key={user.id} className="px-4 py-4 flex flex-col gap-3">
+              <div key={user.id}>
+                <button
+                  type="button"
+                  className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-paper"
+                  onClick={() => setOpenUserId(open ? null : user.id)}
+                >
+                  <span>
+                    <span className="block text-sm font-medium">{user.name || user.email}</span>
+                    <span className="block text-xs text-ink-faint">
+                      {user.email} · {user.company ? user.company.name : t("No company")} · {user.status}
+                    </span>
+                  </span>
+                  <ChevronDown size={16} className={open ? "rotate-180 shrink-0" : "shrink-0"} />
+                </button>
+                {open && <div className="px-4 pb-4 flex flex-col gap-3">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-medium">{user.name || user.email}</p>
@@ -204,6 +263,7 @@ export default function AdminAccess() {
                     <p className="text-xs text-ink-muted">{t("Access follows the group. Change the ticks on that group above.")}</p>
                   </div>
                 )}
+                </div>}
               </div>
             );
           })}

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import CompanyLogoUpload from "@/components/CompanyLogoUpload";
 import { useT } from "@/lib/i18n/client";
 
@@ -30,6 +30,8 @@ export default function CompanyAccess() {
   const [logoDark, setLogoDark] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
+  const [openUserId, setOpenUserId] = useState<string | null>(null);
 
   function load() {
     fetch("/api/company")
@@ -118,10 +120,32 @@ export default function CompanyAccess() {
       </section>
 
       <section className="card divide-y divide-line">
-        {users.map((user) => {
+        <div className="px-4 py-3">
+          <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search people")} />
+        </div>
+        {users.filter((user) => {
+          const needle = query.trim().toLowerCase();
+          if (!needle) return true;
+          const group = (company?.groups || []).find((item) => item.id === user.groupId);
+          const groupName = group?.name || (group ? `${t("Group")} ${group.number}` : "");
+          return `${user.name} ${user.email} ${groupName}`.toLowerCase().includes(needle);
+        }).map((user) => {
           const groups = company?.groups || [];
+          const open = openUserId === user.id;
           return (
-            <div key={user.id} className="px-4 py-4 flex flex-col gap-3">
+            <div key={user.id}>
+              <button
+                type="button"
+                className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-paper"
+                onClick={() => setOpenUserId(open ? null : user.id)}
+              >
+                <span>
+                  <span className="block text-sm font-medium">{user.name || user.email}</span>
+                  <span className="block text-xs text-ink-faint">{user.email} · {user.status}</span>
+                </span>
+                <ChevronDown size={16} className={open ? "rotate-180 shrink-0" : "shrink-0"} />
+              </button>
+              {open && <div className="px-4 pb-4 flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium">{user.name || user.email}</p>
@@ -166,6 +190,7 @@ export default function CompanyAccess() {
                   ))}
                 </select>
               </label>
+              </div>}
             </div>
           );
         })}
