@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAccount, isSuper, parseSections } from "@/lib/access";
+import { parseSections } from "@/lib/access";
+import { requireSuperWithGate } from "@/lib/adminGate";
 
 export const dynamic = "force-dynamic";
 
@@ -8,10 +9,9 @@ const ROLES = new Set(["SUPER", "COMPANY_ADMIN", "MEMBER"]);
 const STATUSES = new Set(["PENDING", "ACTIVE", "CANCELLED"]);
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const account = await getAccount();
-  if (!account || !isSuper(account)) {
-    return NextResponse.json({ error: "Only the top admin can do this." }, { status: 403 });
-  }
+  const gate = await requireSuperWithGate();
+  if ("error" in gate) return gate.error;
+  const account = gate.account;
   const body = await request.json().catch(() => ({}));
   const existing = await prisma.user.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: "Account not found." }, { status: 404 });

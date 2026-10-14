@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAccount, isSuper } from "@/lib/access";
+import { requireSuperWithGate } from "@/lib/adminGate";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +9,8 @@ function cleanLabel(value: string) {
 }
 
 export async function GET() {
-  const account = await getAccount();
-  if (!account || !isSuper(account)) {
-    return NextResponse.json({ error: "Only the top admin can do this." }, { status: 403 });
-  }
+  const gate = await requireSuperWithGate();
+  if ("error" in gate) return gate.error;
   const companies = await prisma.company.findMany({
     orderBy: { label: "asc" },
     include: { _count: { select: { users: true } } },
@@ -21,10 +19,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const account = await getAccount();
-  if (!account || !isSuper(account)) {
-    return NextResponse.json({ error: "Only the top admin can do this." }, { status: 403 });
-  }
+  const gate = await requireSuperWithGate();
+  if ("error" in gate) return gate.error;
   const body = await request.json().catch(() => ({}));
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const label = cleanLabel(typeof body.label === "string" ? body.label : "");

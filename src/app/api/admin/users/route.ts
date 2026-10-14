@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getAccount, isSuper } from "@/lib/access";
+import { requireSuperWithGate } from "@/lib/adminGate";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const account = await getAccount();
-  if (!account || !isSuper(account)) {
-    return NextResponse.json({ error: "Only the top admin can do this." }, { status: 403 });
-  }
+  const gate = await requireSuperWithGate();
+  if ("error" in gate) return gate.error;
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "asc" },
     select: {
