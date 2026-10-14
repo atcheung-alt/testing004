@@ -249,6 +249,11 @@ export const ZH: Record<string, string> = {
   "No matches.": "沒有符合的結果。",
   groups: "組",
   "Search people": "搜尋人員",
+  "Confirm and edit accounts in your company.": "確認並修改你公司的帳戶。",
+  "Confirm registrations and edit accounts in your company. You cannot change another company's accounts.":
+    "確認註冊並修改你公司的帳戶。不能修改其他公司的帳戶。",
+  "Only an admin can do this.": "只有管理員可以這樣做。",
+  "You can only change accounts in your company.": "你只可以修改自己公司的帳戶。",
   "No accounts yet.": "尚未有帳戶。",
   Group: "組別",
   "No group": "沒有組別",

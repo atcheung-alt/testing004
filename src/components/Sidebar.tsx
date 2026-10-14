@@ -193,10 +193,12 @@ function BottomLinks({
   pathname,
   collapsed,
   onNavigate,
+  showSettings,
 }: {
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  showSettings?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -217,7 +219,7 @@ function BottomLinks({
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
       <LanguageSwitch collapsed={collapsed} menuDirection="up" align={collapsed ? "left" : "right"} className={collapsed ? "mx-auto" : "px-0"} />
-      <Link
+      {showSettings && <Link
         href="/settings"
         onClick={onNavigate}
         prefetch={false}
@@ -232,7 +234,7 @@ function BottomLinks({
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />
         {!collapsed && t("Settings")}
-      </Link>
+      </Link>}
       <button
         type="button"
         onClick={handleLogout}
@@ -357,7 +359,7 @@ export default function Sidebar({
             )}
           </div>
         )}
-        <BottomLinks pathname={pathname} collapsed={collapsed} />
+        <BottomLinks pathname={pathname} collapsed={collapsed} showSettings={isAdmin || showCompany} />
       </aside>
 
       {/* Mobile top bar trigger + drawer — always shows full labels; the
@@ -399,7 +401,7 @@ export default function Sidebar({
               </div>
               <SwitchSystemLink href="/hr" label={t("HR System")} onNavigate={() => setOpen(false)} />
               <NavLinks navGroups={navGroups} pathname={pathname} onNavigate={() => setOpen(false)} />
-              <BottomLinks pathname={pathname} onNavigate={() => setOpen(false)} />
+              <BottomLinks pathname={pathname} onNavigate={() => setOpen(false)} showSettings={isAdmin || showCompany} />
             </aside>
           </div>
           </Portal>

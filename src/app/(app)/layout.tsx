@@ -32,7 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const section = sectionForPath(pathname);
   if (section === "admin" && !isSuper(account)) redirect("/");
   if (section === "company" && !isCompanyAdmin(account)) redirect("/");
-  if (section === "settings" && account.companyId && !isSuper(account)) redirect("/");
+  if (section === "settings" && !isSuper(account) && !isCompanyAdmin(account)) redirect("/");
   if (section && section !== "admin" && section !== "company" && section !== "settings" && section !== "hr") {
     if (!canSeeSection(account, section)) {
       const allowed = allowedSections(account);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSettings, updateSettings, validateSettings, type AppSettings, type ThemeMode } from "@/lib/appSettings";
+import { getAccount, isSuper } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,10 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const account = await getAccount();
+  if (!account || !isSuper(account)) {
+    return NextResponse.json({ error: "Only the top admin can do this." }, { status: 403 });
+  }
   const body = await request.json().catch(() => ({}));
 
   if (body.themeMode !== undefined && !["LIGHT", "DARK", "AUTO"].includes(body.themeMode)) {
