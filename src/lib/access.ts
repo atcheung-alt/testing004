@@ -1,20 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { SECTIONS, type SectionId } from "@/lib/sections";
 
-export const SECTIONS = [
-  { id: "dashboard", label: "Dashboard" },
-  { id: "bookings", label: "Bookings" },
-  { id: "quotations", label: "Quotations" },
-  { id: "templates", label: "Templates" },
-  { id: "invoices", label: "Invoices" },
-  { id: "expenses", label: "Expenses" },
-  { id: "receipts", label: "Receipts" },
-  { id: "recruitment", label: "Recruitment" },
-  { id: "clients", label: "Clients" },
-] as const;
-
-export type SectionId = (typeof SECTIONS)[number]["id"];
+export { SECTIONS, type SectionId } from "@/lib/sections";
 
 const SECTION_IDS = new Set<string>(SECTIONS.map((section) => section.id));
 

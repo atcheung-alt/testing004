@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { SECTIONS, type SectionId } from "@/lib/access";
+import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
 type CompanyRow = { id: string; name: string; label: string };

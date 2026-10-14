@@ -28,7 +28,7 @@ import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
-import type { SectionId } from "@/lib/access";
+import type { SectionId } from "@/lib/sections";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
 
