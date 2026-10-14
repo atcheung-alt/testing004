@@ -76,7 +76,7 @@ export async function getPublicInvoiceView(token: string): Promise<PublicInvoice
   if (!invoice) return null;
 
   await logClientView("invoice", invoice.id);
-  const company = await getEffectiveCompany();
+  const company = await getEffectiveCompany(invoice.companyId);
 
   return {
     id: invoice.id,

@@ -88,7 +88,7 @@ export async function getPublicQuotationView(token: string): Promise<PublicQuota
   await logClientView("quotation", quotation.id);
 
   const locked = quotation.status === "CONVERTED";
-  const company = await getEffectiveCompany();
+  const company = await getEffectiveCompany(quotation.companyId);
   const items = quotation.items.map((i) => ({
     name: i.name,
     description: i.description,

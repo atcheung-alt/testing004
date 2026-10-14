@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     }
   }
 
-  const company = await getEffectiveCompany();
+  const company = await getEffectiveCompany(account.companyId && !isSuper(account) ? account.companyId : null);
   const settings = await getSettings();
 
   // Only the admin account ever sees the required-setup gate — settings is

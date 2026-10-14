@@ -269,6 +269,13 @@ export const ZH: Record<string, string> = {
   "Enter the admin security code.": "請輸入管理員安全碼。",
   "My company": "我的公司",
   "You can change this company only.": "你只可以修改這間公司。",
+  "Set this company's name and icon, then confirm your colleagues.": "設定這間公司的名稱和圖示，然後確認同事。",
+  "Shown on your company's pages, PDFs, and emails.": "會顯示在這間公司的頁面、PDF 和電郵上。",
+  "Company logo (primary)": "公司標誌（主要）",
+  "Company logo (dark mode)": "公司標誌（深色模式）",
+  "primary company logo": "主要公司標誌",
+  "dark mode company logo": "深色模式公司標誌",
+  "Company website": "公司網站",
   "Confirm your colleagues and choose what they can open.": "確認同事，並選擇他們可以開啟的部分。",
   "No access yet": "尚未有權限",
   "An admin has confirmed your account, but has not chosen which parts of the site you can open.":

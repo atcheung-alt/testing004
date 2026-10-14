@@ -45,7 +45,7 @@ export async function getPublicRecruitmentView(token: string): Promise<PublicRec
   await logClientView("recruitment", agreement.id);
 
   const locked = agreement.status === "CANCELLED";
-  const company = await getEffectiveCompany();
+  const company = await getEffectiveCompany(agreement.companyId);
 
   return {
     id: agreement.id,

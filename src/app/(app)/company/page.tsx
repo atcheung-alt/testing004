@@ -13,7 +13,7 @@ export default async function CompanyPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Company")}</h1>
-        <p className="text-sm text-ink-muted">{t("Confirm your colleagues and choose what they can open.")}</p>
+        <p className="text-sm text-ink-muted">{t("Set this company's name and icon, then confirm your colleagues.")}</p>
       </div>
       <CompanyAccess />
     </div>

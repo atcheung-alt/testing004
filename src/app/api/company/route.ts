@@ -65,8 +65,16 @@ export async function PATCH(request: NextRequest) {
   if (!name) {
     return NextResponse.json({ error: "Enter a company name." }, { status: 400 });
   }
+  const data: { name: string; website?: string; logo?: string | null; logoDark?: string | null } = { name };
+  if (typeof body.website === "string") data.website = body.website.trim().slice(0, 200);
+  if (body.logo === null || body.logo === "") data.logo = null;
+  else if (typeof body.logo === "string" && body.logo.startsWith("data:image/") && body.logo.length <= 2_000_000) data.logo = body.logo;
+  if (body.logoDark === null || body.logoDark === "") data.logoDark = null;
+  else if (typeof body.logoDark === "string" && body.logoDark.startsWith("data:image/") && body.logoDark.length <= 2_000_000) {
+    data.logoDark = body.logoDark;
+  }
   try {
-    const company = await prisma.company.update({ where: { id: account.companyId }, data: { name } });
+    const company = await prisma.company.update({ where: { id: account.companyId }, data });
     return NextResponse.json(company);
   } catch {
     return NextResponse.json({ error: "That label is already used." }, { status: 409 });

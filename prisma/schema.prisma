@@ -24,6 +24,9 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   label     String   @unique
+  website   String   @default("")
+  logo      String?
+  logoDark  String?
   // The original HR Plus company. Its people see the same records as the top admin.
   isHome    Boolean  @default(false)
   // JSON array of section keys this company may open. People in the

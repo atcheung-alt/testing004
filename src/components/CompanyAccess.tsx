@@ -1,18 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import CompanyLogoUpload from "@/components/CompanyLogoUpload";
 import { useT } from "@/lib/i18n/client";
 
 type GroupRow = { id: string; number: number; name?: string; sections: string };
-type CompanyRow = { id: string; name: string; label: string; sections?: string; groups?: GroupRow[] };
+type CompanyRow = {
+  id: string;
+  name: string;
+  label: string;
+  website?: string;
+  logo?: string | null;
+  logoDark?: string | null;
+  sections?: string;
+  groups?: GroupRow[];
+};
 type UserRow = { id: string; name: string; email: string; status: string; role: string; sections: string; groupId?: string | null };
 
 export default function CompanyAccess() {
   const t = useT();
+  const router = useRouter();
   const [company, setCompany] = useState<CompanyRow | null>(null);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [name, setName] = useState("");
+  const [website, setWebsite] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
+  const [logoDark, setLogoDark] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -22,6 +37,9 @@ export default function CompanyAccess() {
       .then((data) => {
         setCompany(data.company || null);
         setName(data.company?.name || "");
+        setWebsite(data.company?.website || "");
+        setLogo(data.company?.logo || null);
+        setLogoDark(data.company?.logoDark || null);
         setUsers(Array.isArray(data.users) ? data.users : []);
       });
   }
@@ -37,7 +55,7 @@ export default function CompanyAccess() {
     const res = await fetch("/api/company", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, website, logo, logoDark }),
     });
     const data = await res.json();
     setSaving(false);
@@ -46,6 +64,7 @@ export default function CompanyAccess() {
       return;
     }
     load();
+    router.refresh();
   }
 
   async function saveUser(userId: string, patch: Record<string, unknown>) {
@@ -68,14 +87,30 @@ export default function CompanyAccess() {
       {error && <p className="text-sm text-danger-500">{error}</p>}
       <section className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-1">{company?.label || t("Company")}</h2>
-        <p className="text-sm text-ink-muted mb-4">{t("You can change this company only.")}</p>
+        <p className="text-sm text-ink-muted mb-4">{t("Shown on your company's pages, PDFs, and emails.")}</p>
         <p className="text-xs text-ink-faint mb-3">{t("Label")} {company?.label}</p>
-        <form onSubmit={saveCompany} className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
-          <div>
-            <label className="label">{t("Company name")}</label>
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+        <form onSubmit={saveCompany} className="flex flex-col gap-4">
+          <div className="flex gap-4 flex-wrap">
+            <div>
+              <p className="label">{t("Company logo (primary)")}</p>
+              <CompanyLogoUpload imageData={logo} onChange={setLogo} label={t("primary company logo")} />
+            </div>
+            <div>
+              <p className="label">{t("Company logo (dark mode)")}</p>
+              <CompanyLogoUpload imageData={logoDark} onChange={setLogoDark} label={t("dark mode company logo")} />
+            </div>
+            <div className="flex-1 flex flex-col gap-3 min-w-[220px]">
+              <div>
+                <label className="label">{t("Company name")}</label>
+                <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div>
+                <label className="label">{t("Company website")}</label>
+                <input className="input" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
+              </div>
+            </div>
           </div>
-          <button type="submit" className="btn-primary" disabled={saving}>
+          <button type="submit" className="btn-primary self-start" disabled={saving || !name.trim()}>
             {saving ? <Loader2 size={15} className="animate-spin" /> : null}
             {t("Save")}
           </button>
