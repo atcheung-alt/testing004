@@ -235,6 +235,9 @@ export const ZH: Record<string, string> = {
     "確認帳戶、選擇每人可以開啟的部分，並管理所有公司。",
   "Each company has its own label. People choose it when they register.":
     "每間公司有自己的標籤。註冊時要選擇。",
+  "Each company has its own label. Its documents stay separate, and the ticks below are the only parts that company can open.":
+    "每間公司有自己的標籤。文件只留在該標籤內，下面勾選的部分才是這間公司可以開啟的。",
+  "Tick what this company can open on its label above.": "請在上面該公司的標籤勾選它可以開啟的部分。",
   "No companies yet.": "尚未有公司。",
   Accounts: "帳戶",
   "No company": "沒有公司",

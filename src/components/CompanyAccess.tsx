@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
-type CompanyRow = { id: string; name: string; label: string };
+type CompanyRow = { id: string; name: string; label: string; sections?: string };
 type UserRow = { id: string; name: string; email: string; status: string; role: string; sections: string };
 
 function sectionList(raw: string): SectionId[] {
@@ -131,7 +131,7 @@ export default function CompanyAccess() {
                 </label>
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-2">
-                {SECTIONS.map((section) => (
+                {SECTIONS.filter((section) => sectionList(company?.sections || "[]").includes(section.id)).map((section) => (
                   <label key={section.id} className="flex items-center gap-2 text-sm text-ink-muted">
                     <input
                       type="checkbox"

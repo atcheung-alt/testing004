@@ -24,6 +24,9 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   label     String   @unique
+  // JSON array of section keys this company may open. People in the
+  // company only see a section when it is ticked here.
+  sections  String   @default("[]")
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -45,7 +45,11 @@ export async function PATCH(request: NextRequest) {
     }
     const role = body.role === "COMPANY_ADMIN" || body.role === "MEMBER" ? body.role : user.role === "SUPER" ? "COMPANY_ADMIN" : user.role;
     const status = body.status === "ACTIVE" || body.status === "CANCELLED" || body.status === "PENDING" ? body.status : user.status;
-    const sections = Array.isArray(body.sections) ? JSON.stringify(parseSections(JSON.stringify(body.sections))) : user.sections;
+    const company = await prisma.company.findUnique({ where: { id: account.companyId }, select: { sections: true } });
+    const allowed = parseSections(company?.sections);
+    const sections = Array.isArray(body.sections)
+      ? JSON.stringify(parseSections(JSON.stringify(body.sections)).filter((id) => allowed.includes(id)))
+      : user.sections;
     const saved = await prisma.user.update({
       where: { id: user.id },
       data: { role: role === "SUPER" ? "COMPANY_ADMIN" : role, status, sections, isAdmin: false },

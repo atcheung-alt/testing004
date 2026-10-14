@@ -20,7 +20,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const status = typeof body.status === "string" && STATUSES.has(body.status) ? body.status : existing.status;
   const name = typeof body.name === "string" ? body.name.trim() : existing.name;
   const companyId = body.companyId === null ? null : typeof body.companyId === "string" ? body.companyId : existing.companyId;
-  const sections = Array.isArray(body.sections) ? JSON.stringify(parseSections(JSON.stringify(body.sections))) : existing.sections;
+  let sections = Array.isArray(body.sections) ? JSON.stringify(parseSections(JSON.stringify(body.sections))) : existing.sections;
+  if (role !== "SUPER" && companyId) {
+    const company = await prisma.company.findUnique({ where: { id: companyId }, select: { sections: true } });
+    const allowed = parseSections(company?.sections);
+    if (Array.isArray(body.sections) || body.companyId) {
+      const requested = Array.isArray(body.sections) ? parseSections(JSON.stringify(body.sections)) : allowed;
+      sections = JSON.stringify(requested.filter((id) => allowed.includes(id)));
+    }
+  }
 
   if (role !== "SUPER" && !companyId && existing.role !== "SUPER" && existing.companyId) {
     return NextResponse.json({ error: "Choose a company for this account." }, { status: 400 });
