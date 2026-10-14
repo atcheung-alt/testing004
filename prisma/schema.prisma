@@ -42,6 +42,7 @@ model CompanyGroup {
   companyId String
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   number    Int
+  name      String   @default("")
   sections  String   @default("[]")
   users     User[]
   createdAt DateTime @default(now())

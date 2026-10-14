@@ -247,6 +247,8 @@ export const ZH: Record<string, string> = {
   "Add group": "新增組別",
   Group: "組別",
   "No group": "沒有組別",
+  "Delete this group? People in it will lose access until you choose another group.":
+    "刪除這個組別？組內的人會失去權限，直到你再選擇其他組別。",
   "Access follows the group. Change the ticks on that group above.": "權限跟組別走。請在上面該組別勾選。",
   "Choose a group in this company.": "請選擇這間公司裡的組別。",
   "Tick what this company can open on its label above.": "請在上面該公司的標籤勾選它可以開啟的部分。",

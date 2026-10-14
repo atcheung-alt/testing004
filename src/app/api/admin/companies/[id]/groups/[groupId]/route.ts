@@ -11,9 +11,15 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const group = await prisma.companyGroup.findFirst({ where: { id: params.groupId, companyId: params.id } });
   if (!group) return NextResponse.json({ error: "Group not found." }, { status: 404 });
   const body = await request.json().catch(() => ({}));
-  const sections = JSON.stringify(parseSections(JSON.stringify(Array.isArray(body.sections) ? body.sections : [])));
-  const saved = await prisma.companyGroup.update({ where: { id: group.id }, data: { sections } });
-  await prisma.user.updateMany({ where: { groupId: group.id }, data: { sections } });
+  const data: { name?: string; sections?: string } = {};
+  if (typeof body.name === "string") data.name = body.name.trim().slice(0, 40);
+  if (Array.isArray(body.sections)) {
+    data.sections = JSON.stringify(parseSections(JSON.stringify(body.sections)));
+  }
+  const saved = await prisma.companyGroup.update({ where: { id: group.id }, data });
+  if (data.sections !== undefined) {
+    await prisma.user.updateMany({ where: { groupId: group.id }, data: { sections: data.sections } });
+  }
   return NextResponse.json(saved);
 }
 

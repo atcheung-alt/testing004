@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 
-type GroupRow = { id: string; number: number; sections: string };
+type GroupRow = { id: string; number: number; name?: string; sections: string };
 type CompanyRow = { id: string; name: string; label: string; sections?: string; groups?: GroupRow[] };
 type UserRow = { id: string; name: string; email: string; status: string; role: string; sections: string; groupId?: string | null };
 
@@ -126,7 +126,7 @@ export default function CompanyAccess() {
                   <option value="">{t("No group")}</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
-                      {t("Group")} {group.number}
+                      {group.name?.trim() || `${t("Group")} ${group.number}`}
                     </option>
                   ))}
                 </select>

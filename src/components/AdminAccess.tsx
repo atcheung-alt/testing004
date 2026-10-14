@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { SECTIONS, type SectionId } from "@/lib/sections";
 import { useT } from "@/lib/i18n/client";
 
-type GroupRow = { id: string; number: number; sections: string };
+type GroupRow = { id: string; number: number; name?: string; sections: string };
 type CompanyRow = { id: string; name: string; label: string; isHome?: boolean; sections: string; groups?: GroupRow[]; _count?: { users: number } };
 type UserRow = {
   id: string;
@@ -176,7 +176,7 @@ export default function AdminAccess() {
                         <option value="">{t("No group")}</option>
                         {groups.map((group) => (
                           <option key={group.id} value={group.id}>
-                            {t("Group")} {group.number}
+                            {group.name?.trim() || `${t("Group")} ${group.number}`}
                           </option>
                         ))}
                       </select>
@@ -304,21 +304,36 @@ function GroupEditor({
   onError: (message: string) => void;
 }) {
   const t = useT();
+  const [name, setName] = useState(group.name || "");
   const [selected, setSelected] = useState<SectionId[]>(sectionList(group.sections || "[]"));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    setName(group.name || "");
     setSelected(sectionList(group.sections || "[]"));
-  }, [group.id, group.sections]);
+  }, [group.id, group.name, group.sections]);
 
-  async function save(next: SectionId[]) {
-    setSelected(next);
+  async function save(patch: { name?: string; sections?: SectionId[] }) {
+    if (patch.sections) setSelected(patch.sections);
     setSaving(true);
     const res = await fetch(`/api/admin/companies/${companyId}/groups/${group.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sections: next }),
+      body: JSON.stringify(patch),
     });
+    setSaving(false);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      onError(data.error || t("Could not save."));
+      return;
+    }
+    onSaved();
+  }
+
+  async function remove() {
+    if (!window.confirm(t("Delete this group? People in it will lose access until you choose another group."))) return;
+    setSaving(true);
+    const res = await fetch(`/api/admin/companies/${companyId}/groups/${group.id}`, { method: "DELETE" });
     setSaving(false);
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -330,10 +345,27 @@ function GroupEditor({
 
   return (
     <div className="rounded-lg border border-line px-3 py-3 flex flex-col gap-2">
-      <p className="text-sm font-medium">
-        {t("Group")} {group.number}
-        {saving ? <Loader2 size={14} className="inline ml-2 animate-spin" /> : null}
-      </p>
+      <div className="flex items-center gap-2">
+        <input
+          className="input"
+          value={name}
+          placeholder={`${t("Group")} ${group.number}`}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => {
+            if (name.trim() !== (group.name || "").trim()) save({ name });
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+        />
+        <button type="button" className="btn-secondary shrink-0" disabled={saving} onClick={remove}>
+          {t("Delete")}
+        </button>
+        {saving ? <Loader2 size={14} className="animate-spin shrink-0" /> : null}
+      </div>
       <div className="flex flex-wrap gap-x-4 gap-y-2">
         {SECTIONS.map((section) => (
           <label key={section.id} className="flex items-center gap-2 text-sm text-ink-muted">
@@ -344,7 +376,7 @@ function GroupEditor({
                 const next = selected.includes(section.id)
                   ? selected.filter((id) => id !== section.id)
                   : [...selected, section.id];
-                save(next);
+                save({ sections: next });
               }}
             />
             {t(section.label)}
