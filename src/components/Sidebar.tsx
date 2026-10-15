@@ -21,6 +21,7 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Package,
 } from "lucide-react";
 import clsx from "clsx";
 import Portal from "@/components/Portal";
@@ -80,10 +81,18 @@ function buildNavGroups(t: (key: string) => string, sections: SectionId[] | "all
         { href: "/clients", label: t("Clients"), icon: Users },
       ],
     },
+    {
+      items: [{ href: "/items", label: t("Item library"), icon: Package }],
+    },
   ]
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => sections === "all" || sections.includes(ITEM_SECTION[item.href])),
+      items: group.items.filter((item) => {
+        if (item.href === "/items") {
+          return sections === "all" || sections.includes("quotations") || sections.includes("invoices");
+        }
+        return sections === "all" || sections.includes(ITEM_SECTION[item.href]);
+      }),
     }))
     .filter((group) => group.items.length > 0);
 }
@@ -218,7 +227,6 @@ function BottomLinks({
 
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
-      <LanguageSwitch collapsed={collapsed} menuDirection="up" align={collapsed ? "left" : "right"} className={collapsed ? "mx-auto" : "px-0"} />
       {showSettings && <Link
         href="/settings"
         onClick={onNavigate}

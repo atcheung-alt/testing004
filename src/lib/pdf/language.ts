@@ -42,8 +42,10 @@ export function pdfFileName(number: string, language?: string | null): string {
   return `${number}${pdfLanguageSuffix(language)}.pdf`;
 }
 
-export function pdfLanguageLabel(language?: string | null): "Chinese PDF" | "English PDF" {
-  return language === "ZH_HANT" || language === "ZH_HANS" ? "Chinese PDF" : "English PDF";
+export function pdfLanguageLabel(language?: string | null): string {
+  if (language === "ZH_HANT") return "Traditional Chinese PDF";
+  if (language === "ZH_HANS") return "Simplified Chinese PDF";
+  return "English PDF";
 }
 
 export function pdfContentDisposition(filename: string, language?: string | null): string {

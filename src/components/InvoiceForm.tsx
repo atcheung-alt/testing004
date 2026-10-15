@@ -40,9 +40,11 @@ function computeDueDateLabel(issueDateInput: string, paymentDueDays: number): st
 export default function InvoiceForm({
   invoice,
   customer: initialCustomer,
+  calendarEventName: initialCalendarName,
 }: {
   invoice?: Invoice;
   customer?: CustomerDetails;
+  calendarEventName?: string | null;
 }) {
   const router = useRouter();
   const t = useT();
@@ -68,6 +70,8 @@ export default function InvoiceForm({
   const [eventStartTime, setEventStartTime] = useState(invoice?.eventStartTime || "");
   const [eventEndDate, setEventEndDate] = useState(toDateInput(invoice?.eventEndDate));
   const [eventEndTime, setEventEndTime] = useState(invoice?.eventEndTime || "");
+  const [markOnCalendar, setMarkOnCalendar] = useState(Boolean(initialCalendarName));
+  const [calendarEventName, setCalendarEventName] = useState(initialCalendarName || "");
   const [items, setItems] = useState<LineItem[]>(
     invoice?.items?.length ? invoice.items.map((i) => ({ ...i })) : [emptyLineItem()]
   );
@@ -133,6 +137,10 @@ export default function InvoiceForm({
       setError(t("Event end date must be on or after the start date."));
       return;
     }
+    if (markOnCalendar && (!eventStartDate || !eventEndDate)) {
+      setError(t("Set both an event start and end date before marking it on the Bookings calendar."));
+      return;
+    }
 
     setSaving(true);
     try {
@@ -145,6 +153,8 @@ export default function InvoiceForm({
         eventStartTime: eventStartTime || null,
         eventEndDate: eventEndDate || null,
         eventEndTime: eventEndTime || null,
+        markOnCalendar,
+        calendarEventName: calendarEventName.trim() || title.trim() || customer.customerName.trim(),
         items,
         taxRate,
         discount,
@@ -249,7 +259,7 @@ export default function InvoiceForm({
 
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("Event date & time")}</h2>
-        <p className="text-xs text-ink-faint mb-4">{t("Optional — fill in once you know when the actual event is, then use \"Mark on calendar\" from the invoice page to put it on the Calendar.")}</p>
+        <p className="text-xs text-ink-faint mb-4">{t("Optional. Tick the box to show this job as a grey bar on the Bookings calendar.")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Event start date")}</label>
@@ -289,6 +299,32 @@ export default function InvoiceForm({
             />
           </div>
         </div>
+        <label className="mt-4 flex items-center gap-2 text-sm text-ink">
+          <input
+            type="checkbox"
+            checked={markOnCalendar}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setMarkOnCalendar(checked);
+              if (checked && !calendarEventName.trim()) {
+                setCalendarEventName(title.trim() || customer.customerName.trim());
+              }
+            }}
+          />
+          {t("Show this on the Bookings calendar")}
+        </label>
+        {markOnCalendar && (
+          <div className="mt-3 max-w-md">
+            <label className="label">{t("Event name")}</label>
+            <input
+              type="text"
+              className="input"
+              value={calendarEventName}
+              placeholder={t("e.g. Annual Wellness Day")}
+              onChange={(e) => setCalendarEventName(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className="card p-5 overflow-visible">

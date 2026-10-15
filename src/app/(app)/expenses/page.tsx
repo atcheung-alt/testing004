@@ -39,7 +39,7 @@ export default async function ExpensesPage({
       orderBy: { createdAt: "desc" },
       take: 200,
       include: {
-        invoice: { select: { id: true, number: true, customerName: true } },
+        invoice: { select: { id: true, number: true, customerName: true, customerEmail: true } },
         documents: {
           select: { id: true, fileName: true },
           orderBy: { createdAt: "asc" },

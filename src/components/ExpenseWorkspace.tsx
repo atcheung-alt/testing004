@@ -7,6 +7,8 @@ import { FileText, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import StatusBadge from "@/components/StatusBadge";
+import DownloadPdfButton from "@/components/DownloadPdfButton";
+import SendEmailButton from "@/components/SendEmailButton";
 
 export type ExpenseInvoiceChoice = {
   id: string;
@@ -17,6 +19,7 @@ export type ExpenseInvoiceChoice = {
   issueLabel?: string;
   poNumber?: string | null;
   displayStatus?: string;
+  customerEmail?: string | null;
 };
 
 export type ExpenseListRow = {
@@ -361,7 +364,8 @@ export default function ExpenseWorkspace({
               <span />
             </div>
             {shown.map((row) => (
-              <div key={row.id} className="px-4 sm:px-5 py-3 sm:grid sm:grid-cols-[9rem_1fr_8rem_7rem_2rem] sm:items-center sm:gap-3">
+              <div key={row.id} className="px-4 sm:px-5 py-3 flex flex-col gap-3">
+                <div className="sm:grid sm:grid-cols-[9rem_1fr_8rem_7rem_2rem] sm:items-center sm:gap-3">
                 <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600">
                   {row.invoice.number}
                 </Link>
@@ -394,6 +398,20 @@ export default function ExpenseWorkspace({
                 >
                   {deletingId === row.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                 </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <DownloadPdfButton url={`/api/invoices/${row.invoice.id}/expenses/${row.id}/pdf`} />
+                  <SendEmailButton
+                    kind="invoices"
+                    id={row.invoice.id}
+                    endpoint={`/api/invoices/${row.invoice.id}/expenses/${row.id}/email`}
+                    defaultTo={row.invoice.customerEmail || ""}
+                    defaultSubject={`Expense for ${row.invoice.number}`}
+                    defaultBody={`Dear ${row.invoice.customerName || "Customer"},\n\nPlease find the expense record for invoice ${row.invoice.number} attached.\n`}
+                    emailValid={Boolean(row.invoice.customerEmail)}
+                    showCc
+                  />
+                </div>
               </div>
             ))}
           </div>

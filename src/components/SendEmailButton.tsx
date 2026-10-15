@@ -242,27 +242,15 @@ export default function SendEmailButton({
 
                 <div>
                   <label className="label">{t("PDF language")}</label>
-                  <div className="inline-flex rounded-md border border-line overflow-hidden">
-                    {(
-                      [
-                        ["EN", "English PDF"],
-                        ["ZH_HANT", "Chinese PDF"],
-                      ] as const
-                    ).map(([value, label]) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setPdfLanguage(value)}
-                        className={`px-3 py-2 text-sm font-medium transition-colors ${
-                          pdfLanguage === value
-                            ? "bg-brand-600 text-white"
-                            : "bg-surface text-ink hover:bg-brand-50"
-                        }`}
-                      >
-                        {t(label)}
-                      </button>
-                    ))}
-                  </div>
+                  <select
+                    className="input"
+                    value={pdfLanguage}
+                    onChange={(e) => setPdfLanguage(e.target.value as PdfDownloadLanguage)}
+                  >
+                    <option value="EN">English</option>
+                    <option value="ZH_HANT">繁體</option>
+                    <option value="ZH_HANS">简体</option>
+                  </select>
                   <p className="mt-1.5 text-xs text-ink-faint">
                     {t("The attached PDF is generated in this language. It does not change the saved document.")}
                   </p>

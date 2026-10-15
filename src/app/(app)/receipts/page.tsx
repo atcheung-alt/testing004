@@ -8,9 +8,12 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
+import SendEmailButton from "@/components/SendEmailButton";
 import DeleteButton from "@/components/DeleteButton";
 import { getT } from "@/lib/i18n/server";
 import { companyWhere } from "@/lib/access";
+import { isValidEmail, receiptEmailContent } from "@/lib/settings";
+import { COMPANY } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +57,7 @@ async function MoneyList({
             invoice: { AND: [customerFilter || {}, scope] },
           },
           include: {
-            invoice: { select: { id: true, number: true, customerName: true, total: true } },
+            invoice: { select: { id: true, number: true, title: true, customerName: true, customerEmail: true, total: true } },
           },
           orderBy: { issueDate: "desc" },
         });
@@ -68,7 +71,7 @@ async function MoneyList({
             invoice: { AND: [customerFilter || {}, scope] },
           },
           include: {
-            invoice: { select: { id: true, number: true, customerName: true } },
+            invoice: { select: { id: true, number: true, title: true, customerName: true, customerEmail: true } },
             documents: { select: { id: true }, orderBy: { createdAt: "asc" } },
           },
           orderBy: { createdAt: "desc" },
@@ -87,6 +90,12 @@ async function MoneyList({
     amount: number;
     receiptId?: string;
     receiptNumber?: string;
+    expenseId?: string;
+    invoiceId?: string;
+    customerName?: string;
+    customerEmail?: string | null;
+    emailSubject?: string;
+    emailBody?: string;
   };
 
   const rows: Row[] = [
@@ -100,6 +109,26 @@ async function MoneyList({
       amount: receipt.invoice?.total || 0,
       receiptId: receipt.id,
       receiptNumber: receipt.number,
+      customerName: receipt.invoice?.customerName,
+      customerEmail: receipt.invoice?.customerEmail,
+      emailSubject: receipt.invoice
+        ? receiptEmailContent({
+            receiptNumber: receipt.number,
+            invoiceNumber: receipt.invoice.number,
+            title: receipt.invoice.title,
+            customerName: receipt.invoice.customerName,
+            companyName: COMPANY.shortName || COMPANY.name,
+          }).subject
+        : "",
+      emailBody: receipt.invoice
+        ? receiptEmailContent({
+            receiptNumber: receipt.number,
+            invoiceNumber: receipt.invoice.number,
+            title: receipt.invoice.title,
+            customerName: receipt.invoice.customerName,
+            companyName: COMPANY.shortName || COMPANY.name,
+          }).body
+        : "",
     })),
     ...expenses.map((expense) => ({
       key: `expense-${expense.id}`,
@@ -109,6 +138,12 @@ async function MoneyList({
       title: expense.category === "Others" ? expense.label || t("Others") : t(expense.category),
       subtitle: `${expense.invoice.number} · ${expense.invoice.customerName} · ${formatDate(expense.createdAt)}`,
       amount: expense.amount,
+      expenseId: expense.id,
+      invoiceId: expense.invoice.id,
+      customerName: expense.invoice.customerName,
+      customerEmail: expense.invoice.customerEmail,
+      emailSubject: `Expense for ${expense.invoice.number}`,
+      emailBody: `Dear ${expense.invoice.customerName || "Customer"},\n\nPlease find the expense record for invoice ${expense.invoice.number} attached.\n`,
     })),
   ].sort((a, b) => b.when.getTime() - a.when.getTime());
 
@@ -170,7 +205,32 @@ async function MoneyList({
               {row.receiptId && row.receiptNumber && (
                 <>
                   <DownloadPdfButton url={`/api/receipts/${row.receiptId}/pdf`} />
+                  <SendEmailButton
+                    kind="invoices"
+                    id={row.receiptId}
+                    endpoint={`/api/receipts/${row.receiptId}/email`}
+                    defaultTo={row.customerEmail || ""}
+                    defaultSubject={row.emailSubject || ""}
+                    defaultBody={row.emailBody || ""}
+                    emailValid={isValidEmail(row.customerEmail)}
+                    showCc
+                  />
                   <DeleteButton url={`/api/receipts/${row.receiptId}`} confirmNumber={row.receiptNumber} itemLabel="receipt" />
+                </>
+              )}
+              {row.expenseId && row.invoiceId && (
+                <>
+                  <DownloadPdfButton url={`/api/invoices/${row.invoiceId}/expenses/${row.expenseId}/pdf`} />
+                  <SendEmailButton
+                    kind="invoices"
+                    id={row.invoiceId}
+                    endpoint={`/api/invoices/${row.invoiceId}/expenses/${row.expenseId}/email`}
+                    defaultTo={row.customerEmail || ""}
+                    defaultSubject={row.emailSubject || ""}
+                    defaultBody={row.emailBody || ""}
+                    emailValid={isValidEmail(row.customerEmail)}
+                    showCc
+                  />
                 </>
               )}
             </div>

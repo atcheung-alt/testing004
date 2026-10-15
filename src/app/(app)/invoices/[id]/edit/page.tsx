@@ -5,6 +5,7 @@ import { withParsedMultipliersList } from "@/lib/multipliers";
 import { withParsedFeesList } from "@/lib/fees";
 import type { Invoice } from "@/types";
 import { getT } from "@/lib/i18n/server";
+import { getEventForInvoice } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
   });
 
   if (!invoice) notFound();
+  const calendarEvent = await getEventForInvoice(invoice.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -36,6 +38,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
             updatedAt: invoice.updatedAt.toISOString(),
           } as Invoice
         }
+        calendarEventName={calendarEvent?.name || null}
       />
     </div>
   );

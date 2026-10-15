@@ -18,7 +18,7 @@ import BackButton from "@/components/BackButton";
 import ActivityTimeline from "@/components/ActivityTimeline";
 import MarkOnCalendarButton from "@/components/MarkOnCalendarButton";
 import { getEventForInvoice } from "@/lib/events";
-import { defaultEmailContent, followUpEmailContent, isValidEmail } from "@/lib/settings";
+import { defaultEmailContent, followUpEmailContent, isValidEmail, receiptEmailContent } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
 import { ensureInvoiceViewToken, invoiceViewUrlFromHeaders } from "@/lib/signing";
 import { withParsedMultipliersList } from "@/lib/multipliers";
@@ -277,7 +277,31 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
             <p className="text-sm text-ink">
               {invoice.receipt.number} · {t("issued {date}", { date: formatDate(invoice.receipt.issueDate) })}
             </p>
-            <DownloadPdfButton url={`/api/receipts/${invoice.receipt.id}/pdf`} />
+            <div className="flex flex-wrap gap-2 justify-end">
+              <DownloadPdfButton url={`/api/receipts/${invoice.receipt.id}/pdf`} />
+              <SendEmailButton
+                kind="invoices"
+                id={invoice.id}
+                endpoint={`/api/receipts/${invoice.receipt.id}/email`}
+                defaultTo={invoice.customerEmail || ""}
+                defaultSubject={receiptEmailContent({
+                  receiptNumber: invoice.receipt.number,
+                  invoiceNumber: invoice.number,
+                  title: invoice.title,
+                  customerName: invoice.customerName,
+                  companyName: COMPANY.shortName || COMPANY.name,
+                }).subject}
+                defaultBody={receiptEmailContent({
+                  receiptNumber: invoice.receipt.number,
+                  invoiceNumber: invoice.number,
+                  title: invoice.title,
+                  customerName: invoice.customerName,
+                  companyName: COMPANY.shortName || COMPANY.name,
+                }).body}
+                emailValid={isValidEmail(invoice.customerEmail)}
+                showCc
+              />
+            </div>
           </div>
         ) : (
           <p className="text-sm text-ink-muted">

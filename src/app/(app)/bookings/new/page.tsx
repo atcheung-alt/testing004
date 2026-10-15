@@ -1,4 +1,3 @@
-import { requireAdminPage } from "@/lib/auth";
 import NewBookingEventForm from "@/components/NewBookingEventForm";
 import { getT } from "@/lib/i18n/server";
 
@@ -6,7 +5,6 @@ export const dynamic = "force-dynamic";
 
 export default async function NewBookingEventPage() {
   const t = getT();
-  await requireAdminPage();
 
   return (
     <div className="flex flex-col gap-6">

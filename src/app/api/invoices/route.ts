@@ -4,6 +4,7 @@ import { computeTotals } from "@/lib/calculations";
 import { nextDocumentNumber } from "@/lib/numbering";
 import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, eventFieldsFrom, computeDueDate, withParsedItems, VALID_INVOICE_STATUSES } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
+import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { companyWhere, ownerCompanyId } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,12 @@ export async function POST(request: NextRequest) {
   const event = eventFieldsFrom(body);
   if (event.error) {
     return NextResponse.json({ error: event.error }, { status: 400 });
+  }
+  if (body.markOnCalendar === true && (!event.eventStartDate || !event.eventEndDate)) {
+    return NextResponse.json(
+      { error: "Set both an event start and end date before marking it on the Bookings calendar." },
+      { status: 400 }
+    );
   }
 
   const taxRate = Number(body.taxRate) || 0;
@@ -94,6 +101,24 @@ export async function POST(request: NextRequest) {
     type: "CREATED",
     description: `Invoice ${invoice.number} created`,
   });
+
+  if (typeof body.markOnCalendar === "boolean") {
+    const calendarError = await syncInvoiceCalendarEvent({
+      mark: body.markOnCalendar,
+      invoiceId: invoice.id,
+      name: String(body.calendarEventName || invoice.title || invoice.customerName || ""),
+      startDate: invoice.eventStartDate,
+      startTime: invoice.eventStartTime,
+      endDate: invoice.eventEndDate,
+      endTime: invoice.eventEndTime,
+      contactPerson: invoice.customerContact,
+      companyName: invoice.customerName,
+      companyId: invoice.companyId,
+    });
+    if (calendarError) {
+      return NextResponse.json({ error: calendarError }, { status: 400 });
+    }
+  }
 
   return NextResponse.json(withParsedItems(invoice), { status: 201 });
 }

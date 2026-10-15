@@ -92,6 +92,63 @@ export async function createEventForInvoice(params: {
   return rows[0];
 }
 
+/** Put this invoice on the Bookings calendar, refresh it, or take it off. */
+export async function syncInvoiceCalendarEvent(input: {
+  mark: boolean;
+  invoiceId: string;
+  name: string;
+  startDate: Date | null;
+  startTime: string | null;
+  endDate: Date | null;
+  endTime: string | null;
+  contactPerson: string | null;
+  companyName: string;
+  companyId?: string | null;
+}): Promise<string | null> {
+  if (!input.mark) {
+    await prisma.$executeRaw`DELETE FROM "Event" WHERE "invoiceId" = ${input.invoiceId}`;
+    return null;
+  }
+  if (!input.startDate || !input.endDate) {
+    return "Set both an event start and end date before marking it on the Bookings calendar.";
+  }
+  const name = input.name.trim();
+  if (!name) return "Please enter an event name.";
+
+  const existing = await getEventForInvoice(input.invoiceId);
+  if (!existing) {
+    await createEventForInvoice({
+      invoiceId: input.invoiceId,
+      name,
+      startDate: input.startDate,
+      startTime: input.startTime,
+      endDate: input.endDate,
+      endTime: input.endTime,
+      contactPerson: input.contactPerson,
+      companyName: input.companyName,
+      companyId: input.companyId,
+    });
+    return null;
+  }
+
+  const durationMins = computeDurationMins(input.startDate, input.startTime, input.endDate, input.endTime);
+  await prisma.$executeRaw`
+    UPDATE "Event"
+    SET "name" = ${name},
+        "companyId" = ${input.companyId || null},
+        "startDate" = ${input.startDate},
+        "startTime" = ${input.startTime},
+        "endDate" = ${input.endDate},
+        "endTime" = ${input.endTime},
+        "durationMins" = ${durationMins},
+        "contactPerson" = ${input.contactPerson},
+        "companyName" = ${input.companyName},
+        "updatedAt" = now()
+    WHERE "invoiceId" = ${input.invoiceId}
+  `;
+  return null;
+}
+
 /** Every calendar event, oldest start date first — the Calendar page's only
  *  data source (see src/app/(app)/calendar/page.tsx). Unlike the old
  *  quotation-based calendar, there's no status to filter on; every row here

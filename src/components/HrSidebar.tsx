@@ -192,7 +192,6 @@ function BottomLinks({
 
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
-      <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" className={collapsed ? "mx-auto" : undefined} />
       <button
         type="button"
         onClick={handleLogout}
