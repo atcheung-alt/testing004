@@ -8,8 +8,6 @@ type StaffAccount = {
   id: string;
   email: string;
   name: string;
-  status?: string;
-  role?: string;
 };
 
 const emptyDraft = { email: "", name: "" };
@@ -22,7 +20,6 @@ export default function StaffAccountsManager() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
 
   function load() {
     fetch("/api/users")
@@ -76,7 +73,9 @@ export default function StaffAccountsManager() {
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Staff accounts")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t("Confirm registrations and edit accounts in your company. You cannot change another company's accounts.")}
+          {t(
+            "Who can log in — everyone signs in with their Google Workspace account, so just add their work email below. There's no password to set; the first sign-in with that email creates their session automatically."
+          )}
         </p>
       </div>
 
@@ -90,67 +89,32 @@ export default function StaffAccountsManager() {
       {loading ? (
         <p className="text-sm text-ink-muted">{t("Loading…")}</p>
       ) : (
-        <>
-        <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search people")} />
         <div className="flex flex-col divide-y divide-line">
-          {accounts
-            .filter((account) => {
-              const needle = query.trim().toLowerCase();
-              if (!needle) return true;
-              return `${account.name} ${account.email} ${account.status || ""}`.toLowerCase().includes(needle);
-            })
-            .map((account) => (
-            <div key={account.id} className="flex items-center justify-between gap-3 py-2">
+          {accounts.map((a) => (
+            <div key={a.id} className="flex items-center justify-between gap-3 py-2">
               <div className="flex items-center gap-2 min-w-0">
                 <UserCircle2 size={16} className="text-ink-faint shrink-0" />
                 <div className="min-w-0">
-                  <input
-                    className="input py-1"
-                    value={account.name}
-                    onChange={(e) => setAccounts((rows) => rows.map((row) => (row.id === account.id ? { ...row, name: e.target.value } : row)))}
-                    onBlur={(e) => {
-                      fetch(`/api/users/${account.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ name: e.target.value }),
-                      }).then((res) => {
-                        if (!res.ok) load();
-                      });
-                    }}
-                  />
-                  <p className="text-xs text-ink-faint truncate">{account.email} · {account.status || "ACTIVE"}</p>
+                  <p className="text-sm text-ink truncate">{a.name || a.email}</p>
+                  <p className="text-xs text-ink-faint truncate">{a.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {account.status === "PENDING" && (
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={() => {
-                      fetch(`/api/users/${account.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "ACTIVE" }),
-                      }).then(() => load());
-                    }}
-                  >
-                    {t("Confirm")}
-                  </button>
+              <button
+                type="button"
+                onClick={() => removeAccount(a.id)}
+                disabled={deletingId === a.id}
+                aria-label={t("Remove {name}", { name: a.email })}
+                className="text-ink-faint hover:text-danger-500 transition-colors shrink-0"
+              >
+                {deletingId === a.id ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <Trash2 size={15} />
                 )}
-                <button
-                  type="button"
-                  onClick={() => removeAccount(account.id)}
-                  disabled={deletingId === account.id}
-                  aria-label={t("Remove {name}", { name: account.email })}
-                  className="text-ink-faint hover:text-danger-500 transition-colors shrink-0"
-                >
-                  {deletingId === account.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                </button>
-              </div>
+              </button>
             </div>
           ))}
         </div>
-        </>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

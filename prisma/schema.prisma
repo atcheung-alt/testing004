@@ -18,61 +18,10 @@ generator client {
 // A staff login account, authenticated exclusively via Google — see
 // src/lib/googleOAuth.ts. `email` is the verified Google account email
 // that's allowed to sign in; there's no password anywhere in this app.
-// A company label on this site. People choose one when they register.
-// The top admin creates the labels. Each company's records stay separate.
-model Company {
-  id        String   @id @default(cuid())
-  name      String
-  label     String   @unique
-  website   String   @default("")
-  logo      String?
-  logoDark  String?
-  // The original HR Plus company. Its people see the same records as the top admin.
-  isHome    Boolean  @default(false)
-  // JSON array of section keys this company may open. People in the
-  // company only see a section when it is ticked here.
-  sections  String   @default("[]")
-  groups    CompanyGroup[]
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// A numbered group inside one company. Group 1 and group 2 share the
-// company's documents, but each group opens different parts of the site.
-model CompanyGroup {
-  id        String   @id @default(cuid())
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  number    Int
-  name      String   @default("")
-  sections  String   @default("[]")
-  users     User[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([companyId, number])
-}
-
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String   @default("")
-  // scrypt hash for email login. Null for accounts that only use Google.
-  passwordHash String?
-  // PENDING until an admin confirms the registration. CANCELLED cannot log in.
-  // ACTIVE is the existing staff default, so current accounts keep working.
-  status    String   @default("ACTIVE")
-  // SUPER is the first account. COMPANY_ADMIN manages one company.
-  // MEMBER is everyone else.
-  role      String   @default("MEMBER")
-  companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
-  groupId   String?
-  group     CompanyGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  // JSON array of section keys the account may open. Empty means none,
-  // except the top admin and the original staff (no company), who see all.
-  sections  String   @default("[]")
   // Admin-tier access — currently the one gate in the whole app. Set to
   // true automatically for the very first account ever created (see the
   // bootstrap branch in /api/auth/google/callback), false for every account
@@ -104,7 +53,6 @@ model User {
 // customized per-client by company name and payment window (days).
 model RecruitmentAgreement {
   id             String   @id @default(cuid())
-  companyId      String?
   number         String   @unique // e.g. RA-2026-0001
   companyName    String   @default("")
   companyEmail   String   @default("")
@@ -187,9 +135,6 @@ model Setting {
 
 model Quotation {
   id              String          @id @default(cuid())
-  // Which registered company owns this document. Null on rows created
-  // before companies existed — those stay visible to the original staff.
-  companyId       String?
   number          String          @unique
   title           String          @default("") // e.g. "Wellness Event - Office Massage"
   customerName    String          @default("")
@@ -292,7 +237,6 @@ model QuotationItem {
 
 model Invoice {
   id              String        @id @default(cuid())
-  companyId       String?
   number          String        @unique
   title           String        @default("") // e.g. "Wellness Event - Office Massage"
   poNumber        String?       // optional client purchase-order number, e.g. "PO4225"
@@ -432,7 +376,6 @@ model ExpenseDocument {
 // and dates for that job. Customer details are never part of a template.
 model QuotationTemplate {
   id             String                  @id @default(cuid())
-  companyId      String?
   name           String
   title          String                  @default("")
   notes          String?
@@ -506,7 +449,6 @@ model Budget {
 // other "at least one of..." rules in this app).
 model Customer {
   id        String          @id @default(cuid())
-  companyId String?
   name      String // company/organization name
   address   String?
   contacts  ContactPerson[]
@@ -561,7 +503,6 @@ model Receipt {
 // action, so this is a one-time, one-way action per invoice.
 model Event {
   id            String   @id @default(cuid())
-  companyId     String?
   invoiceId     String   @unique
   invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   name          String // event name, entered by staff when marking on calendar
@@ -1029,7 +970,6 @@ model PayrollEntry {
 // that file's header comment for why (same reasoning as the Event model).
 model BookingEvent {
   id          String   @id @default(cuid())
-  companyId   String?
   name        String
   description String   @default("")
   // Which company this event is being run for — mandatory. Every booking

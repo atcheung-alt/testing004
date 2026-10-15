@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSectionApi } from "@/lib/access";
+import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import {
   bookingEventFieldsFrom,
@@ -14,7 +14,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
   const event = await getBookingEvent(params.id);
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
  * every other field).
  */
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
   const existing = await getBookingEvent(params.id);
@@ -96,7 +96,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * outright.
  */
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
   const existing = await getBookingEvent(params.id);

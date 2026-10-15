@@ -29,7 +29,6 @@ import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
 import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
-import type { SectionId } from "@/lib/sections";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
 
@@ -44,19 +43,7 @@ type NavGroup = { label?: string; items: NavItem[] };
 // (HrSidebar) with its own nav and a re-tinted accent color (see the
 // `data-product="hr"` scoping in globals.css) — same app/database/session
 // underneath, deliberately distinct once you're in it.
-const ITEM_SECTION: Record<string, SectionId> = {
-  "/": "dashboard",
-  "/bookings": "bookings",
-  "/quotations": "quotations",
-  "/quotations/templates": "templates",
-  "/invoices": "invoices",
-  "/expenses": "expenses",
-  "/receipts": "receipts",
-  "/recruitment": "recruitment",
-  "/clients": "clients",
-};
-
-function buildNavGroups(t: (key: string) => string, sections: SectionId[] | "all"): NavGroup[] {
+function buildNavGroups(t: (key: string) => string): NavGroup[] {
   return [
     {
       items: [
@@ -84,17 +71,7 @@ function buildNavGroups(t: (key: string) => string, sections: SectionId[] | "all
     {
       items: [{ href: "/items", label: t("Item library"), icon: Package }],
     },
-  ]
-    .map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        if (item.href === "/items") {
-          return sections === "all" || sections.includes("quotations") || sections.includes("invoices");
-        }
-        return sections === "all" || sections.includes(ITEM_SECTION[item.href]);
-      }),
-    }))
-    .filter((group) => group.items.length > 0);
+  ];
 }
 
 function NavLink({
@@ -202,12 +179,10 @@ function BottomLinks({
   pathname,
   collapsed,
   onNavigate,
-  showSettings,
 }: {
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
-  showSettings?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -227,7 +202,7 @@ function BottomLinks({
 
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
-      {showSettings && <Link
+      <Link
         href="/settings"
         onClick={onNavigate}
         prefetch={false}
@@ -242,7 +217,7 @@ function BottomLinks({
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />
         {!collapsed && t("Settings")}
-      </Link>}
+      </Link>
       <button
         type="button"
         onClick={handleLogout}
@@ -269,23 +244,17 @@ export default function Sidebar({
   logoDataDark,
   companyName,
   isAdmin = false,
-  sections = "all",
-  showAdmin = false,
-  showCompany = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
   companyName?: string;
   isAdmin?: boolean;
-  sections?: SectionId[] | "all";
-  showAdmin?: boolean;
-  showCompany?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const navGroups = buildNavGroups(t, sections);
+  const navGroups = buildNavGroups(t);
 
   // Restore the user's last choice — read after mount so server/client
   // markup matches on first paint (avoids a hydration mismatch), then
@@ -350,24 +319,9 @@ export default function Sidebar({
           </div>
         )}
 
-        {isAdmin && <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />}
+        <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />
         <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} />
-        {(showAdmin || showCompany) && !collapsed && (
-          <div className="px-3 mt-4 flex flex-col gap-0.5">
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Admin")}</p>
-            {showAdmin && (
-              <Link href="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-muted hover:bg-paper hover:text-ink">
-                {t("All companies")}
-              </Link>
-            )}
-            {showCompany && (
-              <Link href="/company" className="rounded-lg px-3 py-2 text-sm font-medium text-ink-muted hover:bg-paper hover:text-ink">
-                {t("My company")}
-              </Link>
-            )}
-          </div>
-        )}
-        <BottomLinks pathname={pathname} collapsed={collapsed} showSettings={isAdmin || showCompany} />
+        <BottomLinks pathname={pathname} collapsed={collapsed} />
       </aside>
 
       {/* Mobile top bar trigger + drawer — always shows full labels; the
@@ -409,7 +363,7 @@ export default function Sidebar({
               </div>
               <SwitchSystemLink href="/hr" label={t("HR System")} onNavigate={() => setOpen(false)} />
               <NavLinks navGroups={navGroups} pathname={pathname} onNavigate={() => setOpen(false)} />
-              <BottomLinks pathname={pathname} onNavigate={() => setOpen(false)} showSettings={isAdmin || showCompany} />
+              <BottomLinks pathname={pathname} onNavigate={() => setOpen(false)} />
             </aside>
           </div>
           </Portal>

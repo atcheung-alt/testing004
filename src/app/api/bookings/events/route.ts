@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { companyWhere, ownerCompanyId, requireSectionApi, rowInCompanyScope } from "@/lib/access";
+import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { bookingEventFieldsFrom, createBookingEvent, listBookingEvents } from "@/lib/bookings";
 
@@ -8,19 +8,18 @@ export const dynamic = "force-dynamic";
 /** GET — every booking event, most recent start date first, for the staff
  *  /bookings list page. */
 export async function GET() {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
-  const scope = await companyWhere();
   const events = await listBookingEvents();
-  return NextResponse.json({ events: events.filter((event) => rowInCompanyScope(scope, event.companyId)) });
+  return NextResponse.json({ events });
 }
 
 /** POST — create a new bookable event (e.g. "Massage", "DIY Workshop").
  *  Starts with no slots — staff add those from the event's own detail page
  *  next. */
 export async function POST(request: NextRequest) {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
   const body = await request.json().catch(() => ({}));
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
       // place this flag can be set (see the schema comment on
       // BookingEvent.requiresConfirmation).
       requiresConfirmation: body.requiresConfirmation === true,
-      companyId: await ownerCompanyId(),
     });
 
     await logActivity({

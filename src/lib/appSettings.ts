@@ -135,11 +135,11 @@ export function parseCcEmails(raw: string): string[] {
  * defaults (currency, banking, contact, chop, etc.) with name/logo/website
  * overridden by whatever's configured on the Settings page, if anything.
  */
-export async function getEffectiveCompany(forCompanyId?: string | null): Promise<
+export async function getEffectiveCompany(): Promise<
   typeof COMPANY & { logoDataDark: string | null }
 > {
   const settings = await getSettings();
-  const base = {
+  return {
     ...COMPANY,
     name: settings.companyName || COMPANY.name,
     shortName: settings.companyName || COMPANY.shortName,
@@ -150,21 +150,6 @@ export async function getEffectiveCompany(forCompanyId?: string | null): Promise
     // one, in which case the primary logo just keeps showing in dark mode.
     logoDataDark: settings.companyLogoDark || null,
     website: settings.companyWebsite || COMPANY.website,
-  };
-  if (!forCompanyId) return base;
-  const company = await prisma.company.findUnique({
-    where: { id: forCompanyId },
-    select: { name: true, isHome: true, website: true, logo: true, logoDark: true },
-  });
-  if (!company) return base;
-  const ownLogo = company.logo || (company.isHome ? base.logoData : null);
-  return {
-    ...base,
-    name: company.name || base.name,
-    shortName: company.name || base.shortName,
-    logoData: ownLogo,
-    logoDataDark: company.logoDark || (company.isHome ? base.logoDataDark : null),
-    website: company.website || (company.isHome ? base.website : ""),
   };
 }
 

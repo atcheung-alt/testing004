@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus, CalendarCheck } from "lucide-react";
+import { requireAdminPage } from "@/lib/auth";
 import { listBookingEvents } from "@/lib/bookings";
-import { companyWhere, rowInCompanyScope } from "@/lib/access";
 import { listEvents } from "@/lib/events";
 import EmptyState from "@/components/EmptyState";
 import BookingEventListClient from "@/components/BookingEventListClient";
@@ -20,12 +20,10 @@ export const dynamic = "force-dynamic";
  */
 export default async function BookingsPage() {
   const t = getT();
-  const scope = await companyWhere();
+  await requireAdminPage();
 
   const [events, jobs] = await Promise.all([listBookingEvents(), listEvents()]);
-  const ownEvents = events.filter((event) => rowInCompanyScope(scope, event.companyId));
-  const ownJobs = jobs.filter((job) => rowInCompanyScope(scope, job.companyId));
-  const serializedEvents = ownEvents.map((e) => ({
+  const serializedEvents = events.map((e) => ({
     id: e.id,
     name: e.name,
     description: e.description,
@@ -36,7 +34,7 @@ export default async function BookingsPage() {
   }));
   const calendarItems = [
     ...serializedEvents,
-    ...ownJobs.map((job) => ({
+    ...jobs.map((job) => ({
       id: job.id,
       name: job.name,
       description: job.companyName,
@@ -64,7 +62,7 @@ export default async function BookingsPage() {
 
       <BookingEventsCalendar events={calendarItems} />
 
-      {ownEvents.length === 0 ? (
+      {events.length === 0 ? (
         <EmptyState
           icon={CalendarCheck}
           title={t("No booking events yet")}

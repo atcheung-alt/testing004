@@ -8,7 +8,6 @@ import { SESSION_COOKIE, verifySession } from "@/lib/authToken";
 // are exempt.
 const PUBLIC_PATH_PREFIXES = [
   "/login",
-  "/register",
   "/sign/",
   "/invoice/",
   "/recruitment-sign/",
@@ -92,25 +91,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  const status = session.status || "ACTIVE";
-  if (status === "CANCELLED") {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "This account has been cancelled." }, { status: 403 });
-    }
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("error", "cancelled");
-    return NextResponse.redirect(loginUrl);
-  }
-  if (status === "PENDING" && pathname !== "/pending" && !pathname.startsWith("/api/auth/logout")) {
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "This account is waiting for confirmation." }, { status: 403 });
-    }
-    return NextResponse.redirect(new URL("/pending", request.url));
-  }
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-pathname", pathname);
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return NextResponse.next();
 }
 
 export const config = {

@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { AlertCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { AlertCircle, AlertTriangle } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -14,8 +12,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   unverified_email: "That Google account's email isn't verified, so it can't be used to log in.",
   not_authorized:
     "That Google account isn't authorized for this app yet. Ask an admin to add your email in Settings → Staff accounts.",
-  cancelled: "This account has been cancelled.",
-  pending: "This account is waiting for an admin to confirm it.",
   database:
     "The database is connected, but its tables are not ready yet. Reload this page after the latest deploy finishes.",
 };
@@ -43,78 +39,32 @@ export default function LoginForm({
   errorCode?: string;
 }) {
   const t = useT();
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(errorCode || null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
-    setError(null);
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json().catch(() => ({}));
-    setSaving(false);
-    if (!res.ok) {
-      setError(data.error || t("Something went wrong signing in."));
-      return;
-    }
-    router.push(data.status === "PENDING" ? "/pending" : next);
-    router.refresh();
-  }
+  const [error] = useState<string | null>(errorCode || null);
 
   function continueWithGoogle() {
     window.location.href = `/api/auth/google/start?next=${encodeURIComponent(next)}`;
   }
 
   return (
-    <form onSubmit={submit} className="card p-6 flex flex-col gap-4">
+    <div className="card p-6 flex flex-col gap-4">
       <div>
         <h1 className="font-display text-xl font-semibold text-ink">
           {mode === "setup" ? t("Set up the first account") : t("Log in")}
         </h1>
         <p className="text-sm text-ink-muted mt-1">
           {mode === "setup"
-            ? t("Create the first account. It becomes the top admin.")
-            : t("Log in with your email and password.")}
+            ? t(
+                "No staff accounts exist yet — sign in with your Google Workspace account to create the first one. Add teammates afterward from Settings → Staff accounts."
+              )
+            : t("Sign in with your Google Workspace account to continue.")}
         </p>
       </div>
 
       {error && (
         <div className="flex items-start gap-2 bg-danger-50 border border-danger-500/30 text-danger-600 text-sm rounded-xl px-3 py-2">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
-          <span>{t(ERROR_MESSAGES[error] || error)}</span>
+          <span>{t(ERROR_MESSAGES[error] || "Something went wrong signing in.")}</span>
         </div>
-      )}
-
-      {mode === "login" && (
-        <>
-          <div>
-            <label className="label">{t("Email")}</label>
-            <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
-          </div>
-          <div>
-            <label className="label">{t("Password")}</label>
-            <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-          </div>
-          <button type="submit" className="btn-primary justify-center" disabled={saving}>
-            {saving ? <Loader2 size={15} className="animate-spin" /> : null}
-            {t("Log in")}
-          </button>
-          <Link href="/register" className="text-sm text-brand-500 hover:text-brand-600">
-            {t("Create an account")}
-          </Link>
-        </>
-      )}
-      {mode === "setup" && (
-        <Link href="/register" className="btn-primary justify-center">
-          {t("Create the top admin")}
-        </Link>
       )}
 
       {googleEnabled ? (
@@ -133,6 +83,6 @@ export default function LoginForm({
           </span>
         </div>
       )}
-    </form>
+    </div>
   );
 }

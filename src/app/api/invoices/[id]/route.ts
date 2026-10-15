@@ -218,7 +218,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       endTime: invoice.eventEndTime,
       contactPerson: invoice.customerContact,
       companyName: invoice.customerName,
-      companyId: invoice.companyId,
     });
     if (calendarError) {
       return NextResponse.json({ error: calendarError }, { status: 400 });

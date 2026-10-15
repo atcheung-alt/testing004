@@ -11,7 +11,6 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { getT } from "@/lib/i18n/server";
-import { companyWhere } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +32,6 @@ async function InvoiceList({
   const t = getT();
   const invoices = await prisma.invoice.findMany({
     where: {
-      ...(await companyWhere()),
       status: status === "OVERDUE" ? "UNPAID" : status || undefined,
       dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
       issueDate: dateRangeFilter(from, to),

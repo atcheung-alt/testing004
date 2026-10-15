@@ -9,7 +9,6 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import { getT } from "@/lib/i18n/server";
-import { companyWhere } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +28,6 @@ async function RecruitmentList({
   const t = getT();
   const agreements = await prisma.recruitmentAgreement.findMany({
     where: {
-      ...(await companyWhere()),
       status: status || undefined,
       createdAt: dateRangeFilter(from, to),
       OR: q

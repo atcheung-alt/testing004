@@ -28,7 +28,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       eventStartTime: true,
       eventEndDate: true,
       eventEndTime: true,
-      companyId: true,
     },
   });
   if (!invoice) {
@@ -48,7 +47,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const event = await createEventForInvoice({
     invoiceId: invoice.id,
-    companyId: invoice.companyId,
     name,
     startDate: invoice.eventStartDate,
     startTime: invoice.eventStartTime,

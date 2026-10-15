@@ -10,23 +10,12 @@ export async function getCurrentUser(): Promise<SessionPayload | null> {
 }
 
 /** Set the session cookie after a successful Google sign-in. */
-export async function createSession(user: {
-  id: string;
-  email: string;
-  name: string;
-  isAdmin: boolean;
-  status?: string;
-  role?: string;
-  companyId?: string | null;
-}) {
+export async function createSession(user: { id: string; email: string; name: string; isAdmin: boolean }) {
   const token = await signSession({
     userId: user.id,
     email: user.email,
     name: user.name,
     isAdmin: user.isAdmin,
-    status: user.status || "ACTIVE",
-    role: user.role || (user.isAdmin ? "SUPER" : "MEMBER"),
-    companyId: user.companyId || null,
     exp: Date.now() + SESSION_TTL_MS,
   });
   cookies().set(SESSION_COOKIE, token, {

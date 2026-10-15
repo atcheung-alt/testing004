@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { itemCreateFrom, documentDefaultsFrom } from "@/lib/document-helpers";
-import { companyWhere, ownerCompanyId } from "@/lib/access";
 
 function templateDataFrom(body: any) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -39,7 +38,6 @@ function templateDataFrom(body: any) {
 
 export async function GET() {
   const templates = await prisma.quotationTemplate.findMany({
-    where: await companyWhere(),
     orderBy: { updatedAt: "desc" },
     include: { items: { select: { id: true, name: true }, orderBy: { sortOrder: "asc" } } },
   });
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
   const template = await prisma.quotationTemplate.create({
-    data: { ...parsed.data!, companyId: await ownerCompanyId() },
+    data: parsed.data!,
     include: { items: { orderBy: { sortOrder: "asc" } } },
   });
   return NextResponse.json(template, { status: 201 });

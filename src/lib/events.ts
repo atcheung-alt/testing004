@@ -14,7 +14,6 @@ import { prisma } from "@/lib/prisma";
 
 export type EventRecord = {
   id: string;
-  companyId: string | null;
   invoiceId: string;
   name: string;
   startDate: Date;
@@ -78,15 +77,14 @@ export async function createEventForInvoice(params: {
   endTime: string | null;
   contactPerson: string | null;
   companyName: string;
-  companyId?: string | null;
 }): Promise<EventRecord> {
   const id = randomUUID();
   const durationMins = computeDurationMins(params.startDate, params.startTime, params.endDate, params.endTime);
   const rows = await prisma.$queryRaw<EventRecord[]>`
     INSERT INTO "Event"
-      ("id", "invoiceId", "companyId", "name", "startDate", "startTime", "endDate", "endTime", "durationMins", "contactPerson", "companyName", "createdAt", "updatedAt")
+      ("id", "invoiceId", "name", "startDate", "startTime", "endDate", "endTime", "durationMins", "contactPerson", "companyName", "createdAt", "updatedAt")
     VALUES
-      (${id}, ${params.invoiceId}, ${params.companyId || null}, ${params.name}, ${params.startDate}, ${params.startTime}, ${params.endDate}, ${params.endTime}, ${durationMins}, ${params.contactPerson}, ${params.companyName}, now(), now())
+      (${id}, ${params.invoiceId}, ${params.name}, ${params.startDate}, ${params.startTime}, ${params.endDate}, ${params.endTime}, ${durationMins}, ${params.contactPerson}, ${params.companyName}, now(), now())
     RETURNING *
   `;
   return rows[0];
@@ -103,7 +101,6 @@ export async function syncInvoiceCalendarEvent(input: {
   endTime: string | null;
   contactPerson: string | null;
   companyName: string;
-  companyId?: string | null;
 }): Promise<string | null> {
   if (!input.mark) {
     await prisma.$executeRaw`DELETE FROM "Event" WHERE "invoiceId" = ${input.invoiceId}`;
@@ -126,7 +123,6 @@ export async function syncInvoiceCalendarEvent(input: {
       endTime: input.endTime,
       contactPerson: input.contactPerson,
       companyName: input.companyName,
-      companyId: input.companyId,
     });
     return null;
   }
@@ -135,7 +131,6 @@ export async function syncInvoiceCalendarEvent(input: {
   await prisma.$executeRaw`
     UPDATE "Event"
     SET "name" = ${name},
-        "companyId" = ${input.companyId || null},
         "startDate" = ${input.startDate},
         "startTime" = ${input.startTime},
         "endDate" = ${input.endDate},

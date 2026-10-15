@@ -114,7 +114,7 @@ export async function buildQuotationPdf(id: string, languageOverride?: string | 
   });
   if (!quotation) return null;
 
-  const company = await getEffectiveCompany(quotation.companyId);
+  const company = await getEffectiveCompany();
   const items = mapItems(quotation.items);
   const data: PdfDocData = {
     kind: "Quotation",
@@ -180,7 +180,7 @@ export async function buildInvoicePdf(
   });
   if (!invoice) return null;
 
-  const company = await getEffectiveCompany(invoice.companyId);
+  const company = await getEffectiveCompany();
   const data: PdfDocData = {
     kind: "Invoice",
     number: invoice.number,
@@ -238,7 +238,7 @@ export async function buildReceiptPdf(invoiceId: string, languageOverride?: stri
   });
   if (!invoice || !invoice.receipt) return null;
 
-  const company = await getEffectiveCompany(invoice.companyId);
+  const company = await getEffectiveCompany();
   const data: PdfDocData = {
     kind: "Receipt",
     number: invoice.receipt.number,
@@ -297,7 +297,7 @@ export async function buildRecruitmentAgreementPdf(
   const agreement = await prisma.recruitmentAgreement.findUnique({ where: { id } });
   if (!agreement) return null;
 
-  const company = await getEffectiveCompany(agreement.companyId);
+  const company = await getEffectiveCompany();
   const data: RecruitmentAgreementPdfData = {
     number: agreement.number,
     companyName: agreement.companyName,

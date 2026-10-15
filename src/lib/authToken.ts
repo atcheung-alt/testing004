@@ -21,10 +21,6 @@ export type SessionPayload = {
   // rest of this payload, it only changes on next sign-in (or once the
   // current session cookie expires), same trade-off noted above.
   isAdmin: boolean;
-  // Absent on sessions created before company accounts. Treat those as ACTIVE.
-  status?: string;
-  role?: string;
-  companyId?: string | null;
   exp: number; // unix ms
 };
 

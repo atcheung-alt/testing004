@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSectionApi } from "@/lib/access";
+import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import {
   bulkSlotFieldsFrom,
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
  * slider to in the admin UI (see SLOT_DURATION_MIN/MAX_MINUTES).
  */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireSectionApi("bookings");
+  const denied = await requireAdminApi();
   if (denied) return denied;
 
   const event = await getBookingEvent(params.id);

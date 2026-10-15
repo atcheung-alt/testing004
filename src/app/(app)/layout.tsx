@@ -1,11 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import PageTransition from "@/components/PageTransition";
 import RequiredSetupGate from "@/components/RequiredSetupGate";
-import { getCurrentUser, clearSession } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { getEffectiveCompany, getSettings, getMissingRequiredSettings } from "@/lib/appSettings";
-import { allowedSections, canSeeSection, getAccount, isCompanyAdmin, isSuper, sectionForPath } from "@/lib/access";
 
 // Wraps every internal staff page (dashboard, quotations, invoices, items)
 // with the Sidebar chrome (no top bar — quick-create actions and the
@@ -21,32 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) {
     redirect("/login");
   }
-  const account = await getAccount();
-  if (!account || account.status === "CANCELLED") {
-    clearSession();
-    redirect("/login");
-  }
-  if (account.status === "PENDING") redirect("/pending");
-
-  const pathname = headers().get("x-pathname") || headers().get("next-url") || "";
-  const section = sectionForPath(pathname);
-  if (section === "admin" && !isSuper(account)) redirect("/");
-  if (section === "company" && !isCompanyAdmin(account)) redirect("/");
-  if (section === "settings" && !isSuper(account) && !isCompanyAdmin(account)) redirect("/");
-  if (section && section !== "admin" && section !== "company" && section !== "settings" && section !== "hr") {
-    if (!canSeeSection(account, section)) {
-      const allowed = allowedSections(account);
-      if (allowed === "all") redirect("/");
-      if (allowed.length === 0) {
-        if (pathname !== "/no-access") redirect("/no-access");
-      } else {
-        const first = `/${allowed[0] === "dashboard" ? "" : allowed[0] === "templates" ? "quotations/templates" : allowed[0]}`;
-        if (pathname !== first) redirect(first || "/");
-      }
-    }
-  }
-
-  const company = await getEffectiveCompany(account.companyId && !isSuper(account) ? account.companyId : null);
+  const company = await getEffectiveCompany();
   const settings = await getSettings();
 
   // Only the admin account ever sees the required-setup gate — settings is
@@ -63,9 +36,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoDataDark={settings.companyLogoDark}
         companyName={company.shortName || company.name}
         isAdmin={isAdmin}
-        sections={allowedSections(account)}
-        showAdmin={isSuper(account)}
-        showCompany={isCompanyAdmin(account)}
       />
       <div className="flex-1 flex flex-col min-w-0">
         {/* pt-16 on mobile clears the fixed hamburger button that now floats

@@ -259,10 +259,7 @@ export async function sendDocumentEmail({
     );
   }
 
-  const { getAccount, isSuper } = await import("@/lib/access");
-  const sender = await getAccount().catch(() => null);
-  const senderCompanyId = sender?.companyId && !isSuper(sender) ? sender.companyId : null;
-  const [company, standingCc] = await Promise.all([getEffectiveCompany(senderCompanyId), getEffectiveCc()]);
+  const [company, standingCc] = await Promise.all([getEffectiveCompany(), getEffectiveCc()]);
 
   const from =
     process.env.SMTP_FROM || `${company.name} <${company.email || process.env.SMTP_USER}>`;

@@ -21,12 +21,12 @@ export async function buildExpensePdf(
   const expense = await prisma.invoiceExpense.findFirst({
     where: { id: expenseId, invoiceId },
     include: {
-      invoice: { select: { number: true, customerName: true, customerEmail: true, companyId: true } },
+      invoice: { select: { number: true, customerName: true, customerEmail: true } },
     },
   });
   if (!expense) return null;
 
-  const company = await getEffectiveCompany(expense.invoice.companyId);
+  const company = await getEffectiveCompany();
   const description = expense.category === "Others" ? expense.label : "";
   const data: ExpensePdfData = {
     language: languageOverride,
