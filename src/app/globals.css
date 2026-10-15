@@ -23,17 +23,17 @@
 
 :root,
 html[data-theme="light"] {
-  --color-paper: 246 249 252;
+  --color-paper: 245 247 252;
   --color-surface: 255 255 255;
-  --color-ink: 10 37 64;
-  --color-ink-muted: 66 84 102;
-  --color-ink-faint: 106 122 138;
-  --color-brand-50: 246 248 255;
-  --color-brand-100: 230 232 255;
-  --color-brand-300: 164 160 255;
-  --color-brand-500: 99 91 255;
-  --color-brand-600: 84 77 224;
-  --color-brand-700: 60 54 184;
+  --color-ink: 27 36 54;
+  --color-ink-muted: 102 112 138;
+  --color-ink-faint: 154 163 184;
+  --color-brand-50: 238 244 255;
+  --color-brand-100: 220 232 255;
+  --color-brand-300: 143 182 255;
+  --color-brand-500: 79 124 255;
+  --color-brand-600: 61 99 224;
+  --color-brand-700: 47 79 189;
   --color-cyan-50: 236 254 255;
   --color-cyan-100: 207 250 254;
   --color-cyan-300: 103 232 249;
@@ -41,12 +41,12 @@ html[data-theme="light"] {
   --color-cyan-600: 14 165 196;
   --color-accent-100: 241 232 255;
   --color-accent-300: 201 166 255;
-  --color-accent-500: 99 91 255;
-  --color-accent-600: 84 77 224;
-  --color-line: 227 232 238;
-  --color-danger-50: 255 244 244;
-  --color-danger-500: 223 27 65;
-  --color-danger-600: 176 20 52;
+  --color-accent-500: 155 107 234;
+  --color-accent-600: 127 79 209;
+  --color-line: 227 232 243;
+  --color-danger-50: 252 238 236;
+  --color-danger-500: 196 72 58;
+  --color-danger-600: 160 58 47;
 }
 
 html[data-theme="dark"] {
@@ -62,12 +62,12 @@ html[data-theme="dark"] {
   --color-ink-faint: 112 113 118;
   --color-line: 48 49 53;
 
-  --color-brand-50: 28 26 58;
-  --color-brand-100: 40 36 84;
-  --color-brand-300: 164 160 255;
-  --color-brand-500: 129 122 255;
-  --color-brand-600: 164 160 255;
-  --color-brand-700: 196 193 255;
+  --color-brand-50: 24 39 65;
+  --color-brand-100: 30 50 90;
+  --color-brand-300: 110 147 224;
+  --color-brand-500: 91 134 255;
+  --color-brand-600: 130 166 255;
+  --color-brand-700: 169 194 255;
   --color-cyan-50: 12 42 48;
   --color-cyan-100: 18 58 66;
   --color-cyan-300: 77 208 230;
@@ -95,12 +95,12 @@ html[data-theme="dark"] {
     --color-ink-faint: 112 113 118;
     --color-line: 48 49 53;
 
-    --color-brand-50: 28 26 58;
-    --color-brand-100: 40 36 84;
-    --color-brand-300: 164 160 255;
-    --color-brand-500: 129 122 255;
-    --color-brand-600: 164 160 255;
-    --color-brand-700: 196 193 255;
+    --color-brand-50: 24 39 65;
+    --color-brand-100: 30 50 90;
+    --color-brand-300: 110 147 224;
+    --color-brand-500: 91 134 255;
+    --color-brand-600: 130 166 255;
+    --color-brand-700: 169 194 255;
     --color-cyan-50: 12 42 48;
     --color-cyan-100: 18 58 66;
     --color-cyan-300: 77 208 230;
@@ -174,18 +174,17 @@ html[data-theme="dark"] [data-product="hr"] {
    stay put when re-theming with light/dark — but that means they need an
    explicit override here too, or primary buttons and card hover states
    would stay blue even under the HR shell while everything else re-tints. */
-[data-product="hr"] .btn-primary:hover {
-  background-color: #047857;
+[data-product="hr"] .btn-primary {
+  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
 }
 [data-product="hr"] .card:hover {
-  box-shadow: 0 4px 12px rgba(10, 37, 64, 0.06);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.16);
 }
 [data-product="hr"] .bg-brand-gradient {
-  background-image: none;
-  background-color: #059669;
+  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
 }
 [data-product="hr"] .shadow-soft {
-  box-shadow: 0 2px 5px rgba(5, 150, 105, 0.18);
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.12);
 }
 
 /* -----------------------------------------------------------------------
@@ -226,7 +225,7 @@ html[data-theme="dark"] .theme-logo-dark {
     @apply bg-paper;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-paper text-ink font-sans antialiased bg-app-gradient bg-fixed;
   }
   ::selection {
     @apply bg-brand-100;
@@ -265,17 +264,17 @@ html[data-theme="dark"] .theme-logo-dark {
      `overflow`, so both `shadow-card` and `shadow-soft` still render fully
      rounded and unclipped. */
   .card {
-    @apply bg-surface border border-line rounded-lg overflow-hidden;
+    @apply bg-surface/95 border border-line rounded-card shadow-card backdrop-blur-sm overflow-hidden transition-shadow duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-soft;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium will-change-transform transition-[transform,background-color,color,border-color,box-shadow,filter] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-px active:translate-y-0 active:scale-[0.96] active:duration-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white shadow-soft hover:bg-brand-700;
+    @apply btn bg-brand-gradient text-white shadow-soft hover:brightness-105;
   }
   .btn-secondary {
-    @apply btn bg-surface text-ink border border-line hover:bg-paper;
+    @apply btn bg-surface text-ink border border-line hover:bg-brand-50;
   }
   .btn-danger {
     @apply btn bg-surface text-danger-500 border border-danger-500/30 hover:bg-danger-50;
@@ -285,10 +284,10 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 
   .input {
-    @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 outline-none transition-colors duration-150;
+    @apply w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-colors duration-200;
   }
   .label {
-    @apply block text-sm font-medium text-ink-muted mb-1.5;
+    @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5;
   }
 
   .stamp {

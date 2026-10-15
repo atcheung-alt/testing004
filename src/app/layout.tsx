@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Inter, IBM_Plex_Mono, Allura } from "next/font/google";
+import { Fraunces, Inter, IBM_Plex_Mono, Allura } from "next/font/google";
 import { getEffectiveAnimationsEnabled, getEffectiveThemeModeFor } from "@/lib/appSettings";
 import { getCurrentUser } from "@/lib/auth";
 import { LanguageProvider } from "@/lib/i18n/client";
@@ -8,6 +8,13 @@ import { htmlLang } from "@/lib/i18n/language";
 import { getAppLanguage } from "@/lib/i18n/server";
 import PublicLanguageSwitch from "@/components/PublicLanguageSwitch";
 import "./globals.css";
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -70,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={htmlLang(language)}
       data-animations={animationsEnabled ? "on" : "off"}
       data-theme={themeMode.toLowerCase()}
-      className={`${inter.variable} ${plexMono.variable} ${allura.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${plexMono.variable} ${allura.variable}`}
     >
       <body>
         <LanguageProvider language={language}>
