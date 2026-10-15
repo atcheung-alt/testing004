@@ -7,8 +7,6 @@ import { FileText, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import StatusBadge from "@/components/StatusBadge";
-import DownloadPdfButton from "@/components/DownloadPdfButton";
-import SendEmailButton from "@/components/SendEmailButton";
 
 export type ExpenseInvoiceChoice = {
   id: string;
@@ -90,7 +88,14 @@ export default function ExpenseWorkspace({
 
   const selected = invoices.find((invoice) => invoice.id === invoiceId) || null;
 
-  const shown = initialInvoiceId ? expenses.filter((row) => row.invoice.id === initialInvoiceId) : expenses;
+  const shown = useMemo(() => {
+    if (invoiceId) return expenses.filter((row) => row.invoice.id === invoiceId);
+    const q = invoiceQuery.trim().toLowerCase();
+    if (!q) return expenses;
+    return expenses.filter((row) =>
+      [row.invoice.number, row.invoice.customerName].filter(Boolean).join(" ").toLowerCase().includes(q)
+    );
+  }, [expenses, invoiceId, invoiceQuery]);
   const isOthers = category === "Others";
 
   async function onFiles(list: FileList | null) {
@@ -344,15 +349,24 @@ export default function ExpenseWorkspace({
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-lg font-semibold">{t("Recorded expenses")}</h2>
-          {initialInvoiceId && (
-            <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600">
+          {(invoiceId || invoiceQuery.trim()) && (
+            <button
+              type="button"
+              className="text-sm text-brand-500 hover:text-brand-600"
+              onClick={() => {
+                setInvoiceId("");
+                setInvoiceQuery("");
+              }}
+            >
               {t("Show all expenses")}
-            </Link>
+            </button>
           )}
         </div>
         {shown.length === 0 ? (
           <div className="card px-5 py-8 text-sm text-ink-muted text-center">
-            {t("No expenses yet. Record one above and it will stay linked to the invoice you chose.")}
+            {invoiceId || invoiceQuery.trim()
+              ? t("No expenses logged for this invoice yet.")
+              : t("No expenses yet. Record one above and it will stay linked to the invoice you chose.")}
           </div>
         ) : (
           <div className="card divide-y divide-line">
@@ -398,19 +412,6 @@ export default function ExpenseWorkspace({
                 >
                   {deletingId === row.id ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                 </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <DownloadPdfButton url={`/api/invoices/${row.invoice.id}/expenses/${row.id}/pdf`} />
-                  <SendEmailButton
-                    kind="invoices"
-                    id={row.invoice.id}
-                    endpoint={`/api/invoices/${row.invoice.id}/expenses/${row.id}/email`}
-                    defaultTo={row.invoice.customerEmail || ""}
-                    defaultSubject={`Expense for ${row.invoice.number}`}
-                    defaultBody={`Dear ${row.invoice.customerName || "Customer"},\n\nPlease find the expense record for invoice ${row.invoice.number} attached.\n`}
-                    emailValid={Boolean(row.invoice.customerEmail)}
-                    showCc
-                  />
                 </div>
               </div>
             ))}

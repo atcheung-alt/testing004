@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wallet, Plus, Trash2, Loader2, AlertCircle, Paperclip, FileText } from "lucide-react";
+import { Wallet, Plus, Trash2, Loader2, AlertCircle, Paperclip, FileText, ChevronDown } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 
@@ -39,11 +39,13 @@ export default function InvoiceExpensesCard({
   expenses,
   invoiceTotal,
   categories,
+  embedded = false,
 }: {
   invoiceId: string;
   expenses: InvoiceExpense[];
   invoiceTotal: number;
   categories: string[];
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const options = [...categories, "Others"];
@@ -178,7 +180,7 @@ export default function InvoiceExpensesCard({
   }
 
   return (
-    <div className="card p-5 flex flex-col gap-4">
+    <div className={embedded ? "p-5 flex flex-col gap-4" : "card p-5 flex flex-col gap-4"}>
       <div className="flex items-center gap-2">
         <Wallet size={17} className="text-brand-600" />
         <h2 className="font-display text-lg font-semibold">{t("Event expenses")}</h2>
@@ -401,6 +403,57 @@ export default function InvoiceExpensesCard({
         <p className="text-xs text-ink-faint">
           {t("Tip: add reusable categories (Venue, Staffing, Transport…) in Settings so you don't have to type them out every time.")}
         </p>
+      )}
+    </div>
+  );
+}
+
+export function InvoiceExpensesDisclosure({
+  invoiceId,
+  expenses,
+  invoiceTotal,
+  categories,
+}: {
+  invoiceId: string;
+  expenses: InvoiceExpense[];
+  invoiceTotal: number;
+  categories: string[];
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+  return (
+    <div className="card overflow-hidden">
+      <button
+        type="button"
+        className="w-full px-5 py-4 flex items-center justify-between gap-4 text-left hover:bg-paper transition-colors"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <div>
+          <p className="font-medium text-ink">{t("Expenses")}</p>
+          <p className="text-sm text-ink-muted mt-0.5">
+            {expenses.length === 0
+              ? t("Record a cost and upload a receipt for this invoice.")
+              : t("{count} logged · {amount}", {
+                  count: expenses.length,
+                  amount: formatCurrency(total),
+                })}
+          </p>
+        </div>
+        <ChevronDown size={18} className={`text-ink-faint shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="border-t border-line">
+          <InvoiceExpensesCard
+            embedded
+            invoiceId={invoiceId}
+            expenses={expenses}
+            invoiceTotal={invoiceTotal}
+            categories={categories}
+          />
+        </div>
       )}
     </div>
   );

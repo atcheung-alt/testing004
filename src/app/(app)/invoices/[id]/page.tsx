@@ -25,26 +25,39 @@ import { withParsedMultipliersList } from "@/lib/multipliers";
 import { withParsedFeesList } from "@/lib/fees";
 import { getActivityTimeline } from "@/lib/activity";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
+import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
+import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 
 export const dynamic = "force-dynamic";
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
-  const raw = await prisma.invoice.findUnique({
-    where: { id: params.id },
-    include: {
-      items: { orderBy: { sortOrder: "asc" } },
-      expenses: { select: { amount: true } },
-      quotation: { select: { id: true, number: true, driveFileUrl: true } },
-      receipt: { select: { id: true, number: true, issueDate: true, driveFileUrl: true } },
-    },
-  });
+  await ensureDefaultExpenseCategories();
+  const [raw, categories] = await Promise.all([
+    prisma.invoice.findUnique({
+      where: { id: params.id },
+      include: {
+        items: { orderBy: { sortOrder: "asc" } },
+        expenses: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            documents: {
+              select: { id: true, fileName: true, mimeType: true },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+        quotation: { select: { id: true, number: true, driveFileUrl: true } },
+        receipt: { select: { id: true, number: true, issueDate: true, driveFileUrl: true } },
+      },
+    }),
+    prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" }, select: { name: true } }),
+  ]);
 
   if (!raw) notFound();
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);
-  const expenseTotal = invoice.expenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const locked = invoice.status === "CANCELLED";
   const token = await ensureInvoiceViewToken(invoice.id);
@@ -240,23 +253,18 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         total={invoice.total}
       />
 
-      <Link
-        href={`/expenses?invoice=${invoice.id}`}
-        className="card px-5 py-4 flex items-center justify-between gap-4 hover:bg-paper transition-colors"
-      >
-        <div>
-          <p className="font-medium text-ink">{t("Expenses")}</p>
-          <p className="text-sm text-ink-muted mt-0.5">
-            {invoice.expenses.length === 0
-              ? t("Record a cost and upload a receipt for this invoice.")
-              : t("{count} logged · {amount}", {
-                  count: invoice.expenses.length,
-                  amount: formatCurrency(expenseTotal),
-                })}
-          </p>
-        </div>
-        <span className="text-sm font-medium text-brand-500 shrink-0">{t("Open expenses")}</span>
-      </Link>
+      <InvoiceExpensesDisclosure
+        invoiceId={invoice.id}
+        invoiceTotal={invoice.total}
+        categories={categories.map((category) => category.name)}
+        expenses={invoice.expenses.map((expense) => ({
+          id: expense.id,
+          category: expense.category,
+          label: expense.label,
+          amount: expense.amount,
+          documents: expense.documents,
+        }))}
+      />
 
       {invoice.notes && (
         <div className="card p-5">
