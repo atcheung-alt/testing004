@@ -54,11 +54,11 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
     {
       label: t("Billing"),
       items: [
-        { href: "/quotations", label: t("Quotations"), icon: FileText },
         { href: "/quotations/templates", label: t("Templates"), icon: LayoutTemplate },
+        { href: "/quotations", label: t("Quotations"), icon: FileText },
         { href: "/invoices", label: t("Invoices"), icon: ReceiptText },
-        { href: "/expenses", label: t("Expenses"), icon: Wallet },
         { href: "/receipts", label: t("Receipts"), icon: ReceiptIcon },
+        { href: "/expenses", label: t("Expenses"), icon: Wallet },
       ],
     },
     {
