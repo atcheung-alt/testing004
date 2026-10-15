@@ -10,6 +10,7 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import SendEmailButton from "@/components/SendEmailButton";
 import DeleteButton from "@/components/DeleteButton";
+import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { isValidEmail, receiptEmailContent } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
@@ -270,7 +271,8 @@ export default function ReceiptsPage({
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div>
+      <StickyListHeader>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Receipts")}</h1>
@@ -299,6 +301,7 @@ export default function ReceiptsPage({
         <SearchBox placeholder="Search by customer…" />
         <DateRangeFilter />
       </div>
+      </StickyListHeader>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
         <MoneyList view={view} q={searchParams.q} from={searchParams.from} to={searchParams.to} />
