@@ -14,7 +14,12 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const t = getT();
-  const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, recentExpenses] =
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const nextMonth = new Date(monthStart);
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, monthExpenses, recentExpenses] =
     await Promise.all([
       prisma.quotation.findMany({ select: { status: true, total: true } }),
       prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true } }),
@@ -22,6 +27,10 @@ export default async function DashboardPage() {
       prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
       getCurrentMonthFinance(),
       prisma.invoiceExpense.aggregate({ _sum: { amount: true } }),
+      prisma.invoiceExpense.aggregate({
+        _sum: { amount: true },
+        where: { createdAt: { gte: monthStart, lt: nextMonth } },
+      }),
       prisma.invoiceExpense.findMany({
         orderBy: { createdAt: "desc" },
         take: 5,
@@ -34,6 +43,8 @@ export default async function DashboardPage() {
     .reduce((sum, i) => sum + i.total, 0);
   const paid = invoices.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.total, 0);
   const expenseSum = expenseTotal._sum.amount || 0;
+  const monthExpenseSum = monthExpenses._sum.amount || 0;
+  const monthProfit = thisMonth.revenue - monthExpenseSum;
 
   const outstanding = invoices
     .filter(
@@ -49,14 +60,14 @@ export default async function DashboardPage() {
   const overdueCount = overdueInvoices.length;
   const overdueAmount = overdueInvoices.reduce((sum, i) => sum + i.total, 0);
   const collected = invoiced > 0 ? Math.round((paid / invoiced) * 100) : 0;
-  const monthMax = Math.max(thisMonth.revenue, thisMonth.expenses, Math.abs(thisMonth.profit), 1);
+  const monthMax = Math.max(thisMonth.revenue, monthExpenseSum, Math.abs(monthProfit), 1);
   const monthRows = [
     { label: t("Revenue"), amount: thisMonth.revenue, color: "bg-brand-500" },
-    { label: t("Expenses"), amount: thisMonth.expenses, color: "bg-danger-500" },
+    { label: t("Expenses"), amount: monthExpenseSum, color: "bg-danger-500" },
     {
       label: t("Net profit"),
-      amount: thisMonth.profit,
-      color: thisMonth.profit < 0 ? "bg-danger-500" : "bg-accent-500",
+      amount: monthProfit,
+      color: monthProfit < 0 ? "bg-danger-500" : "bg-accent-500",
     },
   ];
 
@@ -147,7 +158,7 @@ export default async function DashboardPage() {
           })}
         </div>
         <p className="text-xs text-ink-faint mt-4">
-          {t("Based on invoices paid this calendar month, minus their logged expenses.")}
+          {t("Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.")}
         </p>
       </div>
 
