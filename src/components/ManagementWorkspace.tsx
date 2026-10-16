@@ -19,6 +19,8 @@ export default function ManagementWorkspace() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [pages, setPages] = useState<PageOption[]>([]);
   const [fullAccessEmails, setFullAccessEmails] = useState<string[]>([]);
+  const [adminGroupId, setAdminGroupId] = useState("group_admin");
+  const [fullGroupId, setFullGroupId] = useState("group_full");
   const [ready, setReady] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,6 +38,8 @@ export default function ManagementWorkspace() {
         setGroups(Array.isArray(data.groups) ? data.groups : []);
         setPages(Array.isArray(data.pages) ? data.pages : []);
         setFullAccessEmails(Array.isArray(data.fullAccessEmails) ? data.fullAccessEmails : []);
+        if (typeof data.adminGroupId === "string") setAdminGroupId(data.adminGroupId);
+        if (typeof data.fullGroupId === "string") setFullGroupId(data.fullGroupId);
         setReady(data.ready !== false);
         setSelectedId(data.groups?.[0]?.id ?? null);
       })
@@ -52,9 +56,8 @@ export default function ManagementWorkspace() {
   }, [fullAccessEmails, people]);
 
   const lockedPeople = people.filter((person) => lockedEmails.has(person.email.toLowerCase()));
-  const assignable = people.filter((person) => !lockedEmails.has(person.email.toLowerCase()));
   const selected = groups.find((group) => group.id === selectedId) || null;
-  const shownPeople = assignable.filter((person) => {
+  const shownPeople = people.filter((person) => {
     const haystack = `${person.name} ${person.email}`.toLowerCase();
     return haystack.includes(query.trim().toLowerCase());
   });
@@ -97,15 +100,14 @@ export default function ManagementWorkspace() {
   }
 
   function movePerson(email: string, groupId: string) {
+    if (!groupId || lockedEmails.has(email.toLowerCase())) return;
     const normalized = email.toLowerCase();
     const next = groups.map((group) => ({
       ...group,
       emails: group.emails.filter((item) => item !== normalized),
     }));
-    if (groupId) {
-      const target = next.find((group) => group.id === groupId);
-      if (target) target.emails.push(normalized);
-    }
+    const target = next.find((group) => group.id === groupId);
+    if (target) target.emails.push(normalized);
     persist(next);
   }
 
@@ -140,7 +142,7 @@ export default function ManagementWorkspace() {
           <h2 className="font-display text-lg font-semibold">{t("Always full access")}</h2>
         </div>
         <p className="text-sm text-ink-muted mb-3">
-          {t("These accounts can open every page. They cannot be moved into a group.")}
+          {t("These accounts are in the Admin group. They can open every page.")}
         </p>
         <div className="flex flex-wrap gap-2">
           {lockedPeople.map((person) => (
@@ -225,23 +227,37 @@ export default function ManagementWorkspace() {
                     }}
                   />
                 </div>
+                {selected.id !== adminGroupId && selected.id !== fullGroupId ? (
                 <button
                   type="button"
                   className="btn-secondary text-danger-500"
                   onClick={() => {
-                    const next = groups.filter((group) => group.id !== selected.id);
-                    setSelectedId(next[0]?.id ?? null);
+                    const moving = selected.emails;
+                    const next = groups
+                      .filter((group) => group.id !== selected.id)
+                      .map((group) =>
+                        group.id === fullGroupId ? { ...group, emails: [...group.emails, ...moving] } : group
+                      );
+                    setSelectedId(fullGroupId);
                     persist(next);
                   }}
                 >
                   <Trash2 size={15} />
                   {t("Delete group")}
                 </button>
+                ) : (
+                  <p className="text-xs text-ink-muted sm:mb-2">
+                    {selected.id === adminGroupId
+                      ? t("The Admin group always includes every page.")
+                      : t("This default group stays so every account has a group.")}
+                  </p>
+                )}
               </div>
               <div>
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <p className="text-sm font-medium">{t("Pages this group can open")}</p>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  {selected.id !== adminGroupId && (
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       className="text-xs font-medium text-brand-500"
@@ -257,6 +273,7 @@ export default function ManagementWorkspace() {
                       {t("Clear")}
                     </button>
                   </div>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {pages.map((page) => {
@@ -265,13 +282,15 @@ export default function ManagementWorkspace() {
                       <button
                         key={page.id}
                         type="button"
-                        onClick={() =>
+                        disabled={selected.id === adminGroupId}
+                        onClick={() => {
+                          if (selected.id === adminGroupId) return;
                           updateSelected({
                             pages: on
                               ? selected.pages.filter((id) => id !== page.id)
                               : [...selected.pages, page.id],
-                          })
-                        }
+                          });
+                        }}
                         className={clsx(
                           "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
                           on
@@ -314,12 +333,11 @@ export default function ManagementWorkspace() {
                 </div>
                 <select
                   className="input w-44 shrink-0"
-                  value={groupIdFor(person.email)}
+                  value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
                   onChange={(event) => movePerson(person.email, event.target.value)}
-                  disabled={saving || groups.length === 0}
+                  disabled={saving || lockedEmails.has(person.email.toLowerCase())}
                   aria-label={person.email}
                 >
-                  <option value="">{t("Full access")}</option>
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}

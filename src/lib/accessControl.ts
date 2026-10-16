@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 // Accounts that always have every page, in addition to whoever is already
 // marked isAdmin. They cannot be placed in a group.
 export const FULL_ACCESS_EMAILS = ["lucasyam@hrplus.info", "atcheung@hrplus.info"];
+export const ADMIN_GROUP_ID = "group_admin";
+export const FULL_GROUP_ID = "group_full";
 
 export const ACCESS_PAGES = [
   { id: "dashboard", href: "/", label: "Dashboard" },
@@ -73,6 +75,45 @@ export function pageIdForPath(pathname: string): AccessPageId | "management" | n
   return null;
 }
 
+export function allAccessPageIds(): string[] {
+  return ACCESS_PAGES.map((page) => page.id);
+}
+
+export function placeEveryone(groups: AccessGroupRecord[], people: AccessPerson[]): AccessGroupRecord[] {
+  const supers = people.filter((person) => isSuperAdmin(person)).map((person) => normalizeEmail(person.email));
+  const superSet = new Set(supers);
+  const others = people
+    .map((person) => normalizeEmail(person.email))
+    .filter((email) => !superSet.has(email));
+  const otherSet = new Set(others);
+  const savedFull = groups.find((group) => group.id === FULL_GROUP_ID);
+  const savedAdmin = groups.find((group) => group.id === ADMIN_GROUP_ID);
+  const assigned = new Set<string>();
+  const custom = groups
+    .filter((group) => group.id !== ADMIN_GROUP_ID && group.id !== FULL_GROUP_ID)
+    .map((group) => {
+      const emails = group.emails.filter((email) => otherSet.has(email) && !assigned.has(email));
+      emails.forEach((email) => assigned.add(email));
+      return { ...group, emails };
+    });
+  const fullEmails = others.filter((email) => !assigned.has(email));
+  return [
+    {
+      id: ADMIN_GROUP_ID,
+      name: savedAdmin?.name.trim() || "Admin",
+      pages: allAccessPageIds(),
+      emails: supers,
+    },
+    {
+      id: FULL_GROUP_ID,
+      name: savedFull?.name.trim() || "Full access",
+      pages: savedFull ? savedFull.pages : allAccessPageIds(),
+      emails: fullEmails,
+    },
+    ...custom,
+  ];
+}
+
 export function pagesForPerson(
   user: { email: string; isAdmin?: boolean },
   groups: AccessGroupRecord[]
@@ -132,11 +173,8 @@ export async function listAccessGroups(): Promise<{ groups: AccessGroupRecord[];
 }
 
 export function sanitizeGroups(input: unknown, people: AccessPerson[]): AccessGroupRecord[] {
-  if (!Array.isArray(input)) return [];
-  const knownEmails = new Set(
-    people.filter((person) => !isSuperAdmin(person)).map((person) => normalizeEmail(person.email))
-  );
-  const usedEmails = new Set<string>();
+  if (!Array.isArray(input)) return placeEveryone([], people);
+  const knownEmails = new Set(people.map((person) => normalizeEmail(person.email)));
   const groups: AccessGroupRecord[] = [];
   for (const item of input) {
     if (!item || typeof item !== "object") continue;
@@ -153,14 +191,37 @@ export function sanitizeGroups(input: unknown, people: AccessPerson[]): AccessGr
       for (const email of record.emails) {
         if (typeof email !== "string") continue;
         const normalized = normalizeEmail(email);
-        if (!knownEmails.has(normalized) || usedEmails.has(normalized)) continue;
-        usedEmails.add(normalized);
+        if (!knownEmails.has(normalized)) continue;
         emails.push(normalized);
       }
     }
     groups.push({ id, name, pages, emails });
   }
-  return groups;
+  return placeEveryone(groups, people);
+}
+
+function groupSignature(groups: AccessGroupRecord[]): string {
+  return JSON.stringify(
+    groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      pages: [...group.pages].sort(),
+      emails: [...group.emails].sort(),
+    }))
+  );
+}
+
+export async function loadAccessGroups(): Promise<{ groups: AccessGroupRecord[]; ready: boolean }> {
+  const stored = await listAccessGroups();
+  if (!stored.ready) return stored;
+  const people = await prisma.user.findMany({
+    select: { id: true, email: true, name: true, isAdmin: true },
+  });
+  const placed = placeEveryone(stored.groups, people);
+  if (groupSignature(placed) === groupSignature(stored.groups)) return { groups: placed, ready: true };
+  const saved = await replaceAccessGroups(placed);
+  if (!saved.ok) return { groups: stored.groups, ready: true };
+  return { groups: placed, ready: true };
 }
 
 export async function replaceAccessGroups(groups: AccessGroupRecord[]): Promise<{ ok: true } | { ok: false; missing: boolean }> {

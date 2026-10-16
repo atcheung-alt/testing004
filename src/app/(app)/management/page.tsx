@@ -16,7 +16,9 @@ export default async function ManagementPage() {
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Management")}</h1>
         <p className="text-sm text-ink-muted">
-          {t("Choose which pages each group can open. People who are not in a group keep full access.")}
+          {t(
+            "Everyone is in one group. The Admin group can open every page. Other accounts start in Full access, and you can move them or change a group's pages later."
+          )}
         </p>
       </div>
       <ManagementWorkspace />
