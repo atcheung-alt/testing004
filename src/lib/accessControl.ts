@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 // Accounts that always have every page, in addition to whoever is already
 // marked isAdmin. They cannot be placed in a group.
-export const FULL_ACCESS_EMAILS = ["lucasyam@hrplus.info", "atcheung@hrplus.info"];
+export const FULL_ACCESS_EMAILS = ["lucasyam@hrplus.info", "atcheung@hrplus.info", "contact@hrplus.info"];
 export const ADMIN_GROUP_ID = "group_admin";
 export const FULL_GROUP_ID = "group_full";
 

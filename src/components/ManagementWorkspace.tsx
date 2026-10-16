@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, ChevronDown, ChevronUp, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { AlertCircle, ChevronDown, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import clsx from "clsx";
 
@@ -11,6 +11,50 @@ type PageOption = { id: string; href: string; label: string };
 
 function newGroupId() {
   return `group_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+}
+
+function Fold({
+  title,
+  summary,
+  open,
+  onToggle,
+  delay,
+  icon,
+  children,
+}: {
+  title: string;
+  summary: string;
+  open: boolean;
+  onToggle: () => void;
+  delay: string;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="card p-5 animate-settle" style={{ animationDelay: delay }}>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 text-left"
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <span className="flex items-center gap-2 min-w-0">
+          <ChevronDown
+            size={16}
+            className={clsx("text-ink-faint shrink-0 transition-transform duration-300", open && "rotate-180")}
+          />
+          {icon}
+          <h2 className="font-display text-lg font-semibold">{title}</h2>
+        </span>
+        {!open && <span className="text-sm text-ink-muted shrink-0">{summary}</span>}
+      </button>
+      <div className="mgmt-fold" data-open={open ? "true" : "false"}>
+        <div className="mgmt-fold-inner">
+          <div className={clsx("pt-4", open && "animate-fade-in")}>{children}</div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default function ManagementWorkspace() {
@@ -141,72 +185,45 @@ export default function ManagementWorkspace() {
         </div>
       )}
 
-      <section className="card p-5">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between gap-3 text-left"
-          aria-expanded={openSection === "admins"}
-          onClick={() => setOpenSection((current) => (current === "admins" ? null : "admins"))}
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            {openSection === "admins" ? (
-              <ChevronUp size={16} className="text-ink-faint shrink-0" />
-            ) : (
-              <ChevronDown size={16} className="text-ink-faint shrink-0" />
-            )}
-            <Lock size={16} className="text-brand-500 shrink-0" />
-            <h2 className="font-display text-lg font-semibold">{t("Always full access")}</h2>
-          </span>
-          {openSection !== "admins" && (
-            <span className="text-sm text-ink-muted shrink-0">
-              {t("{count} accounts", { count: lockedPeople.length + extraLockedEmails.length })}
+      <Fold
+        title={t("Always full access")}
+        summary={t("{count} accounts", { count: lockedPeople.length + extraLockedEmails.length })}
+        open={openSection === "admins"}
+        delay="0.02s"
+        icon={<Lock size={16} className="text-brand-500 shrink-0" />}
+        onToggle={() => setOpenSection((current) => (current === "admins" ? null : "admins"))}
+      >
+        <p className="text-sm text-ink-muted mb-3">
+          {t("These accounts are in the Admin group. They can open every page.")}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {lockedPeople.map((person) => (
+            <span key={person.id} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
+              {person.name || person.email}
+              <span className="text-ink-faint"> · {person.email}</span>
+              {(person.isAdmin ||
+                fullAccessEmails.some((email) => email.toLowerCase() === person.email.toLowerCase())) && (
+                <span> · {t("Already an admin")}</span>
+              )}
             </span>
-          )}
-        </button>
-        {openSection === "admins" && (
-          <div className="mt-4">
-            <p className="text-sm text-ink-muted mb-3">
-              {t("These accounts are in the Admin group. They can open every page.")}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {lockedPeople.map((person) => (
-                <span key={person.id} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-                  {person.name || person.email}
-                  <span className="text-ink-faint"> · {person.email}</span>
-                  {person.isAdmin && <span> · {t("Already an admin")}</span>}
-                </span>
-              ))}
-              {extraLockedEmails.map((email) => (
-                <span key={email} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-                  {email}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
+          ))}
+          {extraLockedEmails.map((email) => (
+            <span key={email} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
+              {email}
+              <span> · {t("Already an admin")}</span>
+            </span>
+          ))}
+        </div>
+      </Fold>
 
-      <section className="card p-5">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between gap-3 text-left"
-          aria-expanded={openSection === "groups"}
-          onClick={() => setOpenSection((current) => (current === "groups" ? null : "groups"))}
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            {openSection === "groups" ? (
-              <ChevronUp size={16} className="text-ink-faint shrink-0" />
-            ) : (
-              <ChevronDown size={16} className="text-ink-faint shrink-0" />
-            )}
-            <h2 className="font-display text-lg font-semibold">{t("Groups")}</h2>
-          </span>
-          {openSection !== "groups" && (
-            <span className="text-sm text-ink-muted shrink-0">{t("{count} groups", { count: groups.length })}</span>
-          )}
-        </button>
-        {openSection === "groups" && (
-          <div className="mt-4 flex flex-col gap-4">
+      <Fold
+        title={t("Groups")}
+        summary={t("{count} groups", { count: groups.length })}
+        open={openSection === "groups"}
+        delay="0.08s"
+        onToggle={() => setOpenSection((current) => (current === "groups" ? null : "groups"))}
+      >
+        <div className="flex flex-col gap-4">
             <div className="flex gap-2">
               <input
                 className="input"
@@ -240,7 +257,7 @@ export default function ManagementWorkspace() {
               </select>
             )}
             {selected && (
-              <>
+              <div key={selected.id} className="animate-fade-in flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                   <div className="flex-1">
                     <label className="label">{t("Group name")}</label>
@@ -323,7 +340,7 @@ export default function ManagementWorkspace() {
                             });
                           }}
                           className={clsx(
-                            "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+                            "rounded-full px-3 py-1 text-xs font-medium border transition-colors duration-200",
                             on
                               ? "bg-brand-500 border-brand-500 text-white"
                               : "bg-surface border-line text-ink-muted hover:border-brand-500"
@@ -335,33 +352,19 @@ export default function ManagementWorkspace() {
                     })}
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
-        )}
-      </section>
+      </Fold>
 
-      <section className="card p-5">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between gap-3 text-left"
-          aria-expanded={openSection === "people"}
-          onClick={() => setOpenSection((current) => (current === "people" ? null : "people"))}
-        >
-          <span className="flex items-center gap-2 min-w-0">
-            {openSection === "people" ? (
-              <ChevronUp size={16} className="text-ink-faint shrink-0" />
-            ) : (
-              <ChevronDown size={16} className="text-ink-faint shrink-0" />
-            )}
-            <h2 className="font-display text-lg font-semibold">{t("People")}</h2>
-          </span>
-          {openSection !== "people" && (
-            <span className="text-sm text-ink-muted shrink-0">{t("{count} people", { count: people.length })}</span>
-          )}
-        </button>
-        {openSection === "people" && (
-          <div className="mt-4">
+      <Fold
+        title={t("People")}
+        summary={t("{count} people", { count: people.length })}
+        open={openSection === "people"}
+        delay="0.14s"
+        onToggle={() => setOpenSection((current) => (current === "people" ? null : "people"))}
+      >
+        <div>
             <input
               className="input sm:max-w-xs mb-3"
               placeholder={t("Search name or email")}
@@ -395,9 +398,8 @@ export default function ManagementWorkspace() {
                 ))}
               </div>
             )}
-          </div>
-        )}
-      </section>
+        </div>
+      </Fold>
     </div>
   );
 }
