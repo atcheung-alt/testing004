@@ -3,6 +3,7 @@ import HrSidebar from "@/components/HrSidebar";
 import PageTransition from "@/components/PageTransition";
 import { getCurrentUser } from "@/lib/auth";
 import { getEffectiveCompany } from "@/lib/appSettings";
+import { canOpenPath, firstAllowedHref, isSuperAdmin, listAccessGroups, pagesForPerson } from "@/lib/accessControl";
 
 // Wraps every page under /hr (the HR Management System) — a deliberately
 // different shell from the Resource Management System's own AppLayout
@@ -21,6 +22,11 @@ export default async function HrLayout({ children }: { children: React.ReactNode
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");
+  }
+  const stored = await listAccessGroups();
+  const pages = pagesForPerson(user, stored.groups);
+  if (!canOpenPath("/hr", pages, isSuperAdmin(user))) {
+    redirect(firstAllowedHref(pages) || "/");
   }
   const company = await getEffectiveCompany();
 

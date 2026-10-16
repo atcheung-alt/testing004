@@ -368,4 +368,37 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Recruitment Services Agreement {number} from {company}": "來自 {company} 的招聘服務協議 {number}",
   "Dear {company},\n\nPlease find attached our Recruitment Services Agreement ({number}) for your review.\n\nTo review and sign online, please use the \"Review & Sign Online\" link below — no login required.\n\nBest regards,\n{sender}":
     "{company} 鈞鑒：\n\n現附上招聘服務協議（{number}），敬請審閱。\n\n如需網上審閱及簽署，請使用下方「網上審閱及簽署」連結，無需登入。\n\n此致\n{sender}",
+
+  Management: "管理",
+  "Choose which pages each group can open. People who are not in a group keep full access.":
+    "設定每個組別可以開啟的頁面。未加入任何組別的人保持全部權限。",
+  "Always full access": "永遠全部權限",
+  "These accounts can open every page. They cannot be moved into a group.":
+    "這些帳戶可以開啟每一頁，不能被放進組別。",
+  "Already an admin": "已是管理員",
+  Groups: "組別",
+  "New group name": "新組別名稱",
+  "e.g. Finance": "例如：財務",
+  "Create group": "建立組別",
+  "No groups yet. Everyone still has full access.": "尚未有組別。所有人仍然擁有全部權限。",
+  "{count} people": "{count} 人",
+  "{count} pages": "{count} 個頁面",
+  "Group name": "組別名稱",
+  "Pages this group can open": "這個組別可以開啟的頁面",
+  "All pages": "全部頁面",
+  Clear: "清除",
+  "Delete group": "刪除組別",
+  People: "人員",
+  "Search name or email": "搜尋姓名或電郵",
+  "Full access": "全部權限",
+  "No matching people.": "沒有相符的人員。",
+  "Could not load access groups.": "無法載入權限組別。",
+  "Could not save access groups.": "無法儲存權限組別。",
+  "Enter a group name.": "請輸入組別名稱。",
+  "Access groups are not on the database yet. Everyone keeps full access, and no existing records were changed.":
+    "資料庫尚未有權限組別。所有人保持全部權限，現有資料沒有被改動。",
+  "You do not have access to any page. Ask a full-access account to add you to a group.":
+    "你目前沒有任何頁面的權限。請聯絡擁有全部權限的帳戶，把你加入組別。",
+  Calendar: "日曆",
+  Analysis: "分析",
 };

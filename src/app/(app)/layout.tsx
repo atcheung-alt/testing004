@@ -1,9 +1,12 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import PageTransition from "@/components/PageTransition";
 import RequiredSetupGate from "@/components/RequiredSetupGate";
 import { getCurrentUser } from "@/lib/auth";
 import { getEffectiveCompany, getSettings, getMissingRequiredSettings } from "@/lib/appSettings";
+import { canOpenPath, firstAllowedHref, isSuperAdmin, listAccessGroups, pagesForPerson } from "@/lib/accessControl";
+import { getT } from "@/lib/i18n/server";
 
 // Wraps every internal staff page (dashboard, quotations, invoices, items)
 // with the Sidebar chrome (no top bar — quick-create actions and the
@@ -28,6 +31,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // no way to fix it themselves.
   const isAdmin = !!user.isAdmin;
   const missingSettings = isAdmin ? getMissingRequiredSettings(settings) : [];
+  const stored = await listAccessGroups();
+  const superAdmin = isSuperAdmin(user);
+  const pages = pagesForPerson(user, stored.groups);
+  const pathname = headers().get("x-pathname") || "/";
+  const allowed = canOpenPath(pathname, pages, superAdmin);
+  if (!allowed) {
+    const next = firstAllowedHref(pages);
+    if (next) redirect(next);
+  }
+  const t = getT();
 
   return (
     <div className="min-h-screen flex">
@@ -36,10 +49,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         logoDataDark={settings.companyLogoDark}
         companyName={company.shortName || company.name}
         isAdmin={isAdmin}
+        allowedPages={pages}
+        canManage={superAdmin}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
-          <PageTransition>{children}</PageTransition>
+          {allowed ? (
+            <PageTransition>{children}</PageTransition>
+          ) : (
+            <div className="card p-6 max-w-lg">
+              <p className="text-sm text-ink-muted">
+                {t("You do not have access to any page. Ask a full-access account to add you to a group.")}
+              </p>
+            </div>
+          )}
         </main>
       </div>
       <RequiredSetupGate isAdmin={isAdmin} missingFields={missingSettings} />
