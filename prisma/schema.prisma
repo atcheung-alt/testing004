@@ -1071,3 +1071,17 @@ model Booking {
 
   @@index([slotId, status])
 }
+
+// Page-access groups for the Management screen. A new empty table: existing
+// rows in every other table are never read or rewritten by it. Someone who
+// is not listed in any group keeps full access. Super admins are never
+// stored here; the app always treats them as full access.
+model AccessGroup {
+  id        String   @id @default(cuid())
+  name      String
+  pages     String   @default("[]")
+  emails    String   @default("[]")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

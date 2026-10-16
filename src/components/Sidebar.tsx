@@ -16,6 +16,7 @@ import {
   Users,
   Briefcase,
   Settings as SettingsIcon,
+  Shield,
   LogOut,
   Loader2,
   ChevronLeft,
@@ -115,11 +116,13 @@ function NavLinks({
   pathname,
   collapsed,
   onNavigate,
+  showLanguage,
 }: {
   navGroups: NavGroup[];
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  showLanguage?: boolean;
 }) {
   return (
     <nav className="flex flex-col gap-5 px-3">
@@ -136,7 +139,7 @@ function NavLinks({
             </p>
           )}
           {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line hidden lg:block" />}
-          {group.items.some((item) => item.href === "/items") && (
+          {showLanguage && group.items.some((item) => item.href === "/items") && (
             <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" className="mb-1" />
           )}
           {group.items.map((item) => (
@@ -187,10 +190,16 @@ function BottomLinks({
   pathname,
   collapsed,
   onNavigate,
+  canManage,
+  showSettings,
+  showLanguage,
 }: {
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  canManage?: boolean;
+  showSettings?: boolean;
+  showLanguage?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -207,9 +216,32 @@ function BottomLinks({
   }
 
   const settingsActive = pathname.startsWith("/settings");
+  const managementActive = pathname.startsWith("/management");
 
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
+      {showLanguage && (
+        <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" />
+      )}
+      {canManage && (
+        <Link
+          href="/management"
+          onClick={onNavigate}
+          prefetch={false}
+          title={collapsed ? t("Management") : undefined}
+          className={clsx(
+            "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors gap-3 px-3",
+            collapsed && "lg:justify-center lg:px-0 lg:gap-0",
+            managementActive
+              ? "bg-brand-gradient text-white shadow-soft"
+              : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+          )}
+        >
+          <Shield size={17} strokeWidth={2} className="shrink-0" />
+          <span className={clsx(collapsed && "lg:hidden")}>{t("Management")}</span>
+        </Link>
+      )}
+      {showSettings && (
       <Link
         href="/settings"
         onClick={onNavigate}
@@ -226,6 +258,7 @@ function BottomLinks({
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />
         <span className={clsx(collapsed && "lg:hidden")}>{t("Settings")}</span>
       </Link>
+      )}
       <button
         type="button"
         onClick={handleLogout}
@@ -251,12 +284,15 @@ export default function Sidebar({
   logoData,
   logoDataDark,
   companyName,
-  isAdmin = false,
+  allowedPages = "all",
+  canManage = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
   companyName?: string;
   isAdmin?: boolean;
+  allowedPages?: "all" | string[];
+  canManage?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
@@ -264,7 +300,30 @@ export default function Sidebar({
   // session choice only — the next visit starts open again.
   const [narrowOpen, setNarrowOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
-  const navGroups = buildNavGroups(t);
+  const navGroups = buildNavGroups(t)
+    .map((group) => ({
+      ...group,
+      items:
+        allowedPages === "all"
+          ? group.items
+          : group.items.filter((item) => {
+              if (item.href === "/") return allowedPages.includes("dashboard");
+              if (item.href === "/quotations/templates") return allowedPages.includes("templates");
+              if (item.href === "/quotations") return allowedPages.includes("quotations");
+              if (item.href === "/invoices") return allowedPages.includes("invoices");
+              if (item.href === "/receipts") return allowedPages.includes("receipts");
+              if (item.href === "/expenses") return allowedPages.includes("expenses");
+              if (item.href === "/recruitment") return allowedPages.includes("recruitment");
+              if (item.href === "/clients") return allowedPages.includes("clients");
+              if (item.href === "/items") return allowedPages.includes("items");
+              if (item.href === "/bookings") return allowedPages.includes("bookings");
+              return true;
+            }),
+    }))
+    .filter((group) => group.items.length > 0);
+  const showItems = navGroups.some((group) => group.items.some((item) => item.href === "/items"));
+  const showHr = allowedPages === "all" || allowedPages.includes("hr");
+  const showSettings = allowedPages === "all" || allowedPages.includes("settings");
 
   // Restore the user's last choice — read after mount so server/client
   // markup matches on first paint (avoids a hydration mismatch), then
@@ -350,9 +409,15 @@ export default function Sidebar({
           </button>
         </div>
 
-        <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />
-        <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} />
-        <BottomLinks pathname={pathname} collapsed={collapsed} />
+        {showHr && <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />}
+        <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} showLanguage={showItems} />
+        <BottomLinks
+          pathname={pathname}
+          collapsed={collapsed}
+          canManage={canManage}
+          showSettings={showSettings}
+          showLanguage={!showItems}
+        />
       </aside>
 
       {!narrowOpen && (
