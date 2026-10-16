@@ -79,6 +79,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "New bookings wait in “Pending requests” below until confirmed here — the client's confirmation email isn't sent until then.":
     "新預約會留在下方「待處理申請」，在這裡確認後才會向客戶發送確認電郵。",
   Active: "生效",
+  Inactive: "未啟用",
   Hidden: "已隱藏",
   "Requires confirmation": "需要確認",
   "Copy booking link": "複製預約連結",

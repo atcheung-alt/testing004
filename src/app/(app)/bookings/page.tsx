@@ -51,12 +51,12 @@ export default async function BookingsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Bookings")}</h1>
-          <p className="text-sm text-ink-muted">
-            {t("Coloured bars are bookings. Grey bars are jobs marked from an invoice.")}
+          <p className="text-sm text-ink-muted max-w-xl">
+            {t("Review bookings and invoice jobs for the month.")}
           </p>
         </div>
         <Link href="/bookings/new" className="btn-primary shrink-0">
-          <Plus size={15} /> {t("New event")}
+          <Plus size={15} /> {t("Create event")}
         </Link>
       </div>
 
@@ -66,9 +66,9 @@ export default async function BookingsPage() {
         <EmptyState
           icon={CalendarCheck}
           title={t("No booking events yet")}
-          description={t("Create your first event to start taking bookings.")}
+          description={t("Create an event to start taking bookings.")}
           actionHref="/bookings/new"
-          actionLabel={t("New event")}
+          actionLabel={t("Create event")}
         />
       ) : (
         <BookingEventListClient events={serializedEvents} />
