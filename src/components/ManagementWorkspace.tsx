@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronUp, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import clsx from "clsx";
 
@@ -28,6 +28,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
+  const [openSection, setOpenSection] = useState<"admins" | "groups" | "people" | null>(null);
 
   useEffect(() => {
     fetch("/api/access")
@@ -56,6 +57,9 @@ export default function ManagementWorkspace() {
   }, [fullAccessEmails, people]);
 
   const lockedPeople = people.filter((person) => lockedEmails.has(person.email.toLowerCase()));
+  const extraLockedEmails = fullAccessEmails.filter(
+    (email) => !lockedPeople.some((person) => person.email.toLowerCase() === email.toLowerCase())
+  );
   const selected = groups.find((group) => group.id === selectedId) || null;
   const shownPeople = people.filter((person) => {
     const haystack = `${person.name} ${person.email}`.toLowerCase();
@@ -91,6 +95,7 @@ export default function ManagementWorkspace() {
     const group = { id: newGroupId(), name, pages: pages.map((page) => page.id), emails: [] };
     setDraftName("");
     setSelectedId(group.id);
+    setOpenSection("groups");
     persist([...groups, group]);
   }
 
@@ -137,215 +142,259 @@ export default function ManagementWorkspace() {
       )}
 
       <section className="card p-5">
-        <div className="flex items-center gap-2 mb-1">
-          <Lock size={16} className="text-brand-500" />
-          <h2 className="font-display text-lg font-semibold">{t("Always full access")}</h2>
-        </div>
-        <p className="text-sm text-ink-muted mb-3">
-          {t("These accounts are in the Admin group. They can open every page.")}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {lockedPeople.map((person) => (
-            <span key={person.id} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-              {person.name || person.email}
-              <span className="text-ink-faint"> · {person.email}</span>
-              {person.isAdmin && <span> · {t("Already an admin")}</span>}
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+          aria-expanded={openSection === "admins"}
+          onClick={() => setOpenSection((current) => (current === "admins" ? null : "admins"))}
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            {openSection === "admins" ? (
+              <ChevronUp size={16} className="text-ink-faint shrink-0" />
+            ) : (
+              <ChevronDown size={16} className="text-ink-faint shrink-0" />
+            )}
+            <Lock size={16} className="text-brand-500 shrink-0" />
+            <h2 className="font-display text-lg font-semibold">{t("Always full access")}</h2>
+          </span>
+          {openSection !== "admins" && (
+            <span className="text-sm text-ink-muted shrink-0">
+              {t("{count} accounts", { count: lockedPeople.length + extraLockedEmails.length })}
             </span>
-          ))}
-          {fullAccessEmails
-            .filter((email) => !lockedPeople.some((person) => person.email.toLowerCase() === email.toLowerCase()))
-            .map((email) => (
-              <span key={email} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-                {email}
-              </span>
-            ))}
-        </div>
-      </section>
-
-      <div className="grid grid-cols-1 xl:grid-cols-[18rem_1fr] gap-4">
-        <section className="card p-5 flex flex-col gap-3">
-          <h2 className="font-display text-lg font-semibold">{t("Groups")}</h2>
-          <div className="flex gap-2">
-            <input
-              className="input"
-              placeholder={t("e.g. Finance")}
-              aria-label={t("New group name")}
-              value={draftName}
-              onChange={(event) => setDraftName(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") createGroup();
-              }}
-            />
-            <button type="button" className="btn-primary shrink-0" onClick={createGroup} disabled={saving}>
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
-              {t("Create group")}
-            </button>
-          </div>
-          {groups.length === 0 ? (
-            <p className="text-sm text-ink-muted">{t("No groups yet. Everyone still has full access.")}</p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {groups.map((group) => (
-                <button
-                  key={group.id}
-                  type="button"
-                  onClick={() => setSelectedId(group.id)}
-                  className={clsx(
-                    "text-left rounded-xl px-3 py-2 transition-colors",
-                    group.id === selectedId ? "bg-brand-gradient text-white" : "hover:bg-brand-50"
-                  )}
-                >
-                  <p className="text-sm font-medium truncate">{group.name}</p>
-                  <p className={clsx("text-xs", group.id === selectedId ? "text-white/80" : "text-ink-faint")}>
-                    {t("{count} people", { count: group.emails.length })} · {t("{count} pages", { count: group.pages.length })}
-                  </p>
-                </button>
+          )}
+        </button>
+        {openSection === "admins" && (
+          <div className="mt-4">
+            <p className="text-sm text-ink-muted mb-3">
+              {t("These accounts are in the Admin group. They can open every page.")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {lockedPeople.map((person) => (
+                <span key={person.id} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
+                  {person.name || person.email}
+                  <span className="text-ink-faint"> · {person.email}</span>
+                  {person.isAdmin && <span> · {t("Already an admin")}</span>}
+                </span>
+              ))}
+              {extraLockedEmails.map((email) => (
+                <span key={email} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
+                  {email}
+                </span>
               ))}
             </div>
-          )}
-        </section>
-
-        <section className="card p-5 flex flex-col gap-4">
-          {selected ? (
-            <>
-              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-                <div className="flex-1">
-                  <label className="label">{t("Group name")}</label>
-                  <input
-                    className="input"
-                    value={selected.name}
-                    onChange={(event) =>
-                      setGroups((current) =>
-                        current.map((group) =>
-                          group.id === selected.id ? { ...group, name: event.target.value } : group
-                        )
-                      )
-                    }
-                    onBlur={(event) => {
-                      const name = event.target.value.trim();
-                      if (name) updateSelected({ name });
-                    }}
-                  />
-                </div>
-                {selected.id !== adminGroupId && selected.id !== fullGroupId ? (
-                <button
-                  type="button"
-                  className="btn-secondary text-danger-500"
-                  onClick={() => {
-                    const moving = selected.emails;
-                    const next = groups
-                      .filter((group) => group.id !== selected.id)
-                      .map((group) =>
-                        group.id === fullGroupId ? { ...group, emails: [...group.emails, ...moving] } : group
-                      );
-                    setSelectedId(fullGroupId);
-                    persist(next);
-                  }}
-                >
-                  <Trash2 size={15} />
-                  {t("Delete group")}
-                </button>
-                ) : (
-                  <p className="text-xs text-ink-muted sm:mb-2">
-                    {selected.id === adminGroupId
-                      ? t("The Admin group always includes every page.")
-                      : t("This default group stays so every account has a group.")}
-                  </p>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <p className="text-sm font-medium">{t("Pages this group can open")}</p>
-                  {selected.id !== adminGroupId && (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-brand-500"
-                      onClick={() => updateSelected({ pages: pages.map((page) => page.id) })}
-                    >
-                      {t("All pages")}
-                    </button>
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-ink-muted"
-                      onClick={() => updateSelected({ pages: [] })}
-                    >
-                      {t("Clear")}
-                    </button>
-                  </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {pages.map((page) => {
-                    const on = selected.pages.includes(page.id);
-                    return (
-                      <button
-                        key={page.id}
-                        type="button"
-                        disabled={selected.id === adminGroupId}
-                        onClick={() => {
-                          if (selected.id === adminGroupId) return;
-                          updateSelected({
-                            pages: on
-                              ? selected.pages.filter((id) => id !== page.id)
-                              : [...selected.pages, page.id],
-                          });
-                        }}
-                        className={clsx(
-                          "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
-                          on
-                            ? "bg-brand-500 border-brand-500 text-white"
-                            : "bg-surface border-line text-ink-muted hover:border-brand-500"
-                        )}
-                      >
-                        {t(page.label)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-sm text-ink-muted">{t("No groups yet. Everyone still has full access.")}</p>
-          )}
-        </section>
-      </div>
+          </div>
+        )}
+      </section>
 
       <section className="card p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold">{t("People")}</h2>
-          <input
-            className="input sm:max-w-xs"
-            placeholder={t("Search name or email")}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </div>
-        {shownPeople.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
-        ) : (
-          <div className="divide-y divide-line">
-            {shownPeople.map((person) => (
-              <div key={person.id} className="flex items-center justify-between gap-3 py-2">
-                <div className="min-w-0">
-                  <p className="text-sm text-ink truncate">{person.name || person.email}</p>
-                  <p className="text-xs text-ink-faint truncate">{person.email}</p>
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+          aria-expanded={openSection === "groups"}
+          onClick={() => setOpenSection((current) => (current === "groups" ? null : "groups"))}
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            {openSection === "groups" ? (
+              <ChevronUp size={16} className="text-ink-faint shrink-0" />
+            ) : (
+              <ChevronDown size={16} className="text-ink-faint shrink-0" />
+            )}
+            <h2 className="font-display text-lg font-semibold">{t("Groups")}</h2>
+          </span>
+          {openSection !== "groups" && (
+            <span className="text-sm text-ink-muted shrink-0">{t("{count} groups", { count: groups.length })}</span>
+          )}
+        </button>
+        {openSection === "groups" && (
+          <div className="mt-4 flex flex-col gap-4">
+            <div className="flex gap-2">
+              <input
+                className="input"
+                placeholder={t("e.g. Finance")}
+                aria-label={t("New group name")}
+                value={draftName}
+                onChange={(event) => setDraftName(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") createGroup();
+                }}
+              />
+              <button type="button" className="btn-primary shrink-0" onClick={createGroup} disabled={saving}>
+                {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
+                {t("Create group")}
+              </button>
+            </div>
+            {groups.length === 0 ? (
+              <p className="text-sm text-ink-muted">{t("No groups yet. Everyone still has full access.")}</p>
+            ) : (
+              <select
+                className="input"
+                aria-label={t("Choose a group")}
+                value={selected?.id || ""}
+                onChange={(event) => setSelectedId(event.target.value)}
+              >
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name} · {t("{count} people", { count: group.emails.length })} · {t("{count} pages", { count: group.pages.length })}
+                  </option>
+                ))}
+              </select>
+            )}
+            {selected && (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                  <div className="flex-1">
+                    <label className="label">{t("Group name")}</label>
+                    <input
+                      className="input"
+                      value={selected.name}
+                      onChange={(event) =>
+                        setGroups((current) =>
+                          current.map((group) =>
+                            group.id === selected.id ? { ...group, name: event.target.value } : group
+                          )
+                        )
+                      }
+                      onBlur={(event) => {
+                        const name = event.target.value.trim();
+                        if (name) updateSelected({ name });
+                      }}
+                    />
+                  </div>
+                  {selected.id !== adminGroupId && selected.id !== fullGroupId ? (
+                    <button
+                      type="button"
+                      className="btn-secondary text-danger-500"
+                      onClick={() => {
+                        const moving = selected.emails;
+                        const next = groups
+                          .filter((group) => group.id !== selected.id)
+                          .map((group) =>
+                            group.id === fullGroupId ? { ...group, emails: [...group.emails, ...moving] } : group
+                          );
+                        setSelectedId(fullGroupId);
+                        persist(next);
+                      }}
+                    >
+                      <Trash2 size={15} />
+                      {t("Delete group")}
+                    </button>
+                  ) : (
+                    <p className="text-xs text-ink-muted sm:mb-2">
+                      {selected.id === adminGroupId
+                        ? t("The Admin group always includes every page.")
+                        : t("This default group stays so every account has a group.")}
+                    </p>
+                  )}
                 </div>
-                <select
-                  className="input w-44 shrink-0"
-                  value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
-                  onChange={(event) => movePerson(person.email, event.target.value)}
-                  disabled={saving || lockedEmails.has(person.email.toLowerCase())}
-                  aria-label={person.email}
-                >
-                  {groups.map((group) => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="text-sm font-medium">{t("Pages this group can open")}</p>
+                    {selected.id !== adminGroupId && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-brand-500"
+                          onClick={() => updateSelected({ pages: pages.map((page) => page.id) })}
+                        >
+                          {t("All pages")}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-ink-muted"
+                          onClick={() => updateSelected({ pages: [] })}
+                        >
+                          {t("Clear")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {pages.map((page) => {
+                      const on = selected.pages.includes(page.id);
+                      return (
+                        <button
+                          key={page.id}
+                          type="button"
+                          disabled={selected.id === adminGroupId}
+                          onClick={() => {
+                            if (selected.id === adminGroupId) return;
+                            updateSelected({
+                              pages: on ? selected.pages.filter((id) => id !== page.id) : [...selected.pages, page.id],
+                            });
+                          }}
+                          className={clsx(
+                            "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+                            on
+                              ? "bg-brand-500 border-brand-500 text-white"
+                              : "bg-surface border-line text-ink-muted hover:border-brand-500"
+                          )}
+                        >
+                          {t(page.label)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="card p-5">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 text-left"
+          aria-expanded={openSection === "people"}
+          onClick={() => setOpenSection((current) => (current === "people" ? null : "people"))}
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            {openSection === "people" ? (
+              <ChevronUp size={16} className="text-ink-faint shrink-0" />
+            ) : (
+              <ChevronDown size={16} className="text-ink-faint shrink-0" />
+            )}
+            <h2 className="font-display text-lg font-semibold">{t("People")}</h2>
+          </span>
+          {openSection !== "people" && (
+            <span className="text-sm text-ink-muted shrink-0">{t("{count} people", { count: people.length })}</span>
+          )}
+        </button>
+        {openSection === "people" && (
+          <div className="mt-4">
+            <input
+              className="input sm:max-w-xs mb-3"
+              placeholder={t("Search name or email")}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {shownPeople.length === 0 ? (
+              <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
+            ) : (
+              <div className="divide-y divide-line">
+                {shownPeople.map((person) => (
+                  <div key={person.id} className="flex items-center justify-between gap-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm text-ink truncate">{person.name || person.email}</p>
+                      <p className="text-xs text-ink-faint truncate">{person.email}</p>
+                    </div>
+                    <select
+                      className="input w-44 shrink-0"
+                      value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
+                      onChange={(event) => movePerson(person.email, event.target.value)}
+                      disabled={saving || lockedEmails.has(person.email.toLowerCase())}
+                      aria-label={person.email}
+                    >
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         )}
       </section>
