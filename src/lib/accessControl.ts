@@ -1,3 +1,4 @@
+import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // Accounts that always have every page, in addition to whoever is already
@@ -154,21 +155,59 @@ function parseStringList(value: string): string[] {
   }
 }
 
+function readGroups(rows: { id: string; name: string; pages: string; emails: string }[]): AccessGroupRecord[] {
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    pages: parseStringList(row.pages).filter((id) => PAGE_IDS.has(id)),
+    emails: parseStringList(row.emails).map(normalizeEmail),
+  }));
+}
+
+// The group list lives in its own empty table. Creating it does not alter any
+// existing table. This runs only when that table is missing, using the direct
+// database connection so the pooler does not reject the statement.
+async function ensureAccessGroupTable(): Promise<boolean> {
+  const connectionString = process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_UNPOOLED;
+  if (!connectionString) return false;
+  const direct = new PrismaClient({ datasources: { db: { url: connectionString } } });
+  try {
+    await direct.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "AccessGroup" (
+        "id" TEXT NOT NULL,
+        "name" TEXT NOT NULL,
+        "pages" TEXT NOT NULL DEFAULT '[]',
+        "emails" TEXT NOT NULL DEFAULT '[]',
+        "sortOrder" INTEGER NOT NULL DEFAULT 0,
+        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP(3) NOT NULL,
+        CONSTRAINT "AccessGroup_pkey" PRIMARY KEY ("id")
+      )
+    `);
+    return true;
+  } catch (err) {
+    console.error("ensureAccessGroupTable failed:", err);
+    return false;
+  } finally {
+    await direct.$disconnect().catch(() => undefined);
+  }
+}
+
 export async function listAccessGroups(): Promise<{ groups: AccessGroupRecord[]; ready: boolean }> {
   try {
     const rows = await prisma.accessGroup.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
-    return {
-      ready: true,
-      groups: rows.map((row) => ({
-        id: row.id,
-        name: row.name,
-        pages: parseStringList(row.pages).filter((id) => PAGE_IDS.has(id)),
-        emails: parseStringList(row.emails).map(normalizeEmail),
-      })),
-    };
+    return { ready: true, groups: readGroups(rows) };
   } catch (err) {
     console.error("listAccessGroups failed, leaving everyone on full access:", err);
-    return { groups: [], ready: false };
+    const created = await ensureAccessGroupTable();
+    if (!created) return { groups: [], ready: false };
+    try {
+      const rows = await prisma.accessGroup.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
+      return { ready: true, groups: readGroups(rows) };
+    } catch (retryErr) {
+      console.error("listAccessGroups still failed after creating the group table:", retryErr);
+      return { groups: [], ready: false };
+    }
   }
 }
 
