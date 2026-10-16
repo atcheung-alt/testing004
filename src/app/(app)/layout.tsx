@@ -5,7 +5,7 @@ import PageTransition from "@/components/PageTransition";
 import RequiredSetupGate from "@/components/RequiredSetupGate";
 import { getCurrentUser } from "@/lib/auth";
 import { getEffectiveCompany, getSettings, getMissingRequiredSettings } from "@/lib/appSettings";
-import { canOpenPath, firstAllowedHref, isSuperAdmin, listAccessGroups, pagesForPerson } from "@/lib/accessControl";
+import { canOpenPath, firstAllowedHref, isSuperAdmin, loadAccessGroups, pagesForPerson } from "@/lib/accessControl";
 import { getT } from "@/lib/i18n/server";
 
 // Wraps every internal staff page (dashboard, quotations, invoices, items)
@@ -31,7 +31,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // no way to fix it themselves.
   const isAdmin = !!user.isAdmin;
   const missingSettings = isAdmin ? getMissingRequiredSettings(settings) : [];
-  const stored = await listAccessGroups();
+  const stored = await loadAccessGroups();
   const superAdmin = isSuperAdmin(user);
   const pages = pagesForPerson(user, stored.groups);
   const pathname = headers().get("x-pathname") || "/";

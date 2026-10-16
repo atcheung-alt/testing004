@@ -3,9 +3,11 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   ACCESS_PAGES,
+  ADMIN_GROUP_ID,
   FULL_ACCESS_EMAILS,
+  FULL_GROUP_ID,
   isSuperAdmin,
-  listAccessGroups,
+  loadAccessGroups,
   replaceAccessGroups,
   sanitizeGroups,
   type AccessPerson,
@@ -25,19 +27,19 @@ export async function GET() {
   const gate = await requireSuperAdmin();
   if (gate.response) return gate.response;
 
-  const [people, stored] = await Promise.all([
-    prisma.user.findMany({
-      select: { id: true, email: true, name: true, isAdmin: true },
-      orderBy: { name: "asc" },
-    }),
-    listAccessGroups(),
-  ]);
+  const people = await prisma.user.findMany({
+    select: { id: true, email: true, name: true, isAdmin: true },
+    orderBy: { name: "asc" },
+  });
+  const stored = await loadAccessGroups();
 
   return NextResponse.json({
     ready: stored.ready,
     groups: stored.groups,
     pages: ACCESS_PAGES,
     fullAccessEmails: FULL_ACCESS_EMAILS,
+    adminGroupId: ADMIN_GROUP_ID,
+    fullGroupId: FULL_GROUP_ID,
     people,
   });
 }

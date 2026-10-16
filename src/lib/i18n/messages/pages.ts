@@ -372,6 +372,12 @@ export const PAGE_MESSAGES: Record<string, string> = {
   Management: "管理",
   "Choose which pages each group can open. People who are not in a group keep full access.":
     "設定每個組別可以開啟的頁面。未加入任何組別的人保持全部權限。",
+  "Everyone is in one group. The Admin group can open every page. Other accounts start in Full access, and you can move them or change a group's pages later.":
+    "每個人都屬於一個組別。管理員組別可以開啟每一頁。其他帳戶一開始在全部權限組別，之後可以調動，或更改組別可開啟的頁面。",
+  "These accounts are in the Admin group. They can open every page.":
+    "這些帳戶在管理員組別，可以開啟每一頁。",
+  "The Admin group always includes every page.": "管理員組別永遠包含每一頁。",
+  "This default group stays so every account has a group.": "這個預設組別會保留，確保每個帳戶都有組別。",
   "Always full access": "永遠全部權限",
   "These accounts can open every page. They cannot be moved into a group.":
     "這些帳戶可以開啟每一頁，不能被放進組別。",
