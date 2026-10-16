@@ -4,6 +4,9 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Full analysis": "完整分析",
   "Coloured bars are bookings. Grey bars are jobs marked from an invoice.":
     "彩色長條是預約。灰色長條是從發票標記的工作。",
+  "Review bookings and invoice jobs for the month.": "查看本月的預約及由發票安排的工作。",
+  "Create event": "建立活動",
+  "Nothing scheduled this month.": "本月尚未有安排。",
   "Invoice job": "發票工作",
   "Open invoice": "開啟發票",
   "view on Bookings": "在預約頁查看",
@@ -115,6 +118,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "New event": "新增活動",
   "No booking events yet": "尚未有預約活動",
   "Create your first event to start taking bookings.": "建立第一個活動，開始接受預約。",
+  "Create an event to start taking bookings.": "建立活動後即可開始接受預約。",
   "New booking event": "新增預約活動",
   "Give it a name and the range of days it can be booked on — you'll add its actual time slots and quota from its detail page next.":
     "先填寫名稱及可預約的日期範圍——時段及名額可在下一頁的詳情中加入。",

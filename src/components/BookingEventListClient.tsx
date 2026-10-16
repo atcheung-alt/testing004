@@ -27,7 +27,7 @@ export default function BookingEventListClient({ events }: { events: BookingEven
     <div className="card overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          <tr className="border-b border-line text-left text-xs font-medium text-ink-faint">
             <th className="px-5 py-3">{t("Event")}</th>
             <th className="hidden sm:table-cell px-5 py-3">{t("Dates")}</th>
             <th className="px-5 py-3 text-right">{t("Status")}</th>
@@ -41,7 +41,7 @@ export default function BookingEventListClient({ events }: { events: BookingEven
               className="border-b border-line last:border-0 hover:bg-brand-50/40"
             >
               <td className="px-5 py-3">
-                <span className="font-medium text-brand-600">{e.name}</span>
+                <span className="font-medium text-ink">{e.name}</span>
                 {e.description && (
                   <p className="text-xs text-ink-muted truncate max-w-xs">{e.description}</p>
                 )}
@@ -50,12 +50,8 @@ export default function BookingEventListClient({ events }: { events: BookingEven
                 {dateRangeLabel(e.startDate, e.endDate)}
               </td>
               <td className="px-5 py-3 text-right">
-                <span
-                  className={`stamp ${
-                    e.active ? "border-brand-500 text-brand-500 bg-brand-50" : "border-ink-faint text-ink-faint"
-                  }`}
-                >
-                  {e.active ? t("Active") : t("Hidden")}
+                <span className={e.active ? "text-xs font-medium text-brand-600" : "text-xs font-medium text-ink-faint"}>
+                  {e.active ? t("Active") : t("Inactive")}
                 </span>
               </td>
             </ClickableTableRow>

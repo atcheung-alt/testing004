@@ -35,25 +35,16 @@ const MONTH_NAMES = [
 ];
 
 const MAX_LANES = 3;
-const BAR_HEIGHT = 20;
+const BAR_HEIGHT = 22;
 const BAR_GAP = 4;
-const HEADER_HEIGHT = 28;
-const MORE_ROW_HEIGHT = 16;
+const HEADER_HEIGHT = 30;
+const MORE_ROW_HEIGHT = 18;
 
-// A fixed palette, picked deterministically per event id purely so two
-// different events running the same week are easy to tell apart at a
-// glance — not stored anywhere, not user-editable.
-const EVENT_COLORS: { bg: string; text: string }[] = [
-  { bg: "#4F7CFF", text: "#FFFFFF" },
-  { bg: "#22D3EE", text: "#083344" },
-  { bg: "#9B6BEA", text: "#FFFFFF" },
-  { bg: "#34A853", text: "#FFFFFF" },
-  { bg: "#F2A93B", text: "#3A2600" },
-  { bg: "#E35D6A", text: "#FFFFFF" },
-  { bg: "#66708A", text: "#FFFFFF" },
-];
+// A restrained palette, chosen from the event id so overlapping events stay
+// distinct. Not stored, and not user-editable.
+const EVENT_COLORS = ["#5B8DEF", "#3DAB9A", "#8B7EC8", "#5C9A6A", "#C4893A", "#C46B73"];
 
-const JOB_COLOR = { bg: "#66708A", text: "#FFFFFF" };
+const JOB_COLOR = "#8B93A7";
 
 function colorFor(event: { id: string; kind?: "booking" | "job" }) {
   if (event.kind === "job") return JOB_COLOR;
@@ -194,12 +185,12 @@ function WeekRow({
         return (
           <div
             key={i}
-            className={clsx("border-r border-line last:border-r-0 px-1.5 pt-1.5", !inMonth && "bg-paper/70")}
+            className={clsx("border-r border-line/80 last:border-r-0 px-1.5 pt-1.5", !inMonth && "bg-paper/40")}
           >
             <span
               className={clsx(
-                "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium",
-                today_ ? "bg-brand-600 text-white" : inMonth ? "text-ink" : "text-ink-faint"
+                "inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] tabular-nums",
+                today_ ? "bg-brand-500 font-semibold text-white" : inMonth ? "font-medium text-ink" : "text-ink-faint"
               )}
             >
               {d.getDate()}
@@ -217,25 +208,23 @@ function WeekRow({
             onClick={() => onEventClick(s.ev)}
             title={s.ev.name}
             className={clsx(
-              "absolute text-left text-[11px] font-medium leading-[20px] px-1.5 truncate hover:brightness-95 transition-[filter] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] overflow-hidden",
-              !s.ev.active && "opacity-60"
+              "absolute overflow-hidden text-left text-[11px] font-medium leading-[22px] text-ink truncate px-2 transition-colors duration-200 hover:bg-paper",
+              !s.ev.active && "opacity-45"
             )}
             style={{
               top: HEADER_HEIGHT + s.lane * (BAR_HEIGHT + BAR_GAP),
-              left: `calc(${(s.startCol / 7) * 100}% + 2px)`,
-              width: `calc(${(s.span / 7) * 100}% - 4px)`,
+              left: `calc(${(s.startCol / 7) * 100}% + 3px)`,
+              width: `calc(${(s.span / 7) * 100}% - 6px)`,
               height: BAR_HEIGHT,
-              borderTopLeftRadius: s.continuesLeft ? 0 : 6,
-              borderBottomLeftRadius: s.continuesLeft ? 0 : 6,
-              borderTopRightRadius: s.continuesRight ? 0 : 6,
-              borderBottomRightRadius: s.continuesRight ? 0 : 6,
-              backgroundColor: color.bg,
-              color: color.text,
+              borderTopLeftRadius: s.continuesLeft ? 2 : 6,
+              borderBottomLeftRadius: s.continuesLeft ? 2 : 6,
+              borderTopRightRadius: s.continuesRight ? 2 : 6,
+              borderBottomRightRadius: s.continuesRight ? 2 : 6,
+              backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)`,
+              boxShadow: s.continuesLeft ? undefined : `inset 3px 0 0 ${color}`,
             }}
           >
-            {s.continuesLeft ? "◂ " : ""}
             {s.ev.name}
-            {s.continuesRight ? " ▸" : ""}
           </button>
         );
       })}
@@ -251,7 +240,7 @@ function WeekRow({
                 ...hiddenByDay[i].map((s) => s.ev),
               ])
             }
-            className="absolute text-[11px] font-medium text-brand-600 hover:underline px-1.5"
+            className="absolute px-1.5 text-[11px] font-medium text-ink-muted hover:text-ink"
             style={{
               top: HEADER_HEIGHT + MAX_LANES * (BAR_HEIGHT + BAR_GAP),
               left: `${(i / 7) * 100}%`,
@@ -274,14 +263,14 @@ function BookingEventDetail({ ev }: { ev: NormEvent }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color.bg }} aria-hidden="true" />
+        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />
         <div className="min-w-0 flex items-center gap-2">
           <p className="text-sm font-medium text-ink truncate">{ev.name}</p>
           {isJob ? (
-            <span className="stamp border-ink-faint text-ink-faint">{t("Invoice job")}</span>
+            <span className="text-[11px] font-medium text-ink-faint">{t("Invoice job")}</span>
           ) : (
-            <span className={`stamp ${ev.active ? "border-brand-500 text-brand-500 bg-brand-50" : "border-ink-faint text-ink-faint"}`}>
-              {ev.active ? t("Active") : t("Hidden")}
+            <span className={ev.active ? "text-[11px] font-medium text-brand-600" : "text-[11px] font-medium text-ink-faint"}>
+              {ev.active ? t("Active") : t("Inactive")}
             </span>
           )}
         </div>
@@ -373,16 +362,26 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
       </button>
 
       {!collapsed && (
-        <div className="mt-4">
-          <div className="grid grid-cols-7 border-b border-line pb-2 mb-1">
+          <div className="mt-4 animate-fade-in" key={monthLabel}>
+          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+            <span className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-brand-500" aria-hidden="true" />
+              {t("Booking")}
+            </span>
+            <span className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: JOB_COLOR }} aria-hidden="true" />
+              {t("Invoice job")}
+            </span>
+          </div>
+          <div className="mb-1 grid grid-cols-7 border-b border-line pb-2">
             {WEEKDAY_LABELS.map((label) => (
-              <div key={label} className="text-center text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              <div key={label} className="text-center text-[11px] font-medium uppercase tracking-[0.14em] text-ink-faint">
                 {t(label)}
               </div>
             ))}
           </div>
 
-          <div className="rounded-xl overflow-hidden border border-line">
+          <div className="overflow-hidden rounded-2xl border border-line">
             {weeks.map((week, i) => (
               <WeekRow
                 key={i}
@@ -399,7 +398,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
 
           {normalized.length === 0 && (
             <p className="text-sm text-ink-muted mt-4">
-              {t("No booking events yet — once you create one, it'll show up here across the days it runs.")}
+              {t("Nothing scheduled this month.")}
             </p>
           )}
         </div>
@@ -417,7 +416,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
                   {modal.mode === "event"
                     ? modal.event.kind === "job"
                       ? t("Invoice job")
-                      : t("Booking event")
+                      : t("Booking")
                     : formatDateLabel(modal.date)}
                 </h2>
                 <button
@@ -443,7 +442,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
                         onClick={() => setModal({ mode: "event", event: ev })}
                         className="flex items-center gap-3 py-2.5 text-left hover:bg-paper -mx-1 px-1 rounded-lg transition-colors"
                       >
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color.bg }} aria-hidden="true" />
+                        <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-ink truncate">{ev.name}</p>
                         </div>
