@@ -12,6 +12,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Net profit": "純利",
   "Based on invoices paid this calendar month, minus their logged expenses.":
     "按本曆月已付款發票計算，並扣除已記錄的支出。",
+  "Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.":
+    "收入按本曆月已付款發票計算。開支長條是本月在開支頁記錄的總額。",
   Outstanding: "未收帳款",
   Overdue: "逾期",
   "Recent quotations": "最近的報價單",
