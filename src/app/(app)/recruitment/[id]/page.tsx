@@ -94,7 +94,7 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
           <p className="text-sm text-ink">{t("Net {days} days", { days: agreement.paymentDueDays })}</p>
         </div>
         <div className="card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">{t("Created")}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">{t("Agreement date")}</p>
           <p className="text-sm text-ink">{formatDate(agreement.createdAt)}</p>
         </div>
       </div>

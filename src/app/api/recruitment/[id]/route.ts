@@ -7,6 +7,12 @@ import {
   serializeFeeScaleRows,
 } from "@/lib/recruitmentTerms";
 
+function agreementDateFrom(value: unknown): Date | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   const agreement = await prisma.recruitmentAgreement.findUnique({ where: { id: params.id } });
   if (!agreement) {
@@ -40,6 +46,17 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: "That's not a valid terms language." }, { status: 400 });
   }
 
+  let agreementDate: Date | undefined;
+  if (body.agreementDate !== undefined) {
+    const parsed = agreementDateFrom(body.agreementDate);
+    if (!parsed) {
+      return NextResponse.json({ error: "Enter a valid agreement date." }, { status: 400 });
+    }
+    if (existing.createdAt.toISOString().slice(0, 10) !== body.agreementDate) {
+      agreementDate = parsed;
+    }
+  }
+
   const agreement = await prisma.recruitmentAgreement.update({
     where: { id: params.id },
     data: {
@@ -56,6 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         body.feeScaleContract !== undefined ? serializeFeeScaleRows(body.feeScaleContract) : undefined,
       language: body.language !== undefined ? body.language : undefined,
       status: body.status !== undefined ? body.status : undefined,
+      createdAt: agreementDate,
     },
   });
 
@@ -68,6 +86,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     changed.push("fee scale");
   }
   if (body.language !== undefined && body.language !== existing.language) changed.push("terms language");
+  if (agreementDate) changed.push("agreement date");
   if (body.status !== undefined && body.status !== existing.status) changed.push(`status → ${body.status}`);
   await logActivity({
     documentType: "recruitment",

@@ -11,17 +11,14 @@ import {
   Clock,
   UserCircle,
   Menu,
-  X,
   LogOut,
   Loader2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import clsx from "clsx";
-import Portal from "@/components/Portal";
 import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
-import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
 
 // Deliberately a *different* storage key from Sidebar's — collapsing the
@@ -76,19 +73,17 @@ function NavLink({
       <div
         title={t("Coming soon")}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-faint/70 cursor-not-allowed",
-          collapsed ? "justify-center px-0" : "gap-3 px-3"
+          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-faint/70 cursor-not-allowed gap-3 px-3",
+          collapsed && "lg:justify-center lg:px-0 lg:gap-0"
         )}
       >
         <Icon size={17} strokeWidth={2} className="shrink-0" />
-        {!collapsed && (
-          <span className="truncate flex items-center gap-2">
-            {label}
-            <span className="text-[9px] font-semibold uppercase tracking-wide border border-line rounded-full px-1.5 py-0.5">
-              {t("Soon")}
-            </span>
+        <span className={clsx("truncate flex items-center gap-2", collapsed && "lg:hidden")}>
+          {label}
+          <span className="text-[9px] font-semibold uppercase tracking-wide border border-line rounded-full px-1.5 py-0.5">
+            {t("Soon")}
           </span>
-        )}
+        </span>
       </div>
     );
   }
@@ -100,15 +95,15 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
-        collapsed ? "justify-center px-0" : "gap-3 px-3",
+        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
+        collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
           ? "bg-brand-gradient text-white shadow-soft"
           : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />
-      {!collapsed && <span className="truncate">{label}</span>}
+      <span className={clsx("truncate", collapsed && "lg:hidden")}>{label}</span>
     </Link>
   );
 }
@@ -161,9 +156,13 @@ function SidebarLogo({
  *  re-tinted accent color the rest of the shell already picks up. */
 function HrBadge({ collapsed }: { collapsed?: boolean }) {
   const t = useT();
-  if (collapsed) return null;
   return (
-    <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-600 -mt-1">
+    <span
+      className={clsx(
+        "text-[10px] font-semibold uppercase tracking-wider text-brand-600 -mt-1",
+        collapsed && "lg:hidden"
+      )}
+    >
       {t("HR System")}
     </span>
   );
@@ -198,8 +197,8 @@ function BottomLinks({
         disabled={loggingOut}
         title={collapsed ? t("Log out") : undefined}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-muted hover:bg-danger-50 hover:text-danger-500 transition-colors",
-          collapsed ? "justify-center px-0" : "gap-3 px-3"
+          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-muted hover:bg-danger-50 hover:text-danger-500 transition-colors gap-3 px-3",
+          collapsed && "lg:justify-center lg:px-0 lg:gap-0"
         )}
       >
         {loggingOut ? (
@@ -207,7 +206,7 @@ function BottomLinks({
         ) : (
           <LogOut size={17} strokeWidth={2} className="shrink-0" />
         )}
-        {!collapsed && t("Log out")}
+        <span className={clsx(collapsed && "lg:hidden")}>{t("Log out")}</span>
       </button>
     </div>
   );
@@ -226,7 +225,7 @@ export default function HrSidebar({
 }) {
   const pathname = usePathname();
   const t = useT();
-  const [open, setOpen] = useState(false);
+  const [narrowOpen, setNarrowOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const items = buildNavItems(isAdmin, t);
 
@@ -234,6 +233,20 @@ export default function HrSidebar({
     const stored = window.localStorage.getItem(COLLAPSED_STORAGE_KEY);
     if (stored === "1") setCollapsed(true);
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      root.dataset.staffNav = mq.matches && !narrowOpen ? "closed" : "open";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      delete root.dataset.staffNav;
+    };
+  }, [narrowOpen]);
 
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -243,107 +256,70 @@ export default function HrSidebar({
     });
   }
 
+  function toggleRail() {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      toggleCollapsed();
+      return;
+    }
+    setNarrowOpen(false);
+  }
+
   return (
     <>
       <aside
         className={clsx(
-          // Docked on the right (see the note on HrSidebar's export below) —
-          // `border-l` instead of Sidebar's `border-r`, since the divider
-          // now needs to separate this rail from the content sitting to its
-          // LEFT rather than its right.
-          "hidden lg:flex shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-l border-line bg-surface/90 backdrop-blur-sm py-6 transition-[width] duration-200",
-          collapsed ? "w-20" : "w-64"
+          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-l border-line bg-surface/90 backdrop-blur-sm py-6 transition-[width] duration-200 w-64 max-lg:max-w-[72vw]",
+          collapsed && "lg:w-20",
+          narrowOpen ? "flex" : "hidden lg:flex"
         )}
       >
-        {collapsed ? (
+        {collapsed && (
           <button
             type="button"
             onClick={toggleCollapsed}
             aria-label={t("Expand sidebar")}
             title={t("Expand sidebar")}
-            className="mx-auto mb-6 w-11 h-11 flex items-center justify-center rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
+            className="hidden lg:flex mx-auto mb-6 w-11 h-11 items-center justify-center rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
           >
-            {/* Expanding pulls the rail back out from the right edge it's
-                docked to, i.e. leftward — mirrors Sidebar's ChevronRight
-                (which pulls its own left-docked rail out rightward). */}
             <ChevronLeft size={19} />
           </button>
-        ) : (
-          <div className="mb-6 px-6 flex items-center justify-between gap-2 shrink-0">
-            <div className="min-w-0 flex flex-col">
-              <SidebarLogo
-                logoData={logoData}
-                logoDataDark={logoDataDark}
-                companyName={companyName}
-                className="h-9 max-w-full object-contain"
-              />
-              <HrBadge />
-            </div>
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              aria-label={t("Collapse sidebar")}
-              title={t("Collapse sidebar")}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
-            >
-              {/* Collapsing pushes the rail back toward the right edge it's
-                  docked to — mirrors Sidebar's ChevronLeft (which collapses
-                  its own left-docked rail back toward the left edge). */}
-              <ChevronRight size={16} />
-            </button>
-          </div>
         )}
+        <div className={clsx("mb-6 px-6 flex items-center justify-between gap-2 shrink-0", collapsed && "lg:hidden")}>
+          <div className="min-w-0 flex flex-col">
+            <SidebarLogo
+              logoData={logoData}
+              logoDataDark={logoDataDark}
+              companyName={companyName}
+              className="h-9 max-w-full object-contain"
+            />
+            <HrBadge collapsed={collapsed} />
+          </div>
+          <button
+            type="button"
+            onClick={toggleRail}
+            aria-label={t("Collapse sidebar")}
+            title={t("Collapse sidebar")}
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
 
         <SwitchSystemLink href="/" label={t("Resource Management")} collapsed={collapsed} />
         <NavLinks items={items} pathname={pathname} collapsed={collapsed} />
         <BottomLinks collapsed={collapsed} />
       </aside>
 
-      <div className="lg:hidden">
-        <LanguageSwitch className="fixed top-3.5 left-3 z-40" menuDirection="down" align="left" />
+      {!narrowOpen && (
         <button
-          onClick={() => setOpen(true)}
+          type="button"
+          onClick={() => setNarrowOpen(true)}
           aria-label={t("Open navigation menu")}
-          className="fixed top-3.5 right-3 z-40 flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-line shadow-card"
+          className="lg:hidden fixed top-3.5 right-3 z-40 flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-line shadow-card"
         >
           <Menu size={19} />
         </button>
-
-        {open && (
-          <Portal>
-          <div className="fixed inset-0 z-50 flex justify-end">
-            <div
-              className="absolute inset-0 bg-ink/40 animate-fade-in"
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-            />
-            <aside className="relative w-72 max-w-[80vw] bg-surface h-full py-6 shadow-xl flex flex-col overflow-y-auto animate-slide-in-right">
-              <div className="px-6 mb-6 flex items-center justify-between shrink-0">
-                <div className="min-w-0 flex flex-col">
-                  <SidebarLogo
-                    logoData={logoData}
-                    logoDataDark={logoDataDark}
-                    companyName={companyName}
-                    className="h-9 max-w-[70%] object-contain"
-                  />
-                  <HrBadge />
-                </div>
-                <button
-                  onClick={() => setOpen(false)}
-                  aria-label={t("Close navigation menu")}
-                  className="text-ink-muted hover:text-ink"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <SwitchSystemLink href="/" label={t("Resource Management")} onNavigate={() => setOpen(false)} />
-              <NavLinks items={items} pathname={pathname} onNavigate={() => setOpen(false)} />
-              <BottomLinks onNavigate={() => setOpen(false)} />
-            </aside>
-          </div>
-          </Portal>
-        )}
-      </div>
+      )}
     </>
   );
 }

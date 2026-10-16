@@ -121,6 +121,12 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Try adjusting your filters, or create a new agreement.": "請調整篩選條件，或新增一份協議。",
   "New agreement": "新增協議",
   "Created {date}": "建立日期 {date}",
+  "Agreement date": "協議日期",
+  "Agreement date *": "協議日期 *",
+  "Agreement date {date}": "協議日期 {date}",
+  "Printed on the agreement and PDF. An existing agreement keeps its current date until you change it here.":
+    "此日期會印在協議及 PDF 上。舊協議會保留目前日期，直到你在這裡修改。",
+  "Enter a valid agreement date.": "請輸入有效的協議日期。",
   "Net {days} days": "淨 {days} 日",
   "Recruitment Agreements": "招聘協議",
   "Recruitment services terms — a separate system from quotations/invoices/receipts.":

@@ -33,6 +33,7 @@ export default async function EditRecruitmentAgreementPage({ params }: { params:
           feeScalePermanent: normalizeFeeScaleRows(agreement.feeScalePermanent, DEFAULT_FEE_SCALE_PERMANENT),
           feeScaleContract: normalizeFeeScaleRows(agreement.feeScaleContract, DEFAULT_FEE_SCALE_CONTRACT),
           language: (agreement.language as any) || "EN",
+          createdAt: agreement.createdAt.toISOString(),
         }}
       />
     </div>

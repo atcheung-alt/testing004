@@ -32,7 +32,7 @@ export default async function HrLayout({ children }: { children: React.ReactNode
     // that you're in a different system even at a glance.
     <div data-product="hr" className="min-h-screen flex">
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-16 lg:pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
