@@ -13,7 +13,6 @@ import {
   Wallet,
   CalendarCheck,
   Menu,
-  X,
   Users,
   Briefcase,
   Settings as SettingsIcon,
@@ -24,10 +23,8 @@ import {
   Package,
 } from "lucide-react";
 import clsx from "clsx";
-import Portal from "@/components/Portal";
 import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
-import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
@@ -99,15 +96,15 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
-        collapsed ? "justify-center px-0" : "gap-3 px-3",
+        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
+        collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
           ? "bg-brand-gradient text-white shadow-soft"
           : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />
-      {!collapsed && <span className="truncate">{label}</span>}
+      <span className={clsx("truncate", collapsed && "lg:hidden")}>{label}</span>
     </Link>
   );
 }
@@ -127,10 +124,17 @@ function NavLinks({
     <nav className="flex flex-col gap-5 px-3">
       {navGroups.map((group, gi) => (
         <div key={group.label || gi} className="flex flex-col gap-0.5">
-          {group.label && !collapsed && (
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{group.label}</p>
+          {group.label && (
+            <p
+              className={clsx(
+                "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint",
+                collapsed && "lg:hidden"
+              )}
+            >
+              {group.label}
+            </p>
           )}
-          {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line" />}
+          {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line hidden lg:block" />}
           {group.items.map((item) => (
             <NavLink
               key={item.href}
@@ -208,15 +212,15 @@ function BottomLinks({
         prefetch={false}
         title={collapsed ? t("Settings") : undefined}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors",
-          collapsed ? "justify-center px-0" : "gap-3 px-3",
+          "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors gap-3 px-3",
+          collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
             ? "bg-brand-gradient text-white shadow-soft"
             : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
         )}
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />
-        {!collapsed && t("Settings")}
+        <span className={clsx(collapsed && "lg:hidden")}>{t("Settings")}</span>
       </Link>
       <button
         type="button"
@@ -224,8 +228,8 @@ function BottomLinks({
         disabled={loggingOut}
         title={collapsed ? t("Log out") : undefined}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-muted hover:bg-danger-50 hover:text-danger-500 transition-colors",
-          collapsed ? "justify-center px-0" : "gap-3 px-3"
+          "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-muted hover:bg-danger-50 hover:text-danger-500 transition-colors gap-3 px-3",
+          collapsed && "lg:justify-center lg:px-0 lg:gap-0"
         )}
       >
         {loggingOut ? (
@@ -233,7 +237,7 @@ function BottomLinks({
         ) : (
           <LogOut size={17} strokeWidth={2} className="shrink-0" />
         )}
-        {!collapsed && t("Log out")}
+        <span className={clsx(collapsed && "lg:hidden")}>{t("Log out")}</span>
       </button>
     </div>
   );
@@ -252,7 +256,9 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const t = useT();
-  const [open, setOpen] = useState(false);
+  // Narrow viewports keep the tool list open on first paint. Closing it is a
+  // session choice only — the next visit starts open again.
+  const [narrowOpen, setNarrowOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const navGroups = buildNavGroups(t);
 
@@ -264,12 +270,34 @@ export default function Sidebar({
     if (stored === "1") setCollapsed(true);
   }, []);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      root.dataset.staffNav = mq.matches && !narrowOpen ? "closed" : "open";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      delete root.dataset.staffNav;
+    };
+  }, [narrowOpen]);
+
   function toggleCollapsed() {
     setCollapsed((c) => {
       const next = !c;
       window.localStorage.setItem(COLLAPSED_STORAGE_KEY, next ? "1" : "0");
       return next;
     });
+  }
+
+  function toggleRail() {
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      toggleCollapsed();
+      return;
+    }
+    setNarrowOpen(false);
   }
 
   return (
@@ -280,95 +308,59 @@ export default function Sidebar({
           stretching to the full page height and scrolling out of view. */}
       <aside
         className={clsx(
-          "hidden lg:flex shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-5 transition-[width] duration-200",
-          collapsed ? "w-20" : "w-64"
+          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-5 transition-[width] duration-200 w-64 max-lg:max-w-[72vw]",
+          collapsed && "lg:w-20",
+          narrowOpen ? "flex" : "hidden lg:flex"
         )}
       >
-        {/* Collapsed: a dedicated expand button sits where the logo would
-            be. Expanded: the logo is a plain, non-interactive display again,
-            with its own separate collapse button beside it. */}
-        {collapsed ? (
+        {/* Wide screens collapse to icons. Narrow screens hide the whole
+            rail; the menu button below brings the full tool list back. */}
+        {collapsed && (
           <button
             type="button"
             onClick={toggleCollapsed}
             aria-label={t("Expand sidebar")}
             title={t("Expand sidebar")}
-            className="mx-auto mb-6 w-11 h-11 flex items-center justify-center rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
+            className="hidden lg:flex mx-auto mb-6 w-11 h-11 items-center justify-center rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
           >
             <ChevronRight size={19} />
           </button>
-        ) : (
-          <div className="mb-6 px-6 flex items-center justify-between gap-2 shrink-0">
-            <div className="min-w-0 flex items-center">
-              <SidebarLogo
-                logoData={logoData}
-                logoDataDark={logoDataDark}
-                companyName={companyName}
-                className="h-9 max-w-full object-contain"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              aria-label={t("Collapse sidebar")}
-              title={t("Collapse sidebar")}
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
-            >
-              <ChevronLeft size={16} />
-            </button>
-          </div>
         )}
+        <div className={clsx("mb-6 px-6 flex items-center justify-between gap-2 shrink-0", collapsed && "lg:hidden")}>
+          <div className="min-w-0 flex items-center">
+            <SidebarLogo
+              logoData={logoData}
+              logoDataDark={logoDataDark}
+              companyName={companyName}
+              className="h-9 max-w-full object-contain"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={toggleRail}
+            aria-label={t("Collapse sidebar")}
+            title={t("Collapse sidebar")}
+            className="flex items-center justify-center w-7 h-7 rounded-lg text-ink-muted hover:bg-brand-50 hover:text-brand-600 transition-colors shrink-0"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        </div>
 
         <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />
         <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} />
         <BottomLinks pathname={pathname} collapsed={collapsed} />
       </aside>
 
-      {/* Mobile top bar trigger + drawer — always shows full labels; the
-          collapse/expand affordance above is a desktop-only rail since the
-          drawer already hides itself when closed. */}
-      <div className="lg:hidden">
-        <LanguageSwitch className="fixed top-3.5 right-3 z-40" menuDirection="down" />
+      {!narrowOpen && (
         <button
-          onClick={() => setOpen(true)}
+          type="button"
+          onClick={() => setNarrowOpen(true)}
           aria-label={t("Open navigation menu")}
-          className="fixed top-3.5 left-3 z-40 flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-line shadow-card"
+          className="lg:hidden fixed top-3.5 left-3 z-40 flex items-center justify-center w-10 h-10 rounded-xl bg-surface border border-line shadow-card"
         >
           <Menu size={19} />
         </button>
-
-        {open && (
-          <Portal>
-          <div className="fixed inset-0 z-50 flex">
-            <div
-              className="absolute inset-0 bg-ink/40 animate-fade-in"
-              onClick={() => setOpen(false)}
-              aria-hidden="true"
-            />
-            <aside className="relative w-72 max-w-[80vw] bg-surface h-full py-6 shadow-xl flex flex-col overflow-y-auto animate-slide-in-left">
-              <div className="px-6 mb-6 flex items-center justify-between shrink-0">
-                <SidebarLogo
-                  logoData={logoData}
-                  logoDataDark={logoDataDark}
-                  companyName={companyName}
-                  className="h-9 max-w-[70%] object-contain"
-                />
-                <button
-                  onClick={() => setOpen(false)}
-                  aria-label={t("Close navigation menu")}
-                  className="text-ink-muted hover:text-ink"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <SwitchSystemLink href="/hr" label={t("HR System")} onNavigate={() => setOpen(false)} />
-              <NavLinks navGroups={navGroups} pathname={pathname} onNavigate={() => setOpen(false)} />
-              <BottomLinks pathname={pathname} onNavigate={() => setOpen(false)} />
-            </aside>
-          </div>
-          </Portal>
-        )}
-      </div>
+      )}
     </>
   );
 }

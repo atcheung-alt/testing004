@@ -20,6 +20,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
+/** Date-only value stored on the existing createdAt column. UTC midnight keeps the calendar day stable. */
+function agreementDateFrom(value: unknown): Date | null {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q") || undefined;
   const status = request.nextUrl.searchParams.get("status") || undefined;
@@ -65,6 +72,10 @@ export async function POST(request: NextRequest) {
   const language: RecruitmentLanguage = VALID_RECRUITMENT_LANGUAGES.includes(body.language)
     ? body.language
     : "EN";
+  const agreementDate = body.agreementDate === undefined ? new Date() : agreementDateFrom(body.agreementDate);
+  if (!agreementDate) {
+    return NextResponse.json({ error: "Enter a valid agreement date." }, { status: 400 });
+  }
 
   const feeScalePermanentRows = normalizeFeeScaleRows(body.feeScalePermanent, DEFAULT_FEE_SCALE_PERMANENT);
   const feeScaleContractRows = normalizeFeeScaleRows(body.feeScaleContract, DEFAULT_FEE_SCALE_CONTRACT);
@@ -93,6 +104,7 @@ export async function POST(request: NextRequest) {
       language,
       status: body.status || "DRAFT",
       signingToken: generateSigningToken(),
+      createdAt: agreementDate,
     },
   });
 

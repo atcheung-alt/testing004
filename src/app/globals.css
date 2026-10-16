@@ -473,6 +473,12 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 }
 
+@media (max-width: 1023px) {
+  html[data-staff-nav="closed"] main {
+    padding-top: 4.5rem;
+  }
+}
+
 html[data-animations="off"] *,
 html[data-animations="off"] *::before,
 html[data-animations="off"] *::after {

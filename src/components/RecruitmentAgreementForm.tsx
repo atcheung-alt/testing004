@@ -28,7 +28,16 @@ export type RecruitmentAgreementFormData = {
   feeScalePermanent: FeeScaleRowFields[];
   feeScaleContract: FeeScaleRowFields[];
   language: RecruitmentLanguage;
+  /** ISO timestamp already stored for this agreement. Shown as the agreement date. */
+  createdAt: string;
 };
+
+function toDateInput(value?: string | null) {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return new Date().toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10);
+}
 
 /** One fee scale table (Permanent or Contract placements), editable directly
  *  inline — add/edit/delete rows, no separate save step. Belongs entirely to
@@ -117,6 +126,7 @@ export default function RecruitmentAgreementForm({
   const router = useRouter();
   const [companyName, setCompanyName] = useState(agreement?.companyName || "");
   const [companyEmail, setCompanyEmail] = useState(agreement?.companyEmail || "");
+  const [agreementDate, setAgreementDate] = useState(toDateInput(agreement?.createdAt));
   const [paymentDueDays, setPaymentDueDays] = useState(
     agreement?.paymentDueDays ?? DEFAULT_RECRUITMENT_PAYMENT_DUE_DAYS
   );
@@ -297,6 +307,7 @@ export default function RecruitmentAgreementForm({
         body: JSON.stringify({
           companyName,
           companyEmail,
+          agreementDate,
           paymentDueDays,
           terms,
           feeScalePermanent: permanentRows,
@@ -347,6 +358,19 @@ export default function RecruitmentAgreementForm({
               onChange={(e) => setCompanyEmail(e.target.value)}
               required
             />
+          </div>
+          <div>
+            <label className="label">{t("Agreement date *")}</label>
+            <input
+              type="date"
+              className="input"
+              value={agreementDate}
+              onChange={(e) => setAgreementDate(e.target.value)}
+              required
+            />
+            <p className="text-xs text-ink-faint mt-1">
+              {t("Printed on the agreement and PDF. An existing agreement keeps its current date until you change it here.")}
+            </p>
           </div>
           <div>
             <label className="label">{t("Payment due (days) *")}</label>

@@ -66,7 +66,7 @@ async function RecruitmentList({
               <StatusBadge status={a.status} />
             </div>
             <p className="text-xs text-ink-muted truncate mt-0.5">
-              {a.companyName} · {t("Created {date}", { date: formatDate(a.createdAt) })}
+              {a.companyName} · {t("Agreement date {date}", { date: formatDate(a.createdAt) })}
             </p>
           </div>
           <span className="text-xs text-ink-faint shrink-0">{t("Net {days} days", { days: a.paymentDueDays })}</span>

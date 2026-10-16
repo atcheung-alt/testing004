@@ -38,9 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         isAdmin={isAdmin}
       />
       <div className="flex-1 flex flex-col min-w-0">
-        {/* pt-16 on mobile clears the fixed hamburger button that now floats
-            directly over page content with no header bar beneath it. */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-16 lg:pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

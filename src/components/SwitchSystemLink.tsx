@@ -31,12 +31,12 @@ export default function SwitchSystemLink({
       onClick={onNavigate}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2 text-xs font-medium border border-line text-ink-muted hover:text-ink hover:border-ink-faint transition-colors mb-6 shrink-0",
-        collapsed ? "justify-center px-0 mx-auto w-10" : "gap-2 px-3 mx-3"
+        "flex items-center rounded-xl py-2 text-xs font-medium border border-line text-ink-muted hover:text-ink hover:border-ink-faint transition-colors mb-6 shrink-0 gap-2 px-3 mx-3",
+        collapsed && "lg:justify-center lg:px-0 lg:mx-auto lg:w-10 lg:gap-0"
       )}
     >
       <ArrowLeftRight size={14} className="shrink-0" />
-      {!collapsed && <span className="truncate">{label}</span>}
+      <span className={clsx("truncate", collapsed && "lg:hidden")}>{label}</span>
     </Link>
   );
 }
