@@ -25,6 +25,7 @@ import {
 import clsx from "clsx";
 import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
+import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
@@ -135,6 +136,9 @@ function NavLinks({
             </p>
           )}
           {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line hidden lg:block" />}
+          {group.items.some((item) => item.href === "/items") && (
+            <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" className="mb-1" />
+          )}
           {group.items.map((item) => (
             <NavLink
               key={item.href}

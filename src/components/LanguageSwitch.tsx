@@ -65,17 +65,15 @@ export default function LanguageSwitch({
         aria-label="Language"
         title="Language"
         className={clsx(
-          "btn-secondary",
-          collapsed && "justify-center px-0 w-10"
+          "btn-secondary w-full",
+          collapsed && "lg:justify-center lg:px-0 lg:w-10"
         )}
       >
         <Languages size={15} />
-        {!collapsed && (
-          <>
-            Language
-            <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
-          </>
-        )}
+        <span className={clsx("inline-flex items-center gap-1", collapsed && "lg:hidden")}>
+          Language
+          <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />
+        </span>
       </button>
       {open && (
         <div

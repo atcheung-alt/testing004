@@ -369,8 +369,9 @@ export default function ExpenseWorkspace({
               : t("No expenses yet. Record one above and it will stay linked to the invoice you chose.")}
           </div>
         ) : (
-          <div className="card divide-y divide-line">
-            <div className="hidden sm:grid grid-cols-[9rem_1fr_8rem_7rem_2rem] gap-3 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+          <div className="card overflow-x-auto">
+            <div className="min-w-[44rem] divide-y divide-line">
+            <div className="grid grid-cols-[9rem_minmax(12rem,1fr)_10rem_7rem_2rem] gap-3 px-5 py-2 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
               <span>{t("Invoice")}</span>
               <span>{t("Customer")}</span>
               <span>{t("Category")}</span>
@@ -378,14 +379,14 @@ export default function ExpenseWorkspace({
               <span />
             </div>
             {shown.map((row) => (
-              <div key={row.id} className="px-4 sm:px-5 py-3 flex flex-col gap-3">
-                <div className="sm:grid sm:grid-cols-[9rem_1fr_8rem_7rem_2rem] sm:items-center sm:gap-3">
-                <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600">
+              <div key={row.id} className="px-4 sm:px-5 py-3">
+                <div className="grid grid-cols-[9rem_minmax(12rem,1fr)_10rem_7rem_2rem] items-center gap-3">
+                <Link href={`/invoices/${row.invoice.id}`} className="font-mono text-sm font-medium hover:text-brand-600 whitespace-nowrap">
                   {row.invoice.number}
                 </Link>
                 <div className="min-w-0">
-                  <p className="text-sm text-ink truncate">{row.invoice.customerName}</p>
-                  <p className="text-xs text-ink-faint">{row.createdLabel}</p>
+                  <p className="text-sm text-ink whitespace-nowrap">{row.invoice.customerName}</p>
+                  <p className="text-xs text-ink-faint whitespace-nowrap">{row.createdLabel}</p>
                   {row.documents.length > 0 && (
                     <ul className="mt-1 flex flex-col gap-0.5">
                       {row.documents.map((doc) => (
@@ -401,8 +402,8 @@ export default function ExpenseWorkspace({
                     </ul>
                   )}
                 </div>
-                <span className="text-sm text-ink-muted">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
-                <span className="font-mono text-sm sm:text-right">{formatCurrency(row.amount)}</span>
+                <span className="text-sm text-ink-muted whitespace-nowrap">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
+                <span className="font-mono text-sm text-right whitespace-nowrap">{formatCurrency(row.amount)}</span>
                 <button
                   type="button"
                   className="text-ink-faint hover:text-danger-500 justify-self-end"
@@ -415,6 +416,7 @@ export default function ExpenseWorkspace({
                 </div>
               </div>
             ))}
+            </div>
           </div>
         )}
       </section>

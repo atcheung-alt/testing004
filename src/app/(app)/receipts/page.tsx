@@ -183,21 +183,22 @@ async function MoneyList({
         )}
       </div>
 
-      <div className="card divide-y divide-line">
+      <div className="card overflow-x-auto">
+        <div className="min-w-[46rem] divide-y divide-line">
         {rows.map((row) => (
-          <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-4 gap-3">
-            <Link href={row.href} className="min-w-0 hover:opacity-80">
+          <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-4 gap-6">
+            <Link href={row.href} className="min-w-[18rem] hover:opacity-80">
               <div className="flex items-center gap-2">
                 <span
-                  className={`text-[11px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+                  className={`text-[11px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 ${
                     row.kind === "receipt" ? "bg-accent-100 text-accent-600" : "bg-danger-50 text-danger-500"
                   }`}
                 >
                   {row.kind === "receipt" ? t("Receipt") : t("Expense")}
                 </span>
-                <span className="font-mono text-sm font-medium">{row.title}</span>
+                <span className="font-mono text-sm font-medium whitespace-nowrap">{row.title}</span>
               </div>
-              <p className="text-xs text-ink-muted truncate mt-0.5">{row.subtitle}</p>
+              <p className="text-xs text-ink-muted whitespace-nowrap mt-0.5">{row.subtitle}</p>
             </Link>
             <div className="flex items-center gap-3 shrink-0">
               <span className="font-mono text-sm font-medium">{formatCurrency(row.amount)}</span>
@@ -235,6 +236,7 @@ async function MoneyList({
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
   );
