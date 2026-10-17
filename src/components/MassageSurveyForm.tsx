@@ -10,7 +10,7 @@ type TherapistOption = { id: string; name: string };
 
 const QUESTIONS = [
   { key: "overall", label: "How did this massage feel overall?" },
-  { key: "focus", label: "How was the therapist's manner and focus?" },
+  { key: "focus", label: "Did the therapist put care into the session?" },
   { key: "pressure", label: "Was the pressure right for you?" },
   { key: "relief", label: "Did your discomfort ease afterward?" },
 ] as const;

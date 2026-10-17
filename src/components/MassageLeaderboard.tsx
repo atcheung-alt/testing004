@@ -25,7 +25,7 @@ function ScoreBlock({ row }: { row: TherapistStanding }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-2">
       <Meter label={t("Overall")} value={row.overall} active={row.count > 0} />
-      <Meter label={t("Focus")} value={row.focus} active={row.count > 0} />
+      <Meter label={t("Care")} value={row.focus} active={row.count > 0} />
       <Meter label={t("Pressure")} value={row.pressure} active={row.count > 0} />
       <Meter label={t("Relief")} value={row.relief} active={row.count > 0} />
     </div>
@@ -96,8 +96,9 @@ export default function MassageLeaderboard({ rows }: { rows: TherapistStanding[]
       </div>
 
       <div className="card divide-y divide-line">
-        <div className="px-4 sm:px-5 py-3">
-          <h3 className="text-sm font-semibold">{t("Standing")}</h3>
+        <div className="px-4 sm:px-5 py-3 flex items-baseline justify-between gap-3">
+          <h3 className="text-sm font-semibold">{t("League table")}</h3>
+          <p className="text-[11px] uppercase tracking-wide text-ink-faint">{t("Score")} / 5</p>
         </div>
         {ranked.map((row, index) => (
           <div key={row.id} className="px-4 sm:px-5 py-4 flex flex-col lg:flex-row lg:items-center gap-4">

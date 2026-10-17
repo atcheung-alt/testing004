@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { generateSigningToken } from "@/lib/signing";
@@ -28,15 +29,9 @@ export const MASSAGE_THERAPISTS: { id: string; name: string }[] = [
   { id: "mt_brain", name: "Brain" },
 ];
 
-const THERAPIST_IDS = new Set(MASSAGE_THERAPISTS.map((therapist) => therapist.id));
-
 // Below this many surveys the rank is still shown, with an Early mark, the
 // same way a review site shows a rating beside how many people wrote it.
 export const EARLY_SURVEY_COUNT = 8;
-
-export function isMassageTherapistId(id: string): boolean {
-  return THERAPIST_IDS.has(id);
-}
 
 export function round1(value: number): number {
   return Math.round(value * 10) / 10;
@@ -88,14 +83,58 @@ function standingFrom(therapist: { id: string; name: string }, row: AvgRow | und
   };
 }
 
+// Seed the company roster once. Existing rows are left alone, so a therapist
+// who was removed (active = false) is not put back, and a renamed row is not
+// overwritten. No columns are added.
 export async function ensureMassageTherapists(): Promise<void> {
-  for (const [index, therapist] of MASSAGE_THERAPISTS.entries()) {
-    await prisma.massageTherapist.upsert({
-      where: { id: therapist.id },
-      update: { name: therapist.name, sortOrder: index, active: true },
-      create: { id: therapist.id, name: therapist.name, sortOrder: index, active: true },
+  const existing = await prisma.massageTherapist.findMany({ select: { id: true } });
+  const have = new Set(existing.map((row) => row.id));
+  const missing = MASSAGE_THERAPISTS.flatMap((therapist, index) =>
+    have.has(therapist.id) ? [] : [{ id: therapist.id, name: therapist.name, sortOrder: index, active: true }]
+  );
+  if (missing.length === 0) return;
+  await prisma.massageTherapist.createMany({ data: missing, skipDuplicates: true });
+}
+
+export async function addMassageTherapist(name: string): Promise<{ id: string; name: string } | "empty" | "duplicate"> {
+  const trimmed = name.trim().slice(0, 80);
+  if (!trimmed) return "empty";
+  const duplicate = await prisma.massageTherapist.findFirst({
+    where: { active: true, name: trimmed },
+    select: { id: true },
+  });
+  if (duplicate) return "duplicate";
+  // Putting the same name back uses the existing row, so earlier survey
+  // scores stay with that therapist instead of starting a second record.
+  const retired = await prisma.massageTherapist.findFirst({
+    where: { active: false, name: trimmed },
+    select: { id: true },
+  });
+  if (retired) {
+    return prisma.massageTherapist.update({
+      where: { id: retired.id },
+      data: { active: true },
+      select: { id: true, name: true },
     });
   }
+  const last = await prisma.massageTherapist.findFirst({
+    orderBy: { sortOrder: "desc" },
+    select: { sortOrder: true },
+  });
+  const id = `mt_${crypto.randomUUID().replace(/-/g, "").slice(0, 16)}`;
+  return prisma.massageTherapist.create({
+    data: { id, name: trimmed, sortOrder: (last?.sortOrder ?? -1) + 1, active: true },
+    select: { id: true, name: true },
+  });
+}
+
+// Hides the name from new surveys and from the ranking. Past survey rows stay
+// attached, so event history is unchanged.
+export async function retireMassageTherapist(id: string): Promise<boolean> {
+  const row = await prisma.massageTherapist.findUnique({ where: { id }, select: { id: true, active: true } });
+  if (!row?.active) return false;
+  await prisma.massageTherapist.update({ where: { id }, data: { active: false } });
+  return true;
 }
 
 function mentionsMassage(value: string | null | undefined): boolean {
