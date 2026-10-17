@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import {
   countActiveBookingsForSlot,
@@ -26,9 +25,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string; slotId: string } }
 ) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const event = await getBookingEvent(params.id);
   const slot = await getSlot(params.slotId);
   if (!event || !slot || slot.eventId !== params.id) {
@@ -70,9 +66,6 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string; slotId: string } }
 ) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const slot = await getSlot(params.slotId);
   if (!slot || slot.eventId !== params.id) {
     return NextResponse.json({ error: "Slot not found." }, { status: 404 });

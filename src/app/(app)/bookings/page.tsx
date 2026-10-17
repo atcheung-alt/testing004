@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Plus, CalendarCheck } from "lucide-react";
-import { requireAdminPage } from "@/lib/auth";
 import { listBookingEvents } from "@/lib/bookings";
 import { listEvents } from "@/lib/events";
 import EmptyState from "@/components/EmptyState";
@@ -20,7 +19,6 @@ export const dynamic = "force-dynamic";
  */
 export default async function BookingsPage() {
   const t = getT();
-  await requireAdminPage();
 
   const [events, jobs] = await Promise.all([listBookingEvents(), listEvents()]);
   const serializedEvents = events.map((e) => ({

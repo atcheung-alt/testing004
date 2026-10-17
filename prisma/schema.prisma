@@ -304,6 +304,11 @@ model Invoice {
   driveFileId     String?
   driveFileUrl    String?
 
+  // Relations only — no new columns on Invoice. Guest answers and the
+  // survey link live in their own tables.
+  massageEvent   MassageEventLink?
+  massageSurveys MassageSurvey[]
+
   receipt         Receipt?
 
   createdAt       DateTime      @default(now())
@@ -1070,6 +1075,50 @@ model Booking {
   updatedAt     DateTime    @updatedAt
 
   @@index([slotId, status])
+}
+
+// One public survey link for one massage calendar event. Created only after
+// that invoice is marked on the calendar. Keyed by invoiceId because each
+// invoice has at most one Event. Kept off the Invoice columns so other
+// invoice queries do not depend on this feature.
+model MassageEventLink {
+  invoiceId String   @id
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
+
+// A massage therapist a guest can pick on the event survey. The roster is
+// the company's own list (see src/lib/massage.ts). Names stay free of the
+// old internal star notes so a guest is not steered by a printed rating.
+model MassageTherapist {
+  id        String          @id
+  name      String
+  sortOrder Int             @default(0)
+  active    Boolean         @default(true)
+  surveys   MassageSurvey[]
+  createdAt DateTime        @default(now())
+}
+
+// One guest's answers after a massage at one invoiced event. Several guests
+// share the event QR code, so many rows point at the same invoice.
+model MassageSurvey {
+  id          String           @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  therapistId String
+  therapist   MassageTherapist @relation(fields: [therapistId], references: [id])
+  // Each score is 1–5. The standing on the Massage page is their average.
+  overall     Int
+  focus       Int
+  pressure    Int
+  relief      Int
+  comment     String           @default("")
+  language    String           @default("zh")
+  createdAt   DateTime         @default(now())
+
+  @@index([invoiceId, createdAt])
+  @@index([therapistId])
 }
 
 // Page-access groups for the Management screen. A new empty table: existing
