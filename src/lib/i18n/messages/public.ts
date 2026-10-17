@@ -577,7 +577,7 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   "Which therapist massaged you?": "為你按摩的是哪位師傅？",
   "Select a therapist": "請選擇師傅",
   "How did this massage feel overall?": "今次按摩的整體感覺",
-  "How was the therapist's manner and focus?": "師傅的態度同專心程度",
+  "Did the therapist put care into the session?": "師傅有沒有用心？",
   "Was the pressure right for you?": "力度是否適合你",
   "Did your discomfort ease afterward?": "做完之後，不適有沒有舒緩",
   "Any other comments?": "還有其他意見嗎？",

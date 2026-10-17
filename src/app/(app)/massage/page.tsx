@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
 import { listMassageBoard, therapistStandings } from "@/lib/massage";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
+import MassageRoster from "@/components/MassageRoster";
 
 export const dynamic = "force-dynamic";
 
@@ -21,13 +22,13 @@ export default async function MassagePage() {
           <Medal size={18} />
           <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
         </div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">{t("Massage performance")}</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">{t("Results")}</h1>
         <p className="text-sm text-ink-muted mt-2 max-w-2xl">
-          {t("Guest scores after each event, ranked so you can see which therapist is doing better.")}
+          {t("The board opens on the results, so you can see who is doing better before you open an event.")}
         </p>
         <p className="text-xs text-ink-faint mt-2 max-w-2xl">
           {t(
-            "The score is the average of four questions: overall, focus, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking."
+            "The score is the average of four questions: overall, care, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking."
           )}
         </p>
       </header>
@@ -50,6 +51,12 @@ export default async function MassagePage() {
       </section>
 
       <MassageLeaderboard rows={standings} />
+
+      <MassageRoster
+        therapists={[...standings]
+          .sort((a, b) => a.name.localeCompare(b.name, "zh-HK"))
+          .map((row) => ({ id: row.id, name: row.name }))}
+      />
 
       <section className="flex flex-col gap-3">
         <div>

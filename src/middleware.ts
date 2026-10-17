@@ -38,8 +38,17 @@ const PUBLIC_PATH_PREFIXES = [
   "/favicon.ico",
 ];
 
+// A prefix matches the path itself or a child path. "/book" must not also
+// match the staff page "/bookings" — that used to skip the login check and
+// send people to the HR Plus home instead of Bookings.
+function matchesPublicPrefix(pathname: string, prefix: string): boolean {
+  if (pathname === prefix || pathname === prefix.replace(/\/$/, "")) return true;
+  if (prefix.endsWith("/")) return pathname.startsWith(prefix);
+  return pathname.startsWith(`${prefix}/`);
+}
+
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix));
+  return PUBLIC_PATH_PREFIXES.some((prefix) => matchesPublicPrefix(pathname, prefix));
 }
 
 // The subset of PUBLIC_PATH_PREFIXES that render an actual page for an
@@ -66,7 +75,7 @@ const PUBLIC_CLIENT_PATH_PREFIXES = [
 ];
 
 function isPublicClientPath(pathname: string): boolean {
-  return PUBLIC_CLIENT_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  return PUBLIC_CLIENT_PATH_PREFIXES.some((prefix) => matchesPublicPrefix(pathname, prefix));
 }
 
 export async function middleware(request: NextRequest) {

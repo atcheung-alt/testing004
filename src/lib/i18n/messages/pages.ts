@@ -418,8 +418,9 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Massage performance": "按摩表現",
   "Guest scores after each event, ranked so you can see which therapist is doing better.":
     "每個活動的客人評分會排成名次，用來比較哪位師傅表現較好。",
-  "The score is the average of four questions: overall, focus, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking.":
-    "分數是四題的平均：整體、專心、力度、舒緩。5 分最高。少於 8 份會標成「早期」，仍然計入排名。",
+  "The score is the average of four questions: overall, care, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking.":
+    "分數是四題的平均：整體、用心、力度、舒緩。5 分最高。少於 8 份會標成「早期」，仍然計入排名。",
+  Care: "用心",
   Surveys: "問卷",
   "Leading score": "最高分",
   "Therapists with scores": "已有分數的師傅",
@@ -462,4 +463,19 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "This event": "這個活動",
   "Therapists at this event": "這個活動的師傅排名",
   "Event average": "活動平均分",
+  Results: "成績",
+  "League table": "排名表",
+  "The board opens on the results, so you can see who is doing better before you open an event.":
+    "一打開先看到成績，方便你先知道哪位師傅表現較好，再進入個別活動。",
+  "Current therapists": "現有師傅",
+  "Add or remove names guests can choose. Removing a name hides them from new surveys. Past scores stay on the event.":
+    "可以新增或移除客人可選的師傅。移除後，新問卷不會再出現這個名字。過往分數仍留在該活動。",
+  "Therapist name": "師傅名稱",
+  "e.g. Amy": "例如：Amy",
+  "Add therapist": "新增師傅",
+  "Confirm remove": "確認移除",
+  "This therapist is already on the list.": "這位師傅已經在名單上。",
+  "Enter a therapist name.": "請輸入師傅名稱。",
+  "Could not update the therapist list.": "無法更新師傅名單。",
+  "No therapists yet": "尚未有師傅",
 };

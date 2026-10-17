@@ -1,12 +1,20 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { FULL_ACCESS_EMAILS, normalizeEmail } from "@/lib/accessControl";
 import { SESSION_COOKIE, SESSION_TTL_MS, signSession, verifySession, type SessionPayload } from "@/lib/authToken";
 
 /** Read and verify the current request's session cookie. Null if not logged in / expired. */
 export async function getCurrentUser(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;
-  return verifySession(token);
+  const session = await verifySession(token);
+  if (!session) return null;
+  // Founder accounts stay full admin even when the signed-in cookie was
+  // issued before isAdmin was set. This does not write the database.
+  if (!session.isAdmin && FULL_ACCESS_EMAILS.includes(normalizeEmail(session.email))) {
+    return { ...session, isAdmin: true };
+  }
+  return session;
 }
 
 /** Set the session cookie after a successful Google sign-in. */

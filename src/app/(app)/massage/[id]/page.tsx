@@ -97,7 +97,7 @@ export default async function MassageEventPage({ params }: { params: { id: strin
                 </div>
                 <p className="text-xs text-ink-muted mt-0.5">{formatDateTime(survey.createdAt)}</p>
                 <p className="text-sm text-ink mt-2">
-                  {t("Overall")} {survey.overall} · {t("Focus")} {survey.focus} · {t("Pressure")} {survey.pressure} ·{" "}
+                  {t("Overall")} {survey.overall} · {t("Care")} {survey.focus} · {t("Pressure")} {survey.pressure} ·{" "}
                   {t("Relief")} {survey.relief}
                 </p>
                 {survey.comment && <p className="text-sm text-ink-muted mt-2">{survey.comment}</p>}
