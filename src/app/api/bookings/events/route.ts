@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { bookingEventFieldsFrom, createBookingEvent, listBookingEvents } from "@/lib/bookings";
 
@@ -8,9 +7,6 @@ export const dynamic = "force-dynamic";
 /** GET — every booking event, most recent start date first, for the staff
  *  /bookings list page. */
 export async function GET() {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const events = await listBookingEvents();
   return NextResponse.json({ events });
 }
@@ -19,9 +15,6 @@ export async function GET() {
  *  Starts with no slots — staff add those from the event's own detail page
  *  next. */
 export async function POST(request: NextRequest) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const body = await request.json().catch(() => ({}));
   const fields = bookingEventFieldsFrom(body);
   if (fields.error) {

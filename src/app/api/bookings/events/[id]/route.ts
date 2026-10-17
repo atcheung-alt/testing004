@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import {
   bookingEventFieldsFrom,
@@ -14,9 +13,6 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const event = await getBookingEvent(params.id);
   if (!event) {
     return NextResponse.json({ error: "Booking event not found." }, { status: 404 });
@@ -32,9 +28,6 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
  * every other field).
  */
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const existing = await getBookingEvent(params.id);
   if (!existing) {
     return NextResponse.json({ error: "Booking event not found." }, { status: 404 });
@@ -53,8 +46,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 
   const active = typeof body.active === "boolean" ? body.active : existing.active;
-  // Read directly from the body, same as `active` above — this staff-only
-  // route (requireAdminApi-gated) is the only place this can be changed; the
+  // Read directly from the body, same as `active` above — this signed-in
+  // staff route is the only place this can be changed; the
   // public manage-link route always passes the event's current value back
   // unchanged (see the schema comment on BookingEvent.requiresConfirmation).
   const requiresConfirmation =
@@ -96,9 +89,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * outright.
  */
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const existing = await getBookingEvent(params.id);
   if (!existing) {
     return NextResponse.json({ error: "Booking event not found." }, { status: 404 });

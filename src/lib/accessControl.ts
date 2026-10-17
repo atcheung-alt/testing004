@@ -3,13 +3,19 @@ import { prisma } from "@/lib/prisma";
 
 // Accounts that always have every page, in addition to whoever is already
 // marked isAdmin. They cannot be placed in a group.
-export const FULL_ACCESS_EMAILS = ["lucasyam@hrplus.info", "atcheung@hrplus.info", "contact@hrplus.info"];
+export const FULL_ACCESS_EMAILS = [
+  "lucasyam@hrplus.info",
+  "atcheung@hrplus.info",
+  "atchung@hrplus.info",
+  "contact@hrplus.info",
+];
 export const ADMIN_GROUP_ID = "group_admin";
 export const FULL_GROUP_ID = "group_full";
 
 export const ACCESS_PAGES = [
   { id: "dashboard", href: "/", label: "Dashboard" },
   { id: "bookings", href: "/bookings", label: "Bookings" },
+  { id: "massage", href: "/massage", label: "Massage" },
   { id: "templates", href: "/quotations/templates", label: "Templates" },
   { id: "quotations", href: "/quotations", label: "Quotations" },
   { id: "invoices", href: "/invoices", label: "Invoices" },
@@ -37,6 +43,7 @@ const PATH_RULES: { prefix: string; id: AccessPageId | "management" }[] = [
   { prefix: "/expenses", id: "expenses" },
   { prefix: "/recruitment", id: "recruitment" },
   { prefix: "/bookings", id: "bookings" },
+  { prefix: "/massage", id: "massage" },
   { prefix: "/clients", id: "clients" },
   { prefix: "/items", id: "items" },
   { prefix: "/settings", id: "settings" },

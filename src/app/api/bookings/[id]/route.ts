@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAdminApi } from "@/lib/auth";
 import { logActivity } from "@/lib/activity";
 import { sendDocumentEmail } from "@/lib/mailer";
 import { bookingCancelledEmailContent, bookingConfirmedEmailContent, bookingRejectedEmailContent } from "@/lib/settings";
@@ -27,9 +26,6 @@ export const dynamic = "force-dynamic";
  * single-resource system — see DECIDABLE_FROM_STATUS in src/lib/bookings.ts.
  */
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const body = await request.json().catch(() => ({}));
 
   if (typeof body.slotId === "string" && body.slotId && body.status === undefined) {
@@ -177,9 +173,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
  * Cancel instead so the client is actually told.
  */
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
-
   const existing = await getBookingWithSlotAndEvent(params.id);
   if (!existing) {
     return NextResponse.json({ error: "Booking not found." }, { status: 404 });

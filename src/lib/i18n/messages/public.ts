@@ -569,4 +569,27 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   "Cancel your booking": "取消預約",
   "Manage: {name}": "管理：{name}",
   "Manage booking event": "管理預約活動",
+
+  "How was your massage?": "今次按摩好不好？",
+  "About 30 seconds. Pick your therapist, tap a score from 1 to 5, and send.":
+    "大約 30 秒。選擇師傅，每題點 1 至 5 分，然後送出。",
+  "1 is poor. 5 is excellent.": "1 是差，5 是非常好。",
+  "Which therapist massaged you?": "為你按摩的是哪位師傅？",
+  "Select a therapist": "請選擇師傅",
+  "How did this massage feel overall?": "今次按摩的整體感覺",
+  "How was the therapist's manner and focus?": "師傅的態度同專心程度",
+  "Was the pressure right for you?": "力度是否適合你",
+  "Did your discomfort ease afterward?": "做完之後，不適有沒有舒緩",
+  "Any other comments?": "還有其他意見嗎？",
+  Optional: "可留空",
+  "One sentence is enough.": "一句就夠。",
+  "Send feedback": "送出意見",
+  "Thank you": "多謝你的意見",
+  "Your feedback helps us recognise therapists who put care into the session.":
+    "你的評分會用來肯定有用心的師傅。",
+  "Fill in for the next guest": "為下一位客人填寫",
+  "Please choose a therapist and score every question.": "請選擇師傅，並為每一題評分。",
+  "Could not send feedback. Please try again.": "無法送出，請再試一次。",
+  Chinese: "中文",
+  English: "English",
 };

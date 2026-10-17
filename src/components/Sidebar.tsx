@@ -12,6 +12,7 @@ import {
   Receipt as ReceiptIcon,
   Wallet,
   CalendarCheck,
+  Medal,
   Menu,
   Users,
   Briefcase,
@@ -48,6 +49,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       items: [
         { href: "/", label: t("Dashboard"), icon: LayoutDashboard },
         { href: "/bookings", label: t("Bookings"), icon: CalendarCheck },
+        { href: "/massage", label: t("Massage"), icon: Medal },
       ],
     },
     {
@@ -317,6 +319,7 @@ export default function Sidebar({
               if (item.href === "/clients") return allowedPages.includes("clients");
               if (item.href === "/items") return allowedPages.includes("items");
               if (item.href === "/bookings") return allowedPages.includes("bookings");
+              if (item.href === "/massage") return allowedPages.includes("massage");
               return true;
             }),
     }))
