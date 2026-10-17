@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { headers } from "next/headers";
+import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { generateSigningToken } from "@/lib/signing";
 
@@ -83,10 +84,94 @@ function standingFrom(therapist: { id: string; name: string }, row: AvgRow | und
   };
 }
 
+// The survey tables are new and empty. Creating them does not add or rename
+// columns on Invoice or any older table. This runs only when the tables are
+// missing, the same way the access-group table is created.
+let massageTablesReady: Promise<boolean> | null = null;
+
+async function createMassageTables(): Promise<boolean> {
+  const connectionString = process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL_UNPOOLED;
+  if (!connectionString) return false;
+  const direct = new PrismaClient({ datasources: { db: { url: connectionString } } });
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS "MassageTherapist" (
+      "id" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "sortOrder" INTEGER NOT NULL DEFAULT 0,
+      "active" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "MassageTherapist_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE TABLE IF NOT EXISTS "MassageEventLink" (
+      "invoiceId" TEXT NOT NULL,
+      "token" TEXT NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "MassageEventLink_pkey" PRIMARY KEY ("invoiceId")
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "MassageEventLink_token_key" ON "MassageEventLink"("token")`,
+    `CREATE TABLE IF NOT EXISTS "MassageSurvey" (
+      "id" TEXT NOT NULL,
+      "invoiceId" TEXT NOT NULL,
+      "therapistId" TEXT NOT NULL,
+      "overall" INTEGER NOT NULL,
+      "focus" INTEGER NOT NULL,
+      "pressure" INTEGER NOT NULL,
+      "relief" INTEGER NOT NULL,
+      "comment" TEXT NOT NULL DEFAULT '',
+      "language" TEXT NOT NULL DEFAULT 'zh',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "MassageSurvey_pkey" PRIMARY KEY ("id")
+    )`,
+    `CREATE INDEX IF NOT EXISTS "MassageSurvey_invoiceId_createdAt_idx" ON "MassageSurvey"("invoiceId", "createdAt")`,
+    `CREATE INDEX IF NOT EXISTS "MassageSurvey_therapistId_idx" ON "MassageSurvey"("therapistId")`,
+    `DO $$ BEGIN
+      ALTER TABLE "MassageEventLink"
+        ADD CONSTRAINT "MassageEventLink_invoiceId_fkey"
+        FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    `DO $$ BEGIN
+      ALTER TABLE "MassageSurvey"
+        ADD CONSTRAINT "MassageSurvey_invoiceId_fkey"
+        FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    `DO $$ BEGIN
+      ALTER TABLE "MassageSurvey"
+        ADD CONSTRAINT "MassageSurvey_therapistId_fkey"
+        FOREIGN KEY ("therapistId") REFERENCES "MassageTherapist"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  ];
+  try {
+    for (const statement of statements) {
+      await direct.$executeRawUnsafe(statement);
+    }
+    return true;
+  } catch (err) {
+    console.error("ensureMassageTables failed:", err);
+    return false;
+  } finally {
+    await direct.$disconnect().catch(() => undefined);
+  }
+}
+
+export function ensureMassageTables(): Promise<boolean> {
+  if (!massageTablesReady) {
+    massageTablesReady = createMassageTables().then((ok) => {
+      if (!ok) massageTablesReady = null;
+      return ok;
+    });
+  }
+  return massageTablesReady;
+}
+
+function missingMassageTable(err: unknown): boolean {
+  return typeof err === "object" && err !== null && "code" in err && (err as { code?: string }).code === "P2021";
+}
+
 // Seed the company roster once. Existing rows are left alone, so a therapist
 // who was removed (active = false) is not put back, and a renamed row is not
 // overwritten. No columns are added.
 export async function ensureMassageTherapists(): Promise<void> {
+  await ensureMassageTables();
   const existing = await prisma.massageTherapist.findMany({ select: { id: true } });
   const have = new Set(existing.map((row) => row.id));
   const missing = MASSAGE_THERAPISTS.flatMap((therapist, index) =>
@@ -161,6 +246,7 @@ export function massageSurveyUrlFromHeaders(token: string): string {
 }
 
 export async function ensureMassageSurveyToken(invoiceId: string): Promise<string | null> {
+  await ensureMassageTables();
   const existing = await prisma.massageEventLink.findUnique({
     where: { invoiceId },
     select: { token: true },
@@ -193,26 +279,31 @@ export async function ensureMassageSurveyToken(invoiceId: string): Promise<strin
 
 export async function therapistStandings(invoiceId?: string): Promise<TherapistStanding[]> {
   await ensureMassageTherapists();
-  const [therapists, grouped] = await Promise.all([
-    prisma.massageTherapist.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.massageSurvey.groupBy({
-      by: ["therapistId"],
-      where: invoiceId ? { invoiceId } : undefined,
-      _avg: { overall: true, focus: true, pressure: true, relief: true },
-      _count: { _all: true },
-    }),
-  ]);
-  const byId = new Map(grouped.map((row) => [row.therapistId, row]));
-  return therapists
-    .map((therapist) => standingFrom(therapist, byId.get(therapist.id)))
-    .sort((a, b) => {
-      if (a.count === 0 && b.count === 0) return a.name.localeCompare(b.name, "zh-HK");
-      if (a.count === 0) return 1;
-      if (b.count === 0) return -1;
-      if (b.score !== a.score) return b.score - a.score;
-      if (b.count !== a.count) return b.count - a.count;
-      return a.name.localeCompare(b.name, "zh-HK");
-    });
+  try {
+    const [therapists, grouped] = await Promise.all([
+      prisma.massageTherapist.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.massageSurvey.groupBy({
+        by: ["therapistId"],
+        where: invoiceId ? { invoiceId } : undefined,
+        _avg: { overall: true, focus: true, pressure: true, relief: true },
+        _count: { _all: true },
+      }),
+    ]);
+    const byId = new Map(grouped.map((row) => [row.therapistId, row]));
+    return therapists
+      .map((therapist) => standingFrom(therapist, byId.get(therapist.id)))
+      .sort((a, b) => {
+        if (a.count === 0 && b.count === 0) return a.name.localeCompare(b.name, "zh-HK");
+        if (a.count === 0) return 1;
+        if (b.count === 0) return -1;
+        if (b.score !== a.score) return b.score - a.score;
+        if (b.count !== a.count) return b.count - a.count;
+        return a.name.localeCompare(b.name, "zh-HK");
+      });
+  } catch (err) {
+    if (!missingMassageTable(err)) throw err;
+    return [];
+  }
 }
 
 export type MassageCalendarEvent = {
@@ -249,6 +340,20 @@ const massageInvoiceSelect = {
 } as const;
 
 export async function listMassageBoard(): Promise<{
+  scheduled: MassageCalendarEvent[];
+  pending: MassagePendingInvoice[];
+}> {
+  await ensureMassageTables();
+  try {
+    return await listMassageBoardRows();
+  } catch (err) {
+    if (!missingMassageTable(err)) throw err;
+    console.error("Massage tables are still missing:", err);
+    return { scheduled: [], pending: [] };
+  }
+}
+
+async function listMassageBoardRows(): Promise<{
   scheduled: MassageCalendarEvent[];
   pending: MassagePendingInvoice[];
 }> {
@@ -333,6 +438,7 @@ export async function listMassageBoard(): Promise<{
 }
 
 export async function getMassageCalendarEvent(eventId: string) {
+  await ensureMassageTables();
   const event = await prisma.event.findUnique({
     where: { id: eventId },
     select: {

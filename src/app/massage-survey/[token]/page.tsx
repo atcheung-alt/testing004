@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { getT } from "@/lib/i18n/server";
-import { ensureMassageTherapists } from "@/lib/massage";
+import { ensureMassageTables, ensureMassageTherapists } from "@/lib/massage";
 import PublicBookingShell from "@/components/PublicBookingShell";
 import MassageSurveyForm from "@/components/MassageSurveyForm";
 
@@ -16,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MassageSurveyPage({ params }: { params: { token: string } }) {
   const t = getT();
+  await ensureMassageTables();
   const link = await prisma.massageEventLink.findUnique({
     where: { token: params.token },
     select: { invoice: { select: { id: true, title: true, customerName: true } } },

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureMassageTables } from "@/lib/massage";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ function score(value: unknown): number | null {
 }
 
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
+  await ensureMassageTables();
   const link = await prisma.massageEventLink.findUnique({
     where: { token: params.token },
     select: { invoiceId: true },
