@@ -70,7 +70,7 @@ export default function MassageScoreLookup({
 
   return (
     <section className="flex flex-col gap-3">
-      <div>
+      <div className="massage-heading-plate">
         <h3 className="font-sans text-lg font-semibold text-ink">{t("Look up a score")}</h3>
         <p className="lead">{t("Search a name to see scores and comments.")}</p>
       </div>
