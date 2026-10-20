@@ -49,7 +49,6 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       items: [
         { href: "/", label: t("Dashboard"), icon: LayoutDashboard },
         { href: "/bookings", label: t("Bookings"), icon: CalendarCheck },
-        { href: "/massage", label: t("Massage"), icon: Medal },
       ],
     },
     {
@@ -66,6 +65,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       label: t("People"),
       items: [
         { href: "/recruitment", label: t("Recruitment"), icon: Briefcase },
+        { href: "/massage", label: t("Massage"), icon: Medal },
         { href: "/clients", label: t("Clients"), icon: Users },
       ],
     },

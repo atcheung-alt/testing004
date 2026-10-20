@@ -31,9 +31,19 @@ export const MASSAGE_THERAPISTS: { id: string; name: string }[] = [
   { id: "mt_brain", name: "Brain" },
 ];
 
-// Below this many surveys the rank is still shown, with an Early mark, the
-// same way a review site shows a rating beside how many people wrote it.
+// Below this many surveys the result is still shown, with an In progress mark.
 export const EARLY_SURVEY_COUNT = 8;
+
+// Points held back from a single survey. The hold-back shrinks with the
+// square root of the sample, so 5.0 from 1 guest (4.0) stays under 4.8 from
+// 100 guests (4.7).
+export const SAMPLE_CAUTION = 1;
+
+export function adjustedScore(raw: number, count: number): number {
+  if (count <= 0) return 0;
+  const cautious = raw - SAMPLE_CAUTION / Math.sqrt(count);
+  return Math.min(5, Math.max(1, cautious));
+}
 
 export function round1(value: number): number {
   return Math.round(value * 10) / 10;
@@ -53,6 +63,7 @@ export type TherapistStanding = {
   name: string;
   count: number;
   score: number;
+  adjusted: number;
   overall: number;
   focus: number;
   pressure: number;
@@ -72,11 +83,13 @@ function standingFrom(therapist: { id: string; name: string }, row: AvgRow | und
   const focus = row?._avg.focus ?? 0;
   const pressure = row?._avg.pressure ?? 0;
   const relief = row?._avg.relief ?? 0;
+  const score = count ? surveyScore({ overall, focus, pressure, relief }) : 0;
   return {
     id: therapist.id,
     name: therapist.name,
     count,
-    score: count ? surveyScore({ overall, focus, pressure, relief }) : 0,
+    score,
+    adjusted: count ? adjustedScore(score, count) : 0,
     overall: count ? round1(overall) : 0,
     focus: count ? round1(focus) : 0,
     pressure: count ? round1(pressure) : 0,
@@ -304,6 +317,82 @@ export async function retireMassageTherapist(id: string): Promise<boolean> {
   return true;
 }
 
+export type MassageSurveyPatch = {
+  therapistId: string;
+  overall: number;
+  focus: number;
+  pressure: number;
+  relief: number;
+  comment: string;
+  guestNickname: string;
+  timeSlot: string;
+};
+
+function scoreInRange(value: number): boolean {
+  return Number.isInteger(value) && value >= 1 && value <= 5;
+}
+
+export async function updateMassageSurvey(
+  id: string,
+  patch: MassageSurveyPatch
+): Promise<"ok" | "missing" | "invalid"> {
+  if (![patch.overall, patch.focus, patch.pressure, patch.relief].every(scoreInRange)) return "invalid";
+  const [existing, therapist] = await Promise.all([
+    prisma.massageSurvey.findUnique({ where: { id }, select: { id: true } }),
+    prisma.massageTherapist.findUnique({ where: { id: patch.therapistId }, select: { id: true } }),
+  ]);
+  if (!existing) return "missing";
+  if (!therapist) return "invalid";
+  await prisma.massageSurvey.update({
+    where: { id },
+    data: {
+      therapistId: patch.therapistId,
+      overall: patch.overall,
+      focus: patch.focus,
+      pressure: patch.pressure,
+      relief: patch.relief,
+      comment: packSurveyNote(patch.guestNickname, patch.timeSlot, patch.comment),
+    },
+  });
+  return "ok";
+}
+
+export async function deleteMassageSurvey(id: string): Promise<boolean> {
+  const existing = await prisma.massageSurvey.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return false;
+  await prisma.massageSurvey.delete({ where: { id } });
+  return true;
+}
+
+// Timeslot and nickname stay inside the existing comment text. The database
+// columns do not change. Older comments have no marker and stay as written.
+const SURVEY_NOTE = "@@ms1\n";
+
+export function packSurveyNote(nickname: string, timeSlot: string, comment: string): string {
+  const name = nickname.trim().slice(0, 80);
+  const slot = timeSlot.trim().slice(0, 80);
+  const text = comment.trim().slice(0, 500);
+  if (!name && !slot) return text;
+  return `${SURVEY_NOTE}${encodeURIComponent(name)}\n${encodeURIComponent(slot)}\n${text}`;
+}
+
+export function unpackSurveyNote(stored: string): { guestNickname: string; timeSlot: string; comment: string } {
+  if (!stored.startsWith(SURVEY_NOTE)) return { guestNickname: "", timeSlot: "", comment: stored };
+  const rest = stored.slice(SURVEY_NOTE.length);
+  const first = rest.indexOf("\n");
+  const second = first === -1 ? -1 : rest.indexOf("\n", first + 1);
+  if (first === -1 || second === -1) return { guestNickname: "", timeSlot: "", comment: stored };
+  try {
+    return {
+      guestNickname: decodeURIComponent(rest.slice(0, first)),
+      timeSlot: decodeURIComponent(rest.slice(first + 1, second)),
+      comment: rest.slice(second + 1),
+    };
+  } catch {
+    return { guestNickname: "", timeSlot: "", comment: stored };
+  }
+}
+
 export function mentionsMassage(value: string | null | undefined): boolean {
   if (!value) return false;
   return /massage/i.test(value) || value.includes("按摩");
@@ -428,7 +517,7 @@ export async function therapistStandings(linkId?: string): Promise<TherapistStan
         if (a.count === 0 && b.count === 0) return a.name.localeCompare(b.name, "zh-HK");
         if (a.count === 0) return 1;
         if (b.count === 0) return -1;
-        if (b.score !== a.score) return b.score - a.score;
+        if (b.adjusted !== a.adjusted) return b.adjusted - a.adjusted;
         if (b.count !== a.count) return b.count - a.count;
         return a.name.localeCompare(b.name, "zh-HK");
       });

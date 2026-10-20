@@ -6,14 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { formatDate, formatDateTime } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
 import {
+  ensureMassageTherapists,
   getMassageEventView,
   listMassageInvoiceOptions,
   massageSurveyUrlFromHeaders,
   surveyScore,
+  unpackSurveyNote,
   therapistStandings,
 } from "@/lib/massage";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageQrActions from "@/components/MassageQrActions";
+import MassageSurveyRecords from "@/components/MassageSurveyRecords";
 import { MassageInvoiceField } from "@/components/MassageQuestionnaireControls";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +27,8 @@ export default async function MassageEventPage({ params }: { params: { id: strin
   if (!event) notFound();
 
   const url = massageSurveyUrlFromHeaders(event.token);
-  const [standings, surveys, invoices, pngDataUrl, qrSvg] = await Promise.all([
+  await ensureMassageTherapists();
+  const [standings, surveys, invoices, pngDataUrl, qrSvg, therapists] = await Promise.all([
     therapistStandings(event.linkId),
     prisma.massageSurvey.findMany({
       where: { linkId: event.linkId },
@@ -34,6 +38,13 @@ export default async function MassageEventPage({ params }: { params: { id: strin
     event.bookingEventId ? listMassageInvoiceOptions() : Promise.resolve([]),
     QRCode.toDataURL(url, { margin: 1, width: 480, errorCorrectionLevel: "M" }),
     QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" }),
+    prisma.massageTherapist.findMany({
+      where: {
+        OR: [{ active: true }, { surveys: { some: { linkId: event.linkId } } }],
+      },
+      orderBy: [{ active: "desc" }, { sortOrder: "asc" }],
+      select: { id: true, name: true },
+    }),
   ]);
   const sameDay = formatDate(event.startDate) === formatDate(event.endDate);
   const when = sameDay ? formatDate(event.startDate) : `${formatDate(event.startDate)} – ${formatDate(event.endDate)}`;
@@ -52,7 +63,7 @@ export default async function MassageEventPage({ params }: { params: { id: strin
       <div>
         <Link href="/massage" className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink mb-3">
           <ArrowLeft size={16} />
-          {t("Back to ranking")}
+          {t("Back to results")}
         </Link>
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-600 mb-1">{t("This event")}</p>
         <h1 className="font-display text-3xl font-semibold tracking-tight">{event.name}</h1>
@@ -105,7 +116,7 @@ export default async function MassageEventPage({ params }: { params: { id: strin
       </section>
 
       <section>
-        <h2 className="font-display text-xl font-semibold mb-3">{t("Therapists at this event")}</h2>
+        <h2 className="font-display text-xl font-semibold mb-3">{t("Scores at this event")}</h2>
         <MassageLeaderboard rows={standings} />
       </section>
 
@@ -117,22 +128,26 @@ export default async function MassageEventPage({ params }: { params: { id: strin
             <p className="text-sm text-ink-muted">{t("Scores appear here after a guest submits the form.")}</p>
           </div>
         ) : (
-          <div className="card divide-y divide-line">
-            {surveys.map((survey) => (
-              <article key={survey.id} className="px-4 sm:px-5 py-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className="font-medium">{survey.therapist.name}</h3>
-                  <p className="font-mono text-lg text-brand-700">{surveyScore(survey).toFixed(1)}</p>
-                </div>
-                <p className="text-xs text-ink-muted mt-0.5">{formatDateTime(survey.createdAt)}</p>
-                <p className="text-sm text-ink mt-2">
-                  {t("Overall")} {survey.overall} · {t("Care")} {survey.focus} · {t("Pressure")} {survey.pressure} ·{" "}
-                  {t("Relief")} {survey.relief}
-                </p>
-                {survey.comment ? <p className="text-sm text-ink-muted mt-2">{survey.comment}</p> : null}
-              </article>
-            ))}
-          </div>
+          <MassageSurveyRecords
+            therapists={therapists}
+            surveys={surveys.map((survey) => {
+              const note = unpackSurveyNote(survey.comment);
+              return {
+              id: survey.id,
+              therapistId: survey.therapistId,
+              therapistName: survey.therapist.name,
+              guestNickname: note.guestNickname,
+              timeSlot: note.timeSlot,
+              overall: survey.overall,
+              focus: survey.focus,
+              pressure: survey.pressure,
+              relief: survey.relief,
+              comment: note.comment,
+              when: formatDateTime(survey.createdAt),
+              score: surveyScore(survey).toFixed(1),
+              };
+            })}
+          />
         )}
       </section>
     </div>

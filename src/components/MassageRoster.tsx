@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
+import clsx from "clsx";
 import { useT } from "@/lib/i18n/client";
 
 type Therapist = { id: string; name: string };
@@ -9,6 +11,7 @@ type Therapist = { id: string; name: string };
 export default function MassageRoster({ therapists }: { therapists: Therapist[] }) {
   const t = useT();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -66,15 +69,27 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
 
   return (
     <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="font-display text-xl font-semibold">{t("Current therapists")}</h2>
-        <p className="text-sm text-ink-muted mt-1 max-w-2xl">
+      <button
+        type="button"
+        className="card px-4 sm:px-5 py-4 flex items-center justify-between gap-3 text-left w-full"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>
+          <span className="font-display text-xl font-semibold block">{t("Current therapists")}</span>
+          <span className="text-sm text-ink-muted mt-1 block">
+            {t("{count} names guests can choose", { count: therapists.length })}
+          </span>
+        </span>
+        <ChevronDown size={18} className={clsx("shrink-0 text-ink-muted transition-transform", open && "rotate-180")} />
+      </button>
+      {open ? (
+      <div className="card divide-y divide-line">
+        <p className="px-4 sm:px-5 py-4 text-sm text-ink-muted">
           {t(
             "Add or remove names guests can choose. Removing a name hides them from new surveys. Past scores stay on the event."
           )}
         </p>
-      </div>
-      <div className="card divide-y divide-line">
         <form onSubmit={add} className="px-4 sm:px-5 py-4 flex flex-col sm:flex-row gap-2">
           <label className="sr-only" htmlFor="therapist-name">
             {t("Therapist name")}
@@ -114,8 +129,9 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
             </div>
           ))
         )}
-        {error && <p className="px-4 sm:px-5 py-3 text-sm text-danger-500">{error}</p>}
+        {error ? <p className="px-4 sm:px-5 py-3 text-sm text-danger-500">{error}</p> : null}
       </div>
+      ) : null}
     </section>
   );
 }

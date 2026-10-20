@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ensureMassageTables } from "@/lib/massage";
+import { ensureMassageTables, packSurveyNote } from "@/lib/massage";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  const timeSlot = typeof body.timeSlot === "string" ? body.timeSlot.trim().slice(0, 80) : "";
+  const guestNickname = typeof body.nickname === "string" ? body.nickname.trim().slice(0, 80) : "";
   const therapistId = typeof body.therapistId === "string" ? body.therapistId : "";
   const overall = score(body.overall);
   const focus = score(body.focus);
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   const comment = typeof body.comment === "string" ? body.comment.trim().slice(0, 500) : "";
   const language = body.language === "en" ? "en" : "zh";
 
-  if (!therapistId || overall == null || focus == null || pressure == null || relief == null) {
+  if (!timeSlot || !guestNickname || !therapistId || overall == null || focus == null || pressure == null || relief == null) {
     return NextResponse.json({ error: "Incomplete survey." }, { status: 400 });
   }
 
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       focus,
       pressure,
       relief,
-      comment,
+      comment: packSurveyNote(guestNickname, timeSlot, comment),
       language,
     },
   });

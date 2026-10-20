@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { Medal } from "lucide-react";
 import { formatDate } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
 import { listMassageBoard, therapistStandings } from "@/lib/massage";
+import MassageEventSearch from "@/components/MassageEventSearch";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageRoster from "@/components/MassageRoster";
 
@@ -17,7 +17,7 @@ export default async function MassagePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
+      <header className="animate-rise">
         <div className="flex items-center gap-2 text-brand-600 mb-2">
           <Medal size={18} />
           <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
@@ -34,29 +34,23 @@ export default async function MassagePage() {
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="card px-4 py-4">
+        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "80ms" }}>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Surveys")}</p>
           <p className="font-mono text-2xl mt-1">{surveyCount}</p>
         </div>
-        <div className="card px-4 py-4">
+        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "140ms" }}>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
             {t("Therapists with scores")}
           </p>
           <p className="font-mono text-2xl mt-1">{ranked.length}</p>
         </div>
-        <div className="card px-4 py-4">
+        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "200ms" }}>
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Leading score")}</p>
-          <p className="font-mono text-2xl mt-1">{leading ? leading.score.toFixed(1) : "—"}</p>
+          <p className="font-mono text-2xl mt-1">{leading ? leading.adjusted.toFixed(1) : "—"}</p>
         </div>
       </section>
 
-      <MassageLeaderboard rows={standings} />
-
-      <MassageRoster
-        therapists={[...standings]
-          .sort((a, b) => a.name.localeCompare(b.name, "zh-HK"))
-          .map((row) => ({ id: row.id, name: row.name }))}
-      />
+      <MassageLeaderboard rows={standings} demo={ranked.length === 0} />
 
       <section className="flex flex-col gap-3">
         <div>
@@ -73,38 +67,36 @@ export default async function MassagePage() {
             </p>
           </div>
         ) : (
-          <div className="card divide-y divide-line">
-            {board.scheduled.map((event) => {
+          <MassageEventSearch
+            events={board.scheduled.map((event) => {
               const sameDay = formatDate(event.startDate) === formatDate(event.endDate);
               const when = sameDay
                 ? formatDate(event.startDate)
                 : `${formatDate(event.startDate)} – ${formatDate(event.endDate)}`;
-              return (
-                <Link
-                  key={event.id}
-                  href={`/massage/${event.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-paper"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{event.name}</p>
-                    <p className="text-xs text-ink-muted truncate mt-0.5">
-                      {event.number ?? t("Invoice not attached yet")}
-                      {event.customerName ? ` · ${event.customerName}` : ""}
-                      {` · ${when}`}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-mono text-lg font-medium text-brand-700">
-                      {event.surveyCount > 0 ? event.score.toFixed(1) : "—"}
-                    </p>
-                    <p className="text-xs text-ink-muted">{t("{count} surveys", { count: event.surveyCount })}</p>
-                  </div>
-                </Link>
-              );
+              const detail = [
+                event.number ?? t("Invoice not attached yet"),
+                event.customerName,
+                when,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return {
+                id: event.id,
+                name: event.name,
+                detail,
+                score: event.surveyCount > 0 ? event.score.toFixed(1) : "—",
+                surveyCount: event.surveyCount,
+              };
             })}
-          </div>
+          />
         )}
       </section>
+
+      <MassageRoster
+        therapists={[...standings]
+          .sort((a, b) => a.name.localeCompare(b.name, "zh-HK"))
+          .map((row) => ({ id: row.id, name: row.name }))}
+      />
     </div>
   );
 }
