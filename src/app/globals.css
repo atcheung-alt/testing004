@@ -273,7 +273,7 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-[transform,background-color,filter] duration-100 ease-out active:translate-y-px active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:scale-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-[transform,background-color,box-shadow,filter] duration-100 ease-out active:translate-y-px active:scale-[0.97] active:shadow-[inset_0_2px_0_rgba(0,0,0,0.28)] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:scale-100 disabled:active:shadow-none;
   }
   .btn-primary {
     @apply btn bg-brand-500 text-white hover:brightness-110 active:brightness-90;
@@ -289,7 +289,7 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 
   .input {
-    @apply w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-colors duration-200;
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint outline-none transition-[border-color,background-color] duration-100 focus:border-brand-500 focus:bg-paper;
   }
   .label {
     @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5;
@@ -300,7 +300,17 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 
   .stamp {
-    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)];
+    @apply inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+  }
+
+  .card.divide-y > * {
+    transition: background-color 100ms ease-out;
+  }
+  .card.divide-y > *:hover {
+    background-color: rgb(var(--color-paper));
+  }
+  .card.divide-y > *:active {
+    background-color: rgb(var(--color-line));
   }
 }
 
@@ -338,13 +348,9 @@ html[data-theme="dark"] .theme-logo-dark {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(10px);
-    filter: blur(4px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
   }
 }
 
@@ -403,7 +409,7 @@ html[data-theme="dark"] .theme-logo-dark {
     animation: fade-in 0.22s ease-out;
   }
   .animate-fade-in-up {
-    animation: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fade-in-up 0.12s ease-out;
   }
   /* Spring-eased on purpose (see note above) — the overshoot in the
      cubic-bezier itself produces the "pop" without needing extra keyframe

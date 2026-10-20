@@ -21,7 +21,7 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
     .slice(0, 3);
 
   return (
-    <section className="flex flex-col gap-3 animate-rise" style={{ animationDelay: "260ms" }}>
+    <section className="flex flex-col gap-3">
       <div>
         <h3 className="font-display text-xl font-semibold">{t("Top 3")}</h3>
         <p className="lead">{t("The three highest scores.")}</p>

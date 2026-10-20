@@ -73,10 +73,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="animate-rise">
+      <div>
         <div className="flex items-center gap-2 mb-1">
           <h1 className="font-display text-2xl font-semibold text-ink">{t("Dashboard")}</h1>
-          <span className="h-2 w-2 rounded-full bg-brand-500 animate-soft-pulse" aria-hidden />
         </div>
         <p className="lead">
           {t("Invoices, payments, expenses, and what is still outstanding.")}
@@ -90,7 +89,6 @@ export default async function DashboardPage() {
           amount={invoiced}
           detail={t("{count} invoices", { count: invoices.length })}
           icon={ReceiptText}
-          style={{ animationDelay: "40ms" }}
         />
         <StatCard
           label={t("Paid")}
@@ -98,7 +96,6 @@ export default async function DashboardPage() {
           amount={paid}
           icon={TrendingUp}
           accent="accent"
-          style={{ animationDelay: "110ms" }}
         />
         <StatCard
           label={t("Expenses")}
@@ -107,7 +104,6 @@ export default async function DashboardPage() {
           detail={t("Logged against invoices")}
           icon={Wallet}
           accent="danger"
-          style={{ animationDelay: "180ms" }}
         />
         <StatCard
           label={t("Outstanding")}
@@ -115,11 +111,10 @@ export default async function DashboardPage() {
           amount={outstanding}
           icon={AlertTriangle}
           accent="accent"
-          style={{ animationDelay: "250ms" }}
         />
       </div>
 
-      <div className="card px-5 py-4 animate-rise" style={{ animationDelay: "300ms" }}>
+      <div className="card px-5 py-4">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Collected")}</p>
           <p className="font-mono text-sm text-ink">{collected}%</p>
@@ -129,11 +124,10 @@ export default async function DashboardPage() {
             className="absolute inset-y-0 left-0 rounded-full bg-brand-500 animate-fill-bar"
             style={{ ["--bar" as string]: `${collected}%` }}
           />
-          <span className="pointer-events-none absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/55 to-transparent animate-sheen" />
         </div>
       </div>
 
-      <div className="card p-5 animate-rise" style={{ animationDelay: "360ms" }}>
+      <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("This month")}</h2>
         <div className="flex flex-col gap-4">
           {monthRows.map((row) => {
@@ -149,9 +143,6 @@ export default async function DashboardPage() {
                     className={`absolute inset-y-0 left-0 rounded-full animate-fill-bar ${row.color}`}
                     style={{ ["--bar" as string]: width }}
                   />
-                  {row.amount !== 0 && (
-                    <span className="pointer-events-none absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/45 to-transparent animate-sheen" />
-                  )}
                 </div>
               </div>
             );
@@ -162,7 +153,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <section className="animate-rise" style={{ animationDelay: "420ms" }}>
+      <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">{t("Recent expenses")}</h2>
           <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1">
@@ -204,7 +195,7 @@ export default async function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="animate-rise" style={{ animationDelay: "480ms" }}>
+        <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-lg font-semibold">{t("Recent quotations")}</h2>
             <Link
@@ -246,7 +237,7 @@ export default async function DashboardPage() {
           )}
         </section>
 
-        <section className="animate-rise" style={{ animationDelay: "540ms" }}>
+        <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-display text-lg font-semibold">{t("Recent invoices")}</h2>
             <Link

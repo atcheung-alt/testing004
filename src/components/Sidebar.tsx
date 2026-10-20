@@ -103,7 +103,7 @@ function NavLink({
         "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-brand-500 text-white"
+          ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
           : "text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
@@ -235,7 +235,7 @@ function BottomLinks({
             "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
             collapsed && "lg:justify-center lg:px-0 lg:gap-0",
             managementActive
-              ? "bg-brand-500 text-white"
+              ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
               : "text-ink-muted hover:bg-paper hover:text-ink"
           )}
         >
@@ -253,7 +253,7 @@ function BottomLinks({
           "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
-            ? "bg-brand-500 text-white"
+            ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
             : "text-ink-muted hover:bg-paper hover:text-ink"
         )}
       >

@@ -21,7 +21,7 @@ export default async function MassagePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="animate-rise">
+      <header>
         <div className="flex items-center gap-2 text-brand-600 mb-2">
           <Medal size={18} />
           <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
@@ -38,17 +38,17 @@ export default async function MassagePage() {
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "80ms" }}>
+        <div className="card px-4 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Surveys")}</p>
           <p className="font-mono text-2xl mt-1">{surveyCount}</p>
         </div>
-        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "140ms" }}>
+        <div className="card px-4 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
             {t("Therapists with scores")}
           </p>
           <p className="font-mono text-2xl mt-1">{ranked.length}</p>
         </div>
-        <div className="card px-4 py-4 animate-rise" style={{ animationDelay: "200ms" }}>
+        <div className="card px-4 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Leading score")}</p>
           <p className="font-mono text-2xl mt-1">{leading ? leading.adjusted.toFixed(1) : "—"}</p>
         </div>

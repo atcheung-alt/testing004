@@ -69,7 +69,7 @@ export default function MassageScoreLookup({
   }, [selectedId]);
 
   return (
-    <section className="flex flex-col gap-3 animate-rise" style={{ animationDelay: "380ms" }}>
+    <section className="flex flex-col gap-3">
       <div>
         <h3 className="font-display text-xl font-semibold">{t("Look up a score")}</h3>
         <p className="lead">{t("Search a name to see scores and comments.")}</p>

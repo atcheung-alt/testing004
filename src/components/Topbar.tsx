@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n/client";
 export default function Topbar({ userName }: { userName: string }) {
   const t = useT();
   return (
-    <header className="h-16 border-b border-line bg-surface/70 backdrop-blur flex items-center justify-end lg:justify-between px-4 sm:px-6 lg:px-10">
+    <header className="h-16 border-b border-line bg-surface flex items-center justify-end lg:justify-between px-4 sm:px-6 lg:px-10">
       <span className="hidden lg:block text-sm text-ink-muted">
         {t("Resource Management System")}
       </span>
