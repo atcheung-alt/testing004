@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ensureBookingEventManageToken, getBookingEvent, listBookingEvents, listBookingsForEvent, listSlotsForEvent } from "@/lib/bookings";
 import { bookingEventUrlFromHeaders, manageBookingEventUrlFromHeaders } from "@/lib/signing";
 import BookingEventDetailClient from "@/components/BookingEventDetailClient";
+import MassageBookingPanel from "@/components/MassageBookingPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,13 @@ export default async function BookingEventDetailPage({ params }: { params: { id:
   const manageUrl = manageToken ? manageBookingEventUrlFromHeaders(manageToken) : null;
 
   return (
-    <BookingEventDetailClient
+    <div className="flex flex-col gap-6">
+      <MassageBookingPanel
+        bookingEventId={event.id}
+        eventName={event.name}
+        description={event.description}
+      />
+      <BookingEventDetailClient
       bookingUrl={bookingUrl}
       manageUrl={manageUrl}
       event={{
@@ -58,7 +65,8 @@ export default async function BookingEventDetailPage({ params }: { params: { id:
         slotStartTime: b.slotStartTime,
         slotDurationMins: b.slotDurationMins,
       }))}
-      otherEvents={events.filter((item) => item.id !== event.id).map((item) => ({ id: item.id, name: item.name }))}
-    />
+        otherEvents={events.filter((item) => item.id !== event.id).map((item) => ({ id: item.id, name: item.name }))}
+      />
+    </div>
   );
 }

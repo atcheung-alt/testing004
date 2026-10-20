@@ -62,14 +62,14 @@ export default async function MassagePage() {
         <div>
           <h2 className="font-display text-xl font-semibold">{t("Massage events")}</h2>
           <p className="text-sm text-ink-muted mt-1">
-            {t("A QR code is created when a massage invoice is marked on the calendar. Each calendar event has its own code.")}
+            {t("Each massage booking has its own QR code. Create the event first. Attach the invoice after the day.")}
           </p>
         </div>
         {board.scheduled.length === 0 ? (
           <div className="card px-5 py-10 text-center">
             <h3 className="font-display text-lg font-semibold mb-1">{t("No massage events yet")}</h3>
             <p className="text-sm text-ink-muted">
-              {t("Mark a massage invoice on the calendar and it will show up here with a QR code.")}
+              {t("Create a booking for the massage day. Its QR code shows up here. The invoice can wait until the event is over.")}
             </p>
           </div>
         ) : (
@@ -88,7 +88,7 @@ export default async function MassagePage() {
                   <div className="min-w-0">
                     <p className="font-medium truncate">{event.name}</p>
                     <p className="text-xs text-ink-muted truncate mt-0.5">
-                      {event.number}
+                      {event.number ?? t("Invoice not attached yet")}
                       {event.customerName ? ` · ${event.customerName}` : ""}
                       {` · ${when}`}
                     </p>
@@ -102,32 +102,6 @@ export default async function MassagePage() {
                 </Link>
               );
             })}
-          </div>
-        )}
-        {board.pending.length > 0 && (
-          <div className="card divide-y divide-line">
-            <div className="px-4 sm:px-5 py-3">
-              <h3 className="text-sm font-semibold">{t("Not on the calendar yet")}</h3>
-              <p className="text-xs text-ink-muted mt-1">
-                {t("Mark the invoice on the calendar to get a QR code for this massage.")}
-              </p>
-            </div>
-            {board.pending.map((invoice) => (
-              <Link
-                key={invoice.id}
-                href={`/invoices/${invoice.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-paper"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium truncate">{invoice.title || invoice.customerName || invoice.number}</p>
-                  <p className="text-xs text-ink-muted truncate mt-0.5">
-                    {invoice.number}
-                    {invoice.customerName ? ` · ${invoice.customerName}` : ""}
-                    {` · ${formatDate(invoice.issueDate)}`}
-                  </p>
-                </div>
-              </Link>
-            ))}
           </div>
         )}
       </section>

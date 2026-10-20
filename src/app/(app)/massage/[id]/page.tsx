@@ -5,26 +5,33 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatDateTime } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
-import { getMassageCalendarEvent, massageSurveyUrlFromHeaders, surveyScore, therapistStandings } from "@/lib/massage";
+import {
+  getMassageEventView,
+  listMassageInvoiceOptions,
+  massageSurveyUrlFromHeaders,
+  surveyScore,
+  therapistStandings,
+} from "@/lib/massage";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageQrActions from "@/components/MassageQrActions";
+import { MassageInvoiceField } from "@/components/MassageQuestionnaireControls";
 
 export const dynamic = "force-dynamic";
 
 export default async function MassageEventPage({ params }: { params: { id: string } }) {
   const t = getT();
-  const found = await getMassageCalendarEvent(params.id);
-  if (!found) notFound();
-  const { event, invoice, token } = found;
+  const event = await getMassageEventView(params.id);
+  if (!event) notFound();
 
-  const url = massageSurveyUrlFromHeaders(token);
-  const [standings, surveys, pngDataUrl, qrSvg] = await Promise.all([
-    therapistStandings(invoice.id),
+  const url = massageSurveyUrlFromHeaders(event.token);
+  const [standings, surveys, invoices, pngDataUrl, qrSvg] = await Promise.all([
+    therapistStandings(event.linkId),
     prisma.massageSurvey.findMany({
-      where: { invoiceId: invoice.id },
+      where: { linkId: event.linkId },
       orderBy: { createdAt: "desc" },
       include: { therapist: { select: { name: true } } },
     }),
+    event.bookingEventId ? listMassageInvoiceOptions() : Promise.resolve([]),
     QRCode.toDataURL(url, { margin: 1, width: 480, errorCorrectionLevel: "M" }),
     QRCode.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" }),
   ]);
@@ -50,10 +57,25 @@ export default async function MassageEventPage({ params }: { params: { id: strin
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-600 mb-1">{t("This event")}</p>
         <h1 className="font-display text-3xl font-semibold tracking-tight">{event.name}</h1>
         <p className="text-sm text-ink-muted mt-2">
-          <Link href={`/invoices/${invoice.id}`} className="hover:text-brand-600">
-            {invoice.number}
-          </Link>
-          {invoice.customerName ? ` · ${invoice.customerName}` : ""}
+          {event.bookingEventId ? (
+            <Link href={`/bookings/${event.bookingEventId}`} className="hover:text-brand-600">
+              {t("Open booking")}
+            </Link>
+          ) : null}
+          {event.invoice ? (
+            <>
+              {event.bookingEventId ? " · " : null}
+              <Link href={`/invoices/${event.invoice.id}`} className="hover:text-brand-600">
+                {event.invoice.number}
+              </Link>
+            </>
+          ) : (
+            <>
+              {event.bookingEventId ? " · " : null}
+              {t("Invoice not attached yet")}
+            </>
+          )}
+          {event.companyName ? ` · ${event.companyName}` : ""}
           {` · ${when}`}
           {surveys.length > 0 ? ` · ${t("Event average")} ${eventScore.toFixed(1)}` : ""}
         </p>
@@ -64,12 +86,21 @@ export default async function MassageEventPage({ params }: { params: { id: strin
           className="w-[220px] h-[220px] bg-white rounded-xl [&_svg]:h-full [&_svg]:w-full"
           dangerouslySetInnerHTML={{ __html: qrSvg }}
         />
-        <div>
-          <h2 className="font-display text-xl font-semibold">{t("Guest questionnaire")}</h2>
-          <p className="text-sm text-ink-muted mt-1 mb-4">
-            {t("Guests scan this after the massage. It takes about half a minute.")}
-          </p>
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-display text-xl font-semibold">{t("Guest questionnaire")}</h2>
+            <p className="text-sm text-ink-muted mt-1">
+              {t("Guests scan this after the massage. It takes about half a minute.")}
+            </p>
+          </div>
           <MassageQrActions url={url} pngDataUrl={pngDataUrl} />
+          {event.bookingEventId ? (
+            <MassageInvoiceField
+              bookingEventId={event.bookingEventId}
+              invoices={invoices}
+              currentId={event.invoice?.id ?? null}
+            />
+          ) : null}
         </div>
       </section>
 
@@ -91,16 +122,14 @@ export default async function MassageEventPage({ params }: { params: { id: strin
               <article key={survey.id} className="px-4 sm:px-5 py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h3 className="font-medium">{survey.therapist.name}</h3>
-                  <p className="font-mono text-lg text-brand-700">
-                    {surveyScore(survey).toFixed(1)}
-                  </p>
+                  <p className="font-mono text-lg text-brand-700">{surveyScore(survey).toFixed(1)}</p>
                 </div>
                 <p className="text-xs text-ink-muted mt-0.5">{formatDateTime(survey.createdAt)}</p>
                 <p className="text-sm text-ink mt-2">
                   {t("Overall")} {survey.overall} · {t("Care")} {survey.focus} · {t("Pressure")} {survey.pressure} ·{" "}
                   {t("Relief")} {survey.relief}
                 </p>
-                {survey.comment && <p className="text-sm text-ink-muted mt-2">{survey.comment}</p>}
+                {survey.comment ? <p className="text-sm text-ink-muted mt-2">{survey.comment}</p> : null}
               </article>
             ))}
           </div>

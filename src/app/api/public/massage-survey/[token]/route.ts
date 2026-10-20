@@ -14,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   await ensureMassageTables();
   const link = await prisma.massageEventLink.findUnique({
     where: { token: params.token },
-    select: { invoiceId: true },
+    select: { id: true, invoiceId: true },
   });
   if (!link) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
@@ -44,7 +44,17 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (!therapist?.active) return NextResponse.json({ error: "Incomplete survey." }, { status: 400 });
 
   await prisma.massageSurvey.create({
-    data: { invoiceId: link.invoiceId, therapistId, overall, focus, pressure, relief, comment, language },
+    data: {
+      linkId: link.id,
+      invoiceId: link.invoiceId,
+      therapistId,
+      overall,
+      focus,
+      pressure,
+      relief,
+      comment,
+      language,
+    },
   });
 
   return NextResponse.json({ ok: true });

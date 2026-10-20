@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { headers } from "next/headers";
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getBookingEvent, listBookingEvents } from "@/lib/bookings";
 import { generateSigningToken } from "@/lib/signing";
 
 // Customer-facing names from the company's roster. The spreadsheet's star
@@ -103,15 +104,17 @@ async function createMassageTables(): Promise<boolean> {
       CONSTRAINT "MassageTherapist_pkey" PRIMARY KEY ("id")
     )`,
     `CREATE TABLE IF NOT EXISTS "MassageEventLink" (
-      "invoiceId" TEXT NOT NULL,
+      "id" TEXT NOT NULL,
       "token" TEXT NOT NULL,
+      "bookingEventId" TEXT,
+      "invoiceId" TEXT,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      CONSTRAINT "MassageEventLink_pkey" PRIMARY KEY ("invoiceId")
+      CONSTRAINT "MassageEventLink_pkey" PRIMARY KEY ("id")
     )`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS "MassageEventLink_token_key" ON "MassageEventLink"("token")`,
     `CREATE TABLE IF NOT EXISTS "MassageSurvey" (
       "id" TEXT NOT NULL,
-      "invoiceId" TEXT NOT NULL,
+      "linkId" TEXT NOT NULL,
+      "invoiceId" TEXT,
       "therapistId" TEXT NOT NULL,
       "overall" INTEGER NOT NULL,
       "focus" INTEGER NOT NULL,
@@ -122,17 +125,96 @@ async function createMassageTables(): Promise<boolean> {
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       CONSTRAINT "MassageSurvey_pkey" PRIMARY KEY ("id")
     )`,
+    // Older databases keyed the QR code by invoice. Move that key aside so a
+    // booking event can own the code before any invoice exists.
+    `DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'MassageEventLink' AND column_name = 'invoiceId'
+      ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'MassageEventLink' AND column_name = 'id'
+      ) THEN
+        ALTER TABLE "MassageEventLink" ADD COLUMN "id" TEXT;
+        ALTER TABLE "MassageEventLink" ADD COLUMN "bookingEventId" TEXT;
+        UPDATE "MassageEventLink" SET "id" = "invoiceId" WHERE "id" IS NULL;
+        ALTER TABLE "MassageEventLink" DROP CONSTRAINT "MassageEventLink_pkey";
+        ALTER TABLE "MassageEventLink" ALTER COLUMN "id" SET NOT NULL;
+        ALTER TABLE "MassageEventLink" ADD CONSTRAINT "MassageEventLink_pkey" PRIMARY KEY ("id");
+        ALTER TABLE "MassageEventLink" ALTER COLUMN "invoiceId" DROP NOT NULL;
+      END IF;
+    END $$`,
+    `ALTER TABLE "MassageEventLink" ADD COLUMN IF NOT EXISTS "bookingEventId" TEXT`,
+    `DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'MassageSurvey' AND column_name = 'linkId'
+      ) THEN
+        ALTER TABLE "MassageSurvey" ADD COLUMN "linkId" TEXT;
+      END IF;
+    END $$`,
+    `UPDATE "MassageSurvey" AS survey
+      SET "linkId" = link."id"
+      FROM "MassageEventLink" AS link
+      WHERE survey."linkId" IS NULL
+        AND survey."invoiceId" IS NOT NULL
+        AND survey."invoiceId" = link."invoiceId"`,
+    `ALTER TABLE "MassageSurvey" ALTER COLUMN "invoiceId" DROP NOT NULL`,
+    `DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM "MassageSurvey" WHERE "linkId" IS NULL) THEN
+        ALTER TABLE "MassageSurvey" ALTER COLUMN "linkId" SET NOT NULL;
+      END IF;
+    END $$`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "MassageEventLink_token_key" ON "MassageEventLink"("token")`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "MassageEventLink_invoiceId_key" ON "MassageEventLink"("invoiceId")`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "MassageEventLink_bookingEventId_key" ON "MassageEventLink"("bookingEventId")`,
+    `CREATE INDEX IF NOT EXISTS "MassageSurvey_linkId_createdAt_idx" ON "MassageSurvey"("linkId", "createdAt")`,
     `CREATE INDEX IF NOT EXISTS "MassageSurvey_invoiceId_createdAt_idx" ON "MassageSurvey"("invoiceId", "createdAt")`,
     `CREATE INDEX IF NOT EXISTS "MassageSurvey_therapistId_idx" ON "MassageSurvey"("therapistId")`,
+    `DO $$
+    DECLARE deltype "char";
+    BEGIN
+      SELECT c.confdeltype INTO deltype FROM pg_constraint c
+      WHERE c.conname = 'MassageEventLink_invoiceId_fkey';
+      IF deltype IS NULL THEN
+        ALTER TABLE "MassageEventLink"
+          ADD CONSTRAINT "MassageEventLink_invoiceId_fkey"
+          FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      ELSIF deltype = 'c' THEN
+        ALTER TABLE "MassageEventLink" DROP CONSTRAINT "MassageEventLink_invoiceId_fkey";
+        ALTER TABLE "MassageEventLink"
+          ADD CONSTRAINT "MassageEventLink_invoiceId_fkey"
+          FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+    END $$`,
     `DO $$ BEGIN
       ALTER TABLE "MassageEventLink"
-        ADD CONSTRAINT "MassageEventLink_invoiceId_fkey"
-        FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        ADD CONSTRAINT "MassageEventLink_bookingEventId_fkey"
+        FOREIGN KEY ("bookingEventId") REFERENCES "BookingEvent"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+    `DO $$
+    DECLARE deltype "char";
+    BEGIN
+      SELECT c.confdeltype INTO deltype FROM pg_constraint c
+      WHERE c.conname = 'MassageSurvey_invoiceId_fkey';
+      IF deltype IS NULL THEN
+        ALTER TABLE "MassageSurvey"
+          ADD CONSTRAINT "MassageSurvey_invoiceId_fkey"
+          FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      ELSIF deltype = 'c' THEN
+        ALTER TABLE "MassageSurvey" DROP CONSTRAINT "MassageSurvey_invoiceId_fkey";
+        ALTER TABLE "MassageSurvey"
+          ADD CONSTRAINT "MassageSurvey_invoiceId_fkey"
+          FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+    END $$`,
     `DO $$ BEGIN
       ALTER TABLE "MassageSurvey"
-        ADD CONSTRAINT "MassageSurvey_invoiceId_fkey"
-        FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        ADD CONSTRAINT "MassageSurvey_linkId_fkey"
+        FOREIGN KEY ("linkId") REFERENCES "MassageEventLink"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
     `DO $$ BEGIN
       ALTER TABLE "MassageSurvey"
@@ -222,18 +304,9 @@ export async function retireMassageTherapist(id: string): Promise<boolean> {
   return true;
 }
 
-function mentionsMassage(value: string | null | undefined): boolean {
+export function mentionsMassage(value: string | null | undefined): boolean {
   if (!value) return false;
   return /massage/i.test(value) || value.includes("按摩");
-}
-
-export function invoiceMentionsMassage(invoice: {
-  title: string;
-  notes: string | null;
-  items: { name: string; description: string }[];
-}): boolean {
-  if (mentionsMassage(invoice.title) || mentionsMassage(invoice.notes)) return true;
-  return invoice.items.some((item) => mentionsMassage(item.name) || mentionsMassage(item.description));
 }
 
 export function massageSurveyUrlFromHeaders(token: string): string {
@@ -245,46 +318,105 @@ export function massageSurveyUrlFromHeaders(token: string): string {
   return `${proto}://${host}/massage-survey/${token}`;
 }
 
-export async function ensureMassageSurveyToken(invoiceId: string): Promise<string | null> {
+const invoiceLabelSelect = {
+  id: true,
+  number: true,
+  title: true,
+  customerName: true,
+} as const;
+
+export type MassageInvoiceOption = {
+  id: string;
+  number: string;
+  title: string;
+  customerName: string;
+};
+
+export async function listMassageInvoiceOptions(): Promise<MassageInvoiceOption[]> {
+  return prisma.invoice.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 400,
+    select: invoiceLabelSelect,
+  });
+}
+
+export async function getMassageBookingLink(bookingEventId: string, create: boolean) {
+  if (create) {
+    const token = await ensureMassageLinkForBooking(bookingEventId);
+    if (!token) return null;
+  } else {
+    await ensureMassageTables();
+  }
+  return prisma.massageEventLink.findUnique({
+    where: { bookingEventId },
+    select: { token: true, invoiceId: true },
+  });
+}
+
+/** The guest QR belongs to the booking event. Creating it does not require an invoice. */
+export async function ensureMassageLinkForBooking(bookingEventId: string): Promise<string | null> {
   await ensureMassageTables();
+  const event = await getBookingEvent(bookingEventId);
+  if (!event) return null;
+
   const existing = await prisma.massageEventLink.findUnique({
-    where: { invoiceId },
+    where: { bookingEventId },
     select: { token: true },
   });
   if (existing) return existing.token;
 
-  // The code belongs to the calendar event. An invoice that has not been
-  // marked on the calendar does not get one.
-  const calendarEvent = await prisma.event.findUnique({
-    where: { invoiceId },
-    select: { id: true },
-  });
-  if (!calendarEvent) return null;
-
   const token = generateSigningToken();
   try {
     const created = await prisma.massageEventLink.create({
-      data: { invoiceId, token },
+      data: { bookingEventId, token },
       select: { token: true },
     });
     return created.token;
   } catch {
     const again = await prisma.massageEventLink.findUnique({
-      where: { invoiceId },
+      where: { bookingEventId },
       select: { token: true },
     });
     return again?.token ?? null;
   }
 }
 
-export async function therapistStandings(invoiceId?: string): Promise<TherapistStanding[]> {
+export async function setMassageInvoice(bookingEventId: string, invoiceId: string | null): Promise<void> {
+  await ensureMassageTables();
+  const link = await prisma.massageEventLink.findUnique({
+    where: { bookingEventId },
+    select: { id: true },
+  });
+  if (!link) throw new Error("NO_LINK");
+
+  if (invoiceId) {
+    const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, select: { id: true } });
+    if (!invoice) throw new Error("NO_INVOICE");
+    const other = await prisma.massageEventLink.findUnique({
+      where: { invoiceId },
+      select: { id: true },
+    });
+    if (other && other.id !== link.id) throw new Error("ALREADY_LINKED");
+  }
+
+  await prisma.massageEventLink.update({
+    where: { id: link.id },
+    data: { invoiceId },
+  });
+  await prisma.massageSurvey.updateMany({
+    where: { linkId: link.id },
+    data: { invoiceId },
+  });
+}
+
+export async function therapistStandings(linkId?: string): Promise<TherapistStanding[]> {
   await ensureMassageTherapists();
   try {
     const [therapists, grouped] = await Promise.all([
       prisma.massageTherapist.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } }),
       prisma.massageSurvey.groupBy({
         by: ["therapistId"],
-        where: invoiceId ? { invoiceId } : undefined,
+        where: linkId ? { linkId } : undefined,
         _avg: { overall: true, focus: true, pressure: true, relief: true },
         _count: { _all: true },
       }),
@@ -308,154 +440,204 @@ export async function therapistStandings(invoiceId?: string): Promise<TherapistS
 
 export type MassageCalendarEvent = {
   id: string;
-  invoiceId: string;
+  bookingEventId: string | null;
+  invoiceId: string | null;
   name: string;
-  number: string;
+  number: string | null;
   customerName: string;
   startDate: Date;
   endDate: Date;
-  token: string;
   surveyCount: number;
   score: number;
 };
 
-export type MassagePendingInvoice = {
-  id: string;
-  number: string;
-  title: string;
-  customerName: string;
-  issueDate: Date;
+type ScoreGroup = {
+  _count: { _all: number };
+  _avg: { overall: number | null; focus: number | null; pressure: number | null; relief: number | null };
 };
 
-const massageInvoiceSelect = {
-  id: true,
-  number: true,
-  title: true,
-  notes: true,
-  customerName: true,
-  issueDate: true,
-  items: { select: { name: true, description: true } },
-  event: { select: { id: true, name: true, startDate: true, endDate: true, companyName: true } },
-  massageEvent: { select: { token: true } },
-} as const;
+function scoreFromGroup(row: ScoreGroup | undefined): { count: number; score: number } {
+  const count = row?._count._all ?? 0;
+  const score = count
+    ? surveyScore({
+        overall: row?._avg.overall ?? 0,
+        focus: row?._avg.focus ?? 0,
+        pressure: row?._avg.pressure ?? 0,
+        relief: row?._avg.relief ?? 0,
+      })
+    : 0;
+  return { count, score };
+}
 
-export async function listMassageBoard(): Promise<{
-  scheduled: MassageCalendarEvent[];
-  pending: MassagePendingInvoice[];
-}> {
+export async function listMassageBoard(): Promise<{ scheduled: MassageCalendarEvent[] }> {
   await ensureMassageTables();
   try {
     return await listMassageBoardRows();
   } catch (err) {
     if (!missingMassageTable(err)) throw err;
     console.error("Massage tables are still missing:", err);
-    return { scheduled: [], pending: [] };
+    return { scheduled: [] };
   }
 }
 
-async function listMassageBoardRows(): Promise<{
-  scheduled: MassageCalendarEvent[];
-  pending: MassagePendingInvoice[];
-}> {
-  const invoices = await prisma.invoice.findMany({
-    where: {
-      OR: [
-        { event: { isNot: null } },
-        { massageEvent: { isNot: null } },
-        { title: { contains: "massage", mode: "insensitive" } },
-        { title: { contains: "按摩" } },
-        { notes: { contains: "massage", mode: "insensitive" } },
-        { notes: { contains: "按摩" } },
-        { items: { some: { name: { contains: "massage", mode: "insensitive" } } } },
-        { items: { some: { name: { contains: "按摩" } } } },
-        { items: { some: { description: { contains: "massage", mode: "insensitive" } } } },
-        { items: { some: { description: { contains: "按摩" } } } },
-      ],
-    },
-    select: massageInvoiceSelect,
-  });
-
-  const scheduledSources = invoices.filter(
-    (invoice) =>
-      invoice.event &&
-      (invoiceMentionsMassage(invoice) || mentionsMassage(invoice.event.name) || invoice.massageEvent)
+async function listMassageBoardRows(): Promise<{ scheduled: MassageCalendarEvent[] }> {
+  const bookingEvents = await listBookingEvents();
+  const massageDays = bookingEvents.filter(
+    (event) => mentionsMassage(event.name) || mentionsMassage(event.description)
   );
-  const pending = invoices
-    .filter((invoice) => !invoice.event && invoiceMentionsMassage(invoice))
-    .map((invoice) => ({
-      id: invoice.id,
-      number: invoice.number,
-      title: invoice.title,
-      customerName: invoice.customerName,
-      issueDate: invoice.issueDate,
-    }))
-    .sort((a, b) => b.issueDate.getTime() - a.issueDate.getTime());
+  if (massageDays.length > 0) {
+    const linked = await prisma.massageEventLink.findMany({
+      where: { bookingEventId: { in: massageDays.map((event) => event.id) } },
+      select: { bookingEventId: true },
+    });
+    const have = new Set(linked.map((row) => row.bookingEventId));
+    await Promise.all(
+      massageDays.filter((event) => !have.has(event.id)).map((event) => ensureMassageLinkForBooking(event.id))
+    );
+  }
 
-  const withTokens = await Promise.all(
-    scheduledSources.map(async (invoice) => {
-      const token = invoice.massageEvent?.token ?? (await ensureMassageSurveyToken(invoice.id));
-      return { invoice, token };
-    })
+  const [links, grouped] = await Promise.all([
+    prisma.massageEventLink.findMany({
+      include: { invoice: { select: invoiceLabelSelect } },
+    }),
+    prisma.massageSurvey.groupBy({
+      by: ["linkId"],
+      _avg: { overall: true, focus: true, pressure: true, relief: true },
+      _count: { _all: true },
+    }),
+  ]);
+  const byLink = new Map(grouped.map((row) => [row.linkId, row]));
+  const bookingById = new Map(bookingEvents.map((event) => [event.id, event]));
+
+  const legacyInvoiceIds = links.flatMap((link) =>
+    !link.bookingEventId && link.invoiceId ? [link.invoiceId] : []
   );
+  const legacyEvents =
+    legacyInvoiceIds.length === 0
+      ? []
+      : await prisma.event.findMany({
+          where: { invoiceId: { in: legacyInvoiceIds } },
+          select: { id: true, invoiceId: true, name: true, startDate: true, endDate: true, companyName: true },
+        });
+  const legacyByInvoice = new Map(legacyEvents.map((event) => [event.invoiceId, event]));
 
-  const grouped = await prisma.massageSurvey.groupBy({
-    by: ["invoiceId"],
-    _avg: { overall: true, focus: true, pressure: true, relief: true },
-    _count: { _all: true },
-  });
-  const byInvoice = new Map(grouped.map((row) => [row.invoiceId, row]));
+  const scheduled: MassageCalendarEvent[] = [];
 
-  const scheduled = withTokens.flatMap(({ invoice, token }) => {
-    if (!invoice.event || !token) return [];
-    const row = byInvoice.get(invoice.id);
-    const count = row?._count._all ?? 0;
-    const score = count
-      ? surveyScore({
-          overall: row?._avg.overall ?? 0,
-          focus: row?._avg.focus ?? 0,
-          pressure: row?._avg.pressure ?? 0,
-          relief: row?._avg.relief ?? 0,
-        })
-      : 0;
-    return [
-      {
-        id: invoice.event.id,
-        invoiceId: invoice.id,
-        name: invoice.event.name,
-        number: invoice.number,
-        customerName: invoice.customerName || invoice.event.companyName,
-        startDate: invoice.event.startDate,
-        endDate: invoice.event.endDate,
-        token,
-        surveyCount: count,
-        score,
-      },
-    ];
-  });
+  for (const link of links) {
+    const stats = scoreFromGroup(byLink.get(link.id));
+    const booking = link.bookingEventId ? bookingById.get(link.bookingEventId) : undefined;
+    if (booking) {
+      const row: MassageCalendarEvent = {
+        id: booking.id,
+        bookingEventId: booking.id,
+        invoiceId: link.invoiceId,
+        name: booking.name,
+        number: link.invoice?.number ?? null,
+        customerName: booking.companyName,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        surveyCount: stats.count,
+        score: stats.score,
+      };
+      scheduled.push(row);
+      continue;
+    }
+
+    const legacy = link.invoiceId ? legacyByInvoice.get(link.invoiceId) : undefined;
+    if (!legacy && !link.invoice) continue;
+    scheduled.push({
+      id: legacy?.id ?? link.id,
+      bookingEventId: null,
+      invoiceId: link.invoiceId,
+      name: legacy?.name || link.invoice?.title || link.invoice?.customerName || "",
+      number: link.invoice?.number ?? null,
+      customerName: link.invoice?.customerName || legacy?.companyName || "",
+      startDate: legacy?.startDate ?? link.createdAt,
+      endDate: legacy?.endDate ?? link.createdAt,
+      surveyCount: stats.count,
+      score: stats.score,
+    });
+  }
+
   scheduled.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
-
-  return { scheduled, pending };
+  return { scheduled };
 }
 
-export async function getMassageCalendarEvent(eventId: string) {
+export type MassageEventView = {
+  pageId: string;
+  linkId: string;
+  token: string;
+  bookingEventId: string | null;
+  name: string;
+  companyName: string;
+  startDate: Date;
+  endDate: Date;
+  invoice: MassageInvoiceOption | null;
+};
+
+export async function getMassageEventView(pageId: string): Promise<MassageEventView | null> {
   await ensureMassageTables();
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-    select: {
-      id: true,
-      name: true,
-      startDate: true,
-      endDate: true,
-      companyName: true,
-      invoice: { select: massageInvoiceSelect },
-    },
+  const booking = await getBookingEvent(pageId);
+  if (booking && (mentionsMassage(booking.name) || mentionsMassage(booking.description))) {
+    await ensureMassageLinkForBooking(booking.id);
+  }
+
+  const link = await findMassageLink(pageId);
+  if (!link) return null;
+
+  if (link.bookingEventId) {
+    const event = booking?.id === link.bookingEventId ? booking : await getBookingEvent(link.bookingEventId);
+    if (!event) return null;
+    return {
+      pageId: event.id,
+      linkId: link.id,
+      token: link.token,
+      bookingEventId: event.id,
+      name: event.name,
+      companyName: event.companyName,
+      startDate: event.startDate,
+      endDate: event.endDate,
+      invoice: link.invoice,
+    };
+  }
+
+  const legacy = link.invoiceId
+    ? await prisma.event.findUnique({
+        where: { invoiceId: link.invoiceId },
+        select: { id: true, name: true, companyName: true, startDate: true, endDate: true },
+      })
+    : null;
+  return {
+    pageId: legacy?.id ?? link.id,
+    linkId: link.id,
+    token: link.token,
+    bookingEventId: null,
+    name: legacy?.name || link.invoice?.title || link.invoice?.customerName || "",
+    companyName: link.invoice?.customerName || legacy?.companyName || "",
+    startDate: legacy?.startDate ?? link.createdAt,
+    endDate: legacy?.endDate ?? link.createdAt,
+    invoice: link.invoice,
+  };
+}
+
+async function findMassageLink(pageId: string) {
+  const include = { invoice: { select: invoiceLabelSelect } } as const;
+  const byBooking = await prisma.massageEventLink.findUnique({
+    where: { bookingEventId: pageId },
+    include,
   });
-  if (!event) return null;
-  const invoice = event.invoice;
-  const qualifies =
-    invoiceMentionsMassage(invoice) || mentionsMassage(event.name) || !!invoice.massageEvent;
-  if (!qualifies) return null;
-  const token = invoice.massageEvent?.token ?? (await ensureMassageSurveyToken(invoice.id));
-  if (!token) return null;
-  return { event, invoice, token };
+  if (byBooking) return byBooking;
+
+  const byId = await prisma.massageEventLink.findUnique({ where: { id: pageId }, include });
+  if (byId) return byId;
+
+  const calendar = await prisma.event.findUnique({
+    where: { id: pageId },
+    select: { invoiceId: true },
+  });
+  if (!calendar) return null;
+  return prisma.massageEventLink.findUnique({
+    where: { invoiceId: calendar.invoiceId },
+    include,
+  });
 }

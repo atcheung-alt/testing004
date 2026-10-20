@@ -438,14 +438,26 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "客人掃描活動二維碼之後，排名會顯示在這裡。",
   "Waiting for a first score": "等待第一份評分",
   "Massage events": "按摩活動",
-  "A QR code is created when a massage invoice is marked on the calendar. Each calendar event has its own code.":
-    "按摩發票按「加入日曆」之後才會有二維碼。每一個日曆活動有自己的碼。",
+  "Each massage booking has its own QR code. Create the event first. Attach the invoice after the day.":
+    "每個按摩預約活動有自己的二維碼。先建立活動，活動結束後再連上發票。",
   "No massage events yet": "尚未有按摩活動",
-  "Mark a massage invoice on the calendar and it will show up here with a QR code.":
-    "把按摩發票加入日曆後，這一場和它的二維碼會出現在這裡。",
-  "Not on the calendar yet": "尚未加入日曆",
-  "Mark the invoice on the calendar to get a QR code for this massage.":
-    "在發票按「加入日曆」之後，這一場才會有問卷二維碼。",
+  "Create a booking for the massage day. Its QR code shows up here. The invoice can wait until the event is over.":
+    "先為按摩日建立預約活動，二維碼會出現在這裡。發票可以等到活動結束才開。",
+  "Invoice not attached yet": "尚未連上發票",
+  "Open booking": "開啟預約",
+  "Linked invoice": "連上的發票",
+  "No invoice yet": "尚未有發票",
+  "Search by invoice number or client": "用發票編號或客戶搜尋",
+  "Save invoice link": "儲存發票連結",
+  "That invoice is already linked to another massage.": "這張發票已經連到另一場按摩。",
+  "Could not save the invoice link.": "無法儲存發票連結。",
+  "Could not create the guest questionnaire.": "無法建立客人問卷。",
+  "Create guest QR code": "建立客人二維碼",
+  "Create the QR code on this event. Guests can scan it on the day, before you write the invoice.":
+    "二維碼屬於這一場活動。客人當天可以掃描，不必等你開好發票。",
+  "Scores stay on this event. Attach the invoice after the massage, when you bill the client.":
+    "分數留在這一場活動。按摩結束、向客戶收費時，再連上發票。",
+  "Open scores for this event": "查看這一場的分數",
   "{count} surveys": "{count} 份問卷",
   "Open event": "開啟活動",
   "Guest questionnaire": "客人問卷",

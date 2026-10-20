@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { getT } from "@/lib/i18n/server";
 import { ensureMassageTables, ensureMassageTherapists } from "@/lib/massage";
+import { getBookingEvent } from "@/lib/bookings";
 import PublicBookingShell from "@/components/PublicBookingShell";
 import MassageSurveyForm from "@/components/MassageSurveyForm";
 
@@ -19,10 +20,13 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
   await ensureMassageTables();
   const link = await prisma.massageEventLink.findUnique({
     where: { token: params.token },
-    select: { invoice: { select: { id: true, title: true, customerName: true } } },
+    select: {
+      bookingEventId: true,
+      invoice: { select: { title: true, customerName: true } },
+    },
   });
   if (!link) notFound();
-  const invoice = link.invoice;
+  const booking = link.bookingEventId ? await getBookingEvent(link.bookingEventId) : null;
 
   await ensureMassageTherapists();
   const [therapists, company] = await Promise.all([
@@ -34,7 +38,7 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
     getEffectiveCompany(),
   ]);
 
-  const eventName = invoice.title || invoice.customerName;
+  const eventName = booking?.name || link.invoice?.title || link.invoice?.customerName;
 
   return (
     <PublicBookingShell

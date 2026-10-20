@@ -304,8 +304,8 @@ model Invoice {
   driveFileId     String?
   driveFileUrl    String?
 
-  // Relations only — no new columns on Invoice. Guest answers and the
-  // survey link live in their own tables.
+  // Optional. A massage questionnaire belongs to the booking event. The
+  // invoice is attached afterwards, once the day has been billed.
   massageEvent   MassageEventLink?
   massageSurveys MassageSurvey[]
 
@@ -1018,6 +1018,7 @@ model BookingEvent {
   updatedAt   DateTime @updatedAt
 
   slots BookingSlot[]
+  massageLink MassageEventLink?
 
   @@index([active, startDate])
 }
@@ -1077,15 +1078,19 @@ model Booking {
   @@index([slotId, status])
 }
 
-// One public survey link for one massage calendar event. Created only after
-// that invoice is marked on the calendar. Keyed by invoiceId because each
-// invoice has at most one Event. Kept off the Invoice columns so other
-// invoice queries do not depend on this feature.
+// One public survey link for one booking event (the massage day itself).
+// The invoice is optional and is attached after the event, when the client
+// is billed. Older rows may only have invoiceId, from when the code was
+// created by marking an invoice on the calendar.
 model MassageEventLink {
-  invoiceId String   @id
-  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  createdAt DateTime @default(now())
+  id             String        @id @default(cuid())
+  token          String        @unique
+  bookingEventId String?       @unique
+  bookingEvent   BookingEvent? @relation(fields: [bookingEventId], references: [id], onDelete: Cascade)
+  invoiceId      String?       @unique
+  invoice        Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  surveys        MassageSurvey[]
+  createdAt      DateTime      @default(now())
 }
 
 // A massage therapist a guest can pick on the event survey. The roster is
@@ -1100,23 +1105,26 @@ model MassageTherapist {
   createdAt DateTime        @default(now())
 }
 
-// One guest's answers after a massage at one invoiced event. Several guests
-// share the event QR code, so many rows point at the same invoice.
+// One guest's answers for one event QR code. Several guests share the code.
+// invoiceId is filled in only after that event is linked to a bill.
 model MassageSurvey {
-  id          String           @id @default(cuid())
-  invoiceId   String
-  invoice     Invoice          @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  id          String            @id @default(cuid())
+  linkId      String
+  link        MassageEventLink  @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  invoiceId   String?
+  invoice     Invoice?          @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
   therapistId String
-  therapist   MassageTherapist @relation(fields: [therapistId], references: [id])
+  therapist   MassageTherapist  @relation(fields: [therapistId], references: [id])
   // Each score is 1–5. The standing on the Massage page is their average.
   overall     Int
   focus       Int
   pressure    Int
   relief      Int
-  comment     String           @default("")
-  language    String           @default("zh")
-  createdAt   DateTime         @default(now())
+  comment     String            @default("")
+  language    String            @default("zh")
+  createdAt   DateTime          @default(now())
 
+  @@index([linkId, createdAt])
   @@index([invoiceId, createdAt])
   @@index([therapistId])
 }
