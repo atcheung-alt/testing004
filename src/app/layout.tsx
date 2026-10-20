@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Fraunces, Inter, IBM_Plex_Mono, Allura, Lora, Syne } from "next/font/google";
+import localFont from "next/font/local";
+import { Fraunces, Inter, IBM_Plex_Mono, Allura, Lora, Syne, Cinzel } from "next/font/google";
 import { getEffectiveAnimationsEnabled, getEffectiveThemeModeFor } from "@/lib/appSettings";
 import { getCurrentUser } from "@/lib/auth";
 import { LanguageProvider } from "@/lib/i18n/client";
@@ -34,6 +35,27 @@ const syne = Syne({
   variable: "--font-syne",
   weight: ["600", "700"],
   display: "swap",
+});
+
+// Award-stage lettering. Cinzel is an engraved Latin face that stays
+// readable at the small name size. Noto Serif TC follows it so Traditional
+// Chinese is a serif. The Google loader slices that face into 100+ files
+// and aborts, so the Traditional Chinese semibold cut is loaded locally.
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  variable: "--font-cinzel",
+  weight: ["600", "700"],
+  display: "swap",
+});
+
+const notoSerifTC = localFont({
+  src: "../fonts/NotoSerifTC-Traditional-600.woff2",
+  weight: "600",
+  style: "normal",
+  variable: "--font-noto-serif-tc",
+  display: "swap",
+  adjustFontFallback: false,
+  preload: false,
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -91,7 +113,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={htmlLang(language)}
       data-animations={animationsEnabled ? "on" : "off"}
       data-theme={themeMode.toLowerCase()}
-      className={`${fraunces.variable} ${inter.variable} ${lora.variable} ${syne.variable} ${plexMono.variable} ${allura.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${lora.variable} ${syne.variable} ${cinzel.variable} ${notoSerifTC.variable} ${plexMono.variable} ${allura.variable}`}
     >
       <body>
         <LanguageProvider language={language}>

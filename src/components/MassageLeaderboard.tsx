@@ -75,14 +75,14 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
                 <div className="award-body flex w-full flex-col items-center">
                   <div className="mb-2 flex w-full flex-col items-center">
                     {rank === 1 ? <Trophy size={20} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-5" />}
-                    <p className="award-name w-full truncate text-center font-sans text-sm font-semibold">{row.name}</p>
-                    <p className="award-score text-center font-sans text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
+                    <p className="award-name w-full truncate text-center font-award text-sm font-semibold">{row.name}</p>
+                    <p className="award-score text-center font-award text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
                   </div>
                   <div className={`award-step w-full ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`} data-rank={rank}>
                     <div className="award-lid" aria-hidden="true" />
                     <div className="award-side" aria-hidden="true" />
                     <div className="award-face">
-                      <span className={rank === 1 ? "font-sans text-5xl font-semibold leading-none" : "font-sans text-4xl font-semibold leading-none"}>{rank}</span>
+                      <span className={rank === 1 ? "award-rank font-award text-5xl font-semibold leading-none" : "award-rank font-award text-4xl font-semibold leading-none"}>{rank}</span>
                     </div>
                   </div>
                 </div>

@@ -825,6 +825,11 @@ html[data-theme="light"] .page-video-content .booking-events .card {
   background: #c4922a;
 }
 .award-name,
+.award-score,
+.award-rank {
+  font-family: var(--font-cinzel), var(--font-noto-serif-tc), serif;
+}
+.award-name,
 .award-score {
   color: #142033;
   text-shadow: none;
