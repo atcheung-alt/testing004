@@ -100,10 +100,10 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
+        "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+          ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
           : "text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
@@ -127,13 +127,13 @@ function NavLinks({
   showLanguage?: boolean;
 }) {
   return (
-    <nav className="flex flex-col gap-5 px-3">
+    <nav className="flex flex-col gap-3 px-3">
       {navGroups.map((group, gi) => (
         <div key={group.label || gi} className="flex flex-col gap-0.5">
           {group.label && (
             <p
               className={clsx(
-                "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint",
+                "px-3 pb-1 text-xs font-medium text-ink-muted",
                 collapsed && "lg:hidden"
               )}
             >
@@ -176,7 +176,7 @@ function SidebarLogo({
 }) {
   if (!logoData) {
     return (
-      <span className="font-display font-semibold text-lg tracking-tight truncate">
+      <span className="font-sans font-semibold text-base truncate">
         {companyName}
       </span>
     );
@@ -232,10 +232,10 @@ function BottomLinks({
           prefetch={false}
           title={collapsed ? t("Management") : undefined}
           className={clsx(
-            "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
+            "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
             collapsed && "lg:justify-center lg:px-0 lg:gap-0",
             managementActive
-              ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+              ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
               : "text-ink-muted hover:bg-paper hover:text-ink"
           )}
         >
@@ -250,10 +250,10 @@ function BottomLinks({
         prefetch={false}
         title={collapsed ? t("Settings") : undefined}
         className={clsx(
-          "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
+          "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
-            ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+            ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
             : "text-ink-muted hover:bg-paper hover:text-ink"
         )}
       >
@@ -374,7 +374,7 @@ export default function Sidebar({
           stretching to the full page height and scrolling out of view. */}
       <aside
         className={clsx(
-          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-5 transition-[width] duration-200 w-64 max-lg:max-w-[72vw]",
+          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-4 transition-[width] duration-200 w-60 max-lg:max-w-[72vw]",
           collapsed && "lg:w-20",
           narrowOpen ? "flex" : "hidden lg:flex"
         )}

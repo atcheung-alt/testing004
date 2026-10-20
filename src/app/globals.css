@@ -314,6 +314,66 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 }
 
+/* Staff shell only. The public survey stays on the styles above. */
+[data-shell="staff"] .card {
+  border-radius: 8px;
+}
+[data-shell="staff"] .btn {
+  border-radius: 6px;
+}
+[data-shell="staff"] .btn:active {
+  transform: none;
+}
+[data-shell="staff"] .btn-primary:hover {
+  filter: none;
+  background-color: rgb(var(--color-brand-600));
+}
+[data-shell="staff"] .btn-primary:active {
+  filter: none;
+  background-color: rgb(var(--color-brand-700));
+}
+[data-shell="staff"] .btn-secondary:hover {
+  border-color: rgb(var(--color-ink-faint));
+}
+[data-shell="staff"] .input {
+  border-radius: 6px;
+}
+[data-shell="staff"] .label {
+  letter-spacing: 0.04em;
+}
+[data-shell="staff"] .stamp {
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+[data-shell="staff"] .card.divide-y > *:hover {
+  box-shadow: inset 3px 0 0 rgb(var(--color-brand-500));
+}
+[data-shell="staff"] main a:not([class*="btn"]):hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+[data-shell="staff"] ::selection {
+  background: rgb(var(--color-brand-500));
+  color: white;
+}
+[data-shell="staff"] :focus-visible {
+  outline: 2px solid rgb(var(--color-brand-500));
+  outline-offset: 2px;
+}
+[data-shell="staff"] {
+  scrollbar-color: rgb(var(--color-line)) transparent;
+}
+[data-shell="staff"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+[data-shell="staff"] ::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-line));
+}
+[data-shell="staff"] main h1 {
+  letter-spacing: -0.02em;
+}
+
 /* -----------------------------------------------------------------------
  * Motion
  *
