@@ -660,15 +660,15 @@ html[data-theme="light"] .page-video-content .btn-secondary {
 @keyframes award-pop {
   0% {
     opacity: 0;
-    transform: translateY(48px) scale(0.6) rotateX(58deg);
+    transform: translateY(48px) scale(0.6);
   }
   62% {
     opacity: 1;
-    transform: translateY(-10px) scale(1.05) rotateX(18deg);
+    transform: translateY(-10px) scale(1.05);
   }
   100% {
     opacity: 1;
-    transform: rotateX(28deg);
+    transform: none;
   }
 }
 @keyframes award-glow {
@@ -679,9 +679,13 @@ html[data-theme="light"] .page-video-content .btn-secondary {
     box-shadow: 0 0 0 18px rgba(240, 208, 120, 0);
   }
 }
+.award-stage.card {
+  overflow: visible;
+}
 .award-stage-head {
   background: #ffffff;
   padding: 14px 18px 12px;
+  border-radius: 8px 8px 0 0;
 }
 .award-stage-head h3,
 .award-stage-head p {
@@ -700,16 +704,114 @@ html[data-theme="light"] .page-video-content .btn-secondary {
   font-weight: 500;
 }
 .award-floor {
+  position: relative;
   background:
     linear-gradient(180deg, #243044 0%, #1b2433 42%, #121821 100%);
   padding: 28px 18px 36px;
+  border-radius: 0 0 8px 8px;
   perspective: 900px;
   perspective-origin: 50% 20%;
 }
 .award-column {
+  cursor: pointer;
+  animation: award-pop 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+  outline: none;
+}
+.award-body {
+  transform: rotateX(28deg);
   transform-origin: center bottom;
   transform-style: preserve-3d;
-  animation: award-pop 0.7s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), filter 0.35s ease;
+}
+.award-column:hover .award-body,
+.award-column:focus-visible .award-body {
+  transform: rotateX(4deg) translateY(-16px) scale(1.07);
+}
+.award-column:hover .award-step,
+.award-column:focus-visible .award-step {
+  filter: brightness(1.16);
+}
+.award-floor:has(.award-column:hover) .award-column:not(:hover) .award-body,
+.award-floor:has(.award-column:focus-visible) .award-column:not(:focus-visible) .award-body {
+  filter: brightness(0.72);
+}
+.award-card {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 12px;
+  width: min(17.5rem, calc(100% - 24px));
+  padding: 12px 14px 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #142033;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(12px) scale(0.92);
+  transition: opacity 0.18s ease, transform 0.28s cubic-bezier(0.34, 1.4, 0.64, 1), visibility 0.18s;
+}
+.award-column:hover .award-card,
+.award-column:focus-visible .award-card {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+.award-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.award-card-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #142033;
+}
+.award-card-score {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #9a6b12;
+}
+.award-card-meta {
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #3d4b63;
+}
+.award-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.award-card-list li {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 1.8rem;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #142033;
+}
+.award-card-bar {
+  height: 6px;
+  border-radius: 99px;
+  background: #e6ebf2;
+  overflow: hidden;
+}
+.award-card-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #c4922a;
 }
 .award-name,
 .award-score {

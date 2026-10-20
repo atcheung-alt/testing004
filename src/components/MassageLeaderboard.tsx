@@ -21,6 +21,12 @@ const STEP_DELAY: Record<number, string> = {
   2: "0.16s",
   3: "0s",
 };
+const SCORE_PARTS = [
+  { key: "overall", label: "Overall" },
+  { key: "focus", label: "Care" },
+  { key: "pressure", label: "Pressure" },
+  { key: "relief", label: "Relief" },
+] as const;
 
 function TopScores({ rows }: { rows: TherapistStanding[] }) {
   const t = getT();
@@ -31,7 +37,7 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
   const stage = top.length >= 2 ? [top[1], top[0], ...top.slice(2)] : top;
 
   return (
-    <section className="award-stage card overflow-hidden">
+    <section className="award-stage card">
       <div className="award-stage-head">
         <h3>{t("Top 3")}</h3>
         <p>{t("The three highest scores.")}</p>
@@ -45,14 +51,36 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
                 key={row.id}
                 className={rank === 1 ? "award-column flex min-w-0 flex-[1.15] flex-col items-center" : "award-column flex min-w-0 flex-1 flex-col items-center"}
                 style={{ animationDelay: STEP_DELAY[rank] }}
+                tabIndex={0}
               >
-                <div className="mb-2 flex w-full flex-col items-center">
-                  {rank === 1 ? <Trophy size={20} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-5" />}
-                  <p className="award-name w-full truncate text-center font-sans text-sm font-semibold">{row.name}</p>
-                  <p className="award-score text-center font-sans text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
+                <div className="award-card" role="tooltip">
+                  <div className="award-card-top">
+                    <p className="award-card-name">{row.name}</p>
+                    <p className="award-card-score">{row.adjusted.toFixed(1)}</p>
+                  </div>
+                  <p className="award-card-meta">
+                    {t("{count} surveys", { count: row.count })}
+                    {row.early ? ` · ${t("Early")}` : ""}
+                  </p>
+                  <ul className="award-card-list">
+                    {SCORE_PARTS.map((part) => (
+                      <li key={part.key}>
+                        <span>{t(part.label)}</span>
+                        <span className="award-card-bar"><span style={{ width: `${(row[part.key] / 5) * 100}%` }} /></span>
+                        <span>{row[part.key].toFixed(1)}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className={`award-step flex w-full items-center justify-center ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`} data-rank={rank}>
-                  <span className={rank === 1 ? "font-sans text-5xl font-semibold leading-none" : "font-sans text-4xl font-semibold leading-none"}>{rank}</span>
+                <div className="award-body flex w-full flex-col items-center">
+                  <div className="mb-2 flex w-full flex-col items-center">
+                    {rank === 1 ? <Trophy size={20} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-5" />}
+                    <p className="award-name w-full truncate text-center font-sans text-sm font-semibold">{row.name}</p>
+                    <p className="award-score text-center font-sans text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
+                  </div>
+                  <div className={`award-step flex w-full items-center justify-center ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`} data-rank={rank}>
+                    <span className={rank === 1 ? "font-sans text-5xl font-semibold leading-none" : "font-sans text-4xl font-semibold leading-none"}>{rank}</span>
+                  </div>
                 </div>
               </div>
             );
