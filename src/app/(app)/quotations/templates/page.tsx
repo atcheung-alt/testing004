@@ -3,6 +3,7 @@ import { LayoutTemplate, Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import EmptyState from "@/components/EmptyState";
 import DeleteButton from "@/components/DeleteButton";
+import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -15,18 +16,16 @@ export default async function QuotationTemplatesPage() {
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <h1 className="font-sans text-2xl font-semibold text-ink">{t("Quotation templates")}</h1>
-          <p className="lead">
-            {t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
-          </p>
-        </div>
-        <Link href="/quotations/templates/new" className="btn-primary shrink-0">
-          <Plus size={15} /> {t("New template")}
-        </Link>
-      </div>
+    <div>
+      <PageBar
+        title={t("Quotation templates")}
+        note={t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
+        actions={
+          <Link href="/quotations/templates/new" className="btn-primary shrink-0">
+            <Plus size={15} /> {t("New template")}
+          </Link>
+        }
+      />
 
       {templates.length === 0 ? (
         <EmptyState

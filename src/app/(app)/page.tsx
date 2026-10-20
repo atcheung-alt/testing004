@@ -8,6 +8,7 @@ import StatCard from "@/components/StatCard";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
+import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -72,15 +73,8 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="font-display text-2xl font-semibold text-ink">{t("Dashboard")}</h1>
-        </div>
-        <p className="lead">
-          {t("Invoices, payments, expenses, and what is still outstanding.")}
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageBar title={t("Dashboard")} note={t("Invoices, payments, expenses, and what is still outstanding.")} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard

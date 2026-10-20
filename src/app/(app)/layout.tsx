@@ -53,7 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         canManage={superAdmin}
       />
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 pb-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 pb-8">
           {allowed ? (
             <PageTransition>{children}</PageTransition>
           ) : (

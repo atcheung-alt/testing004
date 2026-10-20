@@ -1,10 +1,10 @@
-import { Medal } from "lucide-react";
 import { formatDate, formatDateTime } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
 import { listMassageBoard, listMassageComments, therapistStandings } from "@/lib/massage";
 import MassageEventSearch from "@/components/MassageEventSearch";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageRoster from "@/components/MassageRoster";
+import PageBar from "@/components/PageBar";
 
 export const dynamic = "force-dynamic";
 
@@ -20,22 +20,11 @@ export default async function MassagePage() {
   const leading = ranked[0];
 
   return (
-    <div className="flex flex-col gap-8">
-      <header>
-        <div className="flex items-center gap-2 text-brand-600 mb-2">
-          <Medal size={18} />
-          <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
-        </div>
-        <h1 className="font-display text-2xl font-semibold text-ink">{t("Results")}</h1>
-        <div className="lead">
-          <p>{t("Therapist scores, before you open an event.")}</p>
-          <p className="mt-1 text-sm font-normal text-ink-muted">
-            {t(
-              "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early."
-            )}
-          </p>
-        </div>
-      </header>
+    <div className="flex flex-col gap-4">
+      <PageBar
+        title={t("Results")}
+        note={t("Therapist scores, before you open an event. Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early.")}
+      />
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card px-4 py-4">

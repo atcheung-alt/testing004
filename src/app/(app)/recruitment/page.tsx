@@ -8,6 +8,7 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
+import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -92,23 +93,21 @@ export default function RecruitmentPage({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Recruitment Agreements")}</h1>
-          <p className="lead">
-            {t("Recruitment services terms — a separate system from quotations/invoices/receipts.")}
-          </p>
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Link href="/recruitment/fee-scale" className="btn-secondary">
-            <Table2 size={15} /> {t("Fee scale library")}
-          </Link>
-          <Link href="/recruitment/new" className="btn-primary">
-            <Plus size={15} /> {t("New agreement")}
-          </Link>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageBar
+        title={t("Recruitment Agreements")}
+        note={t("Recruitment services terms — a separate system from quotations/invoices/receipts.")}
+        actions={
+          <>
+            <Link href="/recruitment/fee-scale" className="btn-secondary">
+              <Table2 size={15} /> {t("Fee scale library")}
+            </Link>
+            <Link href="/recruitment/new" className="btn-primary">
+              <Plus size={15} /> {t("New agreement")}
+            </Link>
+          </>
+        }
+      />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">

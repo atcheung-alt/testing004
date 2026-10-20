@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import ExpenseWorkspace from "@/components/ExpenseWorkspace";
+import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 
@@ -45,13 +46,8 @@ export default async function ExpensesPage({
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Expenses")}</h1>
-        <p className="lead">
-          {t("Record a cost on an invoice, and keep the receipt with it.")}
-        </p>
-      </div>
+    <div>
+      <PageBar title={t("Expenses")} note={t("Record a cost on an invoice, and keep the receipt with it.")} />
       <ExpenseWorkspace
         invoices={invoices.map((invoice) => ({
           id: invoice.id,

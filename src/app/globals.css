@@ -324,11 +324,11 @@ html[data-theme="dark"] .theme-logo-dark {
 [data-shell="staff"] .btn:active {
   transform: none;
 }
-[data-shell="staff"] .btn-primary:hover {
+[data-shell="staff"]:not([data-product="hr"]) .btn-primary:hover {
   filter: none;
   background-color: rgb(var(--color-brand-600));
 }
-[data-shell="staff"] .btn-primary:active {
+[data-shell="staff"]:not([data-product="hr"]) .btn-primary:active {
   filter: none;
   background-color: rgb(var(--color-brand-700));
 }
@@ -371,7 +371,15 @@ html[data-theme="dark"] .theme-logo-dark {
   background: rgb(var(--color-line));
 }
 [data-shell="staff"] main h1 {
-  letter-spacing: -0.02em;
+  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+  margin-bottom: 0;
+}
+[data-shell="staff"] main .gap-8,
+[data-shell="staff"] main .gap-6 {
+  gap: 1rem;
 }
 
 /* -----------------------------------------------------------------------
