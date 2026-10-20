@@ -14,7 +14,7 @@ export default async function ItemLibraryPage() {
   return (
     <div className="flex flex-col gap-4">
       <PageBar
-        title={t("Item library")}
+        title={t("Item Library")}
         note={t("Manage your standardized items. Anything saved here can be picked from a dropdown when building a quotation or invoice.")}
       />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

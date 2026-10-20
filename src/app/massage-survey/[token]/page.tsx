@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = makeT(getSurveyLanguage());
-  return { title: t("Session feedback") };
+  return { title: t("Session Feedback") };
 }
 
 export default async function MassageSurveyPage({ params }: { params: { token: string } }) {

@@ -130,7 +130,7 @@ export default function MassageLeaderboard({
   if (ranked.length === 0) {
     return (
       <div className="card px-6 py-10 text-center">
-        <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No guest scores yet")}</h3>
+        <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No Guest Scores Yet")}</h3>
         <p className="text-sm text-ink-muted max-w-sm mx-auto">
           {t("After guests scan an event QR code, the scores show up here.")}
         </p>

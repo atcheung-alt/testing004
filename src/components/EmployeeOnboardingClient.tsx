@@ -208,7 +208,7 @@ export default function EmployeeOnboardingClient({
         )}
 
         <div className="card p-5 flex flex-col gap-4">
-          <h2 className="font-display text-lg font-semibold">{t("Personal information")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Personal Information")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">{t("English surname *")}</label>
@@ -330,7 +330,7 @@ export default function EmployeeOnboardingClient({
         </div>
 
         <div className="card p-5 flex flex-col gap-4">
-          <h2 className="font-display text-lg font-semibold">{t("Emergency contact")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Emergency Contact")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">{t("Contact name *")}</label>
@@ -366,7 +366,7 @@ export default function EmployeeOnboardingClient({
         </div>
 
         <div className="card p-5 flex flex-col gap-4">
-          <h2 className="font-display text-lg font-semibold">{t("Bank details")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Bank Details")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">{t("Bank name *")}</label>

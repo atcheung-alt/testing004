@@ -66,7 +66,7 @@ export default function MarkOnCalendarButton({
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-secondary">
-        <CalendarPlus size={15} /> {t("Mark on calendar")}
+        <CalendarPlus size={15} /> {t("Mark on Calendar")}
       </button>
 
       {open && (
@@ -78,7 +78,7 @@ export default function MarkOnCalendarButton({
             />
             <div className="relative w-full max-w-sm card p-6 animate-scale-in">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-lg font-semibold">{t("Mark on calendar")}</h2>
+                <h2 className="font-display text-lg font-semibold">{t("Mark on Calendar")}</h2>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}

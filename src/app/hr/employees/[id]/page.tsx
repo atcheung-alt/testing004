@@ -506,7 +506,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
         )}
 
         <div className="card p-5">
-          <h2 className="font-display text-lg font-semibold mb-3">{t("Leave requests")}</h2>
+          <h2 className="font-display text-lg font-semibold mb-3">{t("Leave Requests")}</h2>
           <LeaveRequestActions
             employeeId={employee.id}
             requests={employee.leaveRequests.map((r: any) => ({
@@ -547,7 +547,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
 
         {isAdmin && (
           <div className="card p-5">
-            <h2 className="font-display text-lg font-semibold mb-3">{t("Emergency contact")}</h2>
+            <h2 className="font-display text-lg font-semibold mb-3">{t("Emergency Contact")}</h2>
             <div className="flex flex-col gap-2 text-sm">
               <Row label={t("Name")} value={employee.emergencyContactName} />
               <Row label={t("Relationship")} value={employee.emergencyContactRelationship} />
@@ -558,7 +558,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
 
         {isAdmin && (
           <div className="card p-5">
-            <h2 className="font-display text-lg font-semibold mb-3">{t("Bank details")}</h2>
+            <h2 className="font-display text-lg font-semibold mb-3">{t("Bank Details")}</h2>
             <div className="flex flex-col gap-2 text-sm">
               <Row label={t("Bank")} value={employee.bankName} />
               <Row label={t("Bank code")} value={employee.bankCode} />

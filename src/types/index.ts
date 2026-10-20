@@ -235,7 +235,7 @@ export type Employee = {
   updatedAt: string;
 };
 
-// A calendar entry, created via "Mark on calendar" on an invoice — see
+// A calendar entry, created via "Mark on Calendar" on an invoice — see
 // src/lib/events.ts and the Event model in schema.prisma. The only kind of
 // row the Calendar page shows.
 export type Event = {
@@ -316,7 +316,7 @@ export type Invoice = CustomerDetails & {
   dueDate?: string | null;
   // Event date/time this invoice is for — moved here from Quotation. Filled
   // in manually after the invoice already exists; see the Invoice model
-  // comment in schema.prisma. `event` (once created via "Mark on calendar")
+  // comment in schema.prisma. `event` (once created via "Mark on Calendar")
   // is fetched separately (see lib/events.ts) rather than included here.
   eventStartDate?: string | null;
   eventStartTime?: string | null;

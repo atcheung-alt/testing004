@@ -6,7 +6,7 @@ export default function NewQuotationTemplatePage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New template")}</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New Template")}</h1>
         <p className="text-sm text-ink-muted">
           {t("Set the format you reuse: activity name, line items, and the standard wording. Dates are chosen each time you use it.")}
         </p>

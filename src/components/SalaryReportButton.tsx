@@ -54,7 +54,7 @@ export default function SalaryReportButton({ employeeId }: { employeeId: string 
             />
             <div className="relative w-full max-w-sm card p-6 animate-scale-in">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-lg font-semibold">{t("Export salary report")}</h2>
+                <h2 className="font-display text-lg font-semibold">{t("Export Salary Report")}</h2>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}

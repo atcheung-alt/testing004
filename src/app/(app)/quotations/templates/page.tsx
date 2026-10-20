@@ -18,11 +18,11 @@ export default async function QuotationTemplatesPage() {
   return (
     <div>
       <PageBar
-        title={t("Quotation templates")}
+        title={t("Quotation Templates")}
         note={t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
         actions={
           <Link href="/quotations/templates/new" className="btn-primary shrink-0">
-            <Plus size={15} /> {t("New template")}
+            <Plus size={15} /> {t("New Template")}
           </Link>
         }
       />
@@ -30,10 +30,10 @@ export default async function QuotationTemplatesPage() {
       {templates.length === 0 ? (
         <EmptyState
           icon={LayoutTemplate}
-          title={t("No templates yet")}
+          title={t("No Templates Yet")}
           description={t("Create one here, or open a quotation and choose Save as template.")}
           actionHref="/quotations/templates/new"
-          actionLabel={t("New template")}
+          actionLabel={t("New Template")}
         />
       ) : (
         <div className="card overflow-x-auto">

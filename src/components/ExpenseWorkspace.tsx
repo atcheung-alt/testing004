@@ -184,7 +184,7 @@ export default function ExpenseWorkspace({
     <div className="flex flex-col gap-6">
       <form onSubmit={saveExpense} className="card p-5 flex flex-col gap-4">
         <div>
-          <h2 className="font-display text-lg font-semibold">{t("Record an expense")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Record an Expense")}</h2>
           <p className="lead">
             {t("Choose the invoice, then attach a PDF or photo. Clients do not see these files.")}
           </p>
@@ -226,7 +226,7 @@ export default function ExpenseWorkspace({
               <div className="mt-1 w-full card max-h-80 overflow-auto py-1">
                 {!invoiceQuery.trim() && matches.length > 0 && (
                   <p className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-                    {t("Recent invoices")}
+                    {t("Recent Invoices")}
                   </p>
                 )}
                 {matches.length === 0 ? (
@@ -344,7 +344,7 @@ export default function ExpenseWorkspace({
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold">{t("Recorded expenses")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Recorded Expenses")}</h2>
           {(invoiceId || invoiceQuery.trim()) && (
             <button
               type="button"

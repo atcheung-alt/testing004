@@ -48,7 +48,7 @@ function ClientPicker({
       <div className="absolute inset-0 bg-brand-950/30 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div className="relative w-full max-w-lg card p-6 max-h-[85vh] flex flex-col animate-scale-in">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-semibold">{t("Choose from client library")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Choose from Client Library")}</h2>
           <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink" aria-label={t("Close")}>
             <X size={18} />
           </button>
@@ -167,7 +167,7 @@ export default function CustomerFields({
         onClick={() => setPickerOpen(true)}
         className="btn-secondary self-start"
       >
-        <Library size={15} /> {t("Choose from client library")}
+        <Library size={15} /> {t("Choose from Client Library")}
       </button>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

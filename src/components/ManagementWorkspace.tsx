@@ -186,7 +186,7 @@ export default function ManagementWorkspace() {
       )}
 
       <Fold
-        title={t("Always full access")}
+        title={t("Always Full Access")}
         summary={t("{count} accounts", { count: lockedPeople.length + extraLockedEmails.length })}
         open={openSection === "admins"}
         delay="0.02s"

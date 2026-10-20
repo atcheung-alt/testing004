@@ -29,7 +29,7 @@ export default async function MassageBookingPanel({
   if (!link) {
     return (
       <section className="card p-5 sm:p-6">
-        <h2 className="font-display text-xl font-semibold">{t("Guest questionnaire")}</h2>
+        <h2 className="font-display text-xl font-semibold">{t("Guest Questionnaire")}</h2>
         <p className="text-sm text-ink-muted mt-1 mb-4">
           {t("Create the QR code on this event. Guests can scan it on the day, before you write the invoice.")}
         </p>
@@ -53,7 +53,7 @@ export default async function MassageBookingPanel({
       />
       <div className="flex flex-col gap-4 min-w-0">
         <div>
-          <h2 className="font-display text-xl font-semibold">{t("Guest questionnaire")}</h2>
+          <h2 className="font-display text-xl font-semibold">{t("Guest Questionnaire")}</h2>
           <p className="text-sm text-ink-muted mt-1">
             {t("Scores stay on this event. Attach the invoice after the massage, when you bill the client.")}
           </p>

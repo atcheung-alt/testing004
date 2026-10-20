@@ -214,7 +214,7 @@ export default function SettingsForm() {
       {/* Company branding */}
       <div className="card p-5 flex flex-col gap-4">
         <div>
-          <h2 className="font-display text-lg font-semibold">{t("Company branding")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Company Branding")}</h2>
           <p className="text-sm text-ink-muted mt-0.5">
             {t("Shown on every exported PDF and outgoing email.")}
           </p>
@@ -274,7 +274,7 @@ export default function SettingsForm() {
       {/* Google Drive */}
       <div className="card p-5 flex flex-col gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold">{t("Google Drive sync")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Google Drive Sync")}</h2>
           <p className="text-sm text-ink-muted mt-0.5">
             {t(
               "The Shared Drive (or folder inside one) that generated quotation, invoice, and receipt PDFs are automatically synced into."

@@ -111,7 +111,7 @@ export default function MyLeaveClient({ initial }: { initial: MyProfileLeaveView
         <form onSubmit={submit} className="card p-5 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-brand-600" />
-            <h2 className="font-display text-lg font-semibold">{t("Request leave")}</h2>
+            <h2 className="font-display text-lg font-semibold">{t("Request Leave")}</h2>
           </div>
 
           {error && (
@@ -209,7 +209,7 @@ export default function MyLeaveClient({ initial }: { initial: MyProfileLeaveView
       )}
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Request history")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Request History")}</h2>
         {view.leaveRequests.length === 0 ? (
           <p className="text-sm text-ink-muted">{t("No leave requests yet.")}</p>
         ) : (

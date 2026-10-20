@@ -70,7 +70,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       ],
     },
     {
-      items: [{ href: "/items", label: t("Item library"), icon: Package }],
+      items: [{ href: "/items", label: t("Item Library"), icon: Package }],
     },
   ];
 }

@@ -64,7 +64,7 @@ export default async function BookingsPage() {
       {events.length === 0 ? (
         <EmptyState
           icon={CalendarCheck}
-          title={t("No booking events yet")}
+          title={t("No Booking Events Yet")}
           description={t("Create an event to start taking bookings.")}
           actionHref="/bookings/new"
           actionLabel={t("Create event")}

@@ -283,7 +283,7 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeL
 
               <div className="py-4 flex flex-col gap-2.5">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  {t("Emergency contact")}
+                  {t("Emergency Contact")}
                 </h3>
                 <Row label={t("Name")} value={selected.emergencyContactName} />
                 <Row label={t("Relationship")} value={selected.emergencyContactRelationship} />

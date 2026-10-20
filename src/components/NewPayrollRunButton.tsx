@@ -50,7 +50,7 @@ export default function NewPayrollRunButton() {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="btn-primary">
-        <Plus size={15} /> {t("New payroll run")}
+        <Plus size={15} /> {t("New Payroll Run")}
       </button>
 
       {open && (
@@ -62,7 +62,7 @@ export default function NewPayrollRunButton() {
             />
             <div className="relative w-full max-w-sm card p-6 animate-scale-in">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-lg font-semibold">{t("New payroll run")}</h2>
+                <h2 className="font-display text-lg font-semibold">{t("New Payroll Run")}</h2>
                 <button
                   type="button"
                   onClick={() => !saving && setOpen(false)}

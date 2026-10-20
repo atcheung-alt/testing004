@@ -335,7 +335,7 @@ export default function RecruitmentAgreementForm({
       )}
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Client details")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Client Details")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Company name *")}</label>
@@ -408,7 +408,7 @@ export default function RecruitmentAgreementForm({
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-display text-lg font-semibold">{t("Fee scale (Clause 13.b)")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Fee Scale (Clause 13.b)")}</h2>
           <button
             type="button"
             onClick={restoreFeeScaleFromLibrary}
@@ -440,7 +440,7 @@ export default function RecruitmentAgreementForm({
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-display text-lg font-semibold">{t("Terms of business")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Terms of Business")}</h2>
           {termsDirty && (
             <button
               type="button"

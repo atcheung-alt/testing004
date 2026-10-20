@@ -235,7 +235,7 @@ export default function QuotationForm({
       </div>
 
       <div className="card p-5" ref={customerSectionRef}>
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Company information")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Company Information")}</h2>
         <CustomerFields value={customer} onChange={setCustomer} showContactAndPhone={false} />
       </div>
 
@@ -261,7 +261,7 @@ export default function QuotationForm({
       </div>
 
       <div className="card overflow-visible p-5" ref={lineItemsSectionRef}>
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Line items")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Line Items")}</h2>
         <LineItemsEditor
           items={items}
           onItemsChange={setItems}

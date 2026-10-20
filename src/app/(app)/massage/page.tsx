@@ -60,14 +60,14 @@ export default async function MassagePage() {
 
       <section className="massage-events flex flex-col gap-3">
         <div className="massage-heading-plate">
-          <h2 className="font-sans text-lg font-semibold text-ink">{t("Massage events")}</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">{t("Massage Events")}</h2>
           <p className="lead">
             {t("Each event has its own QR code. Attach the invoice after the day.")}
           </p>
         </div>
         {board.scheduled.length === 0 ? (
           <div className="card px-5 py-10 text-center">
-            <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No massage events yet")}</h3>
+            <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No Massage Events Yet")}</h3>
             <p className="text-sm text-ink-muted">
               {t("Create a booking for the massage day. Its QR code shows up here. The invoice can wait until the event is over.")}
             </p>

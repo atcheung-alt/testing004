@@ -45,10 +45,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={`/quotations/new?client=${customer.id}`} className="btn-secondary">
-              <FileText size={15} /> {t("New quotation")}
+              <FileText size={15} /> {t("New Quotation")}
             </Link>
             <Link href={`/invoices/new?client=${customer.id}`} className="btn-primary">
-              <ReceiptText size={15} /> {t("New invoice")}
+              <ReceiptText size={15} /> {t("New Invoice")}
             </Link>
           </div>
         </div>

@@ -185,7 +185,7 @@ export default function InvoiceExpensesCard({
     <div className={embedded ? "p-5 flex flex-col gap-4" : "card p-5 flex flex-col gap-4"}>
       <div className="flex items-center gap-2">
         <Wallet size={17} className="text-brand-600" />
-        <h2 className="font-display text-lg font-semibold">{t("Event expenses")}</h2>
+        <h2 className="font-display text-lg font-semibold">{t("Event Expenses")}</h2>
         <span className="text-xs text-ink-faint ml-auto">{t("Linked to this invoice — internal only")}</span>
       </div>
       <p className="text-sm text-ink-muted -mt-2">

@@ -902,7 +902,7 @@ export default function BookingEventDetailClient({
 
       {/* Slots */}
       <div className="card p-5 sm:p-6 flex flex-col gap-5">
-        <h2 className="font-display text-lg font-semibold text-ink">{t("Time slots")}</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t("Time Slots")}</h2>
 
         <form onSubmit={submitAddSlot} className="rounded-xl border border-line p-4 flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1188,7 +1188,7 @@ export default function BookingEventDetailClient({
       {/* Pending requests */}
       <div className="card p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Pending requests")}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Pending Requests")}</h2>
           {pendingBookings.length > 0 && (
             <span className="stamp border-amber-500 text-amber-600 bg-amber-50">{pendingBookings.length}</span>
           )}
@@ -1229,7 +1229,7 @@ export default function BookingEventDetailClient({
       {/* Confirmed bookings */}
       <div className="card p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Confirmed bookings")}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Confirmed Bookings")}</h2>
           {confirmedBookings.length > 0 && (
             <span className="stamp border-brand-500 text-brand-600 bg-brand-50">{confirmedBookings.length}</span>
           )}
@@ -1248,7 +1248,7 @@ export default function BookingEventDetailClient({
       {/* Cancelled */}
       <div className="card p-4 sm:p-5">
         <button type="button" onClick={() => setShowCancelled((v) => !v)} className="flex items-center justify-between gap-3 w-full text-left">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Cancelled bookings")}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Cancelled Bookings")}</h2>
           <div className="flex items-center gap-2 shrink-0">
             {cancelledBookings.length > 0 && <span className="stamp border-ink-faint text-ink-faint">{cancelledBookings.length}</span>}
             {showCancelled ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}
@@ -1269,7 +1269,7 @@ export default function BookingEventDetailClient({
       {/* Rejected */}
       <div className="card p-4 sm:p-5">
         <button type="button" onClick={() => setShowRejected((v) => !v)} className="flex items-center justify-between gap-3 w-full text-left">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Rejected requests")}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Rejected Requests")}</h2>
           <div className="flex items-center gap-2 shrink-0">
             {rejectedBookings.length > 0 && <span className="stamp border-ink-faint text-ink-faint">{rejectedBookings.length}</span>}
             {showRejected ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}

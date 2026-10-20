@@ -258,7 +258,7 @@ export default function InvoiceForm({
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Event date & time")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Event Date & Time")}</h2>
         <p className="text-xs text-ink-faint mb-4">{t("Optional. Tick the box to show this job as a grey bar on the Bookings calendar.")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -328,7 +328,7 @@ export default function InvoiceForm({
       </div>
 
       <div className="card p-5 overflow-visible">
-        <h2 className="font-display text-lg font-semibold mb-1">{t("Line items")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-1">{t("Line Items")}</h2>
         <p className="text-sm text-ink-muted mb-4">{t("Click the item name and search items you have billed before, or the item library. Click a result to fill the line — you can still edit anything afterwards.")}</p>
         <LineItemsEditor
           items={items}

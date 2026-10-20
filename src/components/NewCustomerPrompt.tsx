@@ -49,7 +49,7 @@ export default function NewCustomerPrompt({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm px-4 animate-fade-in">
       <div className="card p-6 max-w-sm w-full flex flex-col gap-4 animate-scale-in">
         <div>
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Add to client library?")}</h2>
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Add to Client Library?")}</h2>
           <p className="text-sm text-ink-muted mt-1">
             {t(
               "{name} isn't in your client library yet — save them so future quotations/invoices are quicker to fill in?",

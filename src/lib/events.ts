@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 // -----------------------------------------------------------------------------
 // The Event model (see prisma/schema.prisma) — a calendar entry created
-// explicitly by staff via "Mark on calendar" on an invoice, once its event
+// explicitly by staff via "Mark on Calendar" on an invoice, once its event
 // start/end date are both set. Read/written here with $queryRaw/$executeRaw
 // rather than a generated `prisma.event.*` delegate, because this file was
 // written before `npx prisma generate` had been re-run against the new
@@ -52,7 +52,7 @@ export function computeDurationMins(
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
 }
 
-/** This invoice's calendar event, or null if "Mark on calendar" hasn't been
+/** This invoice's calendar event, or null if "Mark on Calendar" hasn't been
  *  clicked for it yet (Event.invoiceId is unique — at most one per invoice). */
 export async function getEventForInvoice(invoiceId: string): Promise<EventRecord | null> {
   const rows = await prisma.$queryRaw<EventRecord[]>`
@@ -62,7 +62,7 @@ export async function getEventForInvoice(invoiceId: string): Promise<EventRecord
 }
 
 /**
- * Create this invoice's calendar event — the "Mark on calendar" action.
+ * Create this invoice's calendar event — the "Mark on Calendar" action.
  * Caller (the API route) is responsible for having already checked that the
  * invoice has both an event start and end date, and that it doesn't already
  * have an event (the unique index on invoiceId would otherwise reject this

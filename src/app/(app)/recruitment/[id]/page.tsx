@@ -132,7 +132,7 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-lg font-semibold">{t("Terms of business")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Terms of Business")}</h2>
           {signingUrl && (
             <Link href={signingUrl} target="_blank" className="text-sm text-brand-500 hover:underline flex items-center gap-1">
               {t("View public signing page")} <ExternalLink size={13} />

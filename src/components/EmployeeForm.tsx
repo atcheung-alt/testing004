@@ -234,7 +234,7 @@ export default function EmployeeForm({
       )}
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Basic information")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Basic Information")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Surname *")}</label>
@@ -347,7 +347,7 @@ export default function EmployeeForm({
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Compensation & leave")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Compensation & Leave")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {isIntern ? (
             <>
@@ -437,7 +437,7 @@ export default function EmployeeForm({
 
       {contract && employmentType !== "FREELANCE" && (
         <div className="card p-5">
-          <h2 className="font-display text-lg font-semibold mb-4">{t("Work location & hours")}</h2>
+          <h2 className="font-display text-lg font-semibold mb-4">{t("Work Location & Hours")}</h2>
           {contract.status === "DRAFT" ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -472,7 +472,7 @@ export default function EmployeeForm({
       )}
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Personal information")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Personal Information")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Chinese surname")}</label>
@@ -561,7 +561,7 @@ export default function EmployeeForm({
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Emergency contact")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Emergency Contact")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Contact name")}</label>
@@ -595,7 +595,7 @@ export default function EmployeeForm({
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Bank details")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Bank Details")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Name of the bank")}</label>
@@ -637,7 +637,7 @@ export default function EmployeeForm({
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Leaving details")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Leaving Details")}</h2>
         <p className="text-xs text-ink-faint mb-3">{t("Only fill these in once the employee has actually left — setting a last day automatically marks them as Former above.")}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

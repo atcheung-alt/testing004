@@ -14,7 +14,7 @@ export const ZH: Record<string, string> = {
   Receipts: "收據",
   Recruitment: "招聘",
   Clients: "客戶",
-  "Item library": "項目庫",
+  "Item Library": "項目庫",
   Settings: "設定",
   "Log out": "登出",
   "HR System": "人力資源系統",
@@ -34,9 +34,9 @@ export const ZH: Record<string, string> = {
 
   "Download PDF": "下載 PDF",
   "Export CSV": "匯出 CSV",
-  "New quotation": "新增報價單",
   "New Quotation": "新增報價單",
-  "New invoice": "新增發票",
+  "New Quotation": "新增報價單",
+  "New Invoice": "新增發票",
   "New Invoice": "新增發票",
   "New employee": "新增員工",
   Search: "搜尋",
@@ -124,7 +124,7 @@ export const ZH: Record<string, string> = {
   "Total Expenses": "總支出",
   "Outstanding (as of today)": "未收帳款（截至今天）",
 
-  "No quotations found": "找不到報價單",
+  "No Quotations Found": "找不到報價單",
   "Try adjusting your filters, or create a new quotation.": "請調整篩選條件，或新增一張報價單。",
   "Draft, send, and track quotations for your customers.": "起草、發送並跟進客戶報價單。",
   "Issued {date}": "開出日期 {date}",
@@ -158,7 +158,7 @@ export const ZH: Record<string, string> = {
   "Could not save your preference.": "無法儲存你的偏好。",
 
   "Salary report": "薪酬報告",
-  "Export salary report": "匯出薪酬報告",
+  "Export Salary Report": "匯出薪酬報告",
   "Please choose both a start and end month.": "請選擇開始及結束月份。",
   "The start month must be on or before the end month.": "開始月份必須早於或等於結束月份。",
   "Covers every payroll run in this range — income, bonus, and MPF (employee and employer) per month, plus totals.":
@@ -176,7 +176,7 @@ export const ZH: Record<string, string> = {
   "Fills the actual official IR56B form from IRD — name, HKID, address, position, employment dates, and salary + bonus totaled from payroll history for that year. The government form is already printed in English and Chinese on the same page. Marital status, spouse, passport, housing, and employer file number aren't stored anywhere in this app, so those sections are left blank on the form for you to fill in by hand before filing.":
     "填入稅務局正式 IR56B 表格：姓名、香港身份證、地址、職位、受僱日期，以及該年度薪酬紀錄中的薪金加花紅。政府表格本身已中英對照印在同一頁。婚姻狀況、配偶、護照、居所及僱主檔案編號並未儲存在此系統，這些欄位會留空，供你在提交前手寫補上。",
 
-  "Nothing here": "這裡沒有內容",
+  "Nothing Here": "這裡沒有內容",
   "This page, quotation, or invoice doesn't exist.": "此頁面、報價單或發票不存在。",
   "Back to dashboard": "返回儀表板",
 
@@ -186,7 +186,7 @@ export const ZH: Record<string, string> = {
   "Chinese PDF": "中文 PDF",
   "The attached PDF is generated in this language. It does not change the saved document.":
     "附件 PDF 會以這個語言產生，不會改動已儲存的文件。",
-  "Record an expense": "記錄開支",
+  "Record an Expense": "記錄開支",
   "Choose the invoice, then attach a PDF or photo. Clients do not see these files.":
     "選擇發票，再附上 PDF 或相片。客人看不到這些檔案。",
   "Related invoice": "相關發票",
@@ -199,7 +199,7 @@ export const ZH: Record<string, string> = {
   "Upload PDF or photo": "上傳 PDF 或照片",
   "PDF or image, up to {count} files, {size}MB each.": "PDF 或圖片，最多 {count} 個檔案，每個 {size}MB。",
   "Save expense": "儲存開支",
-  "Recorded expenses": "已記錄的開支",
+  "Recorded Expenses": "已記錄的開支",
   "Show all expenses": "顯示全部開支",
   "No expenses yet. Record one above and it will stay linked to the invoice you chose.":
     "尚未有開支。在上方記錄一筆，它會一直連結到你選擇的發票。",
@@ -208,8 +208,8 @@ export const ZH: Record<string, string> = {
   "Record a cost and upload a receipt for this invoice.": "為這張發票記錄成本並上傳收據。",
   "{count} logged · {amount}": "已記錄 {count} 筆 · {amount}",
   "Open expenses": "開啟開支",
-  "Recent expenses": "最近開支",
-  "No expenses yet": "尚未有開支",
+  "Recent Expenses": "最近開支",
+  "No Expenses Yet": "尚未有開支",
   "Record a cost against an invoice and upload the receipt.": "把成本記在發票上，並上傳收據。",
   "Logged against invoices": "已記在發票上",
   "Invoices, payments, expenses, and what is still outstanding.": "發票、已收款、開支，以及尚未收取的金額。",
@@ -229,7 +229,7 @@ export const ZH: Record<string, string> = {
   "No expenses found": "找不到開支",
   "Try another date range, or record an expense from the Expenses page.":
     "試試其他日期，或到開支頁記錄一筆。",
-  "Event expenses": "活動開支",
+  "Event Expenses": "活動開支",
   "Linked to this invoice — internal only": "連結至此發票 — 僅供內部使用",
   "Log costs against this invoice and keep the receipts with the record. Clients never see this.":
     "把成本記在這張發票上，並把收據一併保存。客戶不會看到。",
@@ -242,16 +242,16 @@ export const ZH: Record<string, string> = {
   "PDF or image, up to {count} files, {size}MB each. Kept with this invoice for your records.":
     "PDF 或圖片，每項開支最多 {count} 個檔案，每個 {size}MB。會隨這張發票保存，供你留底。",
   Templates: "範本",
-  "Quotation templates": "報價範本",
+  "Quotation Templates": "報價範本",
   "Reuse a saved quotation. Update the activity, items, and dates each time.":
     "可重複使用的報價格式。每次更新活動、項目和日期。",
-  "New template": "新增範本",
-  "No templates yet": "尚未有範本",
+  "New Template": "新增範本",
+  "No Templates Yet": "尚未有範本",
   "Create one here, or open a quotation and choose Save as template.":
     "在這裡建立，或打開一張報價單，選擇「儲存為範本」。",
   "No activity name yet": "尚未有活動名稱",
   "Use template": "使用範本",
-  "Edit template": "編輯範本",
+  "Edit Template": "編輯範本",
   "Save as template": "儲存為範本",
   "Save template": "儲存範本",
   "Create template": "建立範本",

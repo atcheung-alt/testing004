@@ -45,7 +45,7 @@ async function RecruitmentList({
     return (
       <EmptyState
         icon={Briefcase}
-        title={t("No recruitment agreements found")}
+        title={t("No Recruitment Agreements Found")}
         description={t("Try adjusting your filters, or create a new agreement.")}
         actionHref="/recruitment/new"
         actionLabel={t("New agreement")}
@@ -100,7 +100,7 @@ export default function RecruitmentPage({
         actions={
           <>
             <Link href="/recruitment/fee-scale" className="btn-secondary">
-              <Table2 size={15} /> {t("Fee scale library")}
+              <Table2 size={15} /> {t("Fee Scale Library")}
             </Link>
             <Link href="/recruitment/new" className="btn-primary">
               <Plus size={15} /> {t("New agreement")}

@@ -68,7 +68,7 @@ export default function ExpenseCategoriesManager() {
   return (
     <div className="card p-5 flex flex-col gap-4 max-w-2xl">
       <div>
-        <h2 className="font-display text-lg font-semibold">{t("Expense categories")}</h2>
+        <h2 className="font-display text-lg font-semibold">{t("Expense Categories")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
           {t("Offered as a dropdown when logging expenses on an invoice. “Others” is always available and doesn't need to be added here.")}
         </p>

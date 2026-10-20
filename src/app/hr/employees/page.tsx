@@ -57,7 +57,7 @@ async function EmployeeList({ q, status, isAdmin }: { q?: string; status?: strin
     return (
       <EmptyState
         icon={IdCard}
-        title={t("No employees found")}
+        title={t("No Employees Found")}
         description={
           isAdmin
             ? t("Try adjusting your filters, or add a new employee record.")

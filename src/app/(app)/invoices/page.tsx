@@ -57,10 +57,10 @@ async function InvoiceList({
     return (
       <EmptyState
         icon={ReceiptText}
-        title={t("No invoices found")}
+        title={t("No Invoices Found")}
         description={t("Try adjusting your filters, or create a new invoice.")}
         actionHref="/invoices/new"
-        actionLabel={t("New invoice")}
+        actionLabel={t("New Invoice")}
       />
     );
   }
@@ -160,7 +160,7 @@ export default function InvoicesPage({
             <Download size={15} /> {t("Export CSV")}
           </a>
           <Link href="/invoices/new" className="btn-primary">
-            <Plus size={15} /> {t("New invoice")}
+            <Plus size={15} /> {t("New Invoice")}
           </Link>
         </div>
       </div>

@@ -592,7 +592,7 @@ export default function LineItemsEditor({
       <div className="flex flex-wrap gap-2 mt-3">
         {presetsLoaded && (
           <button type="button" onClick={openPicker} className="btn-secondary">
-            <PackagePlus size={15} /> {t("Add from item library")}
+            <PackagePlus size={15} /> {t("Add from Item Library")}
           </button>
         )}
         <button type="button" onClick={addItem} className="btn-ghost !px-2">
@@ -609,7 +609,7 @@ export default function LineItemsEditor({
           />
           <div className="relative w-full max-w-lg card p-6 max-h-[85vh] flex flex-col animate-scale-in">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-lg font-semibold">{t("Add from item library")}</h2>
+              <h2 className="font-display text-lg font-semibold">{t("Add from Item Library")}</h2>
               <button
                 type="button"
                 onClick={() => setPickerOpen(false)}
@@ -861,7 +861,7 @@ function ItemSuggestionList({
                   ? template.useCount === 1
                     ? t("Used {count} time", { count: template.useCount })
                     : t("Used {count} times", { count: template.useCount })
-                  : t("Item library")}
+                  : t("Item Library")}
                 {template.unit ? t(" · per {unit}", { unit: template.unit }) : ""}
                 {template.fees.length > 0
                   ? template.fees.length === 1

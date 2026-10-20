@@ -10,7 +10,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New invoice")}</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New Invoice")}</h1>
         <p className="text-sm text-ink-muted">
           {client
             ? t("This invoice is for {name}.", { name: client.name })

@@ -40,7 +40,7 @@ export default async function NewQuotationPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New quotation")}</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New Quotation")}</h1>
         <p className="text-sm text-ink-muted">
           {client
             ? t("This quotation is for {name}. Add the activity and line items.", { name: client.name })

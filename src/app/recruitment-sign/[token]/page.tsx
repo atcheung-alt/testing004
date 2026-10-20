@@ -34,7 +34,7 @@ export default async function SignRecruitmentAgreementPage({ params }: { params:
       <div className="max-w-md mx-auto px-4 py-20 flex flex-col items-center text-center gap-3">
         <ShieldAlert size={40} className="text-danger-500" />
         <h1 className="font-display text-xl font-semibold text-ink">
-          {t("This signing link isn't valid")}
+          {t("This Signing Link Isn't Valid")}
         </h1>
         <p className="text-sm text-ink-muted">
           {t(

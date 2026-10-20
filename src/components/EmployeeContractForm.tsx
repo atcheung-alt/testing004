@@ -178,7 +178,7 @@ export default function EmployeeContractForm({
       )}
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Contract details")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Contract Details")}</h2>
         {(isIntern || isPartTime) && (
           <p className="text-xs text-ink-faint mb-4">
             {isIntern
@@ -252,7 +252,7 @@ export default function EmployeeContractForm({
 
       <div className="card p-5">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-display text-lg font-semibold">{t("Contract letter")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Contract Letter")}</h2>
           {termsDirty && (
             <button
               type="button"

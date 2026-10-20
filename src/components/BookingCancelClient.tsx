@@ -52,7 +52,7 @@ export default function BookingCancelClient({ booking, company }: { booking: Can
         {status === "CANCELLED" ? (
           <>
             <CheckCircle2 size={40} className="text-emerald-500" />
-            <h1 className="font-display text-xl font-semibold text-ink">{t("Booking cancelled")}</h1>
+            <h1 className="font-display text-xl font-semibold text-ink">{t("Booking Cancelled")}</h1>
             <p className="text-sm text-ink-muted">
               {t("{event} — {slot} has been cancelled. We hope to see you another time.", {
                 event: booking.eventName,
@@ -63,7 +63,7 @@ export default function BookingCancelClient({ booking, company }: { booking: Can
         ) : status !== "CONFIRMED" && status !== "PENDING" ? (
           <>
             <AlertCircle size={40} className="text-ink-faint" />
-            <h1 className="font-display text-xl font-semibold text-ink">{t("This booking can't be cancelled here")}</h1>
+            <h1 className="font-display text-xl font-semibold text-ink">{t("This Booking Can't Be Cancelled Here")}</h1>
             <p className="text-sm text-ink-muted">
               {t("{event} — {slot} is no longer an active booking. Please get in touch if you need help.", {
                 event: booking.eventName,

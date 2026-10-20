@@ -76,7 +76,7 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
         onClick={() => setOpen((value) => !value)}
       >
         <span>
-          <span className="font-sans text-lg font-semibold text-ink block">{t("Current therapists")}</span>
+          <span className="font-sans text-lg font-semibold text-ink block">{t("Current Therapists")}</span>
           <span className="text-sm text-ink-muted mt-1 block">
             {t("{count} names guests can choose", { count: therapists.length })}
           </span>

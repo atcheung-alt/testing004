@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const t = getT();
   const event = await getBookingEvent(params.id);
-  return { title: event ? t("Book: {name}", { name: event.name }) : t("Book an appointment") };
+  return { title: event ? t("Book: {name}", { name: event.name }) : t("Book an Appointment") };
 }
 
 /**

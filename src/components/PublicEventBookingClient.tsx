@@ -175,7 +175,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
               {t("Make another booking")}
             </button>
             <Link href="/book" className="btn-secondary">
-              {t("All appointments")}
+              {t("All Appointments")}
             </Link>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
       <div className="flex flex-col gap-6">
         <div>
           <Link href="/book" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink mb-3">
-            <ChevronLeft size={15} /> {t("All appointments")}
+            <ChevronLeft size={15} /> {t("All Appointments")}
           </Link>
           <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{event.name}</h1>
           {event.companyName && (
@@ -209,7 +209,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
             [
               [1, "Date", "date"],
               [2, "Time", "time"],
-              [3, "Your details", "details"],
+              [3, "Your Details", "details"],
             ] as const
           ).map(([n, label, name], index) => {
             const open = name === "date" || (name === "time" && !!date) || (name === "details" && !!date && !!selectedSlot);
@@ -247,7 +247,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
         <form onSubmit={submit} className="card p-5 sm:p-6 flex flex-col gap-5 max-w-xl">
           {screen === "date" && (
             <div>
-              <h2 className="font-display text-xl font-semibold text-ink">{t("Pick a date")}</h2>
+              <h2 className="font-display text-xl font-semibold text-ink">{t("Pick a Date")}</h2>
               <p className="text-sm text-ink-muted mt-1 mb-4">{t("Choose a day. Coloured days still have space.")}</p>
               <PublicEventCalendar
                 eventId={event.id}
@@ -326,7 +326,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
             <div className="flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-display text-xl font-semibold text-ink">{t("Your details")}</h2>
+                  <h2 className="font-display text-xl font-semibold text-ink">{t("Your Details")}</h2>
                   <p className="text-sm text-ink-muted mt-1">{t("Check this time, then leave your name and email.")}</p>
                 </div>
                 <button type="button" onClick={() => setScreen("time")} className="btn-secondary shrink-0">

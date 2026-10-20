@@ -23,7 +23,7 @@ export const ACCESS_PAGES = [
   { id: "recruitment", href: "/recruitment", label: "Recruitment" },
   { id: "massage", href: "/massage", label: "Massage" },
   { id: "clients", href: "/clients", label: "Clients" },
-  { id: "items", href: "/items", label: "Item library" },
+  { id: "items", href: "/items", label: "Item Library" },
   { id: "calendar", href: "/calendar", label: "Calendar" },
   { id: "analysis", href: "/analysis", label: "Analysis" },
   { id: "settings", href: "/settings", label: "Settings" },

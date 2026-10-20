@@ -49,10 +49,10 @@ async function QuotationList({
     return (
       <EmptyState
         icon={FileText}
-        title={t("No quotations found")}
+        title={t("No Quotations Found")}
         description={t("Try adjusting your filters, or create a new quotation.")}
         actionHref="/quotations/new"
-        actionLabel={t("New quotation")}
+        actionLabel={t("New Quotation")}
       />
     );
   }
@@ -127,7 +127,7 @@ export default function QuotationsPage({
             <LayoutTemplate size={15} /> {t("Templates")}
           </Link>
           <Link href="/quotations/new" className="btn-primary">
-            <Plus size={15} /> {t("New quotation")}
+            <Plus size={15} /> {t("New Quotation")}
           </Link>
         </div>
       </div>

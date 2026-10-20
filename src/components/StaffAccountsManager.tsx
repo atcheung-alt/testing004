@@ -71,7 +71,7 @@ export default function StaffAccountsManager() {
   return (
     <div className="card p-5 flex flex-col gap-4 max-w-2xl">
       <div>
-        <h2 className="font-display text-lg font-semibold">{t("Staff accounts")}</h2>
+        <h2 className="font-display text-lg font-semibold">{t("Staff Accounts")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
           {t(
             "Who can log in — everyone signs in with their Google Workspace account, so just add their work email below. There's no password to set; the first sign-in with that email creates their session automatically."

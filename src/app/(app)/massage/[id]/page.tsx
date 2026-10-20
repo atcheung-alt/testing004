@@ -99,7 +99,7 @@ export default async function MassageEventPage({ params }: { params: { id: strin
         />
         <div className="flex flex-col gap-4">
           <div>
-            <h2 className="font-display text-xl font-semibold">{t("Guest questionnaire")}</h2>
+            <h2 className="font-display text-xl font-semibold">{t("Guest Questionnaire")}</h2>
             <p className="text-sm text-ink-muted mt-1">
               {t("Guests scan this after the massage. It takes about half a minute.")}
             </p>
@@ -116,7 +116,7 @@ export default async function MassageEventPage({ params }: { params: { id: strin
       </section>
 
       <section>
-        <h2 className="font-display text-xl font-semibold mb-3">{t("Scores at this event")}</h2>
+        <h2 className="font-display text-xl font-semibold mb-3">{t("Scores at This Event")}</h2>
         <MassageLeaderboard
           rows={standings}
           notes={surveys.map((survey) => {
@@ -134,10 +134,10 @@ export default async function MassageEventPage({ params }: { params: { id: strin
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="font-display text-xl font-semibold">{t("Survey records")}</h2>
+        <h2 className="font-display text-xl font-semibold">{t("Survey Records")}</h2>
         {surveys.length === 0 ? (
           <div className="card px-5 py-10 text-center">
-            <h3 className="font-display text-lg font-semibold mb-1">{t("No surveys for this event yet")}</h3>
+            <h3 className="font-display text-lg font-semibold mb-1">{t("No Surveys for This Event Yet")}</h3>
             <p className="text-sm text-ink-muted">{t("Scores appear here after a guest submits the form.")}</p>
           </div>
         ) : (

@@ -289,7 +289,7 @@ export default function PresetItemsManager() {
 
       {adding ? (
         <div className="card p-5">
-          <h2 className="font-display text-lg font-semibold mb-4">{t("New preset item")}</h2>
+          <h2 className="font-display text-lg font-semibold mb-4">{t("New Preset Item")}</h2>
           <PresetForm
             initial={emptyDraft}
             saving={saving}
@@ -301,7 +301,7 @@ export default function PresetItemsManager() {
       ) : (
         <div>
           <button type="button" onClick={() => setAdding(true)} className="btn-primary">
-            <Plus size={15} /> {t("New preset item")}
+            <Plus size={15} /> {t("New Preset Item")}
           </button>
         </div>
       )}

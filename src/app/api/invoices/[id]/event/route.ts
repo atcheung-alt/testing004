@@ -6,7 +6,7 @@ import { logActivity } from "@/lib/activity";
 export const dynamic = "force-dynamic";
 
 /**
- * "Mark on calendar" — create this invoice's one-and-only Event row (see the
+ * "Mark on Calendar" — create this invoice's one-and-only Event row (see the
  * Event model in schema.prisma) once staff has set both an event start and
  * end date on the invoice and confirmed a name for it. This is the only way
  * an Event ever gets created; there's no "unmark"/edit action yet.

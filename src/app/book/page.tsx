@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export function generateMetadata(): Metadata {
   const t = getT();
   return {
-    title: t("Book an appointment"),
+    title: t("Book an Appointment"),
   };
 }
 
@@ -33,7 +33,7 @@ export default async function BookEventsPage() {
     >
       <div className="max-w-2xl flex flex-col gap-8">
         <div>
-          <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{t("Book an appointment")}</h1>
+          <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{t("Book an Appointment")}</h1>
           <p className="text-sm text-ink-muted mt-2">{t("Choose an event. Next you pick a day, then a time.")}</p>
         </div>
 

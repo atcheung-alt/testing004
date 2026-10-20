@@ -124,7 +124,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("This month")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("This Month")}</h2>
         <div className="flex flex-col gap-4">
           {monthRows.map((row) => {
             const width = row.amount === 0 ? "0%" : `${Math.max(8, Math.round((Math.abs(row.amount) / monthMax) * 100))}%`;
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-lg font-semibold">{t("Recent expenses")}</h2>
+          <h2 className="font-display text-lg font-semibold">{t("Recent Expenses")}</h2>
           <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1">
             {t("View all")} <ArrowRight size={14} />
           </Link>
@@ -159,10 +159,10 @@ export default async function DashboardPage() {
         {recentExpenses.length === 0 ? (
           <EmptyState
             icon={Wallet}
-            title={t("No expenses yet")}
+            title={t("No Expenses Yet")}
             description={t("Record a cost against an invoice and upload the receipt.")}
             actionHref="/expenses"
-            actionLabel={t("Record an expense")}
+            actionLabel={t("Record an Expense")}
           />
         ) : (
           <div className="card overflow-hidden">
@@ -193,7 +193,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-lg font-semibold">{t("Recent quotations")}</h2>
+            <h2 className="font-display text-lg font-semibold">{t("Recent Quotations")}</h2>
             <Link
               href="/quotations"
               className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
@@ -204,10 +204,10 @@ export default async function DashboardPage() {
           {recentQuotations.length === 0 ? (
             <EmptyState
               icon={FileText}
-              title={t("No quotations yet")}
+              title={t("No Quotations Yet")}
               description={t("Create your first quotation to start quoting customers for work.")}
               actionHref="/quotations/new"
-              actionLabel={t("New quotation")}
+              actionLabel={t("New Quotation")}
             />
           ) : (
             <div className="card divide-y divide-line">
@@ -235,7 +235,7 @@ export default async function DashboardPage() {
 
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-display text-lg font-semibold">{t("Recent invoices")}</h2>
+            <h2 className="font-display text-lg font-semibold">{t("Recent Invoices")}</h2>
             <Link
               href="/invoices"
               className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
@@ -246,10 +246,10 @@ export default async function DashboardPage() {
           {recentInvoices.length === 0 ? (
             <EmptyState
               icon={ReceiptText}
-              title={t("No invoices yet")}
+              title={t("No Invoices Yet")}
               description={t("Convert an accepted quotation, or create an invoice directly.")}
               actionHref="/invoices/new"
-              actionLabel={t("New invoice")}
+              actionLabel={t("New Invoice")}
             />
           ) : (
             <div className="card divide-y divide-line">

@@ -142,7 +142,7 @@ export default function QuotationTemplateForm({ template }: { template?: Quotati
       </p>
 
       <div className="card overflow-visible p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("Line items")}</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Line Items")}</h2>
         <LineItemsEditor
           items={items}
           onItemsChange={setItems}

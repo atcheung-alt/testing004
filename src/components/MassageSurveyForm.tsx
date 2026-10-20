@@ -127,7 +127,7 @@ export default function MassageSurveyForm({
             ))}
           </div>
         </div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight mt-3">{t("Session feedback")}</h1>
+        <h1 className="font-display text-3xl font-semibold tracking-tight mt-3">{t("Session Feedback")}</h1>
         <p className="mt-4 border-l-2 border-brand-600 pl-4 font-display text-lg leading-snug text-ink">
           {t("Your rating keeps every session to the same standard.")}
         </p>
@@ -148,7 +148,7 @@ export default function MassageSurveyForm({
               <path d="M4.5 10.5 8 14l7.5-8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h2 className="font-display text-2xl font-semibold">{t("Thank you for your feedback")}</h2>
+          <h2 className="font-display text-2xl font-semibold">{t("Thank You for Your Feedback")}</h2>
           <p className="text-sm text-ink-muted mt-3 max-w-sm mx-auto">
             {t("Your response has been recorded and will be used to review this session.")}
           </p>
@@ -159,7 +159,7 @@ export default function MassageSurveyForm({
       ) : (
         <form onSubmit={submit} className="bg-surface border border-line rounded-card shadow-card overflow-hidden">
           <div className="px-5 py-6 sm:px-7 sm:py-7 flex flex-col gap-8">
-            <Section index="01" title={t("Session details")}>
+            <Section index="01" title={t("Session Details")}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="timeslot">
@@ -193,9 +193,9 @@ export default function MassageSurveyForm({
               </div>
             </Section>
 
-            <Section index="02" title={t("Your therapist")}>
+            <Section index="02" title={t("Your Therapist")}>
               <label className="sr-only" htmlFor="therapist">
-                {t("Your therapist")}
+                {t("Your Therapist")}
               </label>
               <select
                 id="therapist"
@@ -252,9 +252,9 @@ export default function MassageSurveyForm({
               </div>
             </Section>
 
-            <Section index="04" title={t("Additional comments")}>
+            <Section index="04" title={t("Additional Comments")}>
               <label className="sr-only" htmlFor="comment">
-                {t("Additional comments")}
+                {t("Additional Comments")}
               </label>
               <textarea
                 id="comment"

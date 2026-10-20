@@ -23,7 +23,7 @@ export const RECRUITMENT_LANGUAGE_LABELS: Record<RecruitmentLanguage, string> = 
 //
 // 1. A shared library (RecruitmentFeeScaleRow, managed at
 //    /recruitment/fee-scale) holding the company's current *standard* rates
-//    — the same add/edit/delete pattern as the PresetItem "Item library".
+//    — the same add/edit/delete pattern as the PresetItem "Item Library".
 // 2. Each RecruitmentAgreement stores its OWN copy of these rows
 //    (feeScalePermanent/feeScaleContract, JSON-encoded FeeScaleRowFields[]).
 //    New agreements pre-fill from the library's current defaults, but from

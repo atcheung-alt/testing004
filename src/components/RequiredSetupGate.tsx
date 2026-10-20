@@ -40,7 +40,7 @@ export default function RequiredSetupGate({
               <Settings2 size={18} />
             </div>
             <div>
-              <h2 className="font-display text-lg font-semibold text-ink">{t("Finish setting up HR Plus")}</h2>
+              <h2 className="font-display text-lg font-semibold text-ink">{t("Finish Setting Up HR Plus")}</h2>
               <p className="text-sm text-ink-muted mt-1">
                 {t(
                   "A few things need to be filled in on the Settings page before the app can generate documents and emails correctly."
