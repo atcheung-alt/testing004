@@ -10,10 +10,10 @@ const SAMPLE_ROWS: TherapistStanding[] = [
   { id: "sample-3", name: "示範 · 張啟賢", count: 3, score: 4.5, overall: 4.6, focus: 4.4, pressure: 4.5, relief: 4.5, early: true },
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
-const STEP: Record<number, string> = {
-  1: "min-h-[9.5rem]",
-  2: "min-h-[7.25rem]",
-  3: "min-h-[5.75rem]",
+const STEP_HEIGHT: Record<number, string> = {
+  1: "h-40",
+  2: "h-28",
+  3: "h-20",
 };
 
 function TopScores({ rows }: { rows: TherapistStanding[] }) {
@@ -30,19 +30,19 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
         <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
         <p className="mt-0.5 text-sm text-ink">{t("The three highest scores.")}</p>
       </div>
-      <div className="card px-3 py-4 sm:px-5">
-        <div className="flex items-end justify-center gap-2 sm:gap-3">
+      <div className="card px-3 pt-5 pb-4 sm:px-8">
+        <div className="mx-auto flex max-w-xl items-end justify-center gap-1 sm:gap-1.5">
           {stage.map((row) => {
             const rank = top.indexOf(row) + 1;
             return (
-              <div
-                key={row.id}
-                className={`award-step flex-1 max-w-[16rem] flex flex-col justify-end rounded-lg border border-line px-3 pb-3 pt-3 ${STEP[rank] ?? STEP[3]}`}
-              >
-                <p className="font-sans text-2xl font-semibold leading-none text-ink">{rank}</p>
-                <p className="font-sans text-sm font-semibold text-ink truncate mt-3">{row.name}</p>
-                <p className="text-xs text-ink mt-1">{t("{count} surveys", { count: row.count })}</p>
-                <p className="font-sans text-sm font-semibold text-ink mt-2">{row.adjusted.toFixed(1)} / 5</p>
+              <div key={row.id} className="flex min-w-0 flex-1 flex-col items-center">
+                <p className="w-full truncate text-center font-sans text-sm font-semibold text-ink">{row.name}</p>
+                <p className="mb-2 text-center font-sans text-xs font-semibold text-ink">
+                  {row.adjusted.toFixed(1)} / 5
+                </p>
+                <div className={`award-step flex w-full items-center justify-center rounded-t-md ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`}>
+                  <span className="font-sans text-4xl font-semibold leading-none sm:text-5xl">{rank}</span>
+                </div>
               </div>
             );
           })}
