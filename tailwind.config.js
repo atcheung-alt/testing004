@@ -61,16 +61,16 @@ module.exports = {
       },
       fontFamily: {
         display: [
-          "var(--font-fraunces)",
+          "var(--font-jakarta)",
           "PingFang HK",
           "PingFang TC",
           "Noto Sans TC",
           "Microsoft JhengHei",
-          "Georgia",
-          "serif",
+          "system-ui",
+          "sans-serif",
         ],
         sans: [
-          "var(--font-inter)",
+          "var(--font-jakarta)",
           "PingFang HK",
           "PingFang TC",
           "Noto Sans TC",
