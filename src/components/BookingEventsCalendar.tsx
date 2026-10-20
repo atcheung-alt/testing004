@@ -46,13 +46,17 @@ const EVENT_COLORS = ["#5B8DEF", "#3DAB9A", "#8B7EC8", "#5C9A6A", "#C4893A", "#C
 
 const JOB_COLOR = "#8B93A7";
 
-function colorFor(event: { id: string; kind?: "booking" | "job" }) {
-  if (event.kind === "job") return JOB_COLOR;
+export function eventBarColor(id: string): string {
   let hash = 0;
-  for (let i = 0; i < event.id.length; i++) {
-    hash = (hash * 31 + event.id.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
   }
   return EVENT_COLORS[hash % EVENT_COLORS.length];
+}
+
+function colorFor(event: { id: string; kind?: "booking" | "job" }) {
+  if (event.kind === "job") return JOB_COLOR;
+  return eventBarColor(event.id);
 }
 
 function startOfDay(d: Date) {

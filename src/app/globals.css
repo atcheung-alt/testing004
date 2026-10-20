@@ -348,7 +348,7 @@ html[data-theme="dark"] .theme-logo-dark {
 [data-shell="staff"] .card.divide-y > *:hover {
   box-shadow: inset 3px 0 0 rgb(var(--color-brand-500));
 }
-[data-shell="staff"] main a:not([class*="btn"]):hover {
+[data-shell="staff"] main a:not([class*="btn"]):not(.event-ticket):hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }

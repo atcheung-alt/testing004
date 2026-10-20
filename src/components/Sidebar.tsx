@@ -118,13 +118,11 @@ function NavLinks({
   pathname,
   collapsed,
   onNavigate,
-  showLanguage,
 }: {
   navGroups: NavGroup[];
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
-  showLanguage?: boolean;
 }) {
   return (
     <nav className="flex flex-col gap-3 px-3">
@@ -141,9 +139,6 @@ function NavLinks({
             </p>
           )}
           {group.label && collapsed && <div className="mx-2 mb-1 border-t border-line hidden lg:block" />}
-          {showLanguage && group.items.some((item) => item.href === "/items") && (
-            <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" className="mb-1" />
-          )}
           {group.items.map((item) => (
             <NavLink
               key={item.href}
@@ -194,14 +189,12 @@ function BottomLinks({
   onNavigate,
   canManage,
   showSettings,
-  showLanguage,
 }: {
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
   canManage?: boolean;
   showSettings?: boolean;
-  showLanguage?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
@@ -222,9 +215,6 @@ function BottomLinks({
 
   return (
     <div className="mt-auto px-3 pt-3 border-t border-line flex flex-col gap-1 shrink-0">
-      {showLanguage && (
-        <LanguageSwitch collapsed={collapsed} menuDirection="up" align="left" />
-      )}
       {canManage && (
         <Link
           href="/management"
@@ -278,6 +268,7 @@ function BottomLinks({
         )}
         <span className={clsx(collapsed && "lg:hidden")}>{t("Log out")}</span>
       </button>
+      <LanguageSwitch collapsed={collapsed} className="mt-1" />
     </div>
   );
 }
@@ -324,7 +315,6 @@ export default function Sidebar({
             }),
     }))
     .filter((group) => group.items.length > 0);
-  const showItems = navGroups.some((group) => group.items.some((item) => item.href === "/items"));
   const showHr = allowedPages === "all" || allowedPages.includes("hr");
   const showSettings = allowedPages === "all" || allowedPages.includes("settings");
 
@@ -413,13 +403,12 @@ export default function Sidebar({
         </div>
 
         {showHr && <SwitchSystemLink href="/hr" label={t("HR System")} collapsed={collapsed} />}
-        <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} showLanguage={showItems} />
+        <NavLinks navGroups={navGroups} pathname={pathname} collapsed={collapsed} />
         <BottomLinks
           pathname={pathname}
           collapsed={collapsed}
           canManage={canManage}
           showSettings={showSettings}
-          showLanguage={!showItems}
         />
       </aside>
 

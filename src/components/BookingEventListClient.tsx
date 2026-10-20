@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import clsx from "clsx";
-import ClickableTableRow from "@/components/ClickableTableRow";
+import { eventBarColor } from "@/components/BookingEventsCalendar";
 import { useT } from "@/lib/i18n/client";
 import { formatDateLabel } from "@/lib/bookingFormat";
 
@@ -28,36 +29,54 @@ export default function BookingEventListClient({ events }: { events: BookingEven
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-sans text-lg font-semibold text-ink">{t("Events")}</h2>
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[36rem] text-left text-sm">
-          <thead>
-            <tr className="border-b border-line">
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Event")}</th>
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Dates")}</th>
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Status")}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((e) => (
-              <ClickableTableRow
-                key={e.id}
-                href={`/bookings/${e.id}`}
-                className="border-b border-line last:border-0 hover:bg-paper"
-              >
-                <td className="px-4 py-3">
-                  <p className="font-sans font-medium text-ink">{e.name}</p>
-                  {e.description ? <p className="font-sans text-ink-muted mt-0.5">{e.description}</p> : null}
-                </td>
-                <td className="px-4 py-3 font-sans text-ink whitespace-nowrap">{dateRangeLabel(e.startDate, e.endDate)}</td>
-                <td className="px-4 py-3">
-                  <span className={clsx("stamp", e.active ? "border-brand-500 text-brand-600" : "border-line text-ink-muted")}>
-                    {e.active ? t("Active") : t("Inactive")}
-                  </span>
-                </td>
-              </ClickableTableRow>
-            ))}
-          </tbody>
-        </table>
+      <div className="flex flex-col gap-2">
+        {shown.map((e) => {
+          const color = eventBarColor(e.id);
+          return (
+            <Link
+              key={e.id}
+              href={`/bookings/${e.id}`}
+              className={clsx(
+                "event-ticket flex items-center gap-3 rounded-lg border px-3 py-3 no-underline transition-colors",
+                e.active ? "border-line bg-surface hover:bg-paper" : "border-line/70 bg-paper/40 hover:bg-paper"
+              )}
+              style={e.active ? { boxShadow: `inset 4px 0 0 ${color}` } : undefined}
+            >
+              <span
+                className="h-8 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: e.active ? color : "rgb(var(--color-ink-faint))" }}
+                aria-hidden="true"
+              />
+              <span className="min-w-0 flex-1">
+                <span
+                  className="inline-block max-w-full truncate rounded px-2 py-0.5 text-sm font-medium"
+                  style={
+                    e.active
+                      ? { backgroundColor: color, color: "#fff" }
+                      : { color: "rgb(var(--color-ink-muted))" }
+                  }
+                >
+                  {e.name}
+                </span>
+                <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-ink-muted">
+                  <span>{dateRangeLabel(e.startDate, e.endDate)}</span>
+                  {e.description ? <span className="truncate">{e.description}</span> : null}
+                </span>
+              </span>
+              {e.active ? (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
+                  style={{ backgroundColor: color }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-[soft-pulse_1.6s_ease-in-out_infinite]" />
+                  {t("Active")}
+                </span>
+              ) : (
+                <span className="stamp shrink-0 border-line text-ink-muted">{t("Inactive")}</span>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
