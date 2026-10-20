@@ -31,27 +31,27 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
   const stage = top.length >= 2 ? [top[1], top[0], ...top.slice(2)] : top;
 
   return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
-        <p className="mt-0.5 text-sm text-ink">{t("The three highest scores.")}</p>
+    <section className="award-stage card overflow-hidden">
+      <div className="award-stage-head">
+        <h3>{t("Top 3")}</h3>
+        <p>{t("The three highest scores.")}</p>
       </div>
-      <div className="card px-3 pt-6 pb-5 sm:px-8">
-        <div className="mx-auto flex max-w-xl items-end justify-center gap-1.5 sm:gap-2">
+      <div className="award-floor">
+        <div className="mx-auto flex max-w-xl items-end justify-center gap-2 sm:gap-3">
           {stage.map((row) => {
             const rank = top.indexOf(row) + 1;
             return (
-              <div key={row.id} className={rank === 1 ? "flex min-w-0 flex-[1.15] flex-col items-center" : "flex min-w-0 flex-1 flex-col items-center"}>
-                <div className="award-caption mb-2 flex w-full flex-col items-center" style={{ animationDelay: `calc(${STEP_DELAY[rank]} + 0.35s)` }}>
-                  {rank === 1 ? <Trophy size={18} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-[18px]" />}
-                  <p className="w-full truncate text-center font-sans text-sm font-semibold text-ink">{row.name}</p>
-                  <p className="text-center font-sans text-xs font-semibold text-ink">{row.adjusted.toFixed(1)} / 5</p>
+              <div
+                key={row.id}
+                className={rank === 1 ? "award-column flex min-w-0 flex-[1.15] flex-col items-center" : "award-column flex min-w-0 flex-1 flex-col items-center"}
+                style={{ animationDelay: STEP_DELAY[rank] }}
+              >
+                <div className="mb-2 flex w-full flex-col items-center">
+                  {rank === 1 ? <Trophy size={20} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-5" />}
+                  <p className="award-name w-full truncate text-center font-sans text-sm font-semibold">{row.name}</p>
+                  <p className="award-score text-center font-sans text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
                 </div>
-                <div
-                  className={`award-step flex w-full items-center justify-center ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`}
-                  data-rank={rank}
-                  style={{ animationDelay: STEP_DELAY[rank] }}
-                >
+                <div className={`award-step flex w-full items-center justify-center ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`} data-rank={rank}>
                   <span className={rank === 1 ? "font-sans text-5xl font-semibold leading-none" : "font-sans text-4xl font-semibold leading-none"}>{rank}</span>
                 </div>
               </div>
