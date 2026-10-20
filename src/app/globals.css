@@ -644,6 +644,39 @@ html[data-theme="light"] .page-video-content .btn-secondary {
   }
 }
 
+/* Bookings: the event checker stays on screen. The search stays put
+   while the list inside scrolls. */
+.booking-events {
+  position: sticky;
+  top: 12px;
+  z-index: 4;
+}
+.booking-events-scroll {
+  max-height: 18rem;
+  overflow-y: auto;
+}
+.page-video-content .booking-events h2 {
+  text-shadow: none;
+}
+.page-video-content .booking-events .card {
+  background-color: rgb(18 19 22 / 0.96);
+}
+html[data-theme="light"] .page-video-content .booking-events h2,
+html[data-theme="light"] .page-video-content .booking-events .card {
+  text-shadow: none;
+}
+html[data-theme="light"] .page-video-content .booking-events .card {
+  background-color: rgb(255 255 255 / 0.98);
+}
+@media (prefers-color-scheme: light) {
+  html[data-theme="auto"] .page-video-content .booking-events h2 {
+    text-shadow: none;
+  }
+  html[data-theme="auto"] .page-video-content .booking-events .card {
+    background-color: rgb(255 255 255 / 0.98);
+  }
+}
+
 /* Massage results: the clip is bright, so the writing sits on a firmer
    plate and the gray lines are darkened enough to read. */
 .page-video-content .massage-page .card,
