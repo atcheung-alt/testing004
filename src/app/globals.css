@@ -671,14 +671,6 @@ html[data-theme="light"] .page-video-content .btn-secondary {
     transform: none;
   }
 }
-@keyframes award-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(240, 208, 120, 0.7);
-  }
-  100% {
-    box-shadow: 0 0 0 18px rgba(240, 208, 120, 0);
-  }
-}
 .award-stage.card {
   overflow: visible;
 }
