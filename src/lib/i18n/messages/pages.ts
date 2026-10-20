@@ -180,6 +180,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "{name} 標記此發票為已付款。請核實款項已入帳，然後在下方確認——系統會自動產生收據並以電郵發送。",
   "Billed to": "帳單致",
   Event: "活動",
+  Events: "活動",
   "at {time}": "於 {time}",
   "Add an event end date (via Edit) before this can be marked on the calendar.":
     "請先在編輯頁加入活動結束日期，才可標記到日曆。",

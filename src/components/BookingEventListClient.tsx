@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import ClickableTableRow from "@/components/ClickableTableRow";
 import { useT } from "@/lib/i18n/client";
 import { formatDateLabel } from "@/lib/bookingFormat";
@@ -23,41 +24,41 @@ function dateRangeLabel(startDate: string, endDate: string): string {
 
 export default function BookingEventListClient({ events }: { events: BookingEventListItem[] }) {
   const t = useT();
+  const shown = [...events].sort((a, b) => Number(b.active) - Number(a.active) || a.startDate.localeCompare(b.startDate));
   return (
-    <div className="card overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-xs font-medium text-ink-faint">
-            <th className="px-5 py-3">{t("Event")}</th>
-            <th className="hidden sm:table-cell px-5 py-3">{t("Dates")}</th>
-            <th className="px-5 py-3 text-right">{t("Status")}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {events.map((e) => (
-            <ClickableTableRow
-              key={e.id}
-              href={`/bookings/${e.id}`}
-              className="border-b border-line last:border-0 hover:bg-brand-50/40"
-            >
-              <td className="px-5 py-3">
-                <span className="font-medium text-ink">{e.name}</span>
-                {e.description && (
-                  <p className="text-xs text-ink-muted truncate max-w-xs">{e.description}</p>
-                )}
-              </td>
-              <td className="hidden sm:table-cell px-5 py-3 text-ink-muted">
-                {dateRangeLabel(e.startDate, e.endDate)}
-              </td>
-              <td className="px-5 py-3 text-right">
-                <span className={e.active ? "text-xs font-medium text-brand-600" : "text-xs font-medium text-ink-faint"}>
-                  {e.active ? t("Active") : t("Inactive")}
-                </span>
-              </td>
-            </ClickableTableRow>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <section className="flex flex-col gap-3">
+      <h2 className="font-sans text-lg font-semibold text-ink">{t("Events")}</h2>
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[36rem] text-left text-sm">
+          <thead>
+            <tr className="border-b border-line">
+              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Event")}</th>
+              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Dates")}</th>
+              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Status")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((e) => (
+              <ClickableTableRow
+                key={e.id}
+                href={`/bookings/${e.id}`}
+                className="border-b border-line last:border-0 hover:bg-paper"
+              >
+                <td className="px-4 py-3">
+                  <p className="font-sans font-medium text-ink">{e.name}</p>
+                  {e.description ? <p className="font-sans text-ink-muted mt-0.5">{e.description}</p> : null}
+                </td>
+                <td className="px-4 py-3 font-sans text-ink whitespace-nowrap">{dateRangeLabel(e.startDate, e.endDate)}</td>
+                <td className="px-4 py-3">
+                  <span className={clsx("stamp", e.active ? "border-brand-500 text-brand-600" : "border-line text-ink-muted")}>
+                    {e.active ? t("Active") : t("Inactive")}
+                  </span>
+                </td>
+              </ClickableTableRow>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

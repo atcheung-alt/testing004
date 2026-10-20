@@ -178,14 +178,18 @@ function WeekRow({
     HEADER_HEIGHT + (maxLaneUsed + 1) * (BAR_HEIGHT + BAR_GAP) + (hasMoreRow ? MORE_ROW_HEIGHT : 6);
 
   return (
-    <div className="relative grid grid-cols-7 border-t border-line" style={{ minHeight: Math.max(rowHeight, 100) }}>
+    <div className="relative grid grid-cols-7 border-t border-ink-faint/25" style={{ minHeight: Math.max(rowHeight, 100) }}>
       {week.map((d, i) => {
         const inMonth = d.getMonth() === monthDate.getMonth();
         const today_ = isSameDay(d, today);
         return (
           <div
             key={i}
-            className={clsx("border-r border-line/80 last:border-r-0 px-1.5 pt-1.5", !inMonth && "bg-paper/40")}
+            className={clsx(
+              "border-r border-ink-faint/25 last:border-r-0 px-1.5 pt-1.5",
+              !inMonth && "bg-paper",
+              today_ && inMonth && "bg-brand-50/50"
+            )}
           >
             <span
               className={clsx(
@@ -207,10 +211,7 @@ function WeekRow({
             type="button"
             onClick={() => onEventClick(s.ev)}
             title={s.ev.name}
-            className={clsx(
-              "absolute overflow-hidden text-left text-[11px] font-medium leading-[22px] text-ink truncate px-2 transition-colors duration-200 hover:bg-paper",
-              !s.ev.active && "opacity-45"
-            )}
+            className="absolute overflow-hidden text-left text-[11px] font-medium leading-[22px] truncate px-2 hover:brightness-110"
             style={{
               top: HEADER_HEIGHT + s.lane * (BAR_HEIGHT + BAR_GAP),
               left: `calc(${(s.startCol / 7) * 100}% + 3px)`,
@@ -220,8 +221,9 @@ function WeekRow({
               borderBottomLeftRadius: s.continuesLeft ? 2 : 6,
               borderTopRightRadius: s.continuesRight ? 2 : 6,
               borderBottomRightRadius: s.continuesRight ? 2 : 6,
-              backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)`,
-              boxShadow: s.continuesLeft ? undefined : `inset 3px 0 0 ${color}`,
+              backgroundColor: s.ev.kind === "job" || s.ev.active ? color : "transparent",
+              color: s.ev.kind === "job" || s.ev.active ? "#fff" : color,
+              boxShadow: s.ev.kind === "job" || s.ev.active ? undefined : `inset 0 0 0 1px ${color}`,
             }}
           >
             {s.ev.name}
@@ -344,7 +346,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
       >
         <span className="flex items-center gap-1.5">
           {collapsed ? <ChevronDown size={16} className="text-ink-faint" /> : <ChevronUp size={16} className="text-ink-faint" />}
-          <h2 className="font-display text-lg font-semibold text-ink">{monthLabel}</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">{monthLabel}</h2>
         </span>
         {!collapsed && (
           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -365,23 +367,23 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
           <div className="mt-4 animate-fade-in" key={monthLabel}>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-brand-500" aria-hidden="true" />
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: EVENT_COLORS[0] }} aria-hidden="true" />
               {t("Booking")}
             </span>
             <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: JOB_COLOR }} aria-hidden="true" />
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: JOB_COLOR }} aria-hidden="true" />
               {t("Invoice job")}
             </span>
           </div>
           <div className="mb-1 grid grid-cols-7 border-b border-line pb-2">
             {WEEKDAY_LABELS.map((label) => (
-              <div key={label} className="text-center text-[11px] font-medium uppercase tracking-[0.14em] text-ink-faint">
+              <div key={label} className="text-center text-xs font-medium text-ink-muted">
                 {t(label)}
               </div>
             ))}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-line">
+          <div className="overflow-hidden rounded-lg border border-ink-faint/25">
             {weeks.map((week, i) => (
               <WeekRow
                 key={i}
