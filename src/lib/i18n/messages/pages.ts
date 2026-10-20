@@ -505,6 +505,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Enter a therapist name.": "請輸入師傅名稱。",
   "Could not update the therapist list.": "無法更新師傅名單。",
   "No therapists yet": "尚未有師傅",
+  "Search by event name or date": "用活動名稱或日期搜尋",
+  "The 3 most recent events.": "最近 3 場活動。",
   "Search by event, client, invoice, or date": "用活動名稱、客戶、發票或日期搜尋",
   "Select an event": "選擇活動",
   "{count} events": "{count} 場活動",

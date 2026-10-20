@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import clsx from "clsx";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/client";
 import { formatDateLabel } from "@/lib/bookingFormat";
 
@@ -24,32 +24,62 @@ function dateRangeLabel(startDate: string, endDate: string): string {
 
 export default function BookingEventListClient({ events }: { events: BookingEventListItem[] }) {
   const t = useT();
-  const shown = [...events].sort((a, b) => Number(b.active) - Number(a.active) || a.startDate.localeCompare(b.startDate));
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const recent = useMemo(
+    () => [...events].sort((a, b) => b.startDate.localeCompare(a.startDate)).slice(0, 3),
+    [events]
+  );
+  const shown = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return recent;
+    return [...events]
+      .filter((event) =>
+        [event.name, event.description, dateRangeLabel(event.startDate, event.endDate)].join(" ").toLowerCase().includes(needle)
+      )
+      .sort((a, b) => b.startDate.localeCompare(a.startDate));
+  }, [events, query, recent]);
+
   return (
     <section className="flex flex-col gap-3">
       <h2 className="font-sans text-lg font-semibold text-ink">{t("Events")}</h2>
-      <div className="flex flex-col gap-2">
-        {shown.map((e) => (
-            <Link
-              key={e.id}
-              href={`/bookings/${e.id}`}
-              className={clsx(
-                "event-ticket flex items-center gap-3 rounded-lg border border-line px-3 py-3 no-underline transition-colors hover:bg-paper",
-                e.active ? "bg-surface" : "bg-paper/40"
-              )}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-art text-base font-semibold tracking-wide text-ink">{e.name}</span>
-                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-art text-sm text-ink">
-                  <span>{dateRangeLabel(e.startDate, e.endDate)}</span>
-                  {e.description ? <span className="truncate">{e.description}</span> : null}
-                </span>
-              </span>
-              <span className={clsx("stamp shrink-0", e.active ? "border-brand-500 text-brand-600" : "border-line text-ink-muted")}>
-                {e.active ? t("Active") : t("Inactive")}
-              </span>
-            </Link>
-        ))}
+      <div className="card px-4 sm:px-5 py-4 flex flex-col gap-3">
+        <p className="text-sm text-ink-muted">
+          {query.trim() ? t("{count} matching", { count: shown.length }) : t("The 3 most recent events.")}
+        </p>
+        <label className="sr-only" htmlFor="booking-event-search">
+          {t("Search by event name or date")}
+        </label>
+        <input
+          id="booking-event-search"
+          type="search"
+          className="input"
+          value={query}
+          placeholder={t("Search by event name or date")}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <label className="sr-only" htmlFor="booking-event-select">
+          {t("Select an event")}
+        </label>
+        <select
+          id="booking-event-select"
+          className="input"
+          value=""
+          onChange={(event) => {
+            if (event.target.value) router.push(`/bookings/${event.target.value}`);
+          }}
+        >
+          <option value="">{t("Select an event")}</option>
+          {shown.map((event) => (
+            <option key={event.id} value={event.id}>
+              {event.name}
+              {` · ${dateRangeLabel(event.startDate, event.endDate)}`}
+              {event.description ? ` · ${event.description}` : ""}
+              {` · ${event.active ? t("Active") : t("Inactive")}`}
+            </option>
+          ))}
+        </select>
+        {shown.length === 0 ? <p className="text-sm text-ink-muted">{t("No matching events.")}</p> : null}
       </div>
     </section>
   );
