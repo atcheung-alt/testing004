@@ -58,7 +58,7 @@ export default async function MassagePage() {
         }))}
       />
 
-      <section className="flex flex-col gap-3">
+      <section className="massage-events flex flex-col gap-3">
         <div>
           <h2 className="font-sans text-lg font-semibold text-ink">{t("Massage events")}</h2>
           <p className="lead">
