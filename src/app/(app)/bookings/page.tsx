@@ -47,7 +47,7 @@ export default async function BookingsPage() {
   ];
 
   return (
-    <PageVideo>
+    <PageVideo clip="bookings">
     <div className="flex flex-col gap-4">
       <PageBar
         title={t("Bookings")}

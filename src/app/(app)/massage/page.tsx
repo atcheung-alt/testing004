@@ -21,7 +21,7 @@ export default async function MassagePage() {
   const leading = ranked[0];
 
   return (
-    <PageVideo>
+    <PageVideo clip="massage">
     <div className="flex flex-col gap-4">
       <PageBar
         title={t("Results")}

@@ -74,7 +74,7 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <PageVideo>
+    <PageVideo clip="dashboard">
     <div className="flex flex-col gap-4">
       <PageBar title={t("Dashboard")} note={t("Invoices, payments, expenses, and what is still outstanding.")} />
 

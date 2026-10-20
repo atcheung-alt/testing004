@@ -575,17 +575,28 @@ html[data-theme="dark"] .theme-logo-dark {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0.78;
+  transform: scale(1.04);
 }
 .page-video::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgb(var(--color-paper) / 0.72) 0%,
-    rgb(var(--color-paper) / 0.4) 36%,
-    rgb(var(--color-paper) / 0.22) 100%
-  );
+  background: rgb(var(--color-paper) / 0.32);
+}
+html[data-theme="light"] .page-video video {
+  opacity: 0.42;
+}
+html[data-theme="light"] .page-video::after {
+  background: rgb(var(--color-paper) / 0.48);
+}
+@media (prefers-color-scheme: light) {
+  html[data-theme="auto"] .page-video video {
+    opacity: 0.42;
+  }
+  html[data-theme="auto"] .page-video::after {
+    background: rgb(var(--color-paper) / 0.48);
+  }
 }
 .page-video-content {
   position: relative;
