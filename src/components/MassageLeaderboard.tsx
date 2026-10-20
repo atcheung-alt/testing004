@@ -12,9 +12,9 @@ const SAMPLE_ROWS: TherapistStanding[] = [
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
 const STEP_HEIGHT: Record<number, string> = {
-  1: "h-44",
-  2: "h-32",
-  3: "h-24",
+  1: "h-44 lg:h-56",
+  2: "h-32 lg:h-40",
+  3: "h-24 lg:h-32",
 };
 const STEP_DELAY: Record<number, string> = {
   1: "0.36s",
@@ -43,13 +43,13 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
         <p>{t("The three highest scores.")}</p>
       </div>
       <div className="award-floor">
-        <div className="mx-auto flex max-w-xl items-end justify-center gap-2 sm:gap-3">
+        <div className="mx-auto flex w-full max-w-5xl items-end justify-center gap-2 px-2 sm:gap-3 sm:px-4">
           {stage.map((row) => {
             const rank = top.indexOf(row) + 1;
             return (
               <div
                 key={row.id}
-                className={rank === 1 ? "award-column flex min-w-0 flex-[1.15] flex-col items-center" : "award-column flex min-w-0 flex-1 flex-col items-center"}
+                className={rank === 1 ? "award-column flex min-w-0 flex-[1.25] flex-col items-center" : "award-column flex min-w-0 flex-1 flex-col items-center"}
                 style={{ animationDelay: STEP_DELAY[rank] }}
                 tabIndex={0}
               >
