@@ -444,6 +444,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Search by name": "用姓名搜尋",
   "Select a person": "選擇一位",
   "No matching names.": "沒有相符的姓名。",
+  "No comments for this person.": "這位沒有留下意見。",
+  "No written comment": "沒有寫下意見",
   Noted: "已記下",
   "In progress": "收集中",
   "Sample preview": "示範預覽",

@@ -117,7 +117,20 @@ export default async function MassageEventPage({ params }: { params: { id: strin
 
       <section>
         <h2 className="font-display text-xl font-semibold mb-3">{t("Scores at this event")}</h2>
-        <MassageLeaderboard rows={standings} />
+        <MassageLeaderboard
+          rows={standings}
+          notes={surveys.map((survey) => {
+            const note = unpackSurveyNote(survey.comment);
+            return {
+              id: survey.id,
+              therapistId: survey.therapistId,
+              guestNickname: note.guestNickname,
+              timeSlot: note.timeSlot,
+              comment: note.comment,
+              when: formatDateTime(survey.createdAt),
+            };
+          })}
+        />
       </section>
 
       <section className="flex flex-col gap-3">

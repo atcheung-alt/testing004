@@ -498,6 +498,40 @@ export async function setMassageInvoice(bookingEventId: string, invoiceId: strin
   });
 }
 
+export type MassageCommentRow = {
+  id: string;
+  therapistId: string;
+  guestNickname: string;
+  timeSlot: string;
+  comment: string;
+  createdAt: Date;
+};
+
+export async function listMassageComments(linkId?: string): Promise<MassageCommentRow[]> {
+  await ensureMassageTables();
+  try {
+    const rows = await prisma.massageSurvey.findMany({
+      where: linkId ? { linkId } : undefined,
+      orderBy: { createdAt: "desc" },
+      select: { id: true, therapistId: true, comment: true, createdAt: true },
+    });
+    return rows.map((row) => {
+      const note = unpackSurveyNote(row.comment);
+      return {
+        id: row.id,
+        therapistId: row.therapistId,
+        guestNickname: note.guestNickname,
+        timeSlot: note.timeSlot,
+        comment: note.comment,
+        createdAt: row.createdAt,
+      };
+    });
+  } catch (err) {
+    if (!missingMassageTable(err)) throw err;
+    return [];
+  }
+}
+
 export async function therapistStandings(linkId?: string): Promise<TherapistStanding[]> {
   await ensureMassageTherapists();
   try {

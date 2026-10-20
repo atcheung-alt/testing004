@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useT } from "@/lib/i18n/client";
 import type { TherapistStanding } from "@/lib/massage";
 
@@ -11,7 +11,22 @@ const PARTS = [
   { key: "relief", label: "Relief", bar: "bg-brand-300" },
 ] as const;
 
-export default function MassageScoreLookup({ rows }: { rows: TherapistStanding[] }) {
+export type ScoreNote = {
+  id: string;
+  therapistId: string;
+  guestNickname: string;
+  timeSlot: string;
+  comment: string;
+  when: string;
+};
+
+export default function MassageScoreLookup({
+  rows,
+  notes,
+}: {
+  rows: TherapistStanding[];
+  notes: ScoreNote[];
+}) {
   const t = useT();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -20,12 +35,32 @@ export default function MassageScoreLookup({ rows }: { rows: TherapistStanding[]
     () => rows.filter((row) => row.count > 0).sort((a, b) => a.name.localeCompare(b.name, "zh-HK")),
     [rows]
   );
+  const notesFor = useMemo(() => {
+    const grouped = new Map<string, ScoreNote[]>();
+    for (const note of notes) {
+      const list = grouped.get(note.therapistId) ?? [];
+      list.push(note);
+      grouped.set(note.therapistId, list);
+    }
+    return grouped;
+  }, [notes]);
   const shown = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (!needle) return people;
-    return people.filter((row) => row.name.toLowerCase().includes(needle));
-  }, [people, query]);
+    return people.filter((row) => {
+      if (row.name.toLowerCase().includes(needle)) return true;
+      return (notesFor.get(row.id) ?? []).some((note) =>
+        [note.comment, note.guestNickname, note.timeSlot].join(" ").toLowerCase().includes(needle)
+      );
+    });
+  }, [notesFor, people, query]);
   const selected = people.find((row) => row.id === selectedId) ?? null;
+  const selectedNotes = selected ? notesFor.get(selected.id) ?? [] : [];
+
+  useEffect(() => {
+    if (!query.trim() || shown.length !== 1) return;
+    setSelectedId(shown[0].id);
+  }, [query, shown]);
 
   return (
     <section className="flex flex-col gap-3 animate-rise" style={{ animationDelay: "380ms" }}>
@@ -75,6 +110,27 @@ export default function MassageScoreLookup({ rows }: { rows: TherapistStanding[]
                 </p>
               </div>
               <p className="font-mono text-lg text-brand-700">{selected.adjusted.toFixed(1)} / 5</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">{t("Comment")}</p>
+              {selectedNotes.length === 0 ? (
+                <p className="text-sm text-ink-muted">{t("No comments for this person.")}</p>
+              ) : (
+                <ul className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+                  {selectedNotes.map((note) => {
+                    const who = [note.guestNickname, note.timeSlot].filter(Boolean).join(" · ");
+                    return (
+                      <li key={note.id} className="rounded-xl border border-line bg-paper px-3 py-2">
+                        <p className="text-xs text-ink-muted">
+                          {who ? `${who} · ` : ""}
+                          {note.when}
+                        </p>
+                        <p className="text-sm mt-1 whitespace-pre-wrap">{note.comment || t("No written comment")}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
             <div className="relative h-2.5 rounded-full bg-paper overflow-hidden">
               <div

@@ -1,6 +1,6 @@
 import { getT } from "@/lib/i18n/server";
 import { adjustedScore, type TherapistStanding } from "@/lib/massage";
-import MassageScoreLookup from "@/components/MassageScoreLookup";
+import MassageScoreLookup, { type ScoreNote } from "@/components/MassageScoreLookup";
 
 const SAMPLE_ROWS: TherapistStanding[] = [
   { id: "sample-100", name: "示範 · 何大文", count: 100, score: 4.8, overall: 4.8, focus: 4.8, pressure: 4.7, relief: 4.9, early: false },
@@ -50,7 +50,20 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
   );
 }
 
-export default function MassageLeaderboard({ rows, demo = false }: { rows: TherapistStanding[]; demo?: boolean }) {
+const SAMPLE_NOTES: ScoreNote[] = [
+  { id: "sample-note-1", therapistId: "sample-14", guestNickname: "Amy", timeSlot: "10:30", comment: "Pressure was comfortable and the session felt careful.", when: "20 Oct 2026, 11:00 AM" },
+  { id: "sample-note-2", therapistId: "sample-1", guestNickname: "Chris", timeSlot: "14:00", comment: "Very focused from start to finish.", when: "20 Oct 2026, 2:10 PM" },
+];
+
+export default function MassageLeaderboard({
+  rows,
+  notes = [],
+  demo = false,
+}: {
+  rows: TherapistStanding[];
+  notes?: ScoreNote[];
+  demo?: boolean;
+}) {
   const t = getT();
   const ranked = rows.filter((row) => row.count > 0);
 
@@ -64,7 +77,7 @@ export default function MassageLeaderboard({ rows, demo = false }: { rows: Thera
           </p>
         </div>
         <TopScores rows={SAMPLE_ROWS} />
-        <MassageScoreLookup rows={SAMPLE_ROWS} />
+        <MassageScoreLookup rows={SAMPLE_ROWS} notes={SAMPLE_NOTES} />
       </div>
     );
   }
@@ -83,7 +96,7 @@ export default function MassageLeaderboard({ rows, demo = false }: { rows: Thera
   return (
     <div className="flex flex-col gap-8">
       <TopScores rows={rows} />
-      <MassageScoreLookup rows={rows} />
+      <MassageScoreLookup rows={rows} notes={notes} />
     </div>
   );
 }

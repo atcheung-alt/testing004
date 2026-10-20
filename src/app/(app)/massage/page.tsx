@@ -1,7 +1,7 @@
 import { Medal } from "lucide-react";
-import { formatDate } from "@/lib/calculations";
+import { formatDate, formatDateTime } from "@/lib/calculations";
 import { getT } from "@/lib/i18n/server";
-import { listMassageBoard, therapistStandings } from "@/lib/massage";
+import { listMassageBoard, listMassageComments, therapistStandings } from "@/lib/massage";
 import MassageEventSearch from "@/components/MassageEventSearch";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageRoster from "@/components/MassageRoster";
@@ -10,7 +10,11 @@ export const dynamic = "force-dynamic";
 
 export default async function MassagePage() {
   const t = getT();
-  const [standings, board] = await Promise.all([therapistStandings(), listMassageBoard()]);
+  const [standings, board, comments] = await Promise.all([
+    therapistStandings(),
+    listMassageBoard(),
+    listMassageComments(),
+  ]);
   const ranked = standings.filter((row) => row.count > 0);
   const surveyCount = board.scheduled.reduce((sum, event) => sum + event.surveyCount, 0);
   const leading = ranked[0];
@@ -50,7 +54,18 @@ export default async function MassagePage() {
         </div>
       </section>
 
-      <MassageLeaderboard rows={standings} demo={ranked.length === 0} />
+      <MassageLeaderboard
+        rows={standings}
+        demo={ranked.length === 0}
+        notes={comments.map((row) => ({
+          id: row.id,
+          therapistId: row.therapistId,
+          guestNickname: row.guestNickname,
+          timeSlot: row.timeSlot,
+          comment: row.comment,
+          when: formatDateTime(row.createdAt),
+        }))}
+      />
 
       <section className="flex flex-col gap-3">
         <div>
