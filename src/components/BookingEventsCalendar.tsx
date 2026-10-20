@@ -42,16 +42,11 @@ const MORE_ROW_HEIGHT = 18;
 
 // A restrained palette, chosen from the event id so overlapping events stay
 // distinct. Not stored, and not user-editable.
-const EVENT_COLORS = ["#4F78C4", "#4A7F86", "#6E6A96", "#5C7A68", "#8A7348", "#8A6870"];
-
+const BOOKING_COLOR = "#4E5966";
 const JOB_COLOR = "#8B93A7";
 
-export function eventBarColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return EVENT_COLORS[hash % EVENT_COLORS.length];
+export function eventBarColor(_id: string): string {
+  return BOOKING_COLOR;
 }
 
 function colorFor(event: { id: string; kind?: "booking" | "job" }) {
@@ -371,7 +366,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
           <div className="mt-4 animate-fade-in" key={monthLabel}>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: EVENT_COLORS[0] }} aria-hidden="true" />
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: BOOKING_COLOR }} aria-hidden="true" />
               {t("Booking")}
             </span>
             <span className="inline-flex items-center gap-2">
