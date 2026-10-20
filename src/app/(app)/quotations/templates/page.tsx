@@ -42,12 +42,12 @@ export default async function QuotationTemplatesPage() {
             <div key={template.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4">
               <div className="min-w-0">
                 <p className="font-medium text-ink">{template.name}</p>
-                <p className="text-xs text-ink-muted truncate mt-0.5">
-                  {template.title || t("No activity name yet")}
-                  {template.items.length > 0
-                    ? ` · ${template.items.map((item) => item.name || t("Untitled item")).join(" · ")}`
-                    : ""}
-                </p>
+                <p className="text-sm text-ink-muted mt-1 truncate">{template.title || t("No activity name yet")}</p>
+                {template.items.length > 0 ? (
+                  <p className="text-sm text-ink-muted truncate">
+                    {template.items.map((item) => item.name || t("Untitled item")).join(", ")}
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2 shrink-0">
                 <Link href={`/quotations/new?template=${template.id}`} className="btn-primary">

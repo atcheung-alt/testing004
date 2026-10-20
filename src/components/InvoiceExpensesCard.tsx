@@ -4,7 +4,9 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Wallet, Plus, Trash2, Loader2, AlertCircle, Paperclip, FileText, ChevronDown } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
+import { categoryLabel } from "@/lib/ensureExpenseCategories";
 import { useT } from "@/lib/i18n/client";
+import CategorySelect from "@/components/CategorySelect";
 
 export type ExpenseDocumentRef = {
   id: string;
@@ -201,7 +203,7 @@ export default function InvoiceExpensesCard({
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <span className="text-sm text-ink truncate block">
-                      {e.category === "Others" ? e.label || t("Others") : e.category}
+                      {e.category === "Others" ? e.label || t("Others") : t(categoryLabel(e.category))}
                     </span>
                     {e.category !== "Others" && e.label ? (
                       <span className="text-xs text-ink-faint">{e.label}</span>
@@ -303,13 +305,7 @@ export default function InvoiceExpensesCard({
         <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
           <div className="w-full sm:w-44">
             <label className="label">{t("Category")}</label>
-            <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt === "Others" ? t("Others") : opt}
-                </option>
-              ))}
-            </select>
+            <CategorySelect value={category} options={options} onChange={setCategory} />
           </div>
           {isOthers && (
             <div className="flex-1">

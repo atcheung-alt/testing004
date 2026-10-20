@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2, Paperclip, Trash2, X } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
+import { categoryLabel } from "@/lib/ensureExpenseCategories";
 import { useT } from "@/lib/i18n/client";
+import CategorySelect from "@/components/CategorySelect";
 import StatusBadge from "@/components/StatusBadge";
 
 export type ExpenseInvoiceChoice = {
@@ -267,13 +269,7 @@ export default function ExpenseWorkspace({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">{t("Category")}</label>
-              <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
-                {options.map((name) => (
-                  <option key={name} value={name}>
-                    {t(name)}
-                  </option>
-                ))}
-              </select>
+              <CategorySelect value={category} options={options} onChange={setCategory} />
             </div>
             <div>
               <label className="label">{t("Amount")}</label>
@@ -402,7 +398,7 @@ export default function ExpenseWorkspace({
                     </ul>
                   )}
                 </div>
-                <span className="text-sm text-ink-muted whitespace-nowrap">{row.category === "Others" ? row.label || t("Others") : t(row.category)}</span>
+                <span className="text-sm text-ink whitespace-nowrap">{row.category === "Others" ? row.label || t("Others") : t(categoryLabel(row.category))}</span>
                 <span className="font-mono text-sm text-right whitespace-nowrap">{formatCurrency(row.amount)}</span>
                 <button
                   type="button"

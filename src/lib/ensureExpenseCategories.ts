@@ -13,6 +13,14 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
   "Subcontractor",
 ] as const;
 
+export function categoryLabel(name: string): string {
+  const trimmed = name.trim();
+  const match = DEFAULT_EXPENSE_CATEGORIES.find((item) => item.toLowerCase() === trimmed.toLowerCase());
+  if (match) return match;
+  if (trimmed.toLowerCase() === "others") return "Others";
+  return trimmed;
+}
+
 /** Insert any missing starter categories. Existing names and old expense rows are left as they are. */
 export async function ensureDefaultExpenseCategories() {
   const existing = await prisma.expenseCategory.findMany({
