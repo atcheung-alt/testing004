@@ -6,7 +6,6 @@ import AnimatedAmount from "@/components/AnimatedAmount";
 export default function StatCard({
   label,
   value,
-  icon: Icon,
   detail,
   amount,
   className = "",
@@ -14,7 +13,7 @@ export default function StatCard({
 }: {
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   accent?: "brand" | "accent" | "ink" | "danger";
   detail?: string;
   amount?: number;
@@ -24,19 +23,14 @@ export default function StatCard({
   const t = getT();
 
   return (
-    <div className={`card p-5 flex items-start justify-between ${className}`} style={style}>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">
-          {t(label)}
-        </p>
-        {typeof amount === "number" ? (
-          <AnimatedAmount value={amount} className="font-mono text-2xl font-semibold text-ink" />
-        ) : (
-          <p className="font-mono text-2xl font-semibold text-ink">{value}</p>
-        )}
-        {detail ? <p className="text-xs text-ink-muted mt-1">{detail}</p> : null}
-      </div>
-      <Icon size={18} className="text-ink-muted" />
+    <div className={`card px-4 py-4 ${className}`} style={style}>
+      <p className="text-sm text-ink-muted">{t(label)}</p>
+      {typeof amount === "number" ? (
+        <AnimatedAmount value={amount} className="mt-1 block font-mono text-2xl font-semibold text-ink" />
+      ) : (
+        <p className="mt-1 font-mono text-2xl font-semibold text-ink">{value}</p>
+      )}
+      {detail ? <p className="text-xs text-ink-muted mt-1">{detail}</p> : null}
     </div>
   );
 }

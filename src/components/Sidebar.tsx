@@ -103,7 +103,7 @@ function NavLink({
         "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+          ? "bg-ink text-surface font-semibold"
           : "text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
@@ -225,7 +225,7 @@ function BottomLinks({
             "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
             collapsed && "lg:justify-center lg:px-0 lg:gap-0",
             managementActive
-              ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+              ? "bg-ink text-surface font-semibold"
               : "text-ink-muted hover:bg-paper hover:text-ink"
           )}
         >
@@ -243,7 +243,7 @@ function BottomLinks({
           "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
-            ? "bg-paper text-ink font-semibold shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+            ? "bg-ink text-surface font-semibold"
             : "text-ink-muted hover:bg-paper hover:text-ink"
         )}
       >

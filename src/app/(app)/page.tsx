@@ -65,11 +65,11 @@ export default async function DashboardPage() {
   const monthMax = Math.max(thisMonth.revenue, monthExpenseSum, Math.abs(monthProfit), 1);
   const monthRows = [
     { label: t("Revenue"), amount: thisMonth.revenue, color: "bg-brand-500" },
-    { label: t("Expenses"), amount: monthExpenseSum, color: "bg-danger-500" },
+    { label: t("Expenses"), amount: monthExpenseSum, color: "bg-ink" },
     {
       label: t("Net profit"),
       amount: monthProfit,
-      color: monthProfit < 0 ? "bg-danger-500" : "bg-accent-500",
+      color: monthProfit < 0 ? "bg-danger-500" : "bg-brand-700",
     },
   ];
 
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">{t("Recent Expenses")}</h2>
-          <Link href="/expenses" className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1">
+          <Link href="/expenses" className="text-sm text-ink flex items-center gap-1">
             {t("View all")} <ArrowRight size={14} />
           </Link>
         </div>
@@ -196,7 +196,7 @@ export default async function DashboardPage() {
             <h2 className="font-display text-lg font-semibold">{t("Recent Quotations")}</h2>
             <Link
               href="/quotations"
-              className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
+              className="text-sm text-ink flex items-center gap-1"
             >
               {t("View all")} <ArrowRight size={14} />
             </Link>
@@ -238,7 +238,7 @@ export default async function DashboardPage() {
             <h2 className="font-display text-lg font-semibold">{t("Recent Invoices")}</h2>
             <Link
               href="/invoices"
-              className="text-sm text-brand-500 hover:text-brand-600 flex items-center gap-1"
+              className="text-sm text-ink flex items-center gap-1"
             >
               {t("View all")} <ArrowRight size={14} />
             </Link>

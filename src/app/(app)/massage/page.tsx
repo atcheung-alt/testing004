@@ -30,17 +30,15 @@ export default async function MassagePage() {
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">{t("Surveys")}</p>
+          <p className="text-sm text-ink-muted">{t("Surveys")}</p>
           <p className="font-mono text-2xl mt-1">{surveyCount}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">
-            {t("Therapists with scores")}
-          </p>
+          <p className="text-sm text-ink-muted">{t("Therapists with scores")}</p>
           <p className="font-mono text-2xl mt-1">{ranked.length}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">{t("Leading score")}</p>
+          <p className="text-sm text-ink-muted">{t("Leading score")}</p>
           <p className="font-mono text-2xl mt-1">{leading ? leading.adjusted.toFixed(1) : "—"}</p>
         </div>
       </section>

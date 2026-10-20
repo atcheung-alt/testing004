@@ -98,7 +98,7 @@ function NavLink({
         "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-paper text-ink shadow-[inset_3px_0_0_rgb(var(--color-brand-500))]"
+          ? "bg-ink text-surface font-semibold"
           : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
       )}
     >
