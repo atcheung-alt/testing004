@@ -1,3 +1,4 @@
+import { Trophy } from "lucide-react";
 import { getT } from "@/lib/i18n/server";
 import { adjustedScore, type TherapistStanding } from "@/lib/massage";
 import MassageScoreLookup, { type ScoreNote } from "@/components/MassageScoreLookup";
@@ -11,9 +12,14 @@ const SAMPLE_ROWS: TherapistStanding[] = [
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
 const STEP_HEIGHT: Record<number, string> = {
-  1: "h-40",
-  2: "h-28",
-  3: "h-20",
+  1: "h-44",
+  2: "h-32",
+  3: "h-24",
+};
+const STEP_DELAY: Record<number, string> = {
+  1: "0.36s",
+  2: "0.16s",
+  3: "0s",
 };
 
 function TopScores({ rows }: { rows: TherapistStanding[] }) {
@@ -30,18 +36,23 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
         <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
         <p className="mt-0.5 text-sm text-ink">{t("The three highest scores.")}</p>
       </div>
-      <div className="card px-3 pt-5 pb-4 sm:px-8">
-        <div className="mx-auto flex max-w-xl items-end justify-center gap-1 sm:gap-1.5">
+      <div className="card px-3 pt-6 pb-5 sm:px-8">
+        <div className="mx-auto flex max-w-xl items-end justify-center gap-1.5 sm:gap-2">
           {stage.map((row) => {
             const rank = top.indexOf(row) + 1;
             return (
-              <div key={row.id} className="flex min-w-0 flex-1 flex-col items-center">
-                <p className="w-full truncate text-center font-sans text-sm font-semibold text-ink">{row.name}</p>
-                <p className="mb-2 text-center font-sans text-xs font-semibold text-ink">
-                  {row.adjusted.toFixed(1)} / 5
-                </p>
-                <div className={`award-step flex w-full items-center justify-center rounded-t-md ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`}>
-                  <span className="font-sans text-4xl font-semibold leading-none sm:text-5xl">{rank}</span>
+              <div key={row.id} className={rank === 1 ? "flex min-w-0 flex-[1.15] flex-col items-center" : "flex min-w-0 flex-1 flex-col items-center"}>
+                <div className="award-caption mb-2 flex w-full flex-col items-center" style={{ animationDelay: `calc(${STEP_DELAY[rank]} + 0.35s)` }}>
+                  {rank === 1 ? <Trophy size={18} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-[18px]" />}
+                  <p className="w-full truncate text-center font-sans text-sm font-semibold text-ink">{row.name}</p>
+                  <p className="text-center font-sans text-xs font-semibold text-ink">{row.adjusted.toFixed(1)} / 5</p>
+                </div>
+                <div
+                  className={`award-step flex w-full items-center justify-center ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`}
+                  data-rank={rank}
+                  style={{ animationDelay: STEP_DELAY[rank] }}
+                >
+                  <span className={rank === 1 ? "font-sans text-5xl font-semibold leading-none" : "font-sans text-4xl font-semibold leading-none"}>{rank}</span>
                 </div>
               </div>
             );
