@@ -30,6 +30,7 @@ export default function MassageScoreLookup({
   const t = useT();
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState("");
+  const [commentId, setCommentId] = useState("");
 
   const people = useMemo(
     () => rows.filter((row) => row.count > 0).sort((a, b) => a.name.localeCompare(b.name, "zh-HK")),
@@ -55,12 +56,17 @@ export default function MassageScoreLookup({
     });
   }, [notesFor, people, query]);
   const selected = people.find((row) => row.id === selectedId) ?? null;
-  const selectedNotes = selected ? notesFor.get(selected.id) ?? [] : [];
+  const writtenNotes = (selected ? notesFor.get(selected.id) ?? [] : []).filter((note) => note.comment.trim());
+  const chosenNote = writtenNotes.find((note) => note.id === commentId) ?? null;
 
   useEffect(() => {
     if (!query.trim() || shown.length !== 1) return;
     setSelectedId(shown[0].id);
   }, [query, shown]);
+
+  useEffect(() => {
+    setCommentId("");
+  }, [selectedId]);
 
   return (
     <section className="flex flex-col gap-3 animate-rise" style={{ animationDelay: "380ms" }}>
@@ -111,27 +117,27 @@ export default function MassageScoreLookup({
               </div>
               <p className="font-mono text-lg text-brand-700">{selected.adjusted.toFixed(1)} / 5</p>
             </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-faint">{t("Comment")}</p>
-              {selectedNotes.length === 0 ? (
-                <p className="text-sm text-ink-muted">{t("No comments for this person.")}</p>
-              ) : (
-                <ul className="flex flex-col gap-2 max-h-64 overflow-y-auto">
-                  {selectedNotes.map((note) => {
-                    const who = [note.guestNickname, note.timeSlot].filter(Boolean).join(" · ");
-                    return (
-                      <li key={note.id} className="rounded-xl border border-line bg-paper px-3 py-2">
-                        <p className="text-xs text-ink-muted">
-                          {who ? `${who} · ` : ""}
-                          {note.when}
-                        </p>
-                        <p className="text-sm mt-1 whitespace-pre-wrap">{note.comment || t("No written comment")}</p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+            {writtenNotes.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <label className="label" htmlFor="score-comment-select">
+                  {t("Comment")}
+                </label>
+                <select
+                  id="score-comment-select"
+                  className="input"
+                  value={writtenNotes.some((note) => note.id === commentId) ? commentId : ""}
+                  onChange={(event) => setCommentId(event.target.value)}
+                >
+                  <option value="">{t("Select a comment")}</option>
+                  {writtenNotes.map((note) => (
+                    <option key={note.id} value={note.id}>
+                      {[note.timeSlot, note.when].filter(Boolean).join(" · ")}
+                    </option>
+                  ))}
+                </select>
+                {chosenNote ? <p className="text-sm whitespace-pre-wrap">{chosenNote.comment}</p> : null}
+              </div>
+            ) : null}
             <div className="relative h-2.5 rounded-full bg-paper overflow-hidden">
               <div
                 key={selected.id}
