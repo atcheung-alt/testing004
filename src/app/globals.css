@@ -722,6 +722,10 @@ html[data-theme="light"] .page-video-content .btn-secondary {
   color: #ffffff;
   transform: translateZ(12px);
 }
+.award-step > span {
+  position: relative;
+  z-index: 1;
+}
 .award-step::before {
   content: "";
   position: absolute;
