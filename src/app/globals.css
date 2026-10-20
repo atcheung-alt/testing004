@@ -373,9 +373,28 @@ html[data-theme="dark"] .theme-logo-dark {
 [data-shell="staff"] main h1 {
   font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
   font-size: 1.125rem;
+  font-weight: 600;
   line-height: 1.4;
   letter-spacing: 0;
   margin-bottom: 0;
+}
+[data-shell="staff"] main h2:not(.font-art) {
+  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+[data-shell="staff"] main h3:not(.font-art) {
+  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+[data-shell="staff"] main .award-stage-head h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
 }
 [data-shell="staff"] main .gap-8,
 [data-shell="staff"] main .gap-6 {
