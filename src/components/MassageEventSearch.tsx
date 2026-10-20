@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/client";
 
@@ -64,32 +63,14 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
             <option key={event.id} value={event.id}>
               {event.name}
               {event.detail ? ` · ${event.detail}` : ""}
+              {` · ${event.score} · ${t("{count} surveys", { count: event.surveyCount })}`}
             </option>
           ))}
         </select>
+        {shown.length === 0 ? (
+          <p className="text-sm text-ink-muted">{t("No matching events.")}</p>
+        ) : null}
       </div>
-      {shown.length === 0 ? (
-        <p className="px-4 sm:px-5 py-8 text-sm text-ink-muted text-center">{t("No matching events.")}</p>
-      ) : (
-        <div className="max-h-96 overflow-y-auto divide-y divide-line">
-          {shown.map((event) => (
-            <Link
-              key={event.id}
-              href={`/massage/${event.id}`}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-4 hover:bg-paper"
-            >
-              <div className="min-w-0">
-                <p className="font-medium truncate">{event.name}</p>
-                <p className="text-xs text-ink-muted truncate mt-0.5">{event.detail}</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="font-mono text-lg font-medium text-brand-700">{event.score}</p>
-                <p className="text-xs text-ink-muted">{t("{count} surveys", { count: event.surveyCount })}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
