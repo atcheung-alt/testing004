@@ -94,8 +94,8 @@ function ClientPicker({
                         <p className="text-sm font-medium truncate">{c.name}</p>
                         <p className="text-xs text-ink-muted truncate">
                           {c.contacts.length === 1
-                            ? t("{count} contact", { count: c.contacts.length })
-                            : t("{count} contacts", { count: c.contacts.length })}
+                            ? t("{count} Contact", { count: c.contacts.length })
+                            : t("{count} Contacts", { count: c.contacts.length })}
                         </p>
                       </div>
                     </button>

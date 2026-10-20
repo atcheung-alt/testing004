@@ -67,7 +67,7 @@ export default async function DashboardPage() {
     { label: t("Revenue"), amount: thisMonth.revenue, color: "bg-brand-500" },
     { label: t("Expenses"), amount: monthExpenseSum, color: "bg-ink" },
     {
-      label: t("Net profit"),
+      label: t("Net Profit"),
       amount: monthProfit,
       color: monthProfit < 0 ? "bg-danger-500" : "bg-brand-700",
     },
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
           label={t("Invoices")}
           value={formatCurrency(invoiced)}
           amount={invoiced}
-          detail={t("{count} invoices", { count: invoices.length })}
+          detail={t("{count} Invoices", { count: invoices.length })}
           icon={ReceiptText}
         />
         <StatCard
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">{t("Recent Expenses")}</h2>
           <Link href="/expenses" className="text-sm text-ink flex items-center gap-1">
-            {t("View all")} <ArrowRight size={14} />
+            {t("View All")} <ArrowRight size={14} />
           </Link>
         </div>
         {recentExpenses.length === 0 ? (
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
               href="/quotations"
               className="text-sm text-ink flex items-center gap-1"
             >
-              {t("View all")} <ArrowRight size={14} />
+              {t("View All")} <ArrowRight size={14} />
             </Link>
           </div>
           {recentQuotations.length === 0 ? (
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
               href="/invoices"
               className="text-sm text-ink flex items-center gap-1"
             >
-              {t("View all")} <ArrowRight size={14} />
+              {t("View All")} <ArrowRight size={14} />
             </Link>
           </div>
           {recentInvoices.length === 0 ? (

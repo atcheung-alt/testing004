@@ -159,7 +159,7 @@ function BookingDetail({
             time: formatTimeRangeLabel(booking.slotStartTime, booking.slotDurationMins),
           })}
         </p>
-        <p className="text-ink-muted">{t("{count} minutes", { count: booking.slotDurationMins })}</p>
+        <p className="text-ink-muted">{t("{count} Minutes", { count: booking.slotDurationMins })}</p>
       </div>
 
       <div className="flex flex-col gap-1.5 text-sm">

@@ -231,7 +231,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               {t("Annual entitlement")}
             </p>
             <p className="font-mono text-xl font-semibold text-ink">
-              {t("{count} days", { count: employee.annualLeaveDays })}
+              {t("{count} Days", { count: employee.annualLeaveDays })}
             </p>
             <p className="text-xs text-ink-faint mt-0.5">{t("Full amount per year")}</p>
           </div>
@@ -239,7 +239,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">
               {t("Accrued to date")}
             </p>
-            <p className="font-mono text-xl font-semibold text-ink">{t("{count} days", { count: entitlement })}</p>
+            <p className="font-mono text-xl font-semibold text-ink">{t("{count} Days", { count: entitlement })}</p>
             <p className="text-xs text-ink-faint mt-0.5">
               {employee.startDate
                 ? t("Based on time worked")
@@ -248,14 +248,14 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
           </div>
           <div className="card p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">{t("Applied")}</p>
-            <p className="font-mono text-xl font-semibold text-ink">{t("{count} days", { count: used })}</p>
+            <p className="font-mono text-xl font-semibold text-ink">{t("{count} Days", { count: used })}</p>
           </div>
           <div className="card p-5">
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">{t("Remaining")}</p>
             <p
               className={`font-mono text-xl font-semibold ${remaining < 0 ? "text-danger-500" : "text-brand-600"}`}
             >
-              {t("{count} days", { count: remaining })}
+              {t("{count} Days", { count: remaining })}
             </p>
           </div>
         </div>

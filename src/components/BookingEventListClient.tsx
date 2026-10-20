@@ -46,7 +46,7 @@ export default function BookingEventListClient({ events }: { events: BookingEven
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="font-sans text-lg font-semibold text-ink">{t("Events")}</h2>
             <p className="text-sm text-ink-muted">
-              {query.trim() ? t("{count} matching", { count: shown.length }) : t("{count} events", { count: events.length })}
+              {query.trim() ? t("{count} Matching", { count: shown.length }) : t("{count} Events", { count: events.length })}
             </p>
           </div>
           <label className="sr-only" htmlFor="booking-event-search">

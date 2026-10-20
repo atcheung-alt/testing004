@@ -14,7 +14,7 @@ export default function NotFoundContent() {
       <h1 className="font-display text-xl font-semibold mb-1">{t("Nothing Here")}</h1>
       <p className="text-sm text-ink-muted mb-6">{t("This page, quotation, or invoice doesn't exist.")}</p>
       <Link href="/" className="btn-primary">
-        {t("Back to dashboard")}
+        {t("Back to Dashboard")}
       </Link>
     </div>
   );

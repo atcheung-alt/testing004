@@ -134,7 +134,7 @@ const EmployeeTable = memo(function EmployeeTable({
                 <span className="flex items-center gap-2 flex-wrap justify-end">
                   {e.pendingLeaveCount > 0 && (
                     <span className="stamp border-accent-500 text-accent-600 bg-accent-100">
-                      {t("{count} pending", { count: e.pendingLeaveCount })}
+                      {t("{count} Pending", { count: e.pendingLeaveCount })}
                     </span>
                   )}
                   {e.contractActionLabel && (
@@ -268,7 +268,7 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeL
                 {hasAnnualLeaveEntitlement(selected.employmentType) && (
                   <Row
                     label={t("Annual leave entitlement")}
-                    value={t("{count} days", { count: selected.annualLeaveDays })}
+                    value={t("{count} Days", { count: selected.annualLeaveDays })}
                   />
                 )}
               </div>

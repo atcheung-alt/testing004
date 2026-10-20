@@ -71,7 +71,7 @@ function NavLink({
   if (comingSoon) {
     return (
       <div
-        title={t("Coming soon")}
+        title={t("Coming Soon")}
         className={clsx(
           "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-faint/70 cursor-not-allowed gap-3 px-3",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0"
@@ -195,7 +195,7 @@ function BottomLinks({
         type="button"
         onClick={handleLogout}
         disabled={loggingOut}
-        title={collapsed ? t("Log out") : undefined}
+        title={collapsed ? t("Log Out") : undefined}
         className={clsx(
           "flex items-center rounded-xl py-2.5 text-sm font-medium text-ink-muted hover:bg-danger-50 hover:text-danger-500 transition-colors gap-3 px-3",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0"
@@ -206,7 +206,7 @@ function BottomLinks({
         ) : (
           <LogOut size={17} strokeWidth={2} className="shrink-0" />
         )}
-        <span className={clsx(collapsed && "lg:hidden")}>{t("Log out")}</span>
+        <span className={clsx(collapsed && "lg:hidden")}>{t("Log Out")}</span>
       </button>
     </div>
   );

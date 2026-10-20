@@ -2,7 +2,7 @@
  *  Keys are the English string shown in the UI. Do not duplicate keys from zh.ts. */
 export const PUBLIC_MESSAGES: Record<string, string> = {
   // Shared chrome
-  "Net profit": "純利",
+  "Net Profit": "純利",
   Outstanding: "未收帳款",
   Overdue: "逾期",
   "Preset items": "預設項目",

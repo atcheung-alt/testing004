@@ -34,11 +34,11 @@ export default async function MassagePage() {
           <p className="font-mono text-2xl mt-1">{surveyCount}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-sm text-ink-muted">{t("Therapists with scores")}</p>
+          <p className="text-sm text-ink-muted">{t("Therapists with Scores")}</p>
           <p className="font-mono text-2xl mt-1">{ranked.length}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-sm text-ink-muted">{t("Leading score")}</p>
+          <p className="text-sm text-ink-muted">{t("Leading Score")}</p>
           <p className="font-mono text-2xl mt-1">{leading ? leading.adjusted.toFixed(1) : "—"}</p>
         </div>
       </section>

@@ -26,7 +26,7 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
     <div className="card overflow-hidden">
       <div className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:px-5">
         <p className="text-sm text-ink-muted">
-          {query.trim() ? t("{count} matching", { count: shown.length }) : t("{count} events", { count: events.length })}
+          {query.trim() ? t("{count} Matching", { count: shown.length }) : t("{count} Events", { count: events.length })}
         </p>
         <label className="sr-only" htmlFor="massage-event-search">
           {t("Search by event, client, invoice, or date")}
@@ -56,7 +56,7 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
               </span>
               <span className="shrink-0 text-right">
                 <span className="block font-sans text-sm font-semibold text-ink">{event.score}</span>
-                <span className="block text-xs text-ink-muted">{t("{count} surveys", { count: event.surveyCount })}</span>
+                <span className="block text-xs text-ink-muted">{t("{count} Surveys", { count: event.surveyCount })}</span>
               </span>
             </Link>
           ))

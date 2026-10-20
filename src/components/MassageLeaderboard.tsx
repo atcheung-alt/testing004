@@ -59,7 +59,7 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
                     <p className="award-card-score">{row.adjusted.toFixed(1)}</p>
                   </div>
                   <p className="award-card-meta">
-                    {t("{count} surveys", { count: row.count })}
+                    {t("{count} Surveys", { count: row.count })}
                     {row.early ? ` · ${t("Early")}` : ""}
                   </p>
                   <ul className="award-card-list">
@@ -116,7 +116,7 @@ export default function MassageLeaderboard({
     return (
       <div className="flex flex-col gap-3">
         <div className="rounded-card border border-line bg-paper px-4 sm:px-5 py-4">
-          <p className="text-xs font-semibold text-brand-700">{t("Sample preview")}</p>
+          <p className="text-xs font-semibold text-brand-700">{t("Sample Preview")}</p>
           <p className="text-sm text-ink-muted mt-1 max-w-2xl">
             {t("These names and scores are an example for review. They are not guest results.")}
           </p>

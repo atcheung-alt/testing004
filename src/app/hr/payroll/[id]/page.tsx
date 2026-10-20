@@ -42,8 +42,8 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
         </div>
         <p className="text-sm text-ink-muted mt-1">
           {run.entries.length === 1
-            ? t("{count} employee", { count: run.entries.length })
-            : t("{count} employees", { count: run.entries.length })}
+            ? t("{count} Employee", { count: run.entries.length })
+            : t("{count} Employees", { count: run.entries.length })}
         </p>
       </div>
 

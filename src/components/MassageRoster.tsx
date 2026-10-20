@@ -78,7 +78,7 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
         <span>
           <span className="font-sans text-lg font-semibold text-ink block">{t("Current Therapists")}</span>
           <span className="text-sm text-ink-muted mt-1 block">
-            {t("{count} names guests can choose", { count: therapists.length })}
+            {t("{count} Names Guests Can Choose", { count: therapists.length })}
           </span>
         </span>
         <ChevronDown size={18} className={clsx("shrink-0 text-ink-muted transition-transform", open && "rotate-180")} />

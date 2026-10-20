@@ -141,7 +141,7 @@ export default function MonthlyFinanceChart({ data }: { data: MonthlyFinance[] }
           <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.expenses }} /> {t("Expenses")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.profit }} /> {t("Net profit")}
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS.profit }} /> {t("Net Profit")}
         </span>
       </div>
     </div>

@@ -105,7 +105,7 @@ async function InvoiceList({
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Net profit")}</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Net Profit")}</p>
                 <p
                   className={`font-mono text-sm font-medium ${profit < 0 ? "text-danger-500" : "text-brand-600"}`}
                 >

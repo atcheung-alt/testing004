@@ -694,7 +694,7 @@ export default function LineItemsEditor({
 
                 <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-line shrink-0">
                   <p className="text-xs text-ink-muted">
-                    {selectedIds.size > 0 ? t("{count} selected", { count: selectedIds.size }) : t("Select items to add")}
+                    {selectedIds.size > 0 ? t("{count} Selected", { count: selectedIds.size }) : t("Select items to add")}
                   </p>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => setPickerOpen(false)} className="btn-secondary">

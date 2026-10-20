@@ -111,7 +111,7 @@ export default function MassageScoreLookup({
               <div>
                 <p className="font-medium">{selected.name}</p>
                 <p className="text-xs text-ink-muted mt-0.5">
-                  {t("{count} surveys", { count: selected.count })}
+                  {t("{count} Surveys", { count: selected.count })}
                   {selected.early ? ` · ${t("Early")}` : ""}
                 </p>
               </div>

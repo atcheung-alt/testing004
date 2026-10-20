@@ -187,7 +187,7 @@ export default function ManagementWorkspace() {
 
       <Fold
         title={t("Always Full Access")}
-        summary={t("{count} accounts", { count: lockedPeople.length + extraLockedEmails.length })}
+        summary={t("{count} Accounts", { count: lockedPeople.length + extraLockedEmails.length })}
         open={openSection === "admins"}
         delay="0.02s"
         icon={<Lock size={16} className="text-brand-500 shrink-0" />}
@@ -218,7 +218,7 @@ export default function ManagementWorkspace() {
 
       <Fold
         title={t("Groups")}
-        summary={t("{count} groups", { count: groups.length })}
+        summary={t("{count} Groups", { count: groups.length })}
         open={openSection === "groups"}
         delay="0.08s"
         onToggle={() => setOpenSection((current) => (current === "groups" ? null : "groups"))}
@@ -251,7 +251,7 @@ export default function ManagementWorkspace() {
               >
                 {groups.map((group) => (
                   <option key={group.id} value={group.id}>
-                    {group.name} · {t("{count} people", { count: group.emails.length })} · {t("{count} pages", { count: group.pages.length })}
+                    {group.name} · {t("{count} People", { count: group.emails.length })} · {t("{count} Pages", { count: group.pages.length })}
                   </option>
                 ))}
               </select>
@@ -359,7 +359,7 @@ export default function ManagementWorkspace() {
 
       <Fold
         title={t("People")}
-        summary={t("{count} people", { count: people.length })}
+        summary={t("{count} People", { count: people.length })}
         open={openSection === "people"}
         delay="0.14s"
         onToggle={() => setOpenSection((current) => (current === "people" ? null : "people"))}
