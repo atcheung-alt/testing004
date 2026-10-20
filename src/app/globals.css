@@ -730,8 +730,7 @@ html[data-theme="light"] .page-video-content .booking-events .card {
 }
 .award-floor {
   position: relative;
-  background:
-    linear-gradient(180deg, #3a342c 0%, #241f1a 48%, #14110e 100%);
+  background: #eef1f6;
   padding: 28px 18px 36px;
   border-radius: 0 0 8px 8px;
   perspective: 900px;
@@ -827,7 +826,7 @@ html[data-theme="light"] .page-video-content .booking-events .card {
 }
 .award-name,
 .award-score {
-  color: #f6f1e8;
+  color: #142033;
   text-shadow: none;
 }
 .award-step {
@@ -880,7 +879,7 @@ html[data-theme="light"] .page-video-content .booking-events .card {
 .award-step[data-rank="3"] .award-lid { background: #efc7aa; }
 .award-step[data-rank="3"] .award-side { background: #9a6240; }
 .award-trophy {
-  color: #f6dd9a;
+  color: #b8891c;
 }
 html[data-theme="light"] .page-video-content .massage-page .card,
 html[data-theme="light"] .page-video-content .massage-page .bg-surface,
