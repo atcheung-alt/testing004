@@ -24,7 +24,7 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
     <section className="flex flex-col gap-3 animate-rise" style={{ animationDelay: "260ms" }}>
       <div>
         <h3 className="font-display text-xl font-semibold">{t("Top 3")}</h3>
-        <p className="text-sm text-ink-muted mt-1">{t("Only the three highest scores are shown.")}</p>
+        <p className="text-sm text-ink-muted mt-1">{t("The three highest scores.")}</p>
       </div>
       <div className="card px-4 sm:px-5 py-5 flex flex-col gap-5">
         {top.map((row, index) => (

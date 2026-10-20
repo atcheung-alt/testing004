@@ -28,11 +28,11 @@ export default async function MassagePage() {
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">{t("Results")}</h1>
         <p className="text-sm text-ink-muted mt-2 max-w-2xl">
-          {t("The board opens on the results, so you can see who is doing better before you open an event.")}
+          {t("Therapist scores, before you open an event.")}
         </p>
         <p className="text-xs text-ink-faint mt-2 max-w-2xl">
           {t(
-            "The score is the average of four questions: overall, care, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking."
+            "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early."
           )}
         </p>
       </header>
@@ -71,7 +71,7 @@ export default async function MassagePage() {
         <div>
           <h2 className="font-display text-xl font-semibold">{t("Massage events")}</h2>
           <p className="text-sm text-ink-muted mt-1">
-            {t("Each massage booking has its own QR code. Create the event first. Attach the invoice after the day.")}
+            {t("Each event has its own QR code. Attach the invoice after the day.")}
           </p>
         </div>
         {board.scheduled.length === 0 ? (

@@ -184,7 +184,7 @@ export default function ExpenseWorkspace({
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Record an expense")}</h2>
           <p className="text-sm text-ink-muted mt-0.5">
-            {t("Choose the invoice this cost belongs to, then upload a PDF or a photo. Clients never see these files.")}
+            {t("Choose the invoice, then attach a PDF or photo. Clients do not see these files.")}
           </p>
         </div>
 

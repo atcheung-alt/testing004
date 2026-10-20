@@ -187,8 +187,8 @@ export const ZH: Record<string, string> = {
   "The attached PDF is generated in this language. It does not change the saved document.":
     "附件 PDF 會以這個語言產生，不會改動已儲存的文件。",
   "Record an expense": "記錄開支",
-  "Choose the invoice this cost belongs to, then upload a PDF or a photo. Clients never see these files.":
-    "選擇這筆成本所屬的發票，然後上傳 PDF 或照片。客戶不會看到這些檔案。",
+  "Choose the invoice, then attach a PDF or photo. Clients do not see these files.":
+    "選擇發票，再附上 PDF 或相片。客人看不到這些檔案。",
   "Related invoice": "相關發票",
   "Search invoice number or customer": "搜尋發票編號或客戶",
   "Search number, customer, or activity": "搜尋編號、客戶或活動",
@@ -204,8 +204,7 @@ export const ZH: Record<string, string> = {
   "No expenses yet. Record one above and it will stay linked to the invoice you chose.":
     "尚未有開支。在上方記錄一筆，它會一直連結到你選擇的發票。",
   "Remove expense": "移除開支",
-  "Staff record a cost, choose the related invoice, and keep the receipt with that record.":
-    "員工記錄成本、選擇相關發票，並把收據保存在同一筆記錄。",
+  "Record a cost on an invoice, and keep the receipt with it.": "把開支記入發票，並保存收據。",
   "Record a cost and upload a receipt for this invoice.": "為這張發票記錄成本並上傳收據。",
   "{count} logged · {amount}": "已記錄 {count} 筆 · {amount}",
   "Open expenses": "開啟開支",
@@ -244,8 +243,8 @@ export const ZH: Record<string, string> = {
     "PDF 或圖片，每項開支最多 {count} 個檔案，每個 {size}MB。會隨這張發票保存，供你留底。",
   Templates: "範本",
   "Quotation templates": "報價範本",
-  "Save a format once. Next time, change the activity name, the items, and the dates.":
-    "格式儲存一次。下次只需改活動名稱、項目和日期。",
+  "Reuse a saved quotation. Update the activity, items, and dates each time.":
+    "可重複使用的報價格式。每次更新活動、項目和日期。",
   "New template": "新增範本",
   "No templates yet": "尚未有範本",
   "Create one here, or open a quotation and choose Save as template.":

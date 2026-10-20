@@ -49,8 +49,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Configure appearance, Google Drive sync, company branding, and email CC preferences.":
     "設定外觀、Google Drive 同步、公司品牌及電郵副本偏好。",
 
-  "Open a client to see their quotations and invoices. A document is linked when the company name or a contact email matches. Editing a client here does not change a document you already saved.":
-    "開啟客戶即可查看其報價單及發票。公司名稱或聯絡人電郵相符的文件會連在一起。在此修改客戶不會改動已儲存的文件。",
+  "Quotations and invoices for each client. Editing a client leaves saved documents unchanged.":
+    "各客戶的報價單和發票。修改客戶不會改動已儲存的文件。",
   "No quotations for this client yet.": "此客戶尚未有報價單。",
   "No invoices for this client yet.": "此客戶尚未有發票。",
   "{count} quotations": "{count} 張報價單",
@@ -416,10 +416,9 @@ export const PAGE_MESSAGES: Record<string, string> = {
   Analysis: "分析",
   Massage: "按摩",
   "Massage performance": "按摩表現",
-  "The board opens on the results, so you can see who is doing better before you open an event.":
-    "一打開先看到成績，方便你先知道哪位師傅表現較好，再進入個別活動。",
-  "The score is the average of four questions: overall, care, pressure, and relief. 5 is the best. Fewer than 8 surveys is marked Early, and still counts in the ranking.":
-    "分數是四題的平均：整體、用心、力度、舒緩。5 分最高。少於 8 份會標成「早期」，仍然計入排名。",
+  "Therapist scores, before you open an event.": "先看師傅分數，再進入個別活動。",
+  "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early.":
+    "整體、用心、力度、舒緩四題的平均。5 分最高。少於 8 份標為早期。",
   Care: "用心",
   Surveys: "問卷",
   "Leading score": "最高分",
@@ -438,9 +437,9 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "No scores yet": "尚未有評分",
   "Session standard": "療程標準",
   "Top 3": "最高的三位",
-  "Only the three highest scores are shown.": "這裡只顯示分數最高的三位。",
+  "The three highest scores.": "分數最高的三位。",
   "Look up a score": "查看個別分數",
-  "Search a name, then choose them from the list.": "先搜尋姓名，再從名單選擇。",
+  "Search a name to see scores and comments.": "搜尋姓名，查看分數和意見。",
   "Search by name": "用姓名搜尋",
   "Select a person": "選擇一位",
   "No matching names.": "沒有相符的姓名。",
@@ -452,8 +451,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "These names and scores are an example for review. They are not guest results.":
     "這些姓名和分數只供預覽，不是客人的真實評分。",
   "Massage events": "按摩活動",
-  "Each massage booking has its own QR code. Create the event first. Attach the invoice after the day.":
-    "每個按摩預約活動有自己的二維碼。先建立活動，活動結束後再連上發票。",
+  "Each event has its own QR code. Attach the invoice after the day.":
+    "每場活動有獨立二維碼。活動結束後再連上發票。",
   "No massage events yet": "尚未有按摩活動",
   "Create a booking for the massage day. Its QR code shows up here. The invoice can wait until the event is over.":
     "先為按摩日建立預約活動，二維碼會出現在這裡。發票可以等到活動結束才開。",

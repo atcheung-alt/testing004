@@ -20,7 +20,7 @@ export default async function QuotationTemplatesPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Quotation templates")}</h1>
           <p className="text-sm text-ink-muted">
-            {t("Save a format once. Next time, change the activity name, the items, and the dates.")}
+            {t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
           </p>
         </div>
         <Link href="/quotations/templates/new" className="btn-primary shrink-0">

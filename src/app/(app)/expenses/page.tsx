@@ -49,7 +49,7 @@ export default async function ExpensesPage({
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Expenses")}</h1>
         <p className="text-sm text-ink-muted">
-          {t("Staff record a cost, choose the related invoice, and keep the receipt with that record.")}
+          {t("Record a cost on an invoice, and keep the receipt with it.")}
         </p>
       </div>
       <ExpenseWorkspace
