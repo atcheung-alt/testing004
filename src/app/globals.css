@@ -287,11 +287,11 @@ html[data-theme="dark"] .theme-logo-dark {
     @apply w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-colors duration-200;
   }
   .label {
-    @apply block text-[13px] font-medium text-ink mb-1.5;
+    @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5;
   }
 
   .lead {
-    @apply mt-3 max-w-xl border-l-2 border-brand-500 pl-3 text-[15px] font-medium leading-6 text-ink;
+    @apply mt-1 max-w-2xl text-sm text-ink-muted;
   }
 
   .stamp {

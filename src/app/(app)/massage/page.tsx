@@ -26,7 +26,7 @@ export default async function MassagePage() {
           <Medal size={18} />
           <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
         </div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">{t("Results")}</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink">{t("Results")}</h1>
         <div className="lead">
           <p>{t("Therapist scores, before you open an event.")}</p>
           <p className="mt-1 text-sm font-normal text-ink-muted">
