@@ -4,8 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { getT } from "@/lib/i18n/server";
 import { ensureMassageTables, ensureMassageTherapists } from "@/lib/massage";
-import { getBookingEvent, listSlotsForEvent } from "@/lib/bookings";
-import { formatDateLabel, formatTimeRangeLabel } from "@/lib/bookingFormat";
+import { getBookingEvent } from "@/lib/bookings";
 import PublicBookingShell from "@/components/PublicBookingShell";
 import MassageSurveyForm from "@/components/MassageSurveyForm";
 
@@ -26,13 +25,7 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
     },
   });
   if (!link) notFound();
-  const [booking, slotRows] = link.bookingEventId
-    ? await Promise.all([getBookingEvent(link.bookingEventId), listSlotsForEvent(link.bookingEventId)])
-    : [null, []];
-  const slots = slotRows.map((slot) => ({
-    id: slot.id,
-    label: `${formatDateLabel(slot.date)} · ${formatTimeRangeLabel(slot.startTime, slot.durationMins)}`,
-  }));
+  const booking = link.bookingEventId ? await getBookingEvent(link.bookingEventId) : null;
 
   await ensureMassageTherapists();
   const [therapists, company] = await Promise.all([
@@ -59,7 +52,6 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
         <MassageSurveyForm
           token={params.token}
           therapists={therapists}
-          slots={slots}
           eventName={eventName || ""}
         />
       </div>

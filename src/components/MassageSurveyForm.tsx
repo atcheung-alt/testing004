@@ -28,12 +28,10 @@ const LANGUAGES = [
 export default function MassageSurveyForm({
   token,
   therapists,
-  slots,
   eventName,
 }: {
   token: string;
   therapists: TherapistOption[];
-  slots: { id: string; label: string }[];
   eventName: string;
 }) {
   const t = useT();
@@ -163,32 +161,15 @@ export default function MassageSurveyForm({
                   <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="timeslot">
                     {t("Timeslot")}
                   </label>
-                  {slots.length > 0 ? (
-                    <select
-                      id="timeslot"
-                      className="input text-base"
-                      value={timeSlot}
-                      onChange={(event) => setTimeSlot(event.target.value)}
-                      required
-                    >
-                      <option value="">{t("Select your timeslot")}</option>
-                      {slots.map((slot) => (
-                        <option key={slot.id} value={slot.label}>
-                          {slot.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      id="timeslot"
-                      className="input text-base"
-                      value={timeSlot}
-                      maxLength={80}
-                      placeholder={t("e.g. 10:30")}
-                      onChange={(event) => setTimeSlot(event.target.value)}
-                      required
-                    />
-                  )}
+                  <input
+                    id="timeslot"
+                    className="input text-base"
+                    value={timeSlot}
+                    maxLength={80}
+                    placeholder={t("e.g. 10:30")}
+                    onChange={(event) => setTimeSlot(event.target.value)}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="nickname">
