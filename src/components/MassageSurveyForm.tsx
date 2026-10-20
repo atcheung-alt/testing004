@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useAppLanguage, useSetAppLanguage, useT } from "@/lib/i18n/client";
-import { htmlLang, LANGUAGE_COOKIE, type AppLanguage } from "@/lib/i18n/language";
+import { htmlLang, SURVEY_LANGUAGE_COOKIE, type AppLanguage } from "@/lib/i18n/language";
 
 type TherapistOption = { id: string; name: string };
 
@@ -47,9 +47,13 @@ export default function MassageSurveyForm({
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    document.documentElement.lang = htmlLang(language);
+  }, [language]);
+
   function chooseLanguage(next: AppLanguage) {
     if (next === language) return;
-    document.cookie = `${LANGUAGE_COOKIE}=${next}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    document.cookie = `${SURVEY_LANGUAGE_COOKIE}=${next}; Path=/; Max-Age=31536000; SameSite=Lax`;
     document.documentElement.lang = htmlLang(next);
     setLanguage(next);
     router.refresh();

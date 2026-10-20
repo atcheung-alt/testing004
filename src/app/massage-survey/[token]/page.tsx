@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getEffectiveCompany } from "@/lib/appSettings";
-import { getT } from "@/lib/i18n/server";
+import { LanguageProvider } from "@/lib/i18n/client";
+import { getSurveyLanguage } from "@/lib/i18n/server";
+import { makeT } from "@/lib/i18n/translate";
 import { ensureMassageTables, ensureMassageTherapists } from "@/lib/massage";
 import { getBookingEvent } from "@/lib/bookings";
 import PublicBookingShell from "@/components/PublicBookingShell";
@@ -11,7 +13,7 @@ import MassageSurveyForm from "@/components/MassageSurveyForm";
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = getT();
+  const t = makeT(getSurveyLanguage());
   return { title: t("Session feedback") };
 }
 
@@ -40,6 +42,7 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
   const eventName = booking?.name || link.invoice?.title || link.invoice?.customerName;
 
   return (
+    <LanguageProvider language={getSurveyLanguage()}>
     <PublicBookingShell
       company={{
         name: company.name,
@@ -56,5 +59,6 @@ export default async function MassageSurveyPage({ params }: { params: { token: s
         />
       </div>
     </PublicBookingShell>
+    </LanguageProvider>
   );
 }
