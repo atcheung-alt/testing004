@@ -9,6 +9,7 @@ import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import PageBar from "@/components/PageBar";
+import PageVideo from "@/components/PageVideo";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,7 @@ export default async function DashboardPage() {
   ];
 
   return (
+    <PageVideo>
     <div className="flex flex-col gap-4">
       <PageBar title={t("Dashboard")} note={t("Invoices, payments, expenses, and what is still outstanding.")} />
 
@@ -299,5 +301,6 @@ export default async function DashboardPage() {
         </div>
       )}
     </div>
+    </PageVideo>
   );
 }

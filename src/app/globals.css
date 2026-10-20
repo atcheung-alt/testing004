@@ -560,6 +560,41 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 }
 
+/* Background clip on Dashboard, Bookings, and Massage. The sidebar stays
+   above it (z-30). Cards stay nearly solid so figures stay readable, and
+   the title bar stays a solid strip. */
+.page-video {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: rgb(var(--color-paper));
+}
+.page-video video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.page-video::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(var(--color-paper) / 0.72) 0%,
+    rgb(var(--color-paper) / 0.4) 36%,
+    rgb(var(--color-paper) / 0.22) 100%
+  );
+}
+.page-video-content {
+  position: relative;
+  z-index: 1;
+}
+.page-video-content > * > .border-b {
+  background-color: rgb(var(--color-paper) / 0.92);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

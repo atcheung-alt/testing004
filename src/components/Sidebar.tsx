@@ -374,7 +374,7 @@ export default function Sidebar({
           stretching to the full page height and scrolling out of view. */}
       <aside
         className={clsx(
-          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-4 transition-[width] duration-200 w-60 max-lg:max-w-[72vw]",
+          "z-30 shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-line bg-surface py-4 transition-[width] duration-200 w-60 max-lg:max-w-[72vw]",
           collapsed && "lg:w-20",
           narrowOpen ? "flex" : "hidden lg:flex"
         )}

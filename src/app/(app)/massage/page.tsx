@@ -5,6 +5,7 @@ import MassageEventSearch from "@/components/MassageEventSearch";
 import MassageLeaderboard from "@/components/MassageLeaderboard";
 import MassageRoster from "@/components/MassageRoster";
 import PageBar from "@/components/PageBar";
+import PageVideo from "@/components/PageVideo";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ export default async function MassagePage() {
   const leading = ranked[0];
 
   return (
+    <PageVideo>
     <div className="flex flex-col gap-4">
       <PageBar
         title={t("Results")}
@@ -102,5 +104,6 @@ export default async function MassagePage() {
           .map((row) => ({ id: row.id, name: row.name }))}
       />
     </div>
+    </PageVideo>
   );
 }
