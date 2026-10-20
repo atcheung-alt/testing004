@@ -39,8 +39,8 @@ export default function BookingEventListClient({ events }: { events: BookingEven
               )}
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-reading text-base font-semibold text-ink">{e.name}</span>
-                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-reading text-sm text-ink">
+                <span className="block truncate font-art text-base font-semibold tracking-wide text-ink">{e.name}</span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 font-art text-sm text-ink">
                   <span>{dateRangeLabel(e.startDate, e.endDate)}</span>
                   {e.description ? <span className="truncate">{e.description}</span> : null}
                 </span>

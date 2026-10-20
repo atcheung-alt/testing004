@@ -42,11 +42,15 @@ const MORE_ROW_HEIGHT = 18;
 
 // A restrained palette, chosen from the event id so overlapping events stay
 // distinct. Not stored, and not user-editable.
-const BOOKING_COLOR = "#4E5966";
+const EVENT_COLORS = ["#3B6FE0", "#0E9F8E", "#7A5AF0", "#1F9D55", "#E07A2F", "#E15B73"];
 const JOB_COLOR = "#8B93A7";
 
-export function eventBarColor(_id: string): string {
-  return BOOKING_COLOR;
+export function eventBarColor(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return EVENT_COLORS[hash % EVENT_COLORS.length];
 }
 
 function colorFor(event: { id: string; kind?: "booking" | "job" }) {
@@ -210,7 +214,7 @@ function WeekRow({
             type="button"
             onClick={() => onEventClick(s.ev)}
             title={s.ev.name}
-            className="absolute overflow-hidden text-left text-[11px] font-medium leading-[22px] truncate px-2 hover:brightness-110"
+            className="absolute overflow-hidden text-left font-art text-[12px] font-semibold leading-[22px] tracking-wide truncate px-2 hover:brightness-110"
             style={{
               top: HEADER_HEIGHT + s.lane * (BAR_HEIGHT + BAR_GAP),
               left: `calc(${(s.startCol / 7) * 100}% + 3px)`,
@@ -345,7 +349,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
       >
         <span className="flex items-center gap-1.5">
           {collapsed ? <ChevronDown size={16} className="text-ink-faint" /> : <ChevronUp size={16} className="text-ink-faint" />}
-          <h2 className="font-sans text-lg font-semibold text-ink">{monthLabel}</h2>
+          <h2 className="font-art text-xl font-bold tracking-tight text-ink">{monthLabel}</h2>
         </span>
         {!collapsed && (
           <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
@@ -366,7 +370,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
           <div className="mt-4 animate-fade-in" key={monthLabel}>
           <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
             <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: BOOKING_COLOR }} aria-hidden="true" />
+              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: EVENT_COLORS[0] }} aria-hidden="true" />
               {t("Booking")}
             </span>
             <span className="inline-flex items-center gap-2">

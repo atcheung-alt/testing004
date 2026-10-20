@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Fraunces, Inter, IBM_Plex_Mono, Allura, Lora } from "next/font/google";
+import { Fraunces, Inter, IBM_Plex_Mono, Allura, Lora, Syne } from "next/font/google";
 import { getEffectiveAnimationsEnabled, getEffectiveThemeModeFor } from "@/lib/appSettings";
 import { getCurrentUser } from "@/lib/auth";
 import { LanguageProvider } from "@/lib/i18n/client";
@@ -26,6 +26,13 @@ const lora = Lora({
   subsets: ["latin"],
   variable: "--font-lora",
   weight: ["500", "600"],
+  display: "swap",
+});
+
+const syne = Syne({
+  subsets: ["latin"],
+  variable: "--font-syne",
+  weight: ["600", "700"],
   display: "swap",
 });
 
@@ -84,7 +91,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={htmlLang(language)}
       data-animations={animationsEnabled ? "on" : "off"}
       data-theme={themeMode.toLowerCase()}
-      className={`${fraunces.variable} ${inter.variable} ${lora.variable} ${plexMono.variable} ${allura.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${lora.variable} ${syne.variable} ${plexMono.variable} ${allura.variable}`}
     >
       <body>
         <LanguageProvider language={language}>
