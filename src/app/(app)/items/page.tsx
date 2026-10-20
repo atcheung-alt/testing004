@@ -14,7 +14,7 @@ export default async function ItemLibraryPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Item library")}</h1>
-        <p className="text-sm text-ink-muted">
+        <p className="lead">
           {t(
             "Manage your standardized items. Anything saved here can be picked from a dropdown when building a quotation or invoice."
           )}

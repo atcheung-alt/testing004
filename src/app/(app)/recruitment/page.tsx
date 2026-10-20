@@ -96,7 +96,7 @@ export default function RecruitmentPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Recruitment Agreements")}</h1>
-          <p className="text-sm text-ink-muted">
+          <p className="lead">
             {t("Recruitment services terms — a separate system from quotations/invoices/receipts.")}
           </p>
         </div>

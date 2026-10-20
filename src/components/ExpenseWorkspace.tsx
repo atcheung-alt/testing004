@@ -183,7 +183,7 @@ export default function ExpenseWorkspace({
       <form onSubmit={saveExpense} className="card p-5 flex flex-col gap-4">
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Record an expense")}</h2>
-          <p className="text-sm text-ink-muted mt-0.5">
+          <p className="lead">
             {t("Choose the invoice, then attach a PDF or photo. Clients do not see these files.")}
           </p>
         </div>

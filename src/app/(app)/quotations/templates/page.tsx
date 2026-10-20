@@ -19,7 +19,7 @@ export default async function QuotationTemplatesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Quotation templates")}</h1>
-          <p className="text-sm text-ink-muted">
+          <p className="lead">
             {t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
           </p>
         </div>

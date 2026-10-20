@@ -78,7 +78,7 @@ export default async function DashboardPage() {
           <h1 className="font-display text-2xl font-semibold text-ink">{t("Dashboard")}</h1>
           <span className="h-2 w-2 rounded-full bg-brand-500 animate-soft-pulse" aria-hidden />
         </div>
-        <p className="text-sm text-ink-muted">
+        <p className="lead">
           {t("Invoices, payments, expenses, and what is still outstanding.")}
         </p>
       </div>

@@ -153,7 +153,7 @@ export default function InvoicesPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Invoices")}</h1>
-          <p className="text-sm text-ink-muted">{t("Track what's owed and what's been paid.")}</p>
+          <p className="lead">{t("Track what's owed and what's been paid.")}</p>
         </div>
         <div className="flex gap-2 shrink-0">
           <a href={exportHref} className="btn-secondary">

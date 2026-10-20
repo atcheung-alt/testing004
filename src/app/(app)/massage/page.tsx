@@ -27,14 +27,14 @@ export default async function MassagePage() {
           <p className="text-xs font-semibold uppercase tracking-wide">{t("Massage")}</p>
         </div>
         <h1 className="font-display text-3xl font-semibold tracking-tight">{t("Results")}</h1>
-        <p className="text-sm text-ink-muted mt-2 max-w-2xl">
-          {t("Therapist scores, before you open an event.")}
-        </p>
-        <p className="text-xs text-ink-faint mt-2 max-w-2xl">
-          {t(
-            "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early."
-          )}
-        </p>
+        <div className="lead">
+          <p>{t("Therapist scores, before you open an event.")}</p>
+          <p className="mt-1 text-sm font-normal text-ink-muted">
+            {t(
+              "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early."
+            )}
+          </p>
+        </div>
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -70,7 +70,7 @@ export default async function MassagePage() {
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="font-display text-xl font-semibold">{t("Massage events")}</h2>
-          <p className="text-sm text-ink-muted mt-1">
+          <p className="lead">
             {t("Each event has its own QR code. Attach the invoice after the day.")}
           </p>
         </div>

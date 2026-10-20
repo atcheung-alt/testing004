@@ -11,7 +11,7 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Settings")}</h1>
-        <p className="text-sm text-ink-muted">
+        <p className="lead">
           {t("Configure appearance, Google Drive sync, company branding, and email CC preferences.")}
         </p>
       </div>

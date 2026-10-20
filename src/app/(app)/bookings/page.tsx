@@ -49,7 +49,7 @@ export default async function BookingsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Bookings")}</h1>
-          <p className="text-sm text-ink-muted max-w-xl">
+          <p className="lead">
             {t("Review bookings and invoice jobs for the month.")}
           </p>
         </div>
