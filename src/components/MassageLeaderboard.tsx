@@ -10,30 +10,43 @@ const SAMPLE_ROWS: TherapistStanding[] = [
   { id: "sample-3", name: "示範 · 張啟賢", count: 3, score: 4.5, overall: 4.6, focus: 4.4, pressure: 4.5, relief: 4.5, early: true },
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
+const STEP: Record<number, string> = {
+  1: "min-h-[9.5rem]",
+  2: "min-h-[7.25rem]",
+  3: "min-h-[5.75rem]",
+};
+
 function TopScores({ rows }: { rows: TherapistStanding[] }) {
   const t = getT();
   const top = rows
     .filter((row) => row.count > 0)
     .sort((a, b) => b.adjusted - a.adjusted || b.count - a.count)
     .slice(0, 3);
+  const stage = top.length >= 2 ? [top[1], top[0], ...top.slice(2)] : top;
 
   return (
     <section className="flex flex-col gap-3">
       <div>
         <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
-        <p className="mt-0.5 text-sm text-ink-muted">{t("The three highest scores.")}</p>
+        <p className="mt-0.5 text-sm text-ink">{t("The three highest scores.")}</p>
       </div>
-      <div className="card divide-y divide-line">
-        {top.map((row, index) => (
-          <div key={row.id} className="flex items-center gap-4 px-4 py-3">
-            <span className="w-5 shrink-0 font-sans text-sm font-semibold text-ink-muted">{index + 1}</span>
-            <div className="min-w-0 flex-1">
-              <p className="font-sans font-medium text-ink truncate">{row.name}</p>
-              <p className="text-xs text-ink-muted mt-0.5">{t("{count} surveys", { count: row.count })}</p>
-            </div>
-            <p className="font-sans text-sm font-semibold text-ink shrink-0">{row.adjusted.toFixed(1)} / 5</p>
-          </div>
-        ))}
+      <div className="card px-3 py-4 sm:px-5">
+        <div className="flex items-end justify-center gap-2 sm:gap-3">
+          {stage.map((row) => {
+            const rank = top.indexOf(row) + 1;
+            return (
+              <div
+                key={row.id}
+                className={`award-step flex-1 max-w-[16rem] flex flex-col justify-end rounded-lg border border-line px-3 pb-3 pt-3 ${STEP[rank] ?? STEP[3]}`}
+              >
+                <p className="font-sans text-2xl font-semibold leading-none text-ink">{rank}</p>
+                <p className="font-sans text-sm font-semibold text-ink truncate mt-3">{row.name}</p>
+                <p className="text-xs text-ink mt-1">{t("{count} surveys", { count: row.count })}</p>
+                <p className="font-sans text-sm font-semibold text-ink mt-2">{row.adjusted.toFixed(1)} / 5</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </section>
   );

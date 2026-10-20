@@ -644,6 +644,49 @@ html[data-theme="light"] .page-video-content .btn-secondary {
   }
 }
 
+/* Massage results: the clip is bright, so the writing sits on a firmer
+   plate and the gray lines are darkened enough to read. */
+.page-video-content .massage-page .card,
+.page-video-content .massage-page .bg-surface,
+.page-video-content .massage-page .bg-paper,
+.page-video-content .massage-page > .border-b {
+  background-color: rgb(18 19 22 / 0.92);
+}
+.page-video-content .massage-page .text-ink-muted,
+.page-video-content .massage-page .text-ink-faint,
+.page-video-content .massage-page .lead {
+  color: rgb(226 228 232);
+}
+.award-step {
+  background-color: rgb(32 33 36 / 0.96);
+}
+html[data-theme="light"] .page-video-content .massage-page .card,
+html[data-theme="light"] .page-video-content .massage-page .bg-surface,
+html[data-theme="light"] .page-video-content .massage-page .bg-paper,
+html[data-theme="light"] .page-video-content .massage-page > .border-b,
+html[data-theme="light"] .award-step {
+  background-color: rgb(255 255 255 / 0.96);
+}
+html[data-theme="light"] .page-video-content .massage-page .text-ink-muted,
+html[data-theme="light"] .page-video-content .massage-page .text-ink-faint,
+html[data-theme="light"] .page-video-content .massage-page .lead {
+  color: rgb(32 40 58);
+}
+@media (prefers-color-scheme: light) {
+  html[data-theme="auto"] .page-video-content .massage-page .card,
+  html[data-theme="auto"] .page-video-content .massage-page .bg-surface,
+  html[data-theme="auto"] .page-video-content .massage-page .bg-paper,
+  html[data-theme="auto"] .page-video-content .massage-page > .border-b,
+  html[data-theme="auto"] .award-step {
+    background-color: rgb(255 255 255 / 0.96);
+  }
+  html[data-theme="auto"] .page-video-content .massage-page .text-ink-muted,
+  html[data-theme="auto"] .page-video-content .massage-page .text-ink-faint,
+  html[data-theme="auto"] .page-video-content .massage-page .lead {
+    color: rgb(32 40 58);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

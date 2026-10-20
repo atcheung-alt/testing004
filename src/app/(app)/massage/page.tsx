@@ -22,7 +22,7 @@ export default async function MassagePage() {
 
   return (
     <PageVideo clip="massage">
-    <div className="flex flex-col gap-4">
+    <div className="massage-page flex flex-col gap-4">
       <PageBar
         title={t("Results")}
         note={t("Therapist scores, before you open an event. Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early.")}
@@ -30,17 +30,17 @@ export default async function MassagePage() {
 
       <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Surveys")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">{t("Surveys")}</p>
           <p className="font-mono text-2xl mt-1">{surveyCount}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">
             {t("Therapists with scores")}
           </p>
           <p className="font-mono text-2xl mt-1">{ranked.length}</p>
         </div>
         <div className="card px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{t("Leading score")}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-ink">{t("Leading score")}</p>
           <p className="font-mono text-2xl mt-1">{leading ? leading.adjusted.toFixed(1) : "—"}</p>
         </div>
       </section>
@@ -60,14 +60,14 @@ export default async function MassagePage() {
 
       <section className="flex flex-col gap-3">
         <div>
-          <h2 className="font-display text-xl font-semibold">{t("Massage events")}</h2>
+          <h2 className="font-sans text-lg font-semibold text-ink">{t("Massage events")}</h2>
           <p className="lead">
             {t("Each event has its own QR code. Attach the invoice after the day.")}
           </p>
         </div>
         {board.scheduled.length === 0 ? (
           <div className="card px-5 py-10 text-center">
-            <h3 className="font-display text-lg font-semibold mb-1">{t("No massage events yet")}</h3>
+            <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No massage events yet")}</h3>
             <p className="text-sm text-ink-muted">
               {t("Create a booking for the massage day. Its QR code shows up here. The invoice can wait until the event is over.")}
             </p>
