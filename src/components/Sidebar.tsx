@@ -100,11 +100,11 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
+        "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-brand-gradient text-white shadow-soft"
-          : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+          ? "bg-brand-500 text-white"
+          : "text-ink-muted hover:bg-paper hover:text-ink"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />
@@ -232,11 +232,11 @@ function BottomLinks({
           prefetch={false}
           title={collapsed ? t("Management") : undefined}
           className={clsx(
-            "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors gap-3 px-3",
+            "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
             collapsed && "lg:justify-center lg:px-0 lg:gap-0",
             managementActive
-              ? "bg-brand-gradient text-white shadow-soft"
-              : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+              ? "bg-brand-500 text-white"
+              : "text-ink-muted hover:bg-paper hover:text-ink"
           )}
         >
           <Shield size={17} strokeWidth={2} className="shrink-0" />
@@ -250,11 +250,11 @@ function BottomLinks({
         prefetch={false}
         title={collapsed ? t("Settings") : undefined}
         className={clsx(
-          "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors gap-3 px-3",
+          "flex items-center rounded-lg py-2.5 text-sm font-medium transition-[transform,background-color,color] duration-100 gap-3 px-3 active:scale-[0.98]",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
-            ? "bg-brand-gradient text-white shadow-soft"
-            : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
+            ? "bg-brand-500 text-white"
+            : "text-ink-muted hover:bg-paper hover:text-ink"
         )}
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />

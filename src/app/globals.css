@@ -175,13 +175,18 @@ html[data-theme="dark"] [data-product="hr"] {
    explicit override here too, or primary buttons and card hover states
    would stay blue even under the HR shell while everything else re-tints. */
 [data-product="hr"] .btn-primary {
-  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
+  background-image: none;
+  background-color: #059669;
 }
-[data-product="hr"] .card:hover {
-  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.16);
+[data-product="hr"] .btn-primary:hover {
+  background-color: #10b981;
+}
+[data-product="hr"] .btn-primary:active {
+  background-color: #047857;
 }
 [data-product="hr"] .bg-brand-gradient {
-  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
+  background-image: none;
+  background-color: #059669;
 }
 [data-product="hr"] .shadow-soft {
   box-shadow: 0 12px 32px rgba(16, 185, 129, 0.12);
@@ -225,7 +230,7 @@ html[data-theme="dark"] .theme-logo-dark {
     @apply bg-paper;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased bg-app-gradient bg-fixed;
+    @apply bg-paper text-ink font-sans antialiased;
   }
   ::selection {
     @apply bg-brand-100;
@@ -264,23 +269,23 @@ html[data-theme="dark"] .theme-logo-dark {
      `overflow`, so both `shadow-card` and `shadow-soft` still render fully
      rounded and unclipped. */
   .card {
-    @apply bg-surface/95 border border-line rounded-card shadow-card backdrop-blur-sm overflow-hidden transition-shadow duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-soft;
+    @apply bg-surface border border-line rounded-card overflow-hidden;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium will-change-transform transition-[transform,background-color,color,border-color,box-shadow,filter] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-px active:translate-y-0 active:scale-[0.96] active:duration-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-[transform,background-color,filter] duration-100 ease-out active:translate-y-px active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:scale-100;
   }
   .btn-primary {
-    @apply btn bg-brand-gradient text-white shadow-soft hover:brightness-105;
+    @apply btn bg-brand-500 text-white hover:brightness-110 active:brightness-90;
   }
   .btn-secondary {
-    @apply btn bg-surface text-ink border border-line hover:bg-brand-50;
+    @apply btn bg-surface text-ink border border-line hover:bg-paper active:bg-paper;
   }
   .btn-danger {
-    @apply btn bg-surface text-danger-500 border border-danger-500/30 hover:bg-danger-50;
+    @apply btn bg-surface text-danger-500 border border-danger-500/30 hover:bg-danger-50 active:bg-danger-50;
   }
   .btn-ghost {
-    @apply btn text-ink-muted hover:text-ink hover:bg-brand-50;
+    @apply btn text-ink-muted hover:text-ink hover:bg-paper active:bg-paper;
   }
 
   .input {

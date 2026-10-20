@@ -52,7 +52,7 @@ export default function PublicSignaturePad({ fullName, value, onChange }: Props)
                 onChange(null);
               }}
               className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                active ? "bg-brand-gradient text-white shadow-soft" : "text-ink-muted hover:text-ink"
+                active ? "bg-brand-500 text-white" : "text-ink-muted hover:text-ink"
               }`}
             >
               <Icon size={13} /> {t(option.label)}

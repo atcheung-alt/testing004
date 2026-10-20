@@ -41,7 +41,6 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
                 className={`absolute inset-y-0 left-0 rounded-full animate-fill-bar ${BAR_COLORS[index] ?? BAR_COLORS[0]}`}
                 style={{ ["--bar" as string]: `${(row.adjusted / 5) * 100}%`, animationDelay: `${320 + index * 120}ms` }}
               />
-              <span className="pointer-events-none absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-sheen" />
             </div>
           </div>
         ))}
