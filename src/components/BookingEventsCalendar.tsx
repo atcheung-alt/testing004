@@ -42,7 +42,7 @@ const MORE_ROW_HEIGHT = 18;
 
 // A restrained palette, chosen from the event id so overlapping events stay
 // distinct. Not stored, and not user-editable.
-const EVENT_COLORS = ["#5B8DEF", "#3DAB9A", "#8B7EC8", "#5C9A6A", "#C4893A", "#C46B73"];
+const EVENT_COLORS = ["#4F78C4", "#4A7F86", "#6E6A96", "#5C7A68", "#8A7348", "#8A6870"];
 
 const JOB_COLOR = "#8B93A7";
 

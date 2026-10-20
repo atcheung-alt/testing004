@@ -10,9 +10,6 @@ const SAMPLE_ROWS: TherapistStanding[] = [
   { id: "sample-3", name: "示範 · 張啟賢", count: 3, score: 4.5, overall: 4.6, focus: 4.4, pressure: 4.5, relief: 4.5, early: true },
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
-const BAR_COLORS = ["bg-brand-500", "bg-cyan-500", "bg-accent-500"] as const;
-const SCORE_COLORS = ["text-brand-700", "text-cyan-600", "text-accent-600"] as const;
-
 function TopScores({ rows }: { rows: TherapistStanding[] }) {
   const t = getT();
   const top = rows
@@ -23,25 +20,18 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h3 className="font-display text-xl font-semibold">{t("Top 3")}</h3>
-        <p className="lead">{t("The three highest scores.")}</p>
+        <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
+        <p className="mt-0.5 text-sm text-ink-muted">{t("The three highest scores.")}</p>
       </div>
-      <div className="card px-4 sm:px-5 py-5 flex flex-col gap-5">
+      <div className="card divide-y divide-line">
         {top.map((row, index) => (
-          <div key={row.id}>
-            <div className="flex items-baseline justify-between gap-3 mb-1.5">
-              <p className="font-medium truncate">{row.name}</p>
-              <p className={`font-mono text-sm shrink-0 ${SCORE_COLORS[index] ?? SCORE_COLORS[0]}`}>
-                {row.adjusted.toFixed(1)} / 5
-              </p>
+          <div key={row.id} className="flex items-center gap-4 px-4 py-3">
+            <span className="w-5 shrink-0 font-sans text-sm font-semibold text-ink-muted">{index + 1}</span>
+            <div className="min-w-0 flex-1">
+              <p className="font-sans font-medium text-ink truncate">{row.name}</p>
+              <p className="text-xs text-ink-muted mt-0.5">{t("{count} surveys", { count: row.count })}</p>
             </div>
-            <p className="text-xs text-ink-muted mb-2">{t("{count} surveys", { count: row.count })}</p>
-            <div className="relative h-2.5 rounded-full bg-paper overflow-hidden">
-              <div
-                className={`absolute inset-y-0 left-0 rounded-full animate-fill-bar ${BAR_COLORS[index] ?? BAR_COLORS[0]}`}
-                style={{ ["--bar" as string]: `${(row.adjusted / 5) * 100}%`, animationDelay: `${320 + index * 120}ms` }}
-              />
-            </div>
+            <p className="font-sans text-sm font-semibold text-ink shrink-0">{row.adjusted.toFixed(1)} / 5</p>
           </div>
         ))}
       </div>
@@ -84,7 +74,7 @@ export default function MassageLeaderboard({
   if (ranked.length === 0) {
     return (
       <div className="card px-6 py-10 text-center">
-        <h3 className="font-display text-lg font-semibold mb-1">{t("No guest scores yet")}</h3>
+        <h3 className="font-sans text-lg font-semibold text-ink mb-1">{t("No guest scores yet")}</h3>
         <p className="text-sm text-ink-muted max-w-sm mx-auto">
           {t("After guests scan an event QR code, the scores show up here.")}
         </p>
