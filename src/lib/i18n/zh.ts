@@ -257,6 +257,7 @@ export const ZH: Record<string, string> = {
   "Create template": "建立範本",
   "Template name": "範本名稱",
   "Activity name": "活動名稱",
+  Items: "項目",
   "Give this template a name.": "請為這個範本命名。",
   "Could not save the template.": "無法儲存範本。",
   "e.g. Wellness day package": "例如：健康日套餐",

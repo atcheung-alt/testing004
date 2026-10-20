@@ -16,9 +16,9 @@ export default async function QuotationTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Quotation templates")}</h1>
+          <h1 className="font-sans text-2xl font-semibold text-ink">{t("Quotation templates")}</h1>
           <p className="lead">
             {t("Reuse a saved quotation. Update the activity, items, and dates each time.")}
           </p>
@@ -37,34 +37,46 @@ export default async function QuotationTemplatesPage() {
           actionLabel={t("New template")}
         />
       ) : (
-        <div className="card divide-y divide-line">
-          {templates.map((template) => (
-            <div key={template.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-5 py-4">
-              <div className="min-w-0">
-                <p className="font-medium text-ink">{template.name}</p>
-                <p className="text-sm text-ink-muted mt-1 truncate">{template.title || t("No activity name yet")}</p>
-                {template.items.length > 0 ? (
-                  <p className="text-sm text-ink-muted truncate">
-                    {template.items.map((item) => item.name || t("Untitled item")).join(", ")}
-                  </p>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-2 shrink-0">
-                <Link href={`/quotations/new?template=${template.id}`} className="btn-primary">
-                  {t("Use template")}
-                </Link>
-                <Link href={`/quotations/templates/${template.id}/edit`} className="btn-secondary">
-                  {t("Edit")}
-                </Link>
-                <DeleteButton
-                  url={`/api/quotation-templates/${template.id}`}
-                  confirmNumber={template.name}
-                  itemLabel="template"
-                  redirectTo="/quotations/templates"
-                />
-              </div>
-            </div>
-          ))}
+        <div className="card overflow-x-auto">
+          <table className="w-full min-w-[40rem] text-left text-sm">
+            <thead>
+              <tr className="border-b border-line">
+                <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Template name")}</th>
+                <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Activity name")}</th>
+                <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Items")}</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {templates.map((template) => (
+                <tr key={template.id} className="border-b border-line last:border-0 hover:bg-paper">
+                  <td className="px-4 py-3 font-sans font-medium text-ink">{template.name}</td>
+                  <td className="px-4 py-3 font-sans text-ink-muted">{template.title || t("No activity name yet")}</td>
+                  <td className="px-4 py-3 font-sans text-ink-muted">
+                    {template.items.length > 0
+                      ? template.items.map((item) => item.name || t("Untitled item")).join(", ")
+                      : "—"}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Link href={`/quotations/new?template=${template.id}`} className="btn-primary">
+                        {t("Use template")}
+                      </Link>
+                      <Link href={`/quotations/templates/${template.id}/edit`} className="btn-secondary">
+                        {t("Edit")}
+                      </Link>
+                      <DeleteButton
+                        url={`/api/quotation-templates/${template.id}`}
+                        confirmNumber={template.name}
+                        itemLabel="template"
+                        redirectTo="/quotations/templates"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
