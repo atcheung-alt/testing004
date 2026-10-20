@@ -80,6 +80,13 @@ module.exports = {
         ],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
         signature: ["var(--font-signature)", "cursive"],
+        reading: [
+          "var(--font-lora)",
+          "PingFang HK",
+          "PingFang TC",
+          "Noto Serif TC",
+          "serif",
+        ],
       },
       boxShadow: {
         card: "0 1px 2px rgba(41,58,110,0.04), 0 8px 24px rgba(41,58,110,0.07)",
