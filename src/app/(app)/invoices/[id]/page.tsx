@@ -27,11 +27,13 @@ import { getActivityTimeline } from "@/lib/activity";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
+import { invoiceVisible } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
+  if (!(await invoiceVisible(params.id))) notFound();
   await ensureDefaultExpenseCategories();
   const [raw, categories] = await Promise.all([
     prisma.invoice.findUnique({

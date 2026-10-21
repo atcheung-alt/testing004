@@ -6,15 +6,21 @@ import { withParsedFeesList } from "@/lib/fees";
 import type { Invoice } from "@/types";
 import { getT } from "@/lib/i18n/server";
 import { getEventForInvoice } from "@/lib/events";
+import { invoiceVisible } from "@/lib/documentAccess";
+import { readStaffDirectory, viewersFor } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditInvoicePage({ params }: { params: { id: string } }) {
   const t = getT();
-  const invoice = await prisma.invoice.findUnique({
-    where: { id: params.id },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
-  });
+  if (!(await invoiceVisible(params.id))) notFound();
+  const [invoice, directory] = await Promise.all([
+    prisma.invoice.findUnique({
+      where: { id: params.id },
+      include: { items: { orderBy: { sortOrder: "asc" } } },
+    }),
+    readStaffDirectory(),
+  ]);
 
   if (!invoice) notFound();
   const calendarEvent = await getEventForInvoice(invoice.id);
@@ -39,6 +45,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
           } as Invoice
         }
         calendarEventName={calendarEvent?.name || null}
+        viewerEmails={viewersFor(directory, "invoice", invoice.id).join(", ")}
       />
     </div>
   );

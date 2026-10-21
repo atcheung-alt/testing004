@@ -5,6 +5,8 @@ import { nextDocumentNumber } from "@/lib/numbering";
 import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, eventFieldsFrom, computeDueDate, withParsedItems, VALID_INVOICE_STATUSES } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
+import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
+import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status");
 
   const invoices = await prisma.invoice.findMany({
-    where: { status: status || undefined },
+    where: andFilters({ status: status || undefined }, await currentInvoiceFilter()),
     orderBy: { createdAt: "desc" },
     include: {
       quotation: { select: { id: true, number: true } },
@@ -99,6 +101,9 @@ export async function POST(request: NextRequest) {
     type: "CREATED",
     description: `Invoice ${invoice.number} created`,
   });
+  if (Array.isArray(body.viewerEmails)) {
+    await setDocumentViewers("invoice", invoice.id, body.viewerEmails);
+  }
 
   if (typeof body.markOnCalendar === "boolean") {
     const calendarError = await syncInvoiceCalendarEvent({

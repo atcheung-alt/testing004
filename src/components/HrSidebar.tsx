@@ -40,9 +40,14 @@ type NavItem = { href: string; label: string; icon: LucideIcon; comingSoon?: boo
 // there's no point showing nav items that would just bounce them back to
 // Profile anyway. Admins see everything, Profile included, since an admin
 // can also be an employee with their own leave balance to check.
-function buildNavItems(isAdmin: boolean, t: (key: string) => string): NavItem[] {
+function buildNavItems(isAdmin: boolean, canViewEmployees: boolean, t: (key: string) => string): NavItem[] {
   if (!isAdmin) {
-    return [{ href: "/hr/profile", label: t("Profile"), icon: UserCircle }];
+    return canViewEmployees
+      ? [
+          { href: "/hr/employees", label: t("Employees"), icon: IdCard },
+          { href: "/hr/profile", label: t("Profile"), icon: UserCircle },
+        ]
+      : [{ href: "/hr/profile", label: t("Profile"), icon: UserCircle }];
   }
   return [
     { href: "/hr", label: t("Dashboard"), icon: LayoutDashboard },
@@ -217,17 +222,19 @@ export default function HrSidebar({
   logoDataDark,
   companyName,
   isAdmin = false,
+  canViewEmployees = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
   companyName?: string;
   isAdmin?: boolean;
+  canViewEmployees?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
   const [narrowOpen, setNarrowOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
-  const items = buildNavItems(isAdmin, t);
+  const items = buildNavItems(isAdmin, canViewEmployees, t);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(COLLAPSED_STORAGE_KEY);

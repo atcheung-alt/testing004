@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { expenseFileBytes } from "@/lib/expenseFiles";
+import { invoiceVisible } from "@/lib/documentAccess";
 
 async function loadDocument(invoiceId: string, expenseId: string, documentId: string) {
   const document = await prisma.expenseDocument.findUnique({
@@ -10,6 +11,7 @@ async function loadDocument(invoiceId: string, expenseId: string, documentId: st
   if (!document || document.expense.id !== expenseId || document.expense.invoiceId !== invoiceId) {
     return null;
   }
+  if (!(await invoiceVisible(invoiceId))) return null;
   return document;
 }
 

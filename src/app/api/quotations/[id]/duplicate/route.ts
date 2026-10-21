@@ -14,7 +14,7 @@ import { logActivity } from "@/lib/activity";
 export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
   const original = await prisma.quotation.findUnique({
     where: { id: params.id },
-    include: { items: { orderBy: { sortOrder: "asc" } } },
+    include: { items: { orderBy: { sortOrder: "asc" } }, shares: { orderBy: { sortOrder: "asc" } } },
   });
 
   if (!original) {
@@ -52,6 +52,15 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
       subtotal: original.subtotal,
       taxAmount: original.taxAmount,
       total: original.total,
+      preparedBy: original.preparedBy,
+      shareMode: original.shareMode,
+      shares: {
+        create: original.shares.map((share) => ({
+          colleagueName: share.colleagueName,
+          value: share.value,
+          sortOrder: share.sortOrder,
+        })),
+      },
       items: {
         create: original.items.map((item) => ({
           name: item.name,

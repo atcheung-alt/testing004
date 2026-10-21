@@ -66,7 +66,12 @@ export async function GET(request: NextRequest) {
         data: { email: profile.email, name: profile.name, isAdmin: true },
       });
     } else {
-      return fail(request, "not_authorized");
+      const url = new URL("/request-access", request.url);
+      url.searchParams.set("email", profile.email);
+      if (profile.name) url.searchParams.set("name", profile.name);
+      const response = NextResponse.redirect(url);
+      response.cookies.set(NONCE_COOKIE, "", { path: "/api/auth/google", maxAge: 0 });
+      return response;
     }
   }
 

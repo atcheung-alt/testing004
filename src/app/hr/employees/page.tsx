@@ -3,11 +3,15 @@ import { Suspense } from "react";
 import { Plus, IdCard, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { mpfReminderFor } from "@/lib/payroll";
-import { getCurrentUser, requireAdminPage } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { andFilters, employeeScopeFor, employeeScopeWhere } from "@/lib/documentAccess";
+import { readClientTerms, termFor } from "@/lib/clientService";
+import { redirect } from "next/navigation";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import InviteEmployeeButton from "@/components/InviteEmployeeButton";
 import EmployeeListClient, { EmployeeListItem } from "@/components/EmployeeListClient";
+import EmployerCompaniesManager from "@/components/EmployerCompaniesManager";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -27,23 +31,40 @@ function contractActionLabel(contract: { status: string } | null): string | null
   return null; // VERIFIED or CANCELLED
 }
 
-async function EmployeeList({ q, status, isAdmin }: { q?: string; status?: string; isAdmin: boolean }) {
+async function EmployeeList({
+  q,
+  status,
+  isAdmin,
+  companies,
+  scopeWhere,
+}: {
+  q?: string;
+  status?: string;
+  isAdmin: boolean;
+  companies: { id: string; name: string }[];
+  scopeWhere: Record<string, unknown> | null;
+}) {
   const t = getT();
   // This page is admin-only (see requireAdminPage below), so the query pulls
   // every field the row-click preview panel wants to show — no narrower
   // select needed since there's no non-admin viewer of this data to protect
   // it from.
   const employees = await prisma.employee.findMany({
-    where: {
-      status: status && STATUSES.includes(status) ? status : undefined,
-      OR: q
-        ? [
-            { name: { contains: q, mode: "insensitive" } },
-            { preferredName: { contains: q, mode: "insensitive" } },
-            { title: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status && STATUSES.includes(status) ? status : undefined,
+        OR: q
+          ? [
+              { name: { contains: q, mode: "insensitive" } },
+              { preferredName: { contains: q, mode: "insensitive" } },
+              { nickname: { contains: q, mode: "insensitive" } },
+              { title: { contains: q, mode: "insensitive" } },
+              { company: { name: { contains: q, mode: "insensitive" } } },
+            ]
+          : undefined,
+      },
+      scopeWhere
+    ),
     include: {
       leaveRequests: { where: { status: "PENDING" }, select: { id: true } },
       // Just the status — enough for the badge/preview without pulling the
@@ -94,6 +115,8 @@ async function EmployeeList({ q, status, isAdmin }: { q?: string; status?: strin
       id: e.id,
       name: e.name,
       preferredName: e.preferredName,
+      nickname: e.nickname,
+      companyId: e.companyId,
       nameChinese: e.nameChinese,
       title: e.title,
       status: e.status,
@@ -131,7 +154,7 @@ async function EmployeeList({ q, status, isAdmin }: { q?: string; status?: strin
     };
   });
 
-  return <EmployeeListClient employees={items} />;
+  return <EmployeeListClient employees={items} companies={companies} />;
 }
 
 export default async function EmployeesPage({
@@ -151,9 +174,27 @@ export default async function EmployeesPage({
   // one tab they can see (see requireAdminPage). `isAdmin` below is always
   // true past this point; EmployeeList still takes it as a prop rather than
   // assuming so, in case that ever changes.
-  await requireAdminPage();
   const user = await getCurrentUser();
-  const isAdmin = !!user?.isAdmin;
+  const scope = await employeeScopeFor(user);
+  if (scope.mode === "deny") redirect("/hr/profile");
+  const [companyRows, terms] = await Promise.all([
+    prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      include: { _count: { select: { employees: true } } },
+    }),
+    readClientTerms(),
+  ]);
+  const companies = companyRows.map((company) => {
+    const term = termFor(terms, company.id);
+    return {
+      id: company.id,
+      name: company.name,
+      employeeCount: company._count.employees,
+      feeMode: term.feeMode,
+      feeValue: term.feeValue,
+    };
+  });
+  const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
   const exportParams = new URLSearchParams();
   if (searchParams.q) exportParams.set("q", searchParams.q);
@@ -171,7 +212,7 @@ export default async function EmployeesPage({
             )}
           </p>
         </div>
-        {isAdmin && (
+        {!!user?.isAdmin && scope.mode === "all" && (
           <div className="flex gap-2 flex-wrap">
             <a href={exportHref} className="btn-secondary shrink-0">
               <Download size={15} /> {t("Export CSV")}
@@ -205,8 +246,16 @@ export default async function EmployeesPage({
         </div>
       </div>
 
+      {scope.mode === "all" && <EmployerCompaniesManager companies={companies} />}
+
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
-        <EmployeeList q={searchParams.q} status={searchParams.status} isAdmin={isAdmin} />
+        <EmployeeList
+          q={searchParams.q}
+          status={searchParams.status}
+          isAdmin={isAdmin}
+          companies={scope.mode === "self" ? [] : companies.map(({ id, name }) => ({ id, name }))}
+          scopeWhere={employeeScopeWhere(scope)}
+        />
       </Suspense>
     </div>
   );

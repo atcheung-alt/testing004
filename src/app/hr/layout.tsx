@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import HrSidebar from "@/components/HrSidebar";
+import MpfNotificationPopup from "@/components/MpfNotificationPopup";
 import PageTransition from "@/components/PageTransition";
 import { getCurrentUser } from "@/lib/auth";
-import { getEffectiveCompany } from "@/lib/appSettings";
+import { getEffectiveCompany, getSettings } from "@/lib/appSettings";
+import { prisma } from "@/lib/prisma";
+import { mpfReminderFor } from "@/lib/payroll";
 import { canOpenPath, firstAllowedHref, isSuperAdmin, loadAccessGroups, pagesForPerson } from "@/lib/accessControl";
+import { employeeScopeFor } from "@/lib/documentAccess";
 
 // Wraps every page under /hr (the HR Management System) — a deliberately
 // different shell from the Resource Management System's own AppLayout
@@ -18,6 +22,41 @@ import { canOpenPath, firstAllowedHref, isSuperAdmin, loadAccessGroups, pagesFor
 // The middleware (src/middleware.ts) already redirects unauthenticated
 // requests to /login before they ever reach here — this check is a second,
 // server-rendered layer of defense, same as (app)/layout.tsx.
+async function loadMpfAlerts() {
+  const settings = await getSettings();
+  if (!settings.mpfNotificationsEnabled) return [];
+  const employees = await prisma.employee.findMany({
+    where: {
+      status: { not: "FORMER" },
+      employmentType: "FULL_TIME",
+      mpfVerifiedAt: null,
+      startDate: { not: null },
+    },
+    select: {
+      id: true,
+      name: true,
+      nickname: true,
+      preferredName: true,
+      employmentType: true,
+      startDate: true,
+      mpfVerifiedAt: true,
+    },
+  });
+  return employees
+    .map((employee) => {
+      const reminder = mpfReminderFor(employee.employmentType, employee.startDate, employee.mpfVerifiedAt);
+      if (!reminder || reminder.daysRemaining > 10) return null;
+      return {
+        id: employee.id,
+        name: employee.nickname || employee.preferredName || employee.name,
+        daysRemaining: reminder.daysRemaining,
+        severity: reminder.severity,
+      };
+    })
+    .filter((alert): alert is NonNullable<typeof alert> => alert !== null)
+    .sort((a, b) => a.daysRemaining - b.daysRemaining);
+}
+
 export default async function HrLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
   if (!user) {
@@ -28,7 +67,11 @@ export default async function HrLayout({ children }: { children: React.ReactNode
   if (!canOpenPath("/hr", pages, isSuperAdmin(user))) {
     redirect(firstAllowedHref(pages) || "/");
   }
-  const company = await getEffectiveCompany();
+  const employeeScope = await employeeScopeFor(user);
+  const [company, mpfAlerts] = await Promise.all([
+    getEffectiveCompany(),
+    user.isAdmin ? loadMpfAlerts() : Promise.resolve([]),
+  ]);
 
   return (
     // Sidebar rendered second so it docks on the RIGHT edge of the screen —
@@ -39,6 +82,7 @@ export default async function HrLayout({ children }: { children: React.ReactNode
     <div data-product="hr" data-shell="staff" className="min-h-screen flex">
       <div className="flex-1 flex flex-col min-w-0">
         <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+          <MpfNotificationPopup alerts={mpfAlerts} />
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
@@ -47,6 +91,7 @@ export default async function HrLayout({ children }: { children: React.ReactNode
         logoDataDark={company.logoDataDark}
         companyName={company.shortName || company.name}
         isAdmin={!!user.isAdmin}
+        canViewEmployees={employeeScope.mode === "company" || employeeScope.mode === "self"}
       />
     </div>
   );

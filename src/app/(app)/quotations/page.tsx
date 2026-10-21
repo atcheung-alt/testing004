@@ -10,6 +10,7 @@ import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
+import { andFilters, currentQuotationFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -28,16 +29,20 @@ async function QuotationList({
 }) {
   const t = getT();
   const quotations = await prisma.quotation.findMany({
-    where: {
-      status: status || undefined,
-      issueDate: dateRangeFilter(from, to),
-      OR: q
-        ? [
-            { customerName: { contains: q, mode: "insensitive" } },
-            { customerEmail: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status || undefined,
+        issueDate: dateRangeFilter(from, to),
+        OR: q
+          ? [
+              { customerName: { contains: q, mode: "insensitive" } },
+              { customerEmail: { contains: q, mode: "insensitive" } },
+              { preparedBy: { contains: q, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      await currentQuotationFilter()
+    ),
     orderBy: { createdAt: "desc" },
     // Just enough to preview on the list row (see the items line below) —
     // the full set with pricing/fees is only ever needed on the detail
@@ -72,6 +77,7 @@ async function QuotationList({
             </div>
             <p className="text-xs text-ink-muted truncate mt-0.5">
               {q.customerName} · {t("Issued {date}", { date: formatDate(q.issueDate) })}
+              {q.preparedBy ? ` · ${t("Made by {name}", { name: q.preparedBy })}` : ""}
             </p>
             {/* Always rendered (even blank) so every row reserves the
                 same vertical space regardless of item count — keeps every

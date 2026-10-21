@@ -25,8 +25,10 @@ type WorkDetailsContract = {
 export default function EmployeeForm({
   employee,
   contract,
+  companies = [],
 }: {
   employee?: Employee;
+  companies?: { id: string; name: string }[];
   /** The employee's contract, narrowed to just what the work-location/hours
    *  section below needs — see the edit page's `select`. Undefined when
    *  creating a brand-new employee (no contract can exist yet); null when
@@ -50,6 +52,8 @@ export default function EmployeeForm({
   // instead of the full name when set. Optional; everywhere else (PDFs,
   // emails, IR56B) keeps using the full surname + given name.
   const [preferredName, setPreferredName] = useState(employee?.preferredName || "");
+  const [nickname, setNickname] = useState(employee?.nickname || "");
+  const [companyId, setCompanyId] = useState(employee?.companyId || "");
   const [title, setTitle] = useState(employee?.title || "");
   const [salary, setSalary] = useState(employee?.salary ?? 0);
   const [payRateType, setPayRateType] = useState(employee?.payRateType || "");
@@ -168,6 +172,8 @@ export default function EmployeeForm({
         surnameEn,
         givenNameEn,
         preferredName,
+        nickname,
+        companyId: companyId || null,
         title,
         salary,
         payRateType: usesPayRate ? payRateType || null : null,
@@ -265,6 +271,28 @@ export default function EmployeeForm({
               onChange={(e) => setPreferredName(e.target.value)}
             />
             <p className="mt-1 text-xs text-ink-faint">{t("Shown on the Employees list instead of the full name, if set.")}</p>
+          </div>
+          <div>
+            <label className="label">{t("Nickname")}</label>
+            <input
+              type="text"
+              className="input"
+              placeholder={t("e.g. AT")}
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+            />
+            <p className="mt-1 text-xs text-ink-faint">{t("Short name you can change any time. Quotations can use a login nickname separately.")}</p>
+          </div>
+          <div>
+            <label className="label">{t("Company")}</label>
+            <select className="input" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+              <option value="">{t("No company")}</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="label">{t("Title")}</label>

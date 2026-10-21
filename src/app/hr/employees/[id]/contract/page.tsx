@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdminPage } from "@/lib/auth";
+import { canManageEmployee } from "@/lib/documentAccess";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { getContractPrerequisiteIssues } from "@/lib/employees";
 import EmployeeContractForm from "@/components/EmployeeContractForm";
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeeContractPage({ params }: { params: { id: string } }) {
   const t = getT();
-  await requireAdminPage();
+  if (!(await canManageEmployee(params.id))) redirect("/hr/profile");
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },

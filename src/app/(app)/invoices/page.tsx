@@ -12,6 +12,7 @@ import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
+import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -32,17 +33,20 @@ async function InvoiceList({
 }) {
   const t = getT();
   const invoices = await prisma.invoice.findMany({
-    where: {
-      status: status === "OVERDUE" ? "UNPAID" : status || undefined,
-      dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
-      issueDate: dateRangeFilter(from, to),
-      OR: q
-        ? [
-            { customerName: { contains: q, mode: "insensitive" } },
-            { customerEmail: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status === "OVERDUE" ? "UNPAID" : status || undefined,
+        dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
+        issueDate: dateRangeFilter(from, to),
+        OR: q
+          ? [
+              { customerName: { contains: q, mode: "insensitive" } },
+              { customerEmail: { contains: q, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      await currentInvoiceFilter()
+    ),
     orderBy: { createdAt: "desc" },
     include: {
       expenses: { select: { amount: true } },

@@ -25,7 +25,7 @@ export default async function PayrollListPage() {
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Payroll")}</h1>
           <p className="text-sm text-ink-muted">
             {t(
-              "One run per calendar month — salary, day/hourly-rate, and project-fee pay all calculated together, with Mandatory Provident Fund (MPF) contributions and payslips."
+              "One run per calendar month. Full-time, part-time, and freelance are paid differently. Each client company is billed for wages, employer MPF, and your service fee."
             )}
           </p>
         </div>

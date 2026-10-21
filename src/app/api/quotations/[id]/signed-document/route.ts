@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { quotationVisible } from "@/lib/documentAccess";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await quotationVisible(params.id))) {
+    return NextResponse.json({ error: "No uploaded document for this quotation." }, { status: 404 });
+  }
   const quotation = await prisma.quotation.findUnique({
     where: { id: params.id },
     select: { signedDocumentData: true, signedDocumentName: true, number: true },

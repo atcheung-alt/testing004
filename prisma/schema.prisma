@@ -22,6 +22,9 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String   @default("")
+  // Short name used on quotations this person creates — "Made by", and the
+  // default colleague on profit sharing. Example: atcheung@hrplus.info → "AT".
+  nickname  String   @default("")
   // Admin-tier access — currently the one gate in the whole app. Set to
   // true automatically for the very first account ever created (see the
   // bootstrap branch in /api/auth/google/callback), false for every account
@@ -129,6 +132,10 @@ model Setting {
   // in src/lib/appSettings.ts and the CSS variable blocks in globals.css.
   themeMode      String   @default("LIGHT")
 
+  // When on, opening HR shows a popup for full-time employees whose MPF
+  // enrollment deadline is 10 days away or sooner (including overdue).
+  mpfNotificationsEnabled Boolean @default(true)
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
@@ -200,8 +207,29 @@ model Quotation {
   driveFileId     String?
   driveFileUrl    String?
 
+  // Who created this quotation. Defaults to the logged-in user's nickname.
+  preparedBy      String          @default("")
+  // AMOUNT = each colleague share below is an exact HKD amount.
+  // PERCENT = each share is a percentage of this quotation's total.
+  shareMode       String          @default("AMOUNT")
+  shares          QuotationShare[]
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+}
+
+// One colleague's cut of a quotation. `value` is HKD when the parent
+// quotation's shareMode is AMOUNT, and a percentage of the quotation total
+// when shareMode is PERCENT.
+model QuotationShare {
+  id            String    @id @default(cuid())
+  quotationId   String
+  quotation     Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  colleagueName String    @default("")
+  value         Float     @default(0)
+  sortOrder     Int       @default(0)
+
+  @@index([quotationId])
 }
 
 model QuotationItem {
@@ -606,6 +634,18 @@ model RecruitmentFeeScaleRow {
   @@index([category, sortOrder])
 }
 
+// A company employees are grouped under on the Employees list. Names are
+// edited in place from that page; deleting a company unassigns its people
+// rather than deleting the employee records.
+model EmployerCompany {
+  id        String     @id @default(cuid())
+  name      String
+  sortOrder Int        @default(0)
+  employees Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
 // An internal HR employee record — entirely separate from the
 // Quotation/Invoice/Recruitment client-facing documents. Staff fill this in
 // from the Employees section; the employee themselves never logs in, but
@@ -638,6 +678,9 @@ model Employee {
   // instead of the full name when set; every other read site (PDFs, emails,
   // IR56B, etc.) keeps using the full name above unchanged.
   preferredName   String?
+  // Short name (e.g. "AT"), separate from preferredName. Editable on the
+  // employee form and from the list preview.
+  nickname        String?
   title           String   @default("")
   salary          Float    @default(0)
   // Annual leave entitlement in days/year. Remaining balance is computed
@@ -681,6 +724,19 @@ model Employee {
   // src/lib/myProfile.ts) — so it should be kept in sync with whatever
   // address the employee actually signs in with.
   companyEmail    String?
+
+  // Which company this person belongs to on the Employees list. Null until
+  // someone assigns them — those records show under "No company".
+  companyId       String?
+  company         EmployerCompany? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  // Set when this record was created by rejoining a former employee. The
+  // old record stays as it was (FORMER, with its payroll, leave, and
+  // contract). Walk priorEmployee backward and laterEmployment forward to
+  // see every stint.
+  priorEmployeeId String?          @unique
+  priorEmployee   Employee?        @relation("EmploymentChain", fields: [priorEmployeeId], references: [id], onDelete: SetNull)
+  laterEmployment Employee?        @relation("EmploymentChain")
   // Random token for the public self-service leave link — same mechanism as
   // Quotation.signingToken, generated on first use via ensureLeaveToken().
   // A FORMER employee's link stops accepting new requests (still viewable).
@@ -769,6 +825,7 @@ model Employee {
   updatedAt       DateTime @updatedAt
 
   @@index([status])
+  @@index([companyId])
 }
 
 // The formal employment contract letter sent to an employee for

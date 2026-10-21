@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import EmployeeForm from "@/components/EmployeeForm";
-import { requireAdminPage } from "@/lib/auth";
+import { canManageEmployee } from "@/lib/documentAccess";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function EditEmployeePage({ params }: { params: { id: string } }) {
   const t = getT();
   // Pre-fills every field, including HKID/bank/salary — admin-only.
-  await requireAdminPage();
+  if (!(await canManageEmployee(params.id))) redirect("/hr/profile");
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },
@@ -21,6 +21,10 @@ export default async function EditEmployeePage({ params }: { params: { id: strin
     },
   });
   if (!employee) notFound();
+  const companies = await prisma.employerCompany.findMany({
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, name: true },
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,6 +34,7 @@ export default async function EditEmployeePage({ params }: { params: { id: strin
         </h1>
       </div>
       <EmployeeForm
+        companies={companies}
         contract={employee.contract}
         employee={{
           ...employee,

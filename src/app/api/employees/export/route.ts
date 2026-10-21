@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdminApi } from "@/lib/auth";
+import { getCurrentUser, requireAdminApi } from "@/lib/auth";
+import { andFilters, employeeScopeFor, employeeScopeWhere } from "@/lib/documentAccess";
 import { formatDate } from "@/lib/calculations";
 import { buildCsv, csvResponseHeaders } from "@/lib/csv";
 import { appLanguageFromRequest } from "@/lib/i18n/downloadLanguage";
@@ -16,8 +17,11 @@ const STATUSES = ["ACTIVE", "ONBOARDING", "FORMER"];
  * whatever search and filter are active there.
  */
 export async function GET(request: NextRequest) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
+  const scope = await employeeScopeFor(await getCurrentUser());
+  if (scope.mode !== "all" && scope.mode !== "company") {
+    const denied = await requireAdminApi();
+    if (denied) return denied;
+  }
 
   const language = appLanguageFromRequest(request);
   const t = (key: string) => translate(language, key);
@@ -25,16 +29,19 @@ export async function GET(request: NextRequest) {
   const status = request.nextUrl.searchParams.get("status") || undefined;
 
   const employees = await prisma.employee.findMany({
-    where: {
-      status: status && STATUSES.includes(status) ? status : undefined,
-      OR: q
-        ? [
-            { name: { contains: q, mode: "insensitive" } },
-            { preferredName: { contains: q, mode: "insensitive" } },
-            { title: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status && STATUSES.includes(status) ? status : undefined,
+        OR: q
+          ? [
+              { name: { contains: q, mode: "insensitive" } },
+              { preferredName: { contains: q, mode: "insensitive" } },
+              { title: { contains: q, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      employeeScopeWhere(scope)
+    ),
     orderBy: { name: "asc" },
   });
 

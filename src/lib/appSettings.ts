@@ -34,6 +34,7 @@ export type AppSettings = {
   ccEmails: string; // raw comma-separated string, as stored/edited
   animationsEnabled: boolean;
   themeMode: ThemeMode;
+  mpfNotificationsEnabled: boolean;
 };
 
 const EMPTY_SETTINGS: AppSettings = {
@@ -46,6 +47,7 @@ const EMPTY_SETTINGS: AppSettings = {
   ccEmails: (COMPANY.defaultCc || []).join(", "),
   animationsEnabled: true,
   themeMode: "LIGHT",
+  mpfNotificationsEnabled: true,
 };
 
 /** Fetch the current settings row, returning sensible empty defaults if none exists yet. */
@@ -63,6 +65,7 @@ export async function getSettings(): Promise<AppSettings> {
       ccEmails: row.ccEmails || "",
       animationsEnabled: row.animationsEnabled,
       themeMode: normalizeThemeMode((row as any).themeMode),
+      mpfNotificationsEnabled: (row as any).mpfNotificationsEnabled !== false,
     };
   } catch (err) {
     // Defensive fallback: getSettings() now runs on every single page via
@@ -88,6 +91,7 @@ export type SettingsInput = Partial<{
   ccEmails: string | null;
   animationsEnabled: boolean;
   themeMode: ThemeMode;
+  mpfNotificationsEnabled: boolean;
 }>;
 
 /** Create or update the settings row. Only the fields present on `input` are changed. */
@@ -102,6 +106,7 @@ export async function updateSettings(input: SettingsInput): Promise<AppSettings>
   if ("ccEmails" in input) data.ccEmails = (input.ccEmails || "").trim();
   if ("animationsEnabled" in input) data.animationsEnabled = input.animationsEnabled;
   if ("themeMode" in input) data.themeMode = normalizeThemeMode(input.themeMode);
+  if ("mpfNotificationsEnabled" in input) data.mpfNotificationsEnabled = input.mpfNotificationsEnabled;
 
   const row = await prisma.setting.upsert({
     where: { id: SETTING_ID },
@@ -119,6 +124,7 @@ export async function updateSettings(input: SettingsInput): Promise<AppSettings>
     ccEmails: row.ccEmails || "",
     animationsEnabled: row.animationsEnabled,
     themeMode: normalizeThemeMode((row as any).themeMode),
+    mpfNotificationsEnabled: (row as any).mpfNotificationsEnabled !== false,
   };
 }
 

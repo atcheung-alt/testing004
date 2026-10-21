@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
+import { canManageEmployee } from "@/lib/documentAccess";
 
 /**
  * Staff-facing download of an employee's uploaded signed PDF — the
@@ -10,8 +11,10 @@ import { requireAdminApi } from "@/lib/auth";
  * as the sibling pdf route, not the contract's own id).
  */
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
+  if (!(await canManageEmployee(params.id))) {
+    const denied = await requireAdminApi();
+    return denied || NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  }
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },

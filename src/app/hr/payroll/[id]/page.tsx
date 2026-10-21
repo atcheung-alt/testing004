@@ -8,6 +8,11 @@ import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
 import PayrollRunEntries from "@/components/PayrollRunEntries";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
+import { readStaffDirectory } from "@/lib/staffDirectory";
+import { normalizeEmail } from "@/lib/accessControl";
+import { findClientBill, readClientTerms, serviceFeeFor, termFor } from "@/lib/clientService";
+import { formatCurrency } from "@/lib/calculations";
+import ClientInvoiceButton from "@/components/ClientInvoiceButton";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +22,95 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
 
   const run = await prisma.payrollRun.findUnique({
     where: { id: params.id },
-    include: { entries: { orderBy: { employeeName: "asc" } } },
+    include: {
+      entries: {
+        orderBy: { employeeName: "asc" },
+        include: { employee: { select: { companyId: true, company: { select: { id: true, name: true } } } } },
+      },
+    },
   });
   if (!run) notFound();
 
   const label = periodLabel(run.period, getAppLanguage() === "zh" ? "ZH_HANT" : undefined);
+  const directory = await readStaffDirectory();
+  const terms = await readClientTerms();
+  const bills = await Promise.all(
+    Array.from(new Set(run.entries.map((entry) => entry.employee.companyId).filter((id): id is string => !!id))).map(
+      async (companyId) => ({ companyId, bill: await findClientBill(run.id, companyId) })
+    )
+  );
+  const invoiceByCompany = new Map(bills.map((item) => [item.companyId, item.bill?.invoiceId || null]));
+  const clientGroups = new Map<
+    string,
+    { companyId: string; name: string; headcount: number; gross: number; employerMpf: number; net: number }
+  >();
+  for (const entry of run.entries) {
+    const companyId = entry.employee.companyId;
+    if (!companyId || !entry.employee.company) continue;
+    const current = clientGroups.get(companyId) || {
+      companyId,
+      name: entry.employee.company.name,
+      headcount: 0,
+      gross: 0,
+      employerMpf: 0,
+      net: 0,
+    };
+    current.headcount += 1;
+    current.gross += entry.grossPay;
+    current.employerMpf += entry.employerMpf;
+    current.net += entry.netPay;
+    clientGroups.set(companyId, current);
+  }
+  const clientBills = Array.from(clientGroups.values())
+    .map((group) => {
+      const term = termFor(terms, group.companyId);
+      const serviceFee = serviceFeeFor(term, group.headcount, group.gross);
+      return {
+        ...group,
+        serviceFee,
+        billTotal: group.gross + group.employerMpf + serviceFee,
+        invoiceId: invoiceByCompany.get(group.companyId) || null,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const hrPlusEmails = new Set(
+    directory.profiles.filter((profile) => profile.category === "HR_PLUS_STAFF").map((profile) => normalizeEmail(profile.email))
+  );
+  const serialized = run.entries.map((entry) => ({
+    ...entry,
+    createdAt: entry.createdAt.toISOString(),
+    updatedAt: entry.updatedAt.toISOString(),
+    payslipSentAt: entry.payslipSentAt ? entry.payslipSentAt.toISOString() : null,
+  }));
+  const sections = [
+    {
+      key: "HR_PLUS_STAFF",
+      title: "HR Plus staff payroll",
+      note: "Monthly salary with MPF, for accounts marked HR Plus staff.",
+    },
+    {
+      key: "FULL_TIME",
+      title: "Full-time payroll",
+      note: "Monthly salary with MPF.",
+    },
+    {
+      key: "PART_TIME",
+      title: "Part-time payroll",
+      note: "Daily or hourly pay.",
+    },
+    {
+      key: "FREELANCE",
+      title: "Freelance payroll",
+      note: "Project fee, without MPF.",
+    },
+  ] as const;
+  function bucket(entry: { employeeEmail: string | null; employmentType: string | null }) {
+    const email = entry.employeeEmail ? normalizeEmail(entry.employeeEmail) : "";
+    if (email && hrPlusEmails.has(email)) return "HR_PLUS_STAFF";
+    if (entry.employmentType === "PART_TIME") return "PART_TIME";
+    if (entry.employmentType === "FREELANCE") return "FREELANCE";
+    return "FULL_TIME";
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,17 +136,60 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
         </p>
       </div>
 
-      <PayrollRunEntries
-        runId={run.id}
-        entries={run.entries.map((e: any) => ({
-          ...e,
-          createdAt: e.createdAt.toISOString(),
-          updatedAt: e.updatedAt.toISOString(),
-          payslipSentAt: e.payslipSentAt ? e.payslipSentAt.toISOString() : null,
-        })) as any}
-        periodLabel={label}
-        companyName={COMPANY.shortName || COMPANY.name}
-      />
+      {clientBills.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-semibold text-ink">{t("Bill each client")}</h2>
+            <p className="text-sm text-ink-muted">
+              {t(
+                "Same idea as other payroll-parking services: the client pays the wages, the employer MPF, and your service fee. The worker is still paid the net amount below."
+              )}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {clientBills.map((bill) => (
+              <div key={bill.companyId} className="card p-4 flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-medium text-ink">{bill.name}</h3>
+                    <p className="text-xs text-ink-muted">{t("{count} people", { count: bill.headcount })}</p>
+                  </div>
+                  <ClientInvoiceButton runId={run.id} companyId={bill.companyId} invoiceId={bill.invoiceId} />
+                </div>
+                <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <dt className="text-ink-muted">{t("Wages")}</dt>
+                  <dd className="text-right font-mono">{formatCurrency(bill.gross)}</dd>
+                  <dt className="text-ink-muted">{t("Employer MPF")}</dt>
+                  <dd className="text-right font-mono">{formatCurrency(bill.employerMpf)}</dd>
+                  <dt className="text-ink-muted">{t("Service fee")}</dt>
+                  <dd className="text-right font-mono">{formatCurrency(bill.serviceFee)}</dd>
+                  <dt className="font-medium text-ink">{t("Client pays")}</dt>
+                  <dd className="text-right font-mono font-medium">{formatCurrency(bill.billTotal)}</dd>
+                </dl>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {sections.map((section) => {
+        const entries = serialized.filter((entry) => bucket(entry) === section.key);
+        if (entries.length === 0) return null;
+        return (
+          <section key={section.key} className="flex flex-col gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink">{t(section.title)}</h2>
+              <p className="text-sm text-ink-muted">{t(section.note)}</p>
+            </div>
+            <PayrollRunEntries
+              runId={run.id}
+              entries={entries as any}
+              periodLabel={label}
+              companyName={COMPANY.shortName || COMPANY.name}
+            />
+          </section>
+        );
+      })}
     </div>
   );
 }

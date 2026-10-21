@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { listPendingAccessRequests } from "@/lib/accessRequests";
+import { profileFor, readStaffDirectory } from "@/lib/staffDirectory";
 import {
   ACCESS_PAGES,
   ADMIN_GROUP_ID,
@@ -27,11 +29,16 @@ export async function GET() {
   const gate = await requireSuperAdmin();
   if (gate.response) return gate.response;
 
-  const people = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, isAdmin: true },
-    orderBy: { name: "asc" },
-  });
-  const stored = await loadAccessGroups();
+  const [people, stored, directory, requests, companies] = await Promise.all([
+    prisma.user.findMany({
+      select: { id: true, email: true, name: true, nickname: true, isAdmin: true },
+      orderBy: { name: "asc" },
+    }),
+    loadAccessGroups(),
+    readStaffDirectory(),
+    listPendingAccessRequests(),
+    prisma.employerCompany.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
+  ]);
 
   return NextResponse.json({
     ready: stored.ready,
@@ -40,7 +47,17 @@ export async function GET() {
     fullAccessEmails: FULL_ACCESS_EMAILS,
     adminGroupId: ADMIN_GROUP_ID,
     fullGroupId: FULL_GROUP_ID,
-    people,
+    requests,
+    companies,
+    people: people.map((person) => {
+      const profile = profileFor(directory, person.email);
+      return {
+        ...person,
+        category: profile?.category ?? null,
+        label: profile?.label ?? null,
+        companyName: profile?.companyName ?? "",
+      };
+    }),
   });
 }
 

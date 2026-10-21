@@ -121,6 +121,8 @@ export type EmployeeFields = {
   surnameEn: string;
   givenNameEn: string;
   preferredName: string | null;
+  nickname: string | null;
+  companyId: string | null;
   title: string;
   salary: number;
   // See PAY_RATE_TYPES_BY_EMPLOYMENT_TYPE above — only ever non-null/non-zero
@@ -180,6 +182,8 @@ export function employeeFieldsFrom(body: any): EmployeeFields {
       surnameEn: "",
       givenNameEn: "",
       preferredName: null,
+      nickname: null,
+      companyId: null,
       title: "",
       salary: 0,
       payRateType: null,
@@ -245,6 +249,8 @@ export function employeeFieldsFrom(body: any): EmployeeFields {
     surnameEn,
     givenNameEn,
     preferredName: trimmedOrNull(body.preferredName),
+    nickname: trimmedOrNull(body.nickname)?.slice(0, 40) || null,
+    companyId: typeof body.companyId === "string" && body.companyId.trim() ? body.companyId.trim() : null,
     title: (body.title || "").trim(),
     salary: Number(body.salary) || 0,
     // Meaningless without a payRateType, so kept at 0 alongside it rather

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withParsedFeesList } from "@/lib/fees";
 import { withParsedMultipliersList } from "@/lib/multipliers";
 import { customerFieldsForClient } from "@/lib/clientWork";
+import { loadColleagueNames, loadCurrentNickname } from "@/lib/quotationAuthor";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export default async function NewQuotationPage({
 }) {
   const t = getT();
   const client = searchParams.client ? await customerFieldsForClient(searchParams.client) : null;
+  const [defaultPreparedBy, colleagueNames] = await Promise.all([loadCurrentNickname(), loadColleagueNames()]);
   let preset: QuotationFormPreset | undefined;
   if (searchParams.template) {
     const template = await prisma.quotationTemplate.findUnique({
@@ -51,7 +53,12 @@ export default async function NewQuotationPage({
               : t("Enter the customer details, add line items, and HR Plus will calculate totals automatically.")}
         </p>
       </div>
-      <QuotationForm preset={preset} customer={client || undefined} />
+      <QuotationForm
+        preset={preset}
+        customer={client || undefined}
+        defaultPreparedBy={defaultPreparedBy}
+        colleagueNames={colleagueNames}
+      />
     </div>
   );
 }

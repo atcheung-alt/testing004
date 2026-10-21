@@ -14,6 +14,12 @@ import {
   type DocumentLanguage,
 } from "@/lib/settings";
 import type { Quotation, LineItem, CustomerDetails } from "@/types";
+import { computeTotals } from "@/lib/calculations";
+import ColleagueShareFields, {
+  emptyColleagueShare,
+  type ColleagueShare,
+  type ShareMode,
+} from "@/components/ColleagueShareFields";
 import { useT } from "@/lib/i18n/client";
 
 export type QuotationFormPreset = {
@@ -39,10 +45,16 @@ export default function QuotationForm({
   quotation,
   preset,
   customer: initialCustomer,
+  defaultPreparedBy = "",
+  colleagueNames = [],
+  viewerEmails: initialViewerEmails = "",
 }: {
   quotation?: Quotation;
   preset?: QuotationFormPreset;
   customer?: CustomerDetails;
+  defaultPreparedBy?: string;
+  colleagueNames?: string[];
+  viewerEmails?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -72,6 +84,16 @@ export default function QuotationForm({
   const [discount, setDiscount] = useState(source?.discount ?? 0);
   const [repeatCount, setRepeatCount] = useState(source?.repeatCount ?? 1);
   const [notes, setNotes] = useState(source?.notes || "");
+  const [preparedBy, setPreparedBy] = useState(quotation?.preparedBy || defaultPreparedBy);
+  const [viewerEmails, setViewerEmails] = useState(initialViewerEmails);
+  const [shareMode, setShareMode] = useState<ShareMode>(
+    quotation?.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"
+  );
+  const [shares, setShares] = useState<ColleagueShare[]>(
+    quotation?.shares?.length
+      ? quotation.shares.map((share) => emptyColleagueShare(share.colleagueName, share.value))
+      : [emptyColleagueShare(defaultPreparedBy)]
+  );
 
   // Which language the Reminder/Terms text (and the generated PDF's static
   // labels) are in — see DocumentLanguage in src/lib/settings.ts.
@@ -160,6 +182,13 @@ export default function QuotationForm({
         terms,
         language,
         paymentDueDays,
+        preparedBy,
+        shareMode,
+        shares: shares.map(({ colleagueName, value }) => ({ colleagueName, value })),
+        viewerEmails: viewerEmails
+          .split(/[\s,;]+/)
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
       };
       const res = await fetch(quotation ? `/api/quotations/${quotation.id}` : "/api/quotations", {
         method: quotation ? "PATCH" : "POST",
@@ -271,6 +300,30 @@ export default function QuotationForm({
           onDiscountChange={setDiscount}
           repeatCount={repeatCount}
           onRepeatCountChange={setRepeatCount}
+        />
+      </div>
+
+      <ColleagueShareFields
+        preparedBy={preparedBy}
+        onPreparedByChange={setPreparedBy}
+        shareMode={shareMode}
+        onShareModeChange={setShareMode}
+        shares={shares}
+        onSharesChange={setShares}
+        total={computeTotals(items, taxRate, discount, repeatCount).total}
+        colleagueNames={colleagueNames}
+      />
+
+      <div className="card p-5">
+        <h2 className="font-display text-lg font-semibold mb-1">{t("Also let these people see it")}</h2>
+        <p className="text-xs text-ink-faint mb-3">
+          {t("Freelance accounts only see documents they created. Type their email here, separated by commas, to let them open this quotation and its files.")}
+        </p>
+        <input
+          className="input"
+          value={viewerEmails}
+          placeholder="name@company.com"
+          onChange={(e) => setViewerEmails(e.target.value)}
         />
       </div>
 

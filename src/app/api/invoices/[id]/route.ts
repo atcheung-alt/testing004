@@ -5,8 +5,13 @@ import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, documentLangu
 import { ensureReceiptForInvoice } from "@/lib/receipt";
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
+import { invoiceVisible } from "@/lib/documentAccess";
+import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await invoiceVisible(params.id))) {
+    return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
   const invoice = await prisma.invoice.findUnique({
     where: { id: params.id },
     include: {
@@ -26,9 +31,15 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
 
+  if (!(await invoiceVisible(params.id))) {
+    return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
   const existing = await prisma.invoice.findUnique({ where: { id: params.id } });
   if (!existing) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
+  if (Array.isArray(body.viewerEmails)) {
+    await setDocumentViewers("invoice", params.id, body.viewerEmails);
   }
   if (body.status !== undefined && !VALID_INVOICE_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "That's not a valid invoice status." }, { status: 400 });
@@ -228,6 +239,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await invoiceVisible(params.id))) {
+    return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
   const existing = await prisma.invoice.findUnique({ where: { id: params.id } });
   if (!existing) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });

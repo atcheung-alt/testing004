@@ -41,10 +41,12 @@ export default function InvoiceForm({
   invoice,
   customer: initialCustomer,
   calendarEventName: initialCalendarName,
+  viewerEmails: initialViewerEmails = "",
 }: {
   invoice?: Invoice;
   customer?: CustomerDetails;
   calendarEventName?: string | null;
+  viewerEmails?: string;
 }) {
   const router = useRouter();
   const t = useT();
@@ -61,6 +63,7 @@ export default function InvoiceForm({
         ? { ...emptyCustomer(), ...initialCustomer }
         : emptyCustomer()
   );
+  const [viewerEmails, setViewerEmails] = useState(initialViewerEmails);
   const [title, setTitle] = useState(invoice?.title || "");
   const [poNumber, setPoNumber] = useState(invoice?.poNumber || "");
   const [issueDate, setIssueDate] = useState(
@@ -163,6 +166,10 @@ export default function InvoiceForm({
         terms,
         language,
         paymentDueDays,
+        viewerEmails: viewerEmails
+          .split(/[\s,;]+/)
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
       };
       const res = await fetch(invoice ? `/api/invoices/${invoice.id}` : "/api/invoices", {
         method: invoice ? "PATCH" : "POST",
@@ -337,6 +344,19 @@ export default function InvoiceForm({
           onTaxRateChange={setTaxRate}
           discount={discount}
           onDiscountChange={setDiscount}
+        />
+      </div>
+
+      <div className="card p-5">
+        <h2 className="font-display text-lg font-semibold mb-1">{t("Also let these people see it")}</h2>
+        <p className="text-xs text-ink-faint mb-3">
+          {t("Freelance accounts only see documents they created. Type their email here, separated by commas, to let them open this invoice and its files.")}
+        </p>
+        <input
+          className="input"
+          value={viewerEmails}
+          placeholder="name@company.com"
+          onChange={(e) => setViewerEmails(e.target.value)}
         />
       </div>
 

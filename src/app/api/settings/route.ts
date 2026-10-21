@@ -31,6 +31,10 @@ export async function PUT(request: NextRequest) {
     animationsEnabled:
       typeof body.animationsEnabled === "boolean" ? body.animationsEnabled : current.animationsEnabled,
     themeMode: typeof body.themeMode === "string" ? (body.themeMode as ThemeMode) : current.themeMode,
+    mpfNotificationsEnabled:
+      typeof body.mpfNotificationsEnabled === "boolean"
+        ? body.mpfNotificationsEnabled
+        : current.mpfNotificationsEnabled,
   };
 
   const errors = validateSettings(merged);
@@ -48,6 +52,7 @@ export async function PUT(request: NextRequest) {
     ccEmails: merged.ccEmails,
     animationsEnabled: merged.animationsEnabled,
     themeMode: merged.themeMode,
+    mpfNotificationsEnabled: merged.mpfNotificationsEnabled,
   });
 
   return NextResponse.json(settings);
