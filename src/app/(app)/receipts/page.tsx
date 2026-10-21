@@ -14,6 +14,7 @@ import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { isValidEmail, receiptEmailContent } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
+import { currentInvoiceFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,11 @@ async function MoneyList({
         ],
       }
     : undefined;
+  const visibility = await currentInvoiceFilter();
+  const invoiceWhere =
+    customerFilter || visibility
+      ? { AND: [...(customerFilter ? [customerFilter] : []), ...(visibility ? [visibility] : [])] }
+      : undefined;
 
   const receipts =
     view === "expenses"
@@ -53,7 +59,7 @@ async function MoneyList({
       : await prisma.receipt.findMany({
           where: {
             issueDate: range,
-            invoice: customerFilter,
+            invoice: invoiceWhere,
           },
           include: {
             invoice: { select: { id: true, number: true, title: true, customerName: true, customerEmail: true, total: true } },
@@ -67,7 +73,7 @@ async function MoneyList({
       : await prisma.invoiceExpense.findMany({
           where: {
             createdAt: range,
-            invoice: customerFilter,
+            invoice: invoiceWhere,
           },
           include: {
             invoice: { select: { id: true, number: true, title: true, customerName: true, customerEmail: true } },

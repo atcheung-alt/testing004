@@ -162,8 +162,10 @@ function parseStringList(value: string): string[] {
   }
 }
 
+const RESERVED_ACCESS_ROW_IDS = new Set(["staff_profiles", "client_service_terms", "access_requests"]);
+
 function readGroups(rows: { id: string; name: string; pages: string; emails: string }[]): AccessGroupRecord[] {
-  return rows.map((row) => ({
+  return rows.filter((row) => !RESERVED_ACCESS_ROW_IDS.has(row.id)).map((row) => ({
     id: row.id,
     name: row.name,
     pages: parseStringList(row.pages).filter((id) => PAGE_IDS.has(id)),
@@ -228,7 +230,7 @@ export function sanitizeGroups(input: unknown, people: AccessPerson[]): AccessGr
     const name = typeof record.name === "string" ? record.name.trim().slice(0, 40) : "";
     if (!name) continue;
     const id = typeof record.id === "string" && record.id.trim() ? record.id.trim() : "";
-    if (!id) continue;
+    if (!id || RESERVED_ACCESS_ROW_IDS.has(id)) continue;
     const pages = Array.isArray(record.pages)
       ? Array.from(new Set(record.pages.filter((page): page is string => typeof page === "string" && PAGE_IDS.has(page))))
       : [];
@@ -273,7 +275,7 @@ export async function loadAccessGroups(): Promise<{ groups: AccessGroupRecord[];
 export async function replaceAccessGroups(groups: AccessGroupRecord[]): Promise<{ ok: true } | { ok: false; missing: boolean }> {
   try {
     await prisma.$transaction([
-      prisma.accessGroup.deleteMany(),
+      prisma.accessGroup.deleteMany({ where: { id: { notIn: Array.from(RESERVED_ACCESS_ROW_IDS) } } }),
       ...groups.map((group, index) =>
         prisma.accessGroup.create({
           data: {

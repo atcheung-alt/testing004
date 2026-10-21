@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Pencil, Clock, FileText, FileDown, ExternalLink, ShieldCheck, ShieldAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatDateTime, formatCurrency } from "@/lib/calculations";
@@ -16,7 +16,8 @@ import {
 import { isValidEmail } from "@/lib/settings";
 import { getActivityTimeline } from "@/lib/activity";
 import { mpfReminderFor } from "@/lib/payroll";
-import { getCurrentUser, requireAdminPage } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { employeeScopeFor, employeeVisibleById } from "@/lib/documentAccess";
 import DeleteButton from "@/components/DeleteButton";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
@@ -29,6 +30,7 @@ import MarkOnboardingCompleteButton from "@/components/MarkOnboardingCompleteBut
 import MpfVerifyButton from "@/components/MpfVerifyButton";
 import SalaryReportButton from "@/components/SalaryReportButton";
 import IR56BButton from "@/components/IR56BButton";
+import { loadEmploymentHistory } from "@/lib/employmentHistory";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -49,9 +51,11 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
   // EMPLOYEE_STAFF_SELECT branch below is dead code past this guard, but
   // left in place rather than ripped out — a cheap safety net if this page
   // is ever reopened to non-admins again.
-  await requireAdminPage();
   const user = await getCurrentUser();
-  const isAdmin = !!user?.isAdmin;
+  const scope = await employeeScopeFor(user);
+  if (scope.mode === "deny") redirect("/hr/profile");
+  if (!(await employeeVisibleById(params.id))) notFound();
+  const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
   // Two different Prisma queries, not one query with fields hidden in the
   // JSX: a non-admin's request never selects HKID/address/birthday/salary/
@@ -60,7 +64,11 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
   const employee = isAdmin
     ? await prisma.employee.findUnique({
         where: { id: params.id },
-        include: { leaveRequests: { orderBy: { createdAt: "desc" } }, contract: true },
+        include: {
+          leaveRequests: { orderBy: { createdAt: "desc" } },
+          contract: true,
+          company: { select: { name: true } },
+        },
       })
     : ((await prisma.employee.findUnique({
         where: { id: params.id },
@@ -76,6 +84,9 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
     employee.leaveRequests
   );
   const timeline = await getActivityTimeline("employee", employee.id);
+  const history = await loadEmploymentHistory(employee.id);
+  const currentIndex = history.findIndex((entry) => entry.id === employee.id);
+  const hasLaterRecord = currentIndex >= 0 && currentIndex < history.length - 1;
 
   const contract = isAdmin ? (employee as any).contract : null;
   let contractSigningUrl: string | null = null;
@@ -111,6 +122,11 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
             </span>
           </div>
           {employee.title && <p className="text-sm text-ink-muted">{employee.title}</p>}
+          {(employee.nickname || employee.company?.name) && (
+            <p className="text-sm text-ink-muted">
+              {[employee.nickname, employee.company?.name].filter(Boolean).join(" · ")}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           {leaveUrl && (
@@ -124,6 +140,11 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
             <>
               <SalaryReportButton employeeId={employee.id} />
               <IR56BButton employeeId={employee.id} hkid={employee.hkid} address={employee.address} />
+              {employee.status === "FORMER" && !hasLaterRecord && (
+                <Link href={`/hr/employees/${employee.id}/rejoin`} className="btn-primary">
+                  {t("Rejoin")}
+                </Link>
+              )}
               <Link href={`/hr/employees/${employee.id}/edit`} className="btn-secondary">
                 <Pencil size={15} /> {t("Edit")}
               </Link>
@@ -135,6 +156,40 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               />
             </>
           )}
+        </div>
+      </div>
+
+      <div className="card p-5">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-3">
+          {t("Employment history")}
+        </h2>
+        <p className="text-sm text-ink-muted mb-3">
+          {t("Previous and current employment records stay on file. Open any row to see that period.")}
+        </p>
+        <div className="flex flex-col divide-y divide-line">
+          {history.map((entry) => (
+            <Link
+              key={entry.id}
+              href={`/hr/employees/${entry.id}`}
+              className={`flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm ${
+                entry.id === employee.id ? "text-ink" : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              <span>
+                <span className="font-medium">{entry.nickname || entry.name}</span>
+                {entry.title ? ` · ${entry.title}` : ""}
+                {entry.companyName ? ` · ${entry.companyName}` : ""}
+                {entry.id === employee.id ? ` · ${t("This record")}` : ""}
+              </span>
+              <span className="text-xs">
+                {entry.startDate ? formatDate(entry.startDate) : t("No start date")}
+                {" – "}
+                {entry.lastDay ? formatDate(entry.lastDay) : entry.status === "FORMER" ? t("Left") : t("Present")}
+                {" · "}
+                {t(entry.status)}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
 

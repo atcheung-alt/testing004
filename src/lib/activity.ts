@@ -55,7 +55,9 @@ export async function logActivity(params: {
     if (actor === "STAFF" && !actorName) {
       try {
         const user = await getCurrentUser();
-        actorName = user?.name || user?.email || null;
+        const email = user?.email?.trim();
+        const name = user?.name?.trim();
+        actorName = email ? (name && name.toLowerCase() !== email.toLowerCase() ? `${name} <${email}>` : email) : name || null;
       } catch {
         // No request/session context available (shouldn't normally happen
         // for a STAFF-actor event) — fall back to no name rather than fail.

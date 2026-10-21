@@ -3,11 +3,43 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, ChevronDown, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
+import AccessRequestQueue from "@/components/AccessRequestQueue";
 import clsx from "clsx";
 
-type Person = { id: string; email: string; name: string; isAdmin: boolean };
+type Person = {
+  id: string;
+  email: string;
+  name: string;
+  nickname: string;
+  isAdmin: boolean;
+  category: string | null;
+  label: string | null;
+  companyName: string;
+};
+type AccessRequestRow = {
+  id: string;
+  email: string;
+  name: string;
+  companyName: string;
+  note: string;
+  createdAt: string;
+};
+type CompanyOption = { id: string; name: string };
 type Group = { id: string; name: string; pages: string[]; emails: string[] };
 type PageOption = { id: string; href: string; label: string };
+
+const CATEGORIES = [
+  ["HR_PLUS_STAFF", "HR Plus staff"],
+  ["FULL_TIME", "Full-time"],
+  ["PART_TIME", "Part-time"],
+  ["FREELANCE", "Freelance"],
+] as const;
+const ROLES = [
+  ["ADMIN", "Admin"],
+  ["MEMBER", "Member"],
+  ["EXTERNAL_ADMIN", "External admin"],
+  ["EXTERNAL_MEMBER", "External member"],
+] as const;
 
 function newGroupId() {
   return `group_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
@@ -60,6 +92,8 @@ function Fold({
 export default function ManagementWorkspace() {
   const t = useT();
   const [people, setPeople] = useState<Person[]>([]);
+  const [requests, setRequests] = useState<AccessRequestRow[]>([]);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [pages, setPages] = useState<PageOption[]>([]);
   const [fullAccessEmails, setFullAccessEmails] = useState<string[]>([]);
@@ -72,7 +106,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
-  const [openSection, setOpenSection] = useState<"admins" | "groups" | "people" | null>(null);
+  const [openSection, setOpenSection] = useState<"requests" | "admins" | "groups" | "people" | null>(null);
 
   useEffect(() => {
     fetch("/api/access")
@@ -80,6 +114,8 @@ export default function ManagementWorkspace() {
       .then((data) => {
         if (!Array.isArray(data.people)) throw new Error(data.error || "Could not load access groups.");
         setPeople(data.people);
+        setRequests(Array.isArray(data.requests) ? data.requests : []);
+        setCompanies(Array.isArray(data.companies) ? data.companies : []);
         setGroups(Array.isArray(data.groups) ? data.groups : []);
         setPages(Array.isArray(data.pages) ? data.pages : []);
         setFullAccessEmails(Array.isArray(data.fullAccessEmails) ? data.fullAccessEmails : []);
@@ -87,6 +123,7 @@ export default function ManagementWorkspace() {
         if (typeof data.fullGroupId === "string") setFullGroupId(data.fullGroupId);
         setReady(data.ready !== false);
         setSelectedId(data.groups?.[0]?.id ?? null);
+        if (Array.isArray(data.requests) && data.requests.length > 0) setOpenSection("requests");
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
@@ -164,6 +201,33 @@ export default function ManagementWorkspace() {
     return groups.find((group) => group.emails.includes(email.toLowerCase()))?.id || "";
   }
 
+  async function reloadAccess() {
+    const res = await fetch("/api/access");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not load access groups.");
+    setPeople(data.people);
+    setRequests(Array.isArray(data.requests) ? data.requests : []);
+    setCompanies(Array.isArray(data.companies) ? data.companies : []);
+  }
+
+  async function savePersonAccess(person: Person) {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/access/person", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(person),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save this person's access.");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <p className="text-sm text-ink-muted">{t("Loading…")}</p>;
 
   return (
@@ -184,6 +248,22 @@ export default function ManagementWorkspace() {
           </span>
         </div>
       )}
+
+      <Fold
+        title={t("Access requests")}
+        summary={t("{count} waiting", { count: requests.length })}
+        open={openSection === "requests"}
+        delay="0.02s"
+        onToggle={() => setOpenSection((current) => (current === "requests" ? null : "requests"))}
+      >
+        <AccessRequestQueue
+          requests={requests}
+          companies={companies}
+          saving={saving}
+          onError={setError}
+          onDone={reloadAccess}
+        />
+      </Fold>
 
       <Fold
         title={t("Always Full Access")}
@@ -375,8 +455,11 @@ export default function ManagementWorkspace() {
               <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
             ) : (
               <div className="divide-y divide-line">
-                {shownPeople.map((person) => (
-                  <div key={person.id} className="flex items-center justify-between gap-3 py-2">
+                {shownPeople.map((person) => {
+                  const external = person.label === "EXTERNAL_ADMIN" || person.label === "EXTERNAL_MEMBER";
+                  return (
+                  <div key={person.id} className="flex flex-col gap-2 py-3">
+                    <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm text-ink truncate">{person.name || person.email}</p>
                       <p className="text-xs text-ink-faint truncate">{person.email}</p>
@@ -394,8 +477,87 @@ export default function ManagementWorkspace() {
                         </option>
                       ))}
                     </select>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                      <input
+                        className="input py-1 text-sm"
+                        placeholder={t("Nickname")}
+                        value={person.nickname || ""}
+                        onChange={(event) =>
+                          setPeople((current) =>
+                            current.map((item) => (item.id === person.id ? { ...item, nickname: event.target.value } : item))
+                          )
+                        }
+                      />
+                      <select
+                        className="input py-1 text-sm"
+                        value={person.category || ""}
+                        onChange={(event) =>
+                          setPeople((current) =>
+                            current.map((item) =>
+                              item.id === person.id ? { ...item, category: event.target.value || null } : item
+                            )
+                          )
+                        }
+                      >
+                        <option value="">{t("Not set")}</option>
+                        {CATEGORIES.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {t(label)}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        className="input py-1 text-sm"
+                        value={person.label || ""}
+                        onChange={(event) =>
+                          setPeople((current) =>
+                            current.map((item) =>
+                              item.id === person.id ? { ...item, label: event.target.value || null } : item
+                            )
+                          )
+                        }
+                      >
+                        <option value="">{t("Not set")}</option>
+                        {ROLES.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {t(label)}
+                          </option>
+                        ))}
+                      </select>
+                      {external ? (
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.companyName}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, companyName: event.target.value } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="">{t("Their company")}</option>
+                          {companies.map((company) => (
+                            <option key={company.id} value={company.name}>
+                              {company.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button type="button" className="btn-secondary" disabled={saving} onClick={() => savePersonAccess(person)}>
+                          {t("Save access")}
+                        </button>
+                      )}
+                    </div>
+                    {external && (
+                      <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => savePersonAccess(person)}>
+                        {t("Save access")}
+                      </button>
+                    )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
         </div>

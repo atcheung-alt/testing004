@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 
@@ -83,6 +84,9 @@ export default function LoginForm({
           </span>
         </div>
       )}
+      <Link href="/request-access" className="text-sm text-center text-ink-muted hover:text-ink">
+        {t("Can't sign in? Request access")}
+      </Link>
     </div>
   );
 }

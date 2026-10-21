@@ -19,6 +19,7 @@ const emptySettings: AppSettings = {
   animationsEnabled: true,
   themeMode: "LIGHT",
   companyLogoDark: null,
+  mpfNotificationsEnabled: true,
 };
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
@@ -189,6 +190,21 @@ export default function SettingsForm() {
             onChange={(v) => update("animationsEnabled", v)}
           />
         </label>
+
+        <div className="pt-3 border-t border-line flex flex-col gap-2">
+          <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
+            <span>{t("MPF notifications")}</span>
+            <Switch
+              checked={settings.mpfNotificationsEnabled}
+              onChange={(v) => update("mpfNotificationsEnabled", v)}
+            />
+          </label>
+          <p className="text-xs text-ink-faint max-w-lg">
+            {t(
+              "When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner."
+            )}
+          </p>
+        </div>
 
         <div className="pt-1">
           <p className="text-sm font-medium mb-2">{t("Default color theme")}</p>

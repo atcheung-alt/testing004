@@ -8,6 +8,7 @@ import { SESSION_COOKIE, verifySession } from "@/lib/authToken";
 // are exempt.
 const PUBLIC_PATH_PREFIXES = [
   "/login",
+  "/request-access",
   "/sign/",
   "/invoice/",
   "/recruitment-sign/",
@@ -32,6 +33,7 @@ const PUBLIC_PATH_PREFIXES = [
   // one event (see src/app/massage-survey/[token]/page.tsx).
   "/massage-survey/",
   "/api/auth/",
+  "/api/access-requests",
   "/api/public/",
   "/api/cron/",
   "/_next/",

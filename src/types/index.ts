@@ -10,6 +10,7 @@ export type AppSettings = {
   ccEmails: string;
   animationsEnabled: boolean;
   themeMode: ThemeMode;
+  mpfNotificationsEnabled: boolean;
 };
 
 export type CustomerDetails = {
@@ -123,6 +124,9 @@ export type Quotation = CustomerDetails & {
   items: LineItem[];
   invoice?: { id: string; number: string } | null;
   comments?: QuotationComment[];
+  preparedBy?: string;
+  shareMode?: "AMOUNT" | "PERCENT";
+  shares?: { id?: string; colleagueName: string; value: number; sortOrder?: number }[];
   signingToken?: string | null;
   signatureData?: string | null;
   signedDocumentData?: string | null; // base64 PDF of an uploaded scanned/printed signed copy
@@ -195,6 +199,8 @@ export type Employee = {
   // What they go by day to day — shown on the Employees list instead of the
   // full name when set. Everywhere else keeps using `name`.
   preferredName?: string | null;
+  nickname?: string | null;
+  companyId?: string | null;
   title: string;
   salary: number;
   payRateType?: PayRateType | null;

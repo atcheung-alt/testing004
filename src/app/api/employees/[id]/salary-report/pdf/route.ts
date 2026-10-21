@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth";
+import { canManageEmployee } from "@/lib/documentAccess";
 import { isValidPeriod } from "@/lib/payroll";
 import { buildSalaryReportPdf } from "@/lib/pdf/build";
 import { pdfContentDisposition } from "@/lib/pdf/language";
@@ -12,8 +13,10 @@ export const runtime = "nodejs";
  *  buildSalaryReportPdf for how periods outside the range are excluded and
  *  what happens when no entries exist in range. */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
+  if (!(await canManageEmployee(params.id))) {
+    const denied = await requireAdminApi();
+    return denied || NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  }
 
   const from = request.nextUrl.searchParams.get("from") || "";
   const to = request.nextUrl.searchParams.get("to") || "";

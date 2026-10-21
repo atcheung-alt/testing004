@@ -6,6 +6,7 @@ import { dateRangeFilter } from "@/lib/dateRange";
 import { buildCsv, csvResponseHeaders } from "@/lib/csv";
 import { appLanguageFromRequest } from "@/lib/i18n/downloadLanguage";
 import { translate } from "@/lib/i18n/translate";
+import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 
 /**
  * CSV export for the invoices list — takes the exact same `q`/`status`/
@@ -25,17 +26,20 @@ export async function GET(request: NextRequest) {
   const to = request.nextUrl.searchParams.get("to") || undefined;
 
   const invoices = await prisma.invoice.findMany({
-    where: {
-      status: status === "OVERDUE" ? "UNPAID" : status || undefined,
-      dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
-      issueDate: dateRangeFilter(from, to),
-      OR: q
-        ? [
-            { customerName: { contains: q, mode: "insensitive" } },
-            { customerEmail: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status === "OVERDUE" ? "UNPAID" : status || undefined,
+        dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
+        issueDate: dateRangeFilter(from, to),
+        OR: q
+          ? [
+              { customerName: { contains: q, mode: "insensitive" } },
+              { customerEmail: { contains: q, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      await currentInvoiceFilter()
+    ),
     orderBy: { createdAt: "desc" },
   });
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildExpensePdf } from "@/lib/pdf/buildExpense";
 import { pdfContentDisposition } from "@/lib/pdf/language";
 import { pdfLanguageFromRequest } from "@/lib/i18n/downloadLanguage";
+import { invoiceVisible } from "@/lib/documentAccess";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string; expenseId: string } }
 ) {
+  if (!(await invoiceVisible(params.id))) {
+    return NextResponse.json({ error: "Expense not found." }, { status: 404 });
+  }
   const language = pdfLanguageFromRequest(request);
   const built = await buildExpensePdf(params.id, params.expenseId, language);
   if (!built) {

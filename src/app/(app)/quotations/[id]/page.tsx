@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, FileDown } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/calculations";
+import { formatCurrency, formatDate } from "@/lib/calculations";
 import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
@@ -23,17 +23,20 @@ import { withParsedFeesList } from "@/lib/fees";
 import { getActivityTimeline } from "@/lib/activity";
 import { computeTotals } from "@/lib/calculations";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
+import { quotationVisible } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotationDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
+  if (!(await quotationVisible(params.id))) notFound();
   const raw = await prisma.quotation.findUnique({
     where: { id: params.id },
     include: {
       items: { orderBy: { sortOrder: "asc" } },
       invoice: { select: { id: true, number: true } },
       comments: { orderBy: { createdAt: "asc" } },
+      shares: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -72,6 +75,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             <span className="text-brand-600 font-medium">{quotation.customerName}</span>{" "}
             · {t("Issued {date}", { date: formatDate(quotation.issueDate) })}
             {quotation.expiryDate ? ` · ${t("Valid until {date}", { date: formatDate(quotation.expiryDate) })}` : ""}
+            {quotation.preparedBy ? ` · ${t("Made by {name}", { name: quotation.preparedBy })}` : ""}
           </p>
           {quotation.invoice && (
             <p className="text-sm text-accent-600 mt-1">
@@ -164,6 +168,36 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             </p>
           ))}
       </div>
+
+      {(quotation.preparedBy || quotation.shares.length > 0) && (
+        <div className="card p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-3">
+            {t("Colleague sharing")}
+          </h2>
+          {quotation.preparedBy && (
+            <p className="text-sm text-ink mb-3">{t("Made by {name}", { name: quotation.preparedBy })}</p>
+          )}
+          {quotation.shares.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-ink-faint">
+                {quotation.shareMode === "PERCENT" ? t("Percentage of total") : t("Exact amount")}
+              </p>
+              {quotation.shares.map((share) => {
+                const amount =
+                  quotation.shareMode === "PERCENT" ? (quotation.total * share.value) / 100 : share.value;
+                return (
+                  <div key={share.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium">{share.colleagueName}</span>
+                    <span className="font-mono text-ink-muted">
+                      {quotation.shareMode === "PERCENT" ? `${share.value}% · ${formatCurrency(amount)}` : formatCurrency(amount)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       <DocumentItemsTable
         items={quotation.items}

@@ -15,6 +15,8 @@ export type EmployeeListItem = {
   id: string;
   name: string;
   preferredName: string | null;
+  nickname: string | null;
+  companyId: string | null;
   nameChinese: string | null;
   title: string;
   status: string;
@@ -83,10 +85,14 @@ function Row({ label, value }: { label: string; value?: string | null }) {
 // noticeably slower to open a preview as more employees were added.
 const EmployeeTable = memo(function EmployeeTable({
   employees,
+  companies,
   onSelect,
+  onCompanyChange,
 }: {
   employees: EmployeeListItem[];
+  companies: { id: string; name: string }[];
   onSelect: (id: string) => void;
+  onCompanyChange: (id: string, companyId: string) => void;
 }) {
   const t = useT();
   return (
@@ -96,6 +102,7 @@ const EmployeeTable = memo(function EmployeeTable({
           <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">
             <th className="px-5 py-3">{t("Name")}</th>
             <th className="hidden md:table-cell px-5 py-3">{t("Title")}</th>
+            <th className="hidden lg:table-cell px-5 py-3">{t("Company")}</th>
             <th className="px-5 py-3">{t("Status")}</th>
             <th className="hidden sm:table-cell px-5 py-3">{t("Onboard date")}</th>
             <th className="px-5 py-3 text-right" aria-label={t("Notifications")} />
@@ -109,7 +116,10 @@ const EmployeeTable = memo(function EmployeeTable({
               className="cursor-pointer border-b border-line last:border-0 hover:bg-brand-50/40"
             >
               <td className="px-5 py-3">
-                <span className="font-medium text-brand-600 block">{displayName(e)}</span>
+                <span className="font-medium text-brand-600 block">
+                  {displayName(e)}
+                  {e.nickname ? <span className="text-ink-muted font-normal"> · {e.nickname}</span> : null}
+                </span>
                 {e.employmentType && (
                   <span className="text-xs text-ink-muted block mt-0.5">
                     {t(EMPLOYMENT_TYPE_LABELS[e.employmentType] || e.employmentType)}
@@ -118,6 +128,21 @@ const EmployeeTable = memo(function EmployeeTable({
               </td>
               <td className="hidden md:table-cell px-5 py-3 text-ink-muted">
                 {e.title || t("No title set")}
+              </td>
+              <td className="hidden lg:table-cell px-5 py-3" onClick={(event) => event.stopPropagation()}>
+                <select
+                  className="input py-1 text-sm"
+                  value={e.companyId || ""}
+                  aria-label={t("Company")}
+                  onChange={(event) => onCompanyChange(e.id, event.target.value)}
+                >
+                  <option value="">{t("No company")}</option>
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
               </td>
               <td className="px-5 py-3">
                 <span className={`stamp justify-center ${statusStampClass(e.status)}`}>{t(e.status)}</span>
@@ -168,18 +193,99 @@ const EmployeeTable = memo(function EmployeeTable({
   );
 });
 
-export default function EmployeeListClient({ employees }: { employees: EmployeeListItem[] }) {
+function NicknameEditor({ employeeId, value }: { employeeId: string; value: string | null }) {
+  const t = useT();
+  const router = useRouter();
+  const [nickname, setNickname] = useState(value || "");
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    if (nickname.trim() === (value || "")) return;
+    setSaving(true);
+    try {
+      await fetch(`/api/employees/${employeeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname }),
+      });
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <label className="flex items-center justify-between gap-3">
+      <span className="text-ink-muted">{t("Nickname")}</span>
+      <input
+        className="input py-1 text-sm max-w-[10rem]"
+        value={nickname}
+        placeholder={t("e.g. AT")}
+        disabled={saving}
+        onChange={(event) => setNickname(event.target.value)}
+        onBlur={save}
+      />
+    </label>
+  );
+}
+
+export default function EmployeeListClient({
+  employees,
+  companies,
+}: {
+  employees: EmployeeListItem[];
+  companies: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const t = useT();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = employees.find((e) => e.id === selectedId) || null;
+
+  async function changeCompany(id: string, companyId: string) {
+    await fetch(`/api/employees/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyId: companyId || null }),
+    });
+    router.refresh();
+  }
+
+  const groups = [
+    ...companies.map((company) => ({
+      key: company.id,
+      title: company.name,
+      rows: employees.filter((employee) => employee.companyId === company.id),
+    })),
+    {
+      key: "none",
+      title: t("No company"),
+      rows: employees.filter(
+        (employee) => !employee.companyId || !companies.some((company) => company.id === employee.companyId)
+      ),
+    },
+  ].filter((group) => group.rows.length > 0);
 
   return (
     <>
       {/* `setSelectedId` is a useState setter, so its identity is stable
           across renders — passing it straight through here keeps
           EmployeeTable's memoization intact. */}
-      <EmployeeTable employees={employees} onSelect={setSelectedId} />
+      <div className="flex flex-col gap-6">
+        {groups.map((group) => (
+          <section key={group.key} className="flex flex-col gap-2">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              {group.title}
+              <span className="ml-2 text-sm font-normal text-ink-muted">{group.rows.length}</span>
+            </h2>
+            <EmployeeTable
+              employees={group.rows}
+              companies={companies}
+              onSelect={setSelectedId}
+              onCompanyChange={changeCompany}
+            />
+          </section>
+        ))}
+      </div>
 
       {selected && (
         <Portal>
@@ -243,6 +349,22 @@ export default function EmployeeListClient({ employees }: { employees: EmployeeL
 
               <div className="py-4 flex flex-col gap-2.5">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Employment")}</h3>
+                <NicknameEditor key={selected.id} employeeId={selected.id} value={selected.nickname} />
+                <label className="flex items-center justify-between gap-3">
+                  <span className="text-ink-muted">{t("Company")}</span>
+                  <select
+                    className="input py-1 text-sm max-w-[12rem]"
+                    value={selected.companyId || ""}
+                    onChange={(event) => changeCompany(selected.id, event.target.value)}
+                  >
+                    <option value="">{t("No company")}</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Row label={t("Start date")} value={formatDate(selected.startDate)} />
                 {selected.status === "FORMER" && (
                   <>

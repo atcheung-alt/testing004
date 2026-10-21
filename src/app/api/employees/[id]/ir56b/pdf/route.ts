@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi } from "@/lib/auth";
+import { canManageEmployee } from "@/lib/documentAccess";
 import { buildIR56BPdf } from "@/lib/pdf/build";
 
 export const runtime = "nodejs";
@@ -8,8 +9,10 @@ export const runtime = "nodejs";
  *  HK tax year ending 31 March of that year (e.g. year=2026 covers 1 Apr
  *  2025 – 31 Mar 2026). See buildIR56BPdf for what is/isn't auto-filled. */
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
+  if (!(await canManageEmployee(params.id))) {
+    const denied = await requireAdminApi();
+    return denied || NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  }
 
   const yearParam = request.nextUrl.searchParams.get("year") || "";
   const year = Number(yearParam);

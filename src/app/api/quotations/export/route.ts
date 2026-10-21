@@ -5,6 +5,7 @@ import { dateRangeFilter } from "@/lib/dateRange";
 import { buildCsv, csvResponseHeaders } from "@/lib/csv";
 import { appLanguageFromRequest } from "@/lib/i18n/downloadLanguage";
 import { translate } from "@/lib/i18n/translate";
+import { andFilters, currentQuotationFilter } from "@/lib/documentAccess";
 
 /**
  * CSV export for the quotations list — takes the exact same `q`/`status`/
@@ -22,16 +23,19 @@ export async function GET(request: NextRequest) {
   const to = request.nextUrl.searchParams.get("to") || undefined;
 
   const quotations = await prisma.quotation.findMany({
-    where: {
-      status: status || undefined,
-      issueDate: dateRangeFilter(from, to),
-      OR: q
-        ? [
-            { customerName: { contains: q, mode: "insensitive" } },
-            { customerEmail: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status || undefined,
+        issueDate: dateRangeFilter(from, to),
+        OR: q
+          ? [
+              { customerName: { contains: q, mode: "insensitive" } },
+              { customerEmail: { contains: q, mode: "insensitive" } },
+            ]
+          : undefined,
+      },
+      await currentQuotationFilter()
+    ),
     include: { invoice: { select: { status: true } } },
     orderBy: { createdAt: "desc" },
   });

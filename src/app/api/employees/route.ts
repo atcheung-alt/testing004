@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { employeeFieldsFrom, VALID_EMPLOYEE_STATUSES } from "@/lib/employees";
 import { logActivity } from "@/lib/activity";
-import { requireAdminApi } from "@/lib/auth";
+import { getCurrentUser, requireAdminApi } from "@/lib/auth";
+import { andFilters, employeeScopeFor, employeeScopeWhere } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -11,19 +12,25 @@ export const dynamic = "force-dynamic";
 // page doesn't call this route at all; it queries Prisma directly with a
 // narrowed `select`.)
 export async function GET(request: NextRequest) {
-  const denied = await requireAdminApi();
-  if (denied) return denied;
+  const scope = await employeeScopeFor(await getCurrentUser());
+  if (scope.mode === "deny" || scope.mode === "self") {
+    const denied = await requireAdminApi();
+    if (denied) return denied;
+  }
 
   const q = request.nextUrl.searchParams.get("q") || undefined;
   const status = request.nextUrl.searchParams.get("status") || undefined;
 
   const employees = await prisma.employee.findMany({
-    where: {
-      status: status && VALID_EMPLOYEE_STATUSES.includes(status) ? status : undefined,
-      OR: q
-        ? [{ name: { contains: q, mode: "insensitive" } }, { title: { contains: q, mode: "insensitive" } }]
-        : undefined,
-    },
+    where: andFilters(
+      {
+        status: status && VALID_EMPLOYEE_STATUSES.includes(status) ? status : undefined,
+        OR: q
+          ? [{ name: { contains: q, mode: "insensitive" } }, { title: { contains: q, mode: "insensitive" } }]
+          : undefined,
+      },
+      employeeScopeWhere(scope)
+    ),
     // Only the count of pending requests is needed for the list page's
     // "X pending" badge — fetching full rows here would be wasteful.
     include: { leaveRequests: { where: { status: "PENDING" }, select: { id: true } } },
@@ -46,6 +53,12 @@ export async function POST(request: NextRequest) {
   }
 
   const { error, ...data } = fields;
+  if (data.companyId) {
+    const company = await prisma.employerCompany.findUnique({ where: { id: data.companyId } });
+    if (!company) {
+      return NextResponse.json({ error: "That company doesn't exist." }, { status: 400 });
+    }
+  }
   const employee = await prisma.employee.create({ data });
 
   await logActivity({

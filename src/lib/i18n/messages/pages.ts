@@ -48,6 +48,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
 
   "Configure appearance, Google Drive sync, company branding, and email CC preferences.":
     "設定外觀、Google Drive 同步、公司品牌及電郵副本偏好。",
+  "Configure appearance, your nickname, MPF reminders, Google Drive sync, company branding, and email CC preferences.":
+    "設定外觀、你的暱稱、強積金提醒、Google Drive 同步、公司品牌及電郵副本偏好。",
 
   "Quotations and invoices for each client. Editing a client leaves saved documents unchanged.":
     "各客戶的報價單和發票。修改客戶不會改動已儲存的文件。",
