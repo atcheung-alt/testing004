@@ -29,7 +29,7 @@ export default function RequiredSetupGate({
   const pathname = usePathname();
 
   if (!isAdmin || missingFields.length === 0) return null;
-  if (pathname === "/settings") return null;
+  if (pathname === "/management") return null;
 
   return (
     <Portal>
@@ -43,7 +43,7 @@ export default function RequiredSetupGate({
               <h2 className="font-display text-lg font-semibold text-ink">{t("Finish Setting Up HR Plus")}</h2>
               <p className="text-sm text-ink-muted mt-1">
                 {t(
-                  "A few things need to be filled in on the Settings page before the app can generate documents and emails correctly."
+                  "A few company details need to be filled in on the Management page before the app can generate documents and emails correctly."
                 )}
               </p>
             </div>
@@ -58,8 +58,8 @@ export default function RequiredSetupGate({
             ))}
           </ul>
 
-          <Link href="/settings" className="btn-primary justify-center">
-            {t("Go to Settings")}
+          <Link href="/management" className="btn-primary justify-center">
+            {t("Go to Management")}
           </Link>
         </div>
       </div>

@@ -7,7 +7,6 @@ import { useT } from "@/lib/i18n/client";
 export default function MyNicknameForm() {
   const t = useT();
   const [nickname, setNickname] = useState("");
-  const [email, setEmail] = useState("");
   const [staffCode, setStaffCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -19,7 +18,6 @@ export default function MyNicknameForm() {
       .then((res) => res.json())
       .then((data) => {
         setNickname(data.nickname || "");
-        setEmail(data.email || "");
         setStaffCode(data.staffCode || "");
       })
       .finally(() => setLoading(false));
@@ -51,10 +49,7 @@ export default function MyNicknameForm() {
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Your nickname")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t(
-            "Used as “Made by” on quotations you create, and as your default name when colleague profit is shared. For example, {email} with nickname AT.",
-            { email: email || t("your login email") }
-          )}
+          {t("Only you can change this name. Colleagues see it on the quotations and invoices you create.")}
         </p>
         {staffCode && (
           <p className="text-sm text-ink mt-2">

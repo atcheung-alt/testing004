@@ -93,7 +93,10 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   "Finish Setting Up HR Plus": "完成 HR Plus 設定",
   "A few things need to be filled in on the Settings page before the app can generate documents and emails correctly.":
     "請先在設定頁填妥以下項目，系統才能正確產生文件及電郵。",
+  "A few company details need to be filled in on the Management page before the app can generate documents and emails correctly.":
+    "請先在管理頁填妥公司資料，系統才能正確產生文件及電郵。",
   "Go to Settings": "前往設定",
+  "Go to Management": "前往管理",
   "Company name": "公司名稱",
   "Company logo": "公司標誌",
   "Company website": "公司網站",

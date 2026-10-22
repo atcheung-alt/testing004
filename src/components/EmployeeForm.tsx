@@ -281,7 +281,7 @@ export default function EmployeeForm({
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
             />
-            <p className="mt-1 text-xs text-ink-faint">{t("Short name you can change any time. Quotations can use a login nickname separately.")}</p>
+            <p className="mt-1 text-xs text-ink-faint">{t("Short name shown on the employee list.")}</p>
           </div>
           <div>
             <label className="label">{t("Company")}</label>

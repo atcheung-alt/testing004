@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, ChevronDown, Loader2, Lock, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import AccessRequestQueue from "@/components/AccessRequestQueue";
+import ExpenseCategoriesManager from "@/components/ExpenseCategoriesManager";
+import SettingsForm from "@/components/SettingsForm";
+import StaffAccountsManager from "@/components/StaffAccountsManager";
 import clsx from "clsx";
 
 type Person = {
@@ -217,7 +220,12 @@ export default function ManagementWorkspace() {
       const res = await fetch("/api/access/person", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(person),
+        body: JSON.stringify({
+          id: person.id,
+          category: person.category,
+          label: person.label,
+          companyName: person.companyName,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not save this person's access.");
@@ -248,6 +256,8 @@ export default function ManagementWorkspace() {
           </span>
         </div>
       )}
+
+      <StaffAccountsManager />
 
       <Fold
         title={t("Access requests")}
@@ -478,53 +488,49 @@ export default function ManagementWorkspace() {
                       ))}
                     </select>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                      <input
-                        className="input py-1 text-sm"
-                        placeholder={t("Nickname")}
-                        value={person.nickname || ""}
-                        onChange={(event) =>
-                          setPeople((current) =>
-                            current.map((item) => (item.id === person.id ? { ...item, nickname: event.target.value } : item))
-                          )
-                        }
-                      />
-                      <select
-                        className="input py-1 text-sm"
-                        value={person.category || ""}
-                        onChange={(event) =>
-                          setPeople((current) =>
-                            current.map((item) =>
-                              item.id === person.id ? { ...item, category: event.target.value || null } : item
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
+                        {t("Payroll category")}
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.category || ""}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, category: event.target.value || null } : item
+                              )
                             )
-                          )
-                        }
-                      >
-                        <option value="">{t("Not set")}</option>
-                        {CATEGORIES.map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {t(label)}
-                          </option>
-                        ))}
-                      </select>
-                      <select
-                        className="input py-1 text-sm"
-                        value={person.label || ""}
-                        onChange={(event) =>
-                          setPeople((current) =>
-                            current.map((item) =>
-                              item.id === person.id ? { ...item, label: event.target.value || null } : item
+                          }
+                        >
+                          <option value="">{t("Not set")}</option>
+                          {CATEGORIES.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {t(label)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
+                        {t("Role")}
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.label || ""}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, label: event.target.value || null } : item
+                              )
                             )
-                          )
-                        }
-                      >
-                        <option value="">{t("Not set")}</option>
-                        {ROLES.map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {t(label)}
-                          </option>
-                        ))}
-                      </select>
+                          }
+                        >
+                          <option value="">{t("Not set")}</option>
+                          {ROLES.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {t(label)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       {external ? (
                         <select
                           className="input py-1 text-sm"
@@ -562,6 +568,9 @@ export default function ManagementWorkspace() {
             )}
         </div>
       </Fold>
+
+      <ExpenseCategoriesManager />
+      <SettingsForm part="company" />
     </div>
   );
 }

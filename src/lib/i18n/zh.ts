@@ -131,8 +131,8 @@ export const ZH: Record<string, string> = {
   "Log in": "登入",
   "Set up the first account": "建立第一個帳戶",
   "Sign in with your Google Workspace account to continue.": "請使用 Google Workspace 帳戶登入以繼續。",
-  "No staff accounts exist yet — sign in with your Google Workspace account to create the first one. Add teammates afterward from Settings → Staff accounts.":
-    "目前還沒有員工帳戶。請使用 Google Workspace 帳戶登入以建立第一個帳戶，之後可在「設定 → 員工帳戶」加入同事。",
+  "No staff accounts exist yet — sign in with your Google Workspace account to create the first one. Add teammates afterward from Management.":
+    "目前還沒有員工帳戶。請使用 Google Workspace 帳戶登入以建立第一個帳戶，之後可在「管理」加入同事。",
   "Continue with Google": "使用 Google 繼續",
   "Something went wrong signing in.": "登入時發生問題。",
   "Google sign-in isn't set up on this server yet.": "此伺服器尚未設定 Google 登入。",
@@ -141,8 +141,8 @@ export const ZH: Record<string, string> = {
   "Couldn't verify your Google account. Please try again.": "無法驗證你的 Google 帳戶，請再試一次。",
   "That Google account's email isn't verified, so it can't be used to log in.":
     "該 Google 帳戶的電郵尚未驗證，因此不能用來登入。",
-  "That Google account isn't authorized for this app yet. Ask an admin to add your email in Settings → Staff accounts.":
-    "該 Google 帳戶尚未獲授權使用此系統。請管理員在「設定 → 員工帳戶」加入你的電郵。",
+  "That Google account isn't authorized for this app yet. Ask an admin to add your email in Management.":
+    "該 Google 帳戶尚未獲授權使用此系統。請管理員在「管理」加入你的電郵。",
   "Google sign-in isn't configured on this server yet. An admin needs to set":
     "此伺服器尚未設定 Google 登入。管理員需要設定",
   and: "及",

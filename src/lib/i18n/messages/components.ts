@@ -719,6 +719,12 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Not set": "未設定",
   "Create rejoin record": "建立重新入職紀錄",
   "Your nickname": "你的暱稱",
+  "Only you can change this name. Colleagues see it on the quotations and invoices you create.":
+    "只有你能修改這個名字。同事會在你建立的報價單和發票上看到它。",
+  "Add a person": "新增人員",
+  "Add their Google Workspace email so they can sign in. They choose their own nickname from Settings after they log in.":
+    "加入對方的 Google Workspace 電郵，他們便可登入。登入後可在設定自行填寫暱稱。",
+  "Short name shown on the employee list.": "顯示在員工名單上的簡稱。",
   "Used as “Made by” on quotations you create, and as your default name when colleague profit is shared. For example, {email} with nickname AT.":
     "你建立報價單時會用作「編製人」，同事分成亦預設用這個名字。例如 {email} 的暱稱是 AT。",
   "Your staff number is {code}. Colleagues see your nickname. This number stays on our site and is not printed for clients.":

@@ -42,7 +42,7 @@ export default function AccessRequestQueue({
 }) {
   const t = useT();
   const [drafts, setDrafts] = useState<
-    Record<string, { category: string; label: string; companyName: string; nickname: string }>
+    Record<string, { category: string; label: string; companyName: string }>
   >({});
   const [busy, setBusy] = useState(false);
 
@@ -51,7 +51,6 @@ export default function AccessRequestQueue({
       category: "HR_PLUS_STAFF",
       label: request.companyName ? "EXTERNAL_ADMIN" : "MEMBER",
       companyName: request.companyName,
-      nickname: "",
     };
     setBusy(true);
     try {
@@ -81,7 +80,6 @@ export default function AccessRequestQueue({
           category: "HR_PLUS_STAFF",
           label: request.companyName ? "EXTERNAL_ADMIN" : "MEMBER",
           companyName: request.companyName,
-          nickname: "",
         };
         const external = draft.label === "EXTERNAL_ADMIN" || draft.label === "EXTERNAL_MEMBER";
         return (
@@ -92,14 +90,9 @@ export default function AccessRequestQueue({
               {request.note && <p className="text-sm text-ink-muted mt-1">{request.note}</p>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <input
-                className="input py-1 text-sm"
-                placeholder={t("Nickname")}
-                value={draft.nickname}
-                onChange={(event) => setDrafts((current) => ({ ...current, [request.id]: { ...draft, nickname: event.target.value } }))}
-              />
               <select
                 className="input py-1 text-sm"
+                aria-label={t("Payroll category")}
                 value={draft.category}
                 onChange={(event) => setDrafts((current) => ({ ...current, [request.id]: { ...draft, category: event.target.value } }))}
               >
@@ -111,6 +104,7 @@ export default function AccessRequestQueue({
               </select>
               <select
                 className="input py-1 text-sm"
+                aria-label={t("Role")}
                 value={draft.label}
                 onChange={(event) => setDrafts((current) => ({ ...current, [request.id]: { ...draft, label: event.target.value } }))}
               >

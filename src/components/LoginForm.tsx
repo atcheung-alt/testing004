@@ -12,7 +12,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   exchange_failed: "Couldn't verify your Google account. Please try again.",
   unverified_email: "That Google account's email isn't verified, so it can't be used to log in.",
   not_authorized:
-    "That Google account isn't authorized for this app yet. Ask an admin to add your email in Settings → Staff accounts.",
+    "That Google account isn't authorized for this app yet. Ask an admin to add your email in Management.",
   database:
     "The database is connected, but its tables are not ready yet. Reload this page after the latest deploy finishes.",
 };
@@ -55,7 +55,7 @@ export default function LoginForm({
         <p className="text-sm text-ink-muted mt-1">
           {mode === "setup"
             ? t(
-                "No staff accounts exist yet — sign in with your Google Workspace account to create the first one. Add teammates afterward from Settings → Staff accounts."
+                "No staff accounts exist yet — sign in with your Google Workspace account to create the first one. Add teammates afterward from Management."
               )
             : t("Sign in with your Google Workspace account to continue.")}
         </p>
