@@ -4,6 +4,7 @@ import { nextDocumentNumber } from "@/lib/numbering";
 import { withParsedItems } from "@/lib/document-helpers";
 import { generateSigningToken } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
+import { quotationVisible } from "@/lib/documentAccess";
 
 /**
  * Duplicate a quotation: same customer info and line items, a fresh
@@ -12,6 +13,9 @@ import { logActivity } from "@/lib/activity";
  * signing token, or Drive files).
  */
 export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await quotationVisible(params.id))) {
+    return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
+  }
   const original = await prisma.quotation.findUnique({
     where: { id: params.id },
     include: { items: { orderBy: { sortOrder: "asc" } }, shares: { orderBy: { sortOrder: "asc" } } },

@@ -8,6 +8,7 @@ export default function MyNicknameForm() {
   const t = useT();
   const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
+  const [staffCode, setStaffCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -19,6 +20,7 @@ export default function MyNicknameForm() {
       .then((data) => {
         setNickname(data.nickname || "");
         setEmail(data.email || "");
+        setStaffCode(data.staffCode || "");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -54,6 +56,14 @@ export default function MyNicknameForm() {
             { email: email || t("your login email") }
           )}
         </p>
+        {staffCode && (
+          <p className="text-sm text-ink mt-2">
+            {t(
+              "Your staff number is {code}. Colleagues see your nickname. This number stays on our site and is not printed for clients.",
+              { code: staffCode }
+            )}
+          </p>
+        )}
       </div>
       {loading ? (
         <p className="text-sm text-ink-muted">{t("Loading…")}</p>

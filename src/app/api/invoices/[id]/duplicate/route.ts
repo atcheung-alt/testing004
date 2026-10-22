@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { nextDocumentNumber } from "@/lib/numbering";
 import { withParsedItems, computeDueDate } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
+import { invoiceVisible } from "@/lib/documentAccess";
 
 /**
  * Duplicate an invoice: same customer info and line items, a fresh document
@@ -13,6 +14,9 @@ import { logActivity } from "@/lib/activity";
  * its own public view token once it's actually sent.
  */
 export async function POST(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await invoiceVisible(params.id))) {
+    return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
   const original = await prisma.invoice.findUnique({
     where: { id: params.id },
     include: { items: { orderBy: { sortOrder: "asc" } } },

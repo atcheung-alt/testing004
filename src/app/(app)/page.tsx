@@ -10,6 +10,7 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
+import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
@@ -20,19 +21,24 @@ export default async function DashboardPage() {
   monthStart.setHours(0, 0, 0, 0);
   const nextMonth = new Date(monthStart);
   nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const [quotationFilter, invoiceFilter] = await Promise.all([currentQuotationFilter(), currentInvoiceFilter()]);
+  const quotationWhere = quotationFilter || undefined;
+  const invoiceWhere = invoiceFilter || undefined;
+  const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
   const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, monthExpenses, recentExpenses] =
     await Promise.all([
-      prisma.quotation.findMany({ select: { status: true, total: true } }),
-      prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true } }),
-      prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
-      getCurrentMonthFinance(),
-      prisma.invoiceExpense.aggregate({ _sum: { amount: true } }),
+      prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
+      prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
+      prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
+      getCurrentMonthFinance(invoiceFilter || undefined),
+      prisma.invoiceExpense.aggregate({ _sum: { amount: true }, where: expenseWhere }),
       prisma.invoiceExpense.aggregate({
         _sum: { amount: true },
-        where: { createdAt: { gte: monthStart, lt: nextMonth } },
+        where: { createdAt: { gte: monthStart, lt: nextMonth }, ...expenseWhere },
       }),
       prisma.invoiceExpense.findMany({
+        where: expenseWhere,
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { invoice: { select: { id: true, number: true, customerName: true } } },

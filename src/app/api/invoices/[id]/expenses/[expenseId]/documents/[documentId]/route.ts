@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { expenseFileBytes } from "@/lib/expenseFiles";
-import { invoiceVisible } from "@/lib/documentAccess";
+import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 
 async function loadDocument(invoiceId: string, expenseId: string, documentId: string) {
   const document = await prisma.expenseDocument.findUnique({
@@ -39,6 +39,9 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string; expenseId: string; documentId: string } }
 ) {
+  if (!(await invoiceCanModify(params.id))) {
+    return NextResponse.json({ error: "Document not found." }, { status: 404 });
+  }
   const document = await loadDocument(params.id, params.expenseId, params.documentId);
   if (!document) {
     return NextResponse.json({ error: "Document not found." }, { status: 404 });

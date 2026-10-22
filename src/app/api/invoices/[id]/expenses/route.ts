@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { expenseFilesFrom } from "@/lib/expenseFiles";
+import { invoiceCanModify } from "@/lib/documentAccess";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await invoiceCanModify(params.id))) {
+    return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+  }
   const body = await request.json().catch(() => ({}));
 
   const invoice = await prisma.invoice.findUnique({ where: { id: params.id } });

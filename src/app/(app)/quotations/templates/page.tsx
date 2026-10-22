@@ -5,12 +5,14 @@ import EmptyState from "@/components/EmptyState";
 import DeleteButton from "@/components/DeleteButton";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
+import { andFilters, currentTemplateFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotationTemplatesPage() {
   const t = getT();
   const templates = await prisma.quotationTemplate.findMany({
+    where: andFilters({}, await currentTemplateFilter()),
     orderBy: { updatedAt: "desc" },
     include: { items: { select: { name: true }, orderBy: { sortOrder: "asc" }, take: 5 } },
   });

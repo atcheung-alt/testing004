@@ -6,14 +6,14 @@ import { withParsedFeesList } from "@/lib/fees";
 import type { Invoice } from "@/types";
 import { getT } from "@/lib/i18n/server";
 import { getEventForInvoice } from "@/lib/events";
-import { invoiceVisible } from "@/lib/documentAccess";
+import { invoiceCanModify } from "@/lib/documentAccess";
 import { readStaffDirectory, viewersFor } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditInvoicePage({ params }: { params: { id: string } }) {
   const t = getT();
-  if (!(await invoiceVisible(params.id))) notFound();
+  if (!(await invoiceCanModify(params.id))) notFound();
   const [invoice, directory] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },

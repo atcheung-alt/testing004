@@ -5,7 +5,7 @@ import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, documentLangu
 import { ensureReceiptForInvoice } from "@/lib/receipt";
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
-import { invoiceVisible } from "@/lib/documentAccess";
+import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
 
-  if (!(await invoiceVisible(params.id))) {
+  if (!(await invoiceCanModify(params.id))) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
   }
   const existing = await prisma.invoice.findUnique({ where: { id: params.id } });
@@ -239,7 +239,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  if (!(await invoiceVisible(params.id))) {
+  if (!(await invoiceCanModify(params.id))) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
   }
   const existing = await prisma.invoice.findUnique({ where: { id: params.id } });

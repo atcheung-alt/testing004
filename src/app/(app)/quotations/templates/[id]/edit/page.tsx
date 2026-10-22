@@ -4,11 +4,13 @@ import QuotationTemplateForm from "@/components/QuotationTemplateForm";
 import { withParsedFeesList } from "@/lib/fees";
 import { withParsedMultipliersList } from "@/lib/multipliers";
 import { getT } from "@/lib/i18n/server";
+import { templateVisible } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditQuotationTemplatePage({ params }: { params: { id: string } }) {
   const t = getT();
+  if (!(await templateVisible(params.id))) notFound();
   const raw = await prisma.quotationTemplate.findUnique({
     where: { id: params.id },
     include: { items: { orderBy: { sortOrder: "asc" } } },

@@ -21,6 +21,7 @@ import ColleagueShareFields, {
   type ShareMode,
 } from "@/components/ColleagueShareFields";
 import { useT } from "@/lib/i18n/client";
+import type { StaffColleague } from "@/lib/staffCode";
 
 export type QuotationFormPreset = {
   templateName: string;
@@ -46,14 +47,14 @@ export default function QuotationForm({
   preset,
   customer: initialCustomer,
   defaultPreparedBy = "",
-  colleagueNames = [],
+  colleagues = [],
   viewerEmails: initialViewerEmails = "",
 }: {
   quotation?: Quotation;
   preset?: QuotationFormPreset;
   customer?: CustomerDetails;
   defaultPreparedBy?: string;
-  colleagueNames?: string[];
+  colleagues?: StaffColleague[];
   viewerEmails?: string;
 }) {
   const t = useT();
@@ -311,7 +312,7 @@ export default function QuotationForm({
         shares={shares}
         onSharesChange={setShares}
         total={computeTotals(items, taxRate, discount, repeatCount).total}
-        colleagueNames={colleagueNames}
+        colleagues={colleagues}
       />
 
       <div className="card p-5">

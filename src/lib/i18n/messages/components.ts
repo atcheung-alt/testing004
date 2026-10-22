@@ -657,6 +657,9 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Made by & colleague sharing": "編製人及同事分成",
   "Made by defaults to your nickname. Add colleagues and share either an exact amount or a percentage of the quotation total.":
     "「編製人」預設為你的暱稱。可加入同事，以確實金額或報價總額百分比分成。",
+  "Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.":
+    "「編製人」仍用你的暱稱。選擇同事的暱稱分成後，對方就能看到這張報價單和轉出的發票。客戶看不到這部分。",
+  "Choose a colleague": "選擇同事",
   "Made by": "編製人",
   "e.g. AT": "例如 AT",
   "Exact amount": "確實金額",
@@ -692,6 +695,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Your nickname": "你的暱稱",
   "Used as “Made by” on quotations you create, and as your default name when colleague profit is shared. For example, {email} with nickname AT.":
     "你建立報價單時會用作「編製人」，同事分成亦預設用這個名字。例如 {email} 的暱稱是 AT。",
+  "Your staff number is {code}. Colleagues see your nickname. This number stays on our site and is not printed for clients.":
+    "你的員工編號是 {code}。同事看到的是你的暱稱。這個編號只在我們的網站使用，不會印給客戶。",
   "your login email": "你的登入電郵",
   "Save nickname": "儲存暱稱",
   "MPF notifications": "強積金通知",

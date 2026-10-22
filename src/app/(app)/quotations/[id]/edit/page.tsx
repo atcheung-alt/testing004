@@ -4,22 +4,23 @@ import QuotationForm from "@/components/QuotationForm";
 import { withParsedMultipliersList } from "@/lib/multipliers";
 import { withParsedFeesList } from "@/lib/fees";
 import type { Quotation } from "@/types";
-import { loadColleagueNames } from "@/lib/quotationAuthor";
+import { loadColleagues } from "@/lib/quotationAuthor";
 import { getT } from "@/lib/i18n/server";
-import { quotationVisible } from "@/lib/documentAccess";
+import { quotationCanModify } from "@/lib/documentAccess";
+import { colleagueCode } from "@/lib/staffCode";
 import { readStaffDirectory, viewersFor } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditQuotationPage({ params }: { params: { id: string } }) {
   const t = getT();
-  if (!(await quotationVisible(params.id))) notFound();
-  const [quotation, colleagueNames, directory] = await Promise.all([
+  if (!(await quotationCanModify(params.id))) notFound();
+  const [quotation, colleagues, directory] = await Promise.all([
     prisma.quotation.findUnique({
       where: { id: params.id },
       include: { items: { orderBy: { sortOrder: "asc" } }, shares: { orderBy: { sortOrder: "asc" } } },
     }),
-    loadColleagueNames(),
+    loadColleagues(),
     readStaffDirectory(),
   ]);
 
@@ -45,13 +46,13 @@ export default async function EditQuotationPage({ params }: { params: { id: stri
             updatedAt: quotation.updatedAt.toISOString(),
             shareMode: quotation.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT",
             shares: quotation.shares.map((share) => ({
-              colleagueName: share.colleagueName,
+              colleagueName: colleagueCode(share.colleagueName, colleagues),
               value: share.value,
               sortOrder: share.sortOrder,
             })),
           } as Quotation
         }
-        colleagueNames={colleagueNames}
+        colleagues={colleagues}
         viewerEmails={viewersFor(directory, "quotation", quotation.id).join(", ")}
       />
     </div>

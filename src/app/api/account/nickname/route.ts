@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { staffCodeFromId } from "@/lib/staffCode";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +12,13 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { nickname: true, email: true },
+    select: { id: true, nickname: true, email: true },
   });
-  return NextResponse.json({ nickname: user?.nickname || "", email: user?.email || session.email });
+  return NextResponse.json({
+    nickname: user?.nickname || "",
+    email: user?.email || session.email,
+    staffCode: staffCodeFromId(user?.id || session.userId),
+  });
 }
 
 export async function PUT(request: NextRequest) {
@@ -25,7 +30,11 @@ export async function PUT(request: NextRequest) {
   const user = await prisma.user.update({
     where: { id: session.userId },
     data: { nickname },
-    select: { nickname: true, email: true },
+    select: { id: true, nickname: true, email: true },
   });
-  return NextResponse.json({ nickname: user.nickname, email: user.email });
+  return NextResponse.json({
+    nickname: user.nickname,
+    email: user.email,
+    staffCode: staffCodeFromId(user.id),
+  });
 }

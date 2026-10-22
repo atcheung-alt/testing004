@@ -54,7 +54,7 @@ const LABELS: Record<string, string> = {
 function actorLabel(actor: string, actorName: string | null | undefined, t: TFunction): string {
   if (actor === "CLIENT") return actorName ? t("{name} (client)", { name: actorName }) : t("Client");
   if (actor === "SYSTEM") return t("Automatic");
-  return actorName || t("Staff");
+  return (actorName || t("Staff")).replace(/\s+#\d{8}\b/g, "");
 }
 
 export type ActivityTimelineEvent = {

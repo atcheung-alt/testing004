@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { itemCreateFrom, documentDefaultsFrom } from "@/lib/document-helpers";
+import { logActivity } from "@/lib/activity";
+import { andFilters, currentTemplateFilter } from "@/lib/documentAccess";
 
 function templateDataFrom(body: any) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
@@ -38,6 +40,7 @@ function templateDataFrom(body: any) {
 
 export async function GET() {
   const templates = await prisma.quotationTemplate.findMany({
+    where: andFilters({}, await currentTemplateFilter()),
     orderBy: { updatedAt: "desc" },
     include: { items: { select: { id: true, name: true }, orderBy: { sortOrder: "asc" } } },
   });
@@ -53,6 +56,12 @@ export async function POST(request: NextRequest) {
   const template = await prisma.quotationTemplate.create({
     data: parsed.data!,
     include: { items: { orderBy: { sortOrder: "asc" } } },
+  });
+  await logActivity({
+    documentType: "template",
+    documentId: template.id,
+    type: "CREATED",
+    description: `Template ${template.name} created`,
   });
   return NextResponse.json(template, { status: 201 });
 }

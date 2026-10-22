@@ -28,14 +28,17 @@ function monthLabel(date: Date, locale = "en-US"): string {
  * current calendar month — including months with no paid invoices at all,
  * so a chart/table built from this never skips a quiet month.
  */
-export async function getMonthlyFinance(monthsBack: number): Promise<MonthlyFinance[]> {
+export async function getMonthlyFinance(
+  monthsBack: number,
+  invoiceWhere?: Record<string, unknown>
+): Promise<MonthlyFinance[]> {
   const since = new Date();
   since.setDate(1);
   since.setHours(0, 0, 0, 0);
   since.setMonth(since.getMonth() - (monthsBack - 1));
 
   const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: since } },
+    where: { status: "PAID", paidAt: { gte: since }, ...(invoiceWhere || {}) },
     select: { total: true, paidAt: true, expenses: { select: { amount: true } } },
   });
 
@@ -345,7 +348,7 @@ export async function getAccountsReceivable(): Promise<{
 }
 
 /** Convenience for "this calendar month" figures shown on the dashboard. */
-export async function getCurrentMonthFinance(): Promise<MonthlyFinance> {
-  const [current] = await getMonthlyFinance(1);
+export async function getCurrentMonthFinance(invoiceWhere?: Record<string, unknown>): Promise<MonthlyFinance> {
+  const [current] = await getMonthlyFinance(1, invoiceWhere);
   return current;
 }
