@@ -758,12 +758,37 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Project fee, without MPF.": "按項目費用計算，不計強積金。",
   "You can only keep workers in your own company.": "你只能把員工留在自己的公司。",
   "Client companies": "客戶公司",
+  "Add the companies you park staff for. HR Plus is the default when you invite someone.":
+    "新增你掛靠員工的公司。邀請員工時，預設公司是 HR Plus。",
+  "Choose full time, part time, or freelance.": "請選擇全職、兼職或自由工作。",
+  "Choose a company.": "請選擇公司。",
+  "Days and times you worked": "上班日子和時間",
+  "Add each day with a start and end time. HR Plus approves this before it is used.":
+    "填寫每一天的上班和下班時間。HR Plus 批准後才會採用。",
+  "Request leave, and write the days and times you worked. HR Plus approves both.":
+    "可以申請假期，也可以填寫上班日子和時間。兩項都要 HR Plus 批准。",
+  "Copy personal link": "複製個人連結",
+  "Copy this employee's link for leave and work hours": "複製此員工的假期及工時連結",
+  "They use their personal link to request leave and to enter each day with a start and end time. Approve the hours here.":
+    "他們用個人連結申請假期，並填寫每天的上班和下班時間。請在這裡批准工時。",
+  "Parked companies and the fee you charge them.": "掛靠公司，以及你向他們收取的服務費。",
   "These are the companies you park staff for. Each month, payroll bills a client for wages, employer MPF, and the service fee you set here. A client login only sees its own workers.":
     "這些是你掛靠員工的公司。每月出糧會向客戶收取工資、僱主強積金，以及你在這裡設定的服務費。客戶登入後只能查看自己公司的員工。",
   "Service fee for {name}": "{name} 的服務費",
   "Per person each month": "每人每月",
   "Percent of wages": "工資百分比",
   "Flat fee each month": "每月定額",
+  "How the service fee is worked out": "服務費怎樣計算",
+  "Wages and employer MPF are always billed as well. The setting below is only your fee on top.":
+    "工資和僱主強積金一定會一併收費。下面的設定只是你額外收取的服務費。",
+  "The amount times how many of their people are on that payroll. 800 and 5 people is 4,000.":
+    "金額乘以該次出糧的人數。800 乘 5 人就是 4,000。",
+  "That percent of their gross wages for the month. 10 and 50,000 in wages is 5,000. It is not a percent of MPF.":
+    "該月工資總額的百分比。工資 50,000 的 10% 就是 5,000。這不是強積金的百分比。",
+  "One amount, the same every month, however many people they have.":
+    "每月收取同一金額，與人數無關。",
+  "per person": "每人",
+  "per month": "每月",
   "Service fee amount": "服務費金額",
   "Could not save the service fee.": "無法儲存服務費。",
   "Bill each client": "向各客戶出單",
@@ -839,8 +864,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Approve these hours before you run payroll. A draft run for that month picks up the approved days or hours.":
     "出糧前請先批准這些工時。該月的草稿出糧會採用已批准的日數或時數。",
   "Could not approve the hours.": "無法批准工時。",
-  "Full time: monthly salary. Part time: daily or hourly rate. Freelance: daily, hourly, or a fixed project fee. Only daily and hourly workers fill in a timesheet.":
-    "全職：月薪。兼職：日薪或時薪。自由工作：日薪、時薪或固定項目費。只有日薪及時薪員工需要填工時表。",
+  "Full time: monthly salary. Part time: daily or hourly rate. Freelance: daily, hourly, or a fixed project fee. Everyone can request leave and enter work days from their personal link.":
+    "全職：月薪。兼職：日薪或時薪。自由工作：日薪、時薪或固定項目費。每個人都可以用個人連結申請假期和填寫上班日子。",
   "Choose a month.": "請選擇月份。",
   "Full-time salary and fixed project fees do not use a timesheet.": "全職月薪及固定項目費不用工時表。",
   "Could not open the timesheet.": "無法開啟工時表。",

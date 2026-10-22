@@ -21,7 +21,7 @@ export default function EmployeeTimesheetCard({
   sheets,
 }: {
   employeeId: string;
-  basis: TimesheetBasis;
+  basis: TimesheetBasis | null;
   hasEmail: boolean;
   initialPeriod: string;
   sheets: WorkSheet[];
@@ -81,7 +81,7 @@ export default function EmployeeTimesheetCard({
   }
 
   const summary = current ? summarizeSlots(current.slots) : null;
-  const units = current ? unitsFromSlots(basis, current.slots) : 0;
+  const units = current && basis ? unitsFromSlots(basis, current.slots) : 0;
 
   return (
     <div className="card p-5 flex flex-col gap-3">
@@ -89,8 +89,7 @@ export default function EmployeeTimesheetCard({
         <h2 className="font-display text-lg font-semibold">{t("Work timesheet")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
           {t(
-            "Full-time staff are paid a monthly salary, so they do not fill in days. This worker is paid by the {unit}. Email one link for the month. They enter each day and the start and end time. Approve it, and that month's payroll uses these {unit} instead of a guess.",
-            { unit: basis === "DAILY" ? t("days") : t("hours") }
+            "They use their personal link to request leave and to enter each day with a start and end time. Approve the hours here."
           )}
         </p>
       </div>
@@ -135,10 +134,11 @@ export default function EmployeeTimesheetCard({
             <span className="font-medium">{t(STATUS_TEXT[current.status])}</span>
             {" · "}
             {t("{hours} hours across {days} days", { hours: summary.hours, days: summary.days })}
-            {" · "}
-            {t("Payroll will use {units}.", {
-              units: basis === "DAILY" ? t("{count} days", { count: units }) : t("{count} hours", { count: units }),
-            })}
+            {basis
+              ? ` · ${t("Payroll will use {units}.", {
+                  units: basis === "DAILY" ? t("{count} days", { count: units }) : t("{count} hours", { count: units }),
+                })}`
+              : ""}
           </p>
           {current.note && <p className="text-sm text-ink-muted">{current.note}</p>}
           {current.slots.length > 0 && (

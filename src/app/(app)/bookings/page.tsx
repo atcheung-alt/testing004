@@ -6,7 +6,6 @@ import EmptyState from "@/components/EmptyState";
 import BookingEventListClient from "@/components/BookingEventListClient";
 import BookingEventsCalendar from "@/components/BookingEventsCalendar";
 import PageBar from "@/components/PageBar";
-import PageVideo from "@/components/PageVideo";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +46,6 @@ export default async function BookingsPage() {
   ];
 
   return (
-    <PageVideo clip="bookings">
     <div className="flex flex-col gap-4">
       <PageBar
         title={t("Bookings")}
@@ -73,6 +71,5 @@ export default async function BookingsPage() {
         <BookingEventListClient events={serializedEvents} />
       )}
     </div>
-    </PageVideo>
   );
 }

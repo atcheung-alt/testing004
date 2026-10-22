@@ -4,7 +4,7 @@ import { canManageEmployee } from "@/lib/documentAccess";
 import { isMailConfigured, sendDocumentEmail } from "@/lib/mailer";
 import { resolveBaseUrl } from "@/lib/signing";
 import { isValidPeriod } from "@/lib/payroll";
-import { openTimesheet, timesheetBasis } from "@/lib/timesheets";
+import { openTimesheet } from "@/lib/timesheets";
 
 export const dynamic = "force-dynamic";
 
@@ -20,12 +20,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const employee = await prisma.employee.findUnique({ where: { id: params.id } });
   if (!employee) return NextResponse.json({ error: "Employee not found." }, { status: 404 });
-  if (!timesheetBasis(employee.employmentType, employee.payRateType)) {
-    return NextResponse.json(
-      { error: "Full-time salary and fixed project fees do not use a timesheet." },
-      { status: 400 }
-    );
-  }
   const to = employee.personalEmail || employee.email || employee.companyEmail || "";
   if (!to) {
     return NextResponse.json({ error: "Add an email on the employee record before sending the link." }, { status: 400 });

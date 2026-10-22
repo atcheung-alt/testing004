@@ -92,6 +92,7 @@ export default async function HrLayout({ children }: { children: React.ReactNode
         companyName={company.shortName || company.name}
         isAdmin={!!user.isAdmin}
         canViewEmployees={employeeScope.mode === "company" || employeeScope.mode === "self"}
+        canManageCompanies={employeeScope.mode === "all"}
       />
     </div>
   );

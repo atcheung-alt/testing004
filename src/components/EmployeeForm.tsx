@@ -339,7 +339,7 @@ export default function EmployeeForm({
             </select>
             <p className="mt-1 text-xs text-ink-faint">
               {t(
-                "Full time: monthly salary. Part time: daily or hourly rate. Freelance: daily, hourly, or a fixed project fee. Only daily and hourly workers fill in a timesheet."
+                "Full time: monthly salary. Part time: daily or hourly rate. Freelance: daily, hourly, or a fixed project fee. Everyone can request leave and enter work days from their personal link."
               )}
             </p>
           </div>

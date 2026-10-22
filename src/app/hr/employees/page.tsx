@@ -5,13 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { mpfReminderFor } from "@/lib/payroll";
 import { getCurrentUser } from "@/lib/auth";
 import { andFilters, employeeScopeFor, employeeScopeWhere } from "@/lib/documentAccess";
-import { readClientTerms, termFor } from "@/lib/clientService";
 import { redirect } from "next/navigation";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import InviteEmployeeButton from "@/components/InviteEmployeeButton";
 import EmployeeListClient, { EmployeeListItem } from "@/components/EmployeeListClient";
-import EmployerCompaniesManager from "@/components/EmployerCompaniesManager";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -177,22 +175,9 @@ export default async function EmployeesPage({
   const user = await getCurrentUser();
   const scope = await employeeScopeFor(user);
   if (scope.mode === "deny") redirect("/hr/profile");
-  const [companyRows, terms] = await Promise.all([
-    prisma.employerCompany.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      include: { _count: { select: { employees: true } } },
-    }),
-    readClientTerms(),
-  ]);
-  const companies = companyRows.map((company) => {
-    const term = termFor(terms, company.id);
-    return {
-      id: company.id,
-      name: company.name,
-      employeeCount: company._count.employees,
-      feeMode: term.feeMode,
-      feeValue: term.feeValue,
-    };
+  const companies = await prisma.employerCompany.findMany({
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: { id: true, name: true },
   });
   const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
@@ -217,7 +202,7 @@ export default async function EmployeesPage({
             <a href={exportHref} className="btn-secondary shrink-0">
               <Download size={15} /> {t("Export CSV")}
             </a>
-            <InviteEmployeeButton />
+            <InviteEmployeeButton companies={companies} />
             <Link href="/hr/employees/new" className="btn-primary shrink-0">
               <Plus size={15} /> {t("New employee")}
             </Link>
@@ -246,14 +231,12 @@ export default async function EmployeesPage({
         </div>
       </div>
 
-      {scope.mode === "all" && <EmployerCompaniesManager companies={companies} />}
-
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
         <EmployeeList
           q={searchParams.q}
           status={searchParams.status}
           isAdmin={isAdmin}
-          companies={scope.mode === "self" ? [] : companies.map(({ id, name }) => ({ id, name }))}
+          companies={scope.mode === "self" ? [] : companies}
           scopeWhere={employeeScopeWhere(scope)}
         />
       </Suspense>

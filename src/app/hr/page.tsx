@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { IdCard, Clock3, UserPlus, Wallet, CalendarClock, ArrowRight } from "lucide-react";
+import { IdCard, Building2, Clock3, UserPlus, Wallet, CalendarClock, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
+import { employeeScopeFor } from "@/lib/documentAccess";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
  *  is redirected to /hr/profile, the one tab they can see. */
 export default async function HrDashboardPage() {
   const t = getT();
-  await requireAdminPage();
+  const user = await requireAdminPage();
+  const scope = await employeeScopeFor(user);
 
   const [active, onboarding, former, pendingLeave, pendingOnboarding, draftPayrollRuns] = await Promise.all([
     prisma.employee.count({ where: { status: "ACTIVE" } }),
@@ -108,7 +110,7 @@ export default async function HrDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-semibold">{t("Modules")}</h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/hr/employees"
             className="rounded-xl border border-line p-4 flex flex-col gap-2 hover:bg-brand-50/60 transition-colors"
@@ -117,6 +119,16 @@ export default async function HrDashboardPage() {
             <p className="text-sm font-medium text-ink">{t("Employees")}</p>
             <p className="text-xs text-ink-muted">{t("Records, onboarding, leave & contracts")}</p>
           </Link>
+          {scope.mode === "all" && (
+            <Link
+              href="/hr/companies"
+              className="rounded-xl border border-line p-4 flex flex-col gap-2 hover:bg-brand-50/60 transition-colors"
+            >
+              <Building2 size={18} className="text-brand-600" />
+              <p className="text-sm font-medium text-ink">{t("Client companies")}</p>
+              <p className="text-xs text-ink-muted">{t("Parked companies and the fee you charge them.")}</p>
+            </Link>
+          )}
           <Link
             href="/hr/payroll"
             className="rounded-xl border border-line p-4 flex flex-col gap-2 hover:bg-brand-50/60 transition-colors"

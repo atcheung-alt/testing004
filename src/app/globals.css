@@ -364,12 +364,6 @@ html[data-theme="dark"] .theme-logo-dark {
 [data-shell="staff"] main a:not([class*="btn"]):not(.event-ticket) {
   color: rgb(var(--color-ink));
 }
-.page-video-content h1,
-.page-video-content h2,
-html[data-theme="light"] .page-video-content h1,
-html[data-theme="light"] .page-video-content h2 {
-  text-shadow: none;
-}
 [data-shell="staff"] .btn:active {
   transform: none;
 }
@@ -628,93 +622,6 @@ html[data-theme="light"] .page-video-content h2 {
   }
 }
 
-/* Background clip on Dashboard, Bookings, and Massage. The video stays
-   visible through the cards. Text sits on a dark (or light) plate so the
-   figures stay easy to read. The sidebar stays above it (z-30). */
-.page-video {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  background: rgb(var(--color-paper));
-}
-.page-video video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 1;
-  transform: scale(1.04);
-}
-.page-video::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgb(0 0 0 / 0.12);
-}
-.page-video-content {
-  position: relative;
-  z-index: 1;
-}
-.page-video-content .card,
-.page-video-content .bg-surface,
-.page-video-content .bg-paper {
-  background-color: rgb(8 9 12 / 0.62);
-}
-.page-video-content > * > .border-b,
-.page-video-content > * > .page-bar {
-  background-color: rgb(8 9 12 / 0.55);
-}
-.page-video-content h1,
-.page-video-content h2 {
-  text-shadow: none;
-}
-.page-video-content .input,
-.page-video-content .btn-secondary {
-  background-color: rgb(8 9 12 / 0.88);
-}
-.page-video-content .btn-primary {
-  background-color: rgb(var(--color-brand-500));
-}
-html[data-theme="light"] .page-video::after {
-  background: rgb(255 255 255 / 0.18);
-}
-html[data-theme="light"] .page-video-content .card,
-html[data-theme="light"] .page-video-content .bg-surface,
-html[data-theme="light"] .page-video-content .bg-paper,
-html[data-theme="light"] .page-video-content > * > .border-b,
-html[data-theme="light"] .page-video-content > * > .page-bar {
-  background-color: rgb(255 252 247 / 0.94);
-}
-html[data-theme="light"] .page-video-content h1,
-html[data-theme="light"] .page-video-content h2 {
-  text-shadow: none;
-}
-html[data-theme="light"] .page-video-content .input,
-html[data-theme="light"] .page-video-content .btn-secondary {
-  background-color: rgb(255 255 255 / 0.94);
-}
-@media (prefers-color-scheme: light) {
-  html[data-theme="auto"] .page-video::after {
-    background: rgb(255 255 255 / 0.18);
-  }
-  html[data-theme="auto"] .page-video-content .card,
-  html[data-theme="auto"] .page-video-content .bg-surface,
-  html[data-theme="auto"] .page-video-content .bg-paper,
-  html[data-theme="auto"] .page-video-content > * > .border-b,
-  html[data-theme="auto"] .page-video-content > * > .page-bar {
-    background-color: rgb(255 252 247 / 0.94);
-  }
-  html[data-theme="auto"] .page-video-content h1,
-  html[data-theme="auto"] .page-video-content h2 {
-    text-shadow: none;
-  }
-  html[data-theme="auto"] .page-video-content .input,
-  html[data-theme="auto"] .page-video-content .btn-secondary {
-    background-color: rgb(255 255 255 / 0.94);
-  }
-}
-
 /* Bookings: the event checker stays on screen. The search stays put
    while the list inside scrolls. */
 .booking-events {
@@ -726,41 +633,7 @@ html[data-theme="light"] .page-video-content .btn-secondary {
   max-height: 18rem;
   overflow-y: auto;
 }
-.page-video-content .booking-events h2 {
-  text-shadow: none;
-}
-.page-video-content .booking-events .card {
-  background-color: rgb(18 19 22 / 0.96);
-}
-html[data-theme="light"] .page-video-content .booking-events h2,
-html[data-theme="light"] .page-video-content .booking-events .card {
-  text-shadow: none;
-}
-html[data-theme="light"] .page-video-content .booking-events .card {
-  background-color: rgb(255 255 255 / 0.98);
-}
-@media (prefers-color-scheme: light) {
-  html[data-theme="auto"] .page-video-content .booking-events h2 {
-    text-shadow: none;
-  }
-  html[data-theme="auto"] .page-video-content .booking-events .card {
-    background-color: rgb(255 255 255 / 0.98);
-  }
-}
 
-/* Massage results: the clip is bright, so the writing sits on a firmer
-   plate and the gray lines are darkened enough to read. */
-.page-video-content .massage-page .card,
-.page-video-content .massage-page .bg-surface,
-.page-video-content .massage-page .bg-paper,
-.page-video-content .massage-page > .border-b {
-  background-color: rgb(18 19 22 / 0.92);
-}
-.page-video-content .massage-page .text-ink-muted,
-.page-video-content .massage-page .text-ink-faint,
-.page-video-content .massage-page .lead {
-  color: rgb(226 228 232);
-}
 @keyframes award-pop {
   0% {
     opacity: 0;
@@ -979,30 +852,6 @@ html[data-theme="light"] .page-video-content .booking-events .card {
 .award-trophy {
   color: #b8891c;
 }
-html[data-theme="light"] .page-video-content .massage-page .card,
-html[data-theme="light"] .page-video-content .massage-page .bg-surface,
-html[data-theme="light"] .page-video-content .massage-page .bg-paper,
-html[data-theme="light"] .page-video-content .massage-page > .border-b {
-  background-color: rgb(255 255 255 / 0.96);
-}
-html[data-theme="light"] .page-video-content .massage-page .text-ink-muted,
-html[data-theme="light"] .page-video-content .massage-page .text-ink-faint,
-html[data-theme="light"] .page-video-content .massage-page .lead {
-  color: rgb(32 40 58);
-}
-@media (prefers-color-scheme: light) {
-  html[data-theme="auto"] .page-video-content .massage-page .card,
-  html[data-theme="auto"] .page-video-content .massage-page .bg-surface,
-  html[data-theme="auto"] .page-video-content .massage-page .bg-paper,
-  html[data-theme="auto"] .page-video-content .massage-page > .border-b {
-    background-color: rgb(255 255 255 / 0.96);
-  }
-  html[data-theme="auto"] .page-video-content .massage-page .text-ink-muted,
-  html[data-theme="auto"] .page-video-content .massage-page .text-ink-faint,
-  html[data-theme="auto"] .page-video-content .massage-page .lead {
-    color: rgb(32 40 58);
-  }
-}
 
 /* Massage events: the checker stays on screen. Search stays put while
    about two events show, and the rest scroll inside the list. */
@@ -1014,72 +863,6 @@ html[data-theme="light"] .page-video-content .massage-page .lead {
 .massage-events-scroll {
   max-height: 9rem;
   overflow-y: auto;
-}
-.page-video-content .massage-page .massage-events h2 {
-  text-shadow: none;
-}
-.page-video-content .massage-page .massage-events .card {
-  background-color: rgb(18 19 22 / 0.96);
-}
-html[data-theme="light"] .page-video-content .massage-page .massage-events h2 {
-  text-shadow: none;
-}
-html[data-theme="light"] .page-video-content .massage-page .massage-events .card {
-  background-color: rgb(255 255 255 / 0.98);
-}
-@media (prefers-color-scheme: light) {
-  html[data-theme="auto"] .page-video-content .massage-page .massage-events h2 {
-    text-shadow: none;
-  }
-  html[data-theme="auto"] .page-video-content .massage-page .massage-events .card {
-    background-color: rgb(255 255 255 / 0.98);
-  }
-}
-
-/* Heading copy sits on the bright clip, outside the cards. A near-white
-   plate keeps the title and the one-line description readable. These
-   rules follow the massage-page color rules so they win over the light
-   gray .lead / .text-ink-muted paint. */
-.page-video-content .massage-page .massage-heading-plate {
-  background-color: transparent;
-  padding: 2px 0 2px 12px;
-  border-radius: 0;
-  border-left: 3px solid #241c14;
-}
-.page-video-content .massage-page .massage-heading-plate,
-.page-video-content .massage-page .massage-heading-plate h2,
-.page-video-content .massage-page .massage-heading-plate h3,
-.page-video-content .massage-page .massage-heading-plate .lead,
-.page-video-content .massage-page .massage-heading-plate .text-ink-muted,
-.page-video-content .massage-page .massage-heading-plate .text-ink-faint {
-  color: #142033;
-  text-shadow: none;
-}
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate {
-  background-color: transparent;
-}
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate,
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate h2,
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate h3,
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate .lead,
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate .text-ink-muted,
-html[data-theme="light"] .page-video-content .massage-page .massage-heading-plate .text-ink-faint {
-  color: #142033;
-  text-shadow: none;
-}
-@media (prefers-color-scheme: light) {
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate {
-    background-color: transparent;
-  }
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate,
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate h2,
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate h3,
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate .lead,
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate .text-ink-muted,
-  html[data-theme="auto"] .page-video-content .massage-page .massage-heading-plate .text-ink-faint {
-    color: #142033;
-    text-shadow: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
