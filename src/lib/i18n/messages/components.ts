@@ -783,6 +783,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "You can only keep workers in your own company.": "你只能把員工留在自己的公司。",
   "Client companies": "客戶公司",
   "All companies": "全部公司",
+  "Payroll run not found.": "找不到這次出糧。",
   "All types": "全部類型",
   Document: "文件",
   "All documents": "全部文件",

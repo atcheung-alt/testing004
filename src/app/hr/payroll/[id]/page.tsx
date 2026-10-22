@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { periodLabel } from "@/lib/payroll";
@@ -13,10 +13,17 @@ import { normalizeEmail } from "@/lib/accessControl";
 import { findClientBill, readClientTerms, serviceFeeFor, termFor } from "@/lib/clientService";
 import { formatCurrency } from "@/lib/calculations";
 import ClientInvoiceButton from "@/components/ClientInvoiceButton";
+import PayrollCompanyFilter from "@/components/PayrollCompanyFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function PayrollRunPage({ params }: { params: { id: string } }) {
+export default async function PayrollRunPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { company?: string };
+}) {
   const t = getT();
   await requireAdminPage();
 
@@ -73,10 +80,19 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
+  const companies = clientBills.map((bill) => ({ id: bill.companyId, name: bill.name }));
+  const selected = companies.find((company) => company.id === searchParams.company) || null;
+  const shownBills = selected ? clientBills.filter((bill) => bill.companyId === selected.id) : clientBills;
+  const visibleEntries = selected
+    ? run.entries.filter((entry) => entry.employee.companyId === selected.id)
+    : run.entries;
+  const exportParams = new URLSearchParams();
+  if (selected) exportParams.set("company", selected.id);
+  const exportHref = `/api/payroll/${run.id}/export${exportParams.toString() ? `?${exportParams}` : ""}`;
   const hrPlusEmails = new Set(
     directory.profiles.filter((profile) => profile.category === "HR_PLUS_STAFF").map((profile) => normalizeEmail(profile.email))
   );
-  const serialized = run.entries.map((entry) => ({
+  const serialized = visibleEntries.map((entry) => ({
     ...entry,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
@@ -130,13 +146,22 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
           />
         </div>
         <p className="text-sm text-ink-muted mt-1">
-          {run.entries.length === 1
-            ? t("{count} Employee", { count: run.entries.length })
-            : t("{count} Employees", { count: run.entries.length })}
+          {visibleEntries.length === 1
+            ? t("{count} Employee", { count: visibleEntries.length })
+            : t("{count} Employees", { count: visibleEntries.length })}
+          {selected ? ` · ${selected.name}` : ""}
         </p>
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          {companies.length > 0 ? (
+            <PayrollCompanyFilter runId={run.id} companies={companies} selected={selected?.id || ""} />
+          ) : null}
+          <a href={exportHref} className="btn-secondary">
+            <Download size={15} /> {t("Export CSV")}
+          </a>
+        </div>
       </div>
 
-      {clientBills.length > 0 && (
+      {shownBills.length > 0 && (
         <section className="flex flex-col gap-3">
           <div>
             <h2 className="font-display text-lg font-semibold text-ink">{t("Bill each client")}</h2>
@@ -147,7 +172,7 @@ export default async function PayrollRunPage({ params }: { params: { id: string 
             </p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {clientBills.map((bill) => (
+            {shownBills.map((bill) => (
               <div key={bill.companyId} className="card p-4 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
