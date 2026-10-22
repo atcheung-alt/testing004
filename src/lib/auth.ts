@@ -2,19 +2,52 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { FULL_ACCESS_EMAILS, normalizeEmail } from "@/lib/accessControl";
+import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE, SESSION_TTL_MS, signSession, verifySession, type SessionPayload } from "@/lib/authToken";
+
+const REMOVED_FULL_ACCESS_EMAIL = "lucasyam@hrplus.info";
+let removedFullAccessCleared = false;
+
+/** Lucas was taken off the locked admin list. Clear the admin flag once per
+ *  server start so an old account record cannot put him back on that list. */
+async function clearRemovedFullAccess() {
+  if (removedFullAccessCleared) return;
+  removedFullAccessCleared = true;
+  await prisma.user.updateMany({
+    where: { email: { equals: REMOVED_FULL_ACCESS_EMAIL, mode: "insensitive" }, isAdmin: true },
+    data: { isAdmin: false },
+  });
+}
 
 /** Read and verify the current request's session cookie. Null if not logged in / expired. */
 export async function getCurrentUser(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;
   const session = await verifySession(token);
   if (!session) return null;
+  try {
+    await clearRemovedFullAccess();
+  } catch {
+    removedFullAccessCleared = false;
+  }
+  const email = normalizeEmail(session.email);
   // Founder accounts stay full admin even when the signed-in cookie was
   // issued before isAdmin was set. This does not write the database.
-  if (!session.isAdmin && FULL_ACCESS_EMAILS.includes(normalizeEmail(session.email))) {
-    return { ...session, isAdmin: true };
+  if (FULL_ACCESS_EMAILS.includes(email)) {
+    return session.isAdmin ? session : { ...session, isAdmin: true };
   }
-  return session;
+  // Everyone else follows the account record, so taking someone off full
+  // access applies on the next page instead of waiting for a new sign-in.
+  try {
+    const row = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { isAdmin: true },
+    });
+    if (!row) return null;
+    if (row.isAdmin === session.isAdmin) return session;
+    return { ...session, isAdmin: row.isAdmin };
+  } catch {
+    return session;
+  }
 }
 
 /** Set the session cookie after a successful Google sign-in. */
