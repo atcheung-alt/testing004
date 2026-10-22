@@ -325,7 +325,7 @@ export type OnboardingSubmissionFields = {
 };
 
 const ONBOARDING_DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png"];
-const MAX_ONBOARDING_DOCUMENT_BYTES = 8 * 1024 * 1024; // 8MB per file
+const MAX_ONBOARDING_DOCUMENT_BYTES = 3 * 1024 * 1024; // 3MB per file so one upload stays under the host's request limit
 
 /**
  * Validates one onboarding document upload's `data:` URL shape/type/size
@@ -334,7 +334,7 @@ const MAX_ONBOARDING_DOCUMENT_BYTES = 8 * 1024 * 1024; // 8MB per file
  * EmployeeForm), so pulling mailer.ts's nodemailer dependency in here would
  * bundle it into the browser. Returns an error message, or null if valid.
  */
-function onboardingDocumentError(dataUrl: unknown, label: string): string | null {
+export function onboardingDocumentError(dataUrl: unknown, label: string): string | null {
   if (typeof dataUrl !== "string" || !dataUrl) return `Please attach ${label}.`;
   const match = /^data:([^;,]+);base64,(.+)$/.exec(dataUrl);
   if (!match) return `Please attach ${label}.`;
@@ -346,7 +346,7 @@ function onboardingDocumentError(dataUrl: unknown, label: string): string | null
   // actually decoding — decoding here would just be thrown away.
   const approxBytes = Math.floor((match[2].length * 3) / 4);
   if (approxBytes > MAX_ONBOARDING_DOCUMENT_BYTES) {
-    return `${capitalized} is too large — please keep it under 8 MB.`;
+    return `${capitalized} is too large — please keep it under 3 MB.`;
   }
   return null;
 }
@@ -434,12 +434,15 @@ export function onboardingSubmissionFieldsFrom(body: any): OnboardingSubmissionF
   const surnameChinese = trimmedOrNull(body.surnameChinese);
   const givenNameChinese = trimmedOrNull(body.givenNameChinese);
 
-  const addressProofError = onboardingDocumentError(body.addressProofData, "your proof of address");
-  if (addressProofError) return fail(addressProofError);
-  const bankStatementError = onboardingDocumentError(body.bankStatementData, "your bank statement");
-  if (bankStatementError) return fail(bankStatementError);
-  const hkidDocumentError = onboardingDocumentError(body.hkidDocumentData, "a copy of your HKID");
-  if (hkidDocumentError) return fail(hkidDocumentError);
+  const documentsAlreadyUploaded = body.documentsAlreadyUploaded === true;
+  if (!documentsAlreadyUploaded) {
+    const addressProofError = onboardingDocumentError(body.addressProofData, "your proof of address");
+    if (addressProofError) return fail(addressProofError);
+    const bankStatementError = onboardingDocumentError(body.bankStatementData, "your bank statement");
+    if (bankStatementError) return fail(bankStatementError);
+    const hkidDocumentError = onboardingDocumentError(body.hkidDocumentData, "a copy of your HKID");
+    if (hkidDocumentError) return fail(hkidDocumentError);
+  }
 
   if (body.declarationAccuracy !== true) {
     return fail("Please confirm the declaration that your information is accurate.");
@@ -471,9 +474,9 @@ export function onboardingSubmissionFieldsFrom(body: any): OnboardingSubmissionF
     bankAccount,
     declarationAccuracy: true,
     declarationConsent: true,
-    addressProofData: body.addressProofData,
-    bankStatementData: body.bankStatementData,
-    hkidDocumentData: body.hkidDocumentData,
+    addressProofData: documentsAlreadyUploaded ? "" : body.addressProofData,
+    bankStatementData: documentsAlreadyUploaded ? "" : body.bankStatementData,
+    hkidDocumentData: documentsAlreadyUploaded ? "" : body.hkidDocumentData,
     error: null,
   };
 }

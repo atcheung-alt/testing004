@@ -44,6 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   }
 
   const { error, addressProofData, bankStatementData, hkidDocumentData, ...data } = fields;
+  const documentsAlreadyUploaded = body.documentsAlreadyUploaded === true;
 
   // Documents are a mandatory part of onboarding (see onboardingSubmissionFieldsFrom),
   // so — unlike every other Drive sync in this app — a failure here must be a
@@ -55,52 +56,106 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     );
   }
 
-  let addressProofFile, bankStatementFile, hkidDocumentFile;
+  let uploaded: {
+    addressProofDriveFileId: string;
+    addressProofDriveUrl: string;
+    bankStatementDriveFileId: string;
+    bankStatementDriveUrl: string;
+    hkidDocumentDriveFileId: string;
+    hkidDocumentDriveUrl: string;
+  } | null = null;
+
+  if (documentsAlreadyUploaded) {
+    const stored = await prisma.employee.findUnique({
+      where: { id: employee.id },
+      select: {
+        addressProofDriveFileId: true,
+        addressProofDriveUrl: true,
+        bankStatementDriveFileId: true,
+        bankStatementDriveUrl: true,
+        hkidDocumentDriveFileId: true,
+        hkidDocumentDriveUrl: true,
+      },
+    });
+    if (
+      !stored?.addressProofDriveFileId ||
+      !stored.addressProofDriveUrl ||
+      !stored.bankStatementDriveFileId ||
+      !stored.bankStatementDriveUrl ||
+      !stored.hkidDocumentDriveFileId ||
+      !stored.hkidDocumentDriveUrl
+    ) {
+      return NextResponse.json(
+        { error: "Please attach all three documents before submitting." },
+        { status: 400 }
+      );
+    }
+    uploaded = {
+      addressProofDriveFileId: stored.addressProofDriveFileId,
+      addressProofDriveUrl: stored.addressProofDriveUrl,
+      bankStatementDriveFileId: stored.bankStatementDriveFileId,
+      bankStatementDriveUrl: stored.bankStatementDriveUrl,
+      hkidDocumentDriveFileId: stored.hkidDocumentDriveFileId,
+      hkidDocumentDriveUrl: stored.hkidDocumentDriveUrl,
+    };
+  } else {
+    try {
+      const addressProofParsed = parseDataUrl(addressProofData)!;
+      const bankStatementParsed = parseDataUrl(bankStatementData)!;
+      const hkidDocumentParsed = parseDataUrl(hkidDocumentData)!;
+      const [addressProofFile, bankStatementFile, hkidDocumentFile] = await Promise.all([
+        uploadEmployeeOnboardingDocument(
+          employee.id,
+          "Proof of Address",
+          extensionForContentType(addressProofParsed.contentType),
+          addressProofParsed.buffer
+        ),
+        uploadEmployeeOnboardingDocument(
+          employee.id,
+          "Bank Statement",
+          extensionForContentType(bankStatementParsed.contentType),
+          bankStatementParsed.buffer
+        ),
+        uploadEmployeeOnboardingDocument(
+          employee.id,
+          "HKID",
+          extensionForContentType(hkidDocumentParsed.contentType),
+          hkidDocumentParsed.buffer
+        ),
+      ]);
+      uploaded = {
+        addressProofDriveFileId: addressProofFile.id,
+        addressProofDriveUrl: addressProofFile.webViewLink,
+        bankStatementDriveFileId: bankStatementFile.id,
+        bankStatementDriveUrl: bankStatementFile.webViewLink,
+        hkidDocumentDriveFileId: hkidDocumentFile.id,
+        hkidDocumentDriveUrl: hkidDocumentFile.webViewLink,
+      };
+    } catch (err: any) {
+      console.error("Failed to upload onboarding documents:", err);
+      return NextResponse.json(
+        { error: "Could not upload your documents. Please try again in a moment." },
+        { status: 500 }
+      );
+    }
+  }
+
   try {
-    const addressProofParsed = parseDataUrl(addressProofData)!;
-    const bankStatementParsed = parseDataUrl(bankStatementData)!;
-    const hkidDocumentParsed = parseDataUrl(hkidDocumentData)!;
-    [addressProofFile, bankStatementFile, hkidDocumentFile] = await Promise.all([
-      uploadEmployeeOnboardingDocument(
-        employee.id,
-        "Proof of Address",
-        extensionForContentType(addressProofParsed.contentType),
-        addressProofParsed.buffer
-      ),
-      uploadEmployeeOnboardingDocument(
-        employee.id,
-        "Bank Statement",
-        extensionForContentType(bankStatementParsed.contentType),
-        bankStatementParsed.buffer
-      ),
-      uploadEmployeeOnboardingDocument(
-        employee.id,
-        "HKID",
-        extensionForContentType(hkidDocumentParsed.contentType),
-        hkidDocumentParsed.buffer
-      ),
-    ]);
-  } catch (err: any) {
-    console.error("Failed to upload onboarding documents:", err);
+    await prisma.employee.update({
+      where: { id: employee.id },
+      data: {
+        ...data,
+        ...uploaded,
+        onboardingCompletedAt: new Date(),
+      },
+    });
+  } catch (err) {
+    console.error("Failed to save onboarding details:", err);
     return NextResponse.json(
-      { error: "Could not upload your documents. Please try again in a moment." },
+      { error: "Could not save your details. Please try again in a moment." },
       { status: 500 }
     );
   }
-
-  await prisma.employee.update({
-    where: { id: employee.id },
-    data: {
-      ...data,
-      addressProofDriveFileId: addressProofFile.id,
-      addressProofDriveUrl: addressProofFile.webViewLink,
-      bankStatementDriveFileId: bankStatementFile.id,
-      bankStatementDriveUrl: bankStatementFile.webViewLink,
-      hkidDocumentDriveFileId: hkidDocumentFile.id,
-      hkidDocumentDriveUrl: hkidDocumentFile.webViewLink,
-      onboardingCompletedAt: new Date(),
-    },
-  });
 
   await logActivity({
     documentType: "employee",
@@ -112,5 +167,8 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   });
 
   const view = await getPublicEmployeeOnboardingView(params.token);
+  if (!view) {
+    return NextResponse.json({ error: "This link isn't valid." }, { status: 404 });
+  }
   return NextResponse.json(view, { status: 200 });
 }

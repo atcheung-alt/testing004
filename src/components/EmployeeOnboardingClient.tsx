@@ -7,7 +7,7 @@ import CompanyLogo from "@/components/CompanyLogo";
 import type { PublicEmployeeOnboardingView } from "@/lib/publicEmployeeOnboarding";
 import { useT } from "@/lib/i18n/client";
 
-const MAX_DOCUMENT_BYTES = 8 * 1024 * 1024; // 8MB — matches the server-side cap in onboardingSubmissionFieldsFrom
+const MAX_DOCUMENT_BYTES = 3 * 1024 * 1024;
 
 type DocumentKey = "addressProof" | "bankStatement" | "hkidDocument";
 
@@ -18,6 +18,75 @@ const DOCUMENT_LABELS: Record<DocumentKey, { title: string; hint: string }> = {
 };
 
 const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read this file — please try again."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      const maxEdge = 1600;
+      const scale = Math.min(1, maxEdge / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context) {
+        reject(new Error("Could not read this file — please try again."));
+        return;
+      }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      let quality = 0.72;
+      let data = canvas.toDataURL("image/jpeg", quality);
+      while (data.length > 2_800_000 && quality > 0.4) {
+        quality -= 0.08;
+        data = canvas.toDataURL("image/jpeg", quality);
+      }
+      if (data.length > 3_800_000) {
+        reject(new Error("This file is too large — please keep it under 3 MB."));
+        return;
+      }
+      resolve(data);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read this file — please try again."));
+    };
+    image.src = url;
+  });
+}
+
+async function postJson(url: string, body: unknown): Promise<{ ok: boolean; error?: string; data: any }> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  let data: any = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    return {
+      ok: false,
+      error:
+        res.status === 413
+          ? "The files are too large to send. Please use a smaller photo or PDF."
+          : "The form could not be saved. Please try again.",
+      data: null,
+    };
+  }
+  return { ok: res.ok, error: data.error, data };
+}
 
 function CompanyHeader({ company }: { company: PublicEmployeeOnboardingView["company"] }) {
   return (
@@ -107,6 +176,16 @@ export default function EmployeeOnboardingClient({
 
   const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
+  async function prepareDocument(file: File): Promise<string> {
+    if (file.type === "application/pdf") {
+      if (file.size > MAX_DOCUMENT_BYTES) {
+        throw new Error(t("This file is too large — please keep it under 3 MB."));
+      }
+      return readFileAsDataUrl(file);
+    }
+    return compressImage(file);
+  }
+
   function handleDocumentChange(key: DocumentKey, file: File | null) {
     if (!file) {
       setDocuments((d) => ({ ...d, [key]: { data: null, name: null } }));
@@ -116,19 +195,15 @@ export default function EmployeeOnboardingClient({
       setDocumentErrors((d) => ({ ...d, [key]: t("Please upload a PDF, JPG, or PNG file.") }));
       return;
     }
-    if (file.size > MAX_DOCUMENT_BYTES) {
-      setDocumentErrors((d) => ({ ...d, [key]: t("This file is too large — please keep it under 8 MB.") }));
-      return;
-    }
     setDocumentErrors((d) => ({ ...d, [key]: null }));
-    const reader = new FileReader();
-    reader.onload = () => {
-      setDocuments((d) => ({ ...d, [key]: { data: reader.result as string, name: file.name } }));
-    };
-    reader.onerror = () => {
-      setDocumentErrors((d) => ({ ...d, [key]: t("Could not read this file — please try again.") }));
-    };
-    reader.readAsDataURL(file);
+    prepareDocument(file)
+      .then((data) => setDocuments((d) => ({ ...d, [key]: { data, name: file.name } })))
+      .catch((err: unknown) => {
+        setDocumentErrors((d) => ({
+          ...d,
+          [key]: err instanceof Error ? err.message : t("Could not read this file — please try again."),
+        }));
+      });
   }
 
   const allDocumentsAttached = (Object.keys(DOCUMENT_LABELS) as DocumentKey[]).every(
@@ -149,23 +224,23 @@ export default function EmployeeOnboardingClient({
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/public/onboarding/${token}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          addressProofData: documents.addressProof.data,
-          bankStatementData: documents.bankStatement.data,
-          hkidDocumentData: documents.hkidDocument.data,
-          declarationAccuracy,
-          declarationConsent,
-        }),
+      for (const key of Object.keys(DOCUMENT_LABELS) as DocumentKey[]) {
+        const uploaded = await postJson(`/api/public/onboarding/${token}/document`, {
+          kind: key,
+          data: documents[key].data,
+        });
+        if (!uploaded.ok) throw new Error(uploaded.error || t("Could not upload your documents. Please try again in a moment."));
+      }
+      const saved = await postJson(`/api/public/onboarding/${token}/submit`, {
+        ...form,
+        documentsAlreadyUploaded: true,
+        declarationAccuracy,
+        declarationConsent,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || t("Something went wrong. Please try again."));
-      setView(data);
-    } catch (err: any) {
-      setError(err.message);
+      if (!saved.ok) throw new Error(saved.error || t("Something went wrong. Please try again."));
+      setView(saved.data);
+    } catch (err: unknown) {
+      setError(t(err instanceof Error ? err.message : "Something went wrong. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -413,7 +488,7 @@ export default function EmployeeOnboardingClient({
         <div className="card p-5 flex flex-col gap-4">
           <div>
             <h2 className="font-display text-lg font-semibold">{t("Documents")}</h2>
-            <p className="text-sm text-ink-muted mt-0.5">{t("Please attach all three documents below (PDF, JPG, or PNG, up to 8 MB each). All three are required to submit.")}</p>
+            <p className="text-sm text-ink-muted mt-0.5">{t("Please attach all three documents below (PDF, JPG, or PNG). Photos are reduced automatically. A PDF must be under 3 MB.")}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {(Object.keys(DOCUMENT_LABELS) as DocumentKey[]).map((key) => {
