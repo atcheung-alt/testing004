@@ -4,7 +4,8 @@ import { computeTotals } from "@/lib/calculations";
 import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, documentLanguageFrom, withParsedItems, VALID_QUOTATION_STATUSES } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
 import { quotationShareFieldsFrom } from "@/lib/quotationShares";
-import { quotationVisible } from "@/lib/documentAccess";
+import { quotationCanModify, quotationVisible } from "@/lib/documentAccess";
+import { bindShareColleagueNames } from "@/lib/quotationAuthor";
 import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
@@ -30,7 +31,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
 
-  if (!(await quotationVisible(params.id))) {
+  if (!(await quotationCanModify(params.id))) {
     return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
   }
   const existing = await prisma.quotation.findUnique({ where: { id: params.id } });
@@ -112,6 +113,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (sharing.error) {
     return NextResponse.json({ error: sharing.error }, { status: 400 });
   }
+  const boundShares = await bindShareColleagueNames(sharing.shares);
 
   const quotation = await prisma.$transaction(async (tx) => {
     await tx.quotationItem.deleteMany({ where: { quotationId: params.id } });
@@ -141,7 +143,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           create: body.items.map(itemCreateFrom),
         },
         shares: {
-          create: sharing.shares,
+          create: boundShares,
         },
       },
       include: {
@@ -163,7 +165,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-  if (!(await quotationVisible(params.id))) {
+  if (!(await quotationCanModify(params.id))) {
     return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
   }
   const existing = await prisma.quotation.findUnique({

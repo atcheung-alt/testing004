@@ -27,13 +27,14 @@ import { getActivityTimeline } from "@/lib/activity";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
-import { invoiceVisible } from "@/lib/documentAccess";
+import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
   if (!(await invoiceVisible(params.id))) notFound();
+  const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
   const [raw, categories] = await Promise.all([
     prisma.invoice.findUnique({
@@ -141,7 +142,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <StatusUpdater kind="invoice" id={invoice.id} status={normalizeInvoiceStatus(invoice.status)} />
+            {canModify && <StatusUpdater kind="invoice" id={invoice.id} status={normalizeInvoiceStatus(invoice.status)} />}
             <DownloadPdfButton url={`/api/invoices/${invoice.id}/pdf`} />
             <SendEmailButton
               kind="invoices"
@@ -172,16 +173,18 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
                 title={t("Copy the public view & pay link")}
               />
             )}
-            <Link href={`/invoices/${invoice.id}/edit`} className="btn-secondary">
-              <Pencil size={15} /> {t("Edit")}
-            </Link>
+            {canModify && (
+              <Link href={`/invoices/${invoice.id}/edit`} className="btn-secondary">
+                <Pencil size={15} /> {t("Edit")}
+              </Link>
+            )}
             <DuplicateButton kind="invoice" id={invoice.id} />
-            <DeleteButton
+            {canModify && <DeleteButton
               url={`/api/invoices/${invoice.id}`}
               confirmNumber={invoice.number}
               itemLabel={t("invoice")}
               redirectTo="/invoices"
-            />
+            />}
           </div>
         </div>
       </div>
@@ -189,7 +192,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
       {invoice.status === "PENDING_VERIFICATION" && (
         <div className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-brand-50/60 border-brand-100">
           <p className="text-sm text-brand-700">{paymentNotice}</p>
-          <VerifyPaymentButton invoiceId={invoice.id} />
+          {canModify && <VerifyPaymentButton invoiceId={invoice.id} />}
         </div>
       )}
 

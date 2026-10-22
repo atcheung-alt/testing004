@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/activity";
+import { quotationVisible } from "@/lib/documentAccess";
 
 /** Copy a quotation's format (title, items, terms) into a reusable template.
  *  Customer details and dates stay on the quotation — a template is the
  *  format you fill in next time. */
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await quotationVisible(params.id))) {
+    return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
+  }
   const quotation = await prisma.quotation.findUnique({
     where: { id: params.id },
     include: { items: { orderBy: { sortOrder: "asc" } } },
@@ -43,6 +48,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         })),
       },
     },
+  });
+
+  await logActivity({
+    documentType: "template",
+    documentId: template.id,
+    type: "CREATED",
+    description: `Template ${template.name} created`,
   });
 
   return NextResponse.json({ id: template.id, name: template.name }, { status: 201 });

@@ -1,24 +1,39 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { staffCodeFromId, type StaffColleague } from "@/lib/staffCode";
+import type { QuotationShareInput } from "@/lib/quotationShares";
 
-/** Nicknames (and staff names) offered when picking who a quotation share goes to. */
-export async function loadColleagueNames(): Promise<string[]> {
-  const [users, employees] = await Promise.all([
-    prisma.user.findMany({ select: { nickname: true, name: true } }),
-    prisma.employee.findMany({
-      where: { status: { not: "FORMER" }, nickname: { not: null } },
-      select: { nickname: true },
-    }),
-  ]);
-  const names = new Set<string>();
-  for (const user of users) {
-    if (user.nickname.trim()) names.add(user.nickname.trim());
-    else if (user.name.trim()) names.add(user.name.trim());
-  }
-  for (const employee of employees) {
-    if (employee.nickname?.trim()) names.add(employee.nickname.trim());
-  }
-  return Array.from(names).sort((a, b) => a.localeCompare(b));
+/** Login accounts, shown by nickname. The value saved on a share is the staff number. */
+export async function loadColleagues(): Promise<StaffColleague[]> {
+  const users = await prisma.user.findMany({
+    select: { id: true, nickname: true, name: true, email: true },
+    orderBy: { email: "asc" },
+  });
+  return users
+    .map((user) => ({
+      code: staffCodeFromId(user.id),
+      nickname: user.nickname.trim() || user.name.trim() || user.email,
+      name: user.name.trim(),
+    }))
+    .sort((a, b) => a.nickname.localeCompare(b.nickname));
+}
+
+/** Rewrite a typed nickname to that person's staff number. Unknown names stay as typed. */
+export async function bindShareColleagueNames(shares: QuotationShareInput[]): Promise<QuotationShareInput[]> {
+  if (shares.length === 0) return shares;
+  const users = await prisma.user.findMany({ select: { id: true, nickname: true, name: true } });
+  return shares.map((share) => {
+    const named = share.colleagueName.trim().toLowerCase();
+    const hit = users.find((user) => {
+      const code = staffCodeFromId(user.id);
+      return (
+        code === share.colleagueName.trim() ||
+        (user.nickname.trim() && user.nickname.trim().toLowerCase() === named) ||
+        (user.name.trim() && user.name.trim().toLowerCase() === named)
+      );
+    });
+    return hit ? { ...share, colleagueName: staffCodeFromId(hit.id) } : share;
+  });
 }
 
 /**

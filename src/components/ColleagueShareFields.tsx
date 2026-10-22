@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
+import type { StaffColleague } from "@/lib/staffCode";
 
 export type ShareMode = "AMOUNT" | "PERCENT";
 
@@ -25,7 +26,7 @@ export default function ColleagueShareFields({
   shares,
   onSharesChange,
   total,
-  colleagueNames,
+  colleagues,
 }: {
   preparedBy: string;
   onPreparedByChange: (value: string) => void;
@@ -34,7 +35,7 @@ export default function ColleagueShareFields({
   shares: ColleagueShare[];
   onSharesChange: (shares: ColleagueShare[]) => void;
   total: number;
-  colleagueNames: string[];
+  colleagues: StaffColleague[];
 }) {
   const t = useT();
   const listId = "colleague-name-suggestions";
@@ -51,7 +52,7 @@ export default function ColleagueShareFields({
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Made by & colleague sharing")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t("Made by defaults to your nickname. Add colleagues and share either an exact amount or a percentage of the quotation total.")}
+          {t("Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.")}
         </p>
       </div>
 
@@ -92,8 +93,8 @@ export default function ColleagueShareFields({
       </div>
 
       <datalist id={listId}>
-        {colleagueNames.map((name) => (
-          <option key={name} value={name} />
+        {colleagues.map((person) => (
+          <option key={person.code} value={person.nickname} />
         ))}
       </datalist>
 
@@ -105,13 +106,24 @@ export default function ColleagueShareFields({
             <div key={share.id} className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2 items-end">
               <div>
                 {index === 0 && <label className="label">{t("Colleague")}</label>}
-                <input
+                <select
                   className="input"
-                  list={listId}
                   value={share.colleagueName}
-                  placeholder={t("Nickname")}
                   onChange={(e) => updateShare(index, { colleagueName: e.target.value })}
-                />
+                >
+                  <option value="">{t("Choose a colleague")}</option>
+                  {colleagues.map((person) => {
+                    const sharedNickname = colleagues.filter((other) => other.nickname === person.nickname).length > 1;
+                    return (
+                      <option key={person.code} value={person.code}>
+                        {sharedNickname ? `${person.nickname} · ${person.code}` : person.nickname}
+                      </option>
+                    );
+                  })}
+                  {share.colleagueName && !colleagues.some((person) => person.code === share.colleagueName) && (
+                    <option value={share.colleagueName}>{share.colleagueName}</option>
+                  )}
+                </select>
               </div>
               <div>
                 {index === 0 && (

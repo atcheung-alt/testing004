@@ -23,14 +23,18 @@ import { withParsedFeesList } from "@/lib/fees";
 import { getActivityTimeline } from "@/lib/activity";
 import { computeTotals } from "@/lib/calculations";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
-import { quotationVisible } from "@/lib/documentAccess";
+import { quotationCanModify, quotationVisible } from "@/lib/documentAccess";
+import { loadColleagues } from "@/lib/quotationAuthor";
+import { colleagueLabel } from "@/lib/staffCode";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuotationDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
   if (!(await quotationVisible(params.id))) notFound();
-  const raw = await prisma.quotation.findUnique({
+  const canModify = await quotationCanModify(params.id);
+  const [raw, colleagues] = await Promise.all([
+    prisma.quotation.findUnique({
     where: { id: params.id },
     include: {
       items: { orderBy: { sortOrder: "asc" } },
@@ -38,7 +42,9 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
       comments: { orderBy: { createdAt: "asc" } },
       shares: { orderBy: { sortOrder: "asc" } },
     },
-  });
+  }),
+    loadColleagues(),
+  ]);
 
   if (!raw) notFound();
   const quotation = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
@@ -95,7 +101,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             flex-wrap when there isn't room beside the heading) fixes every
             width, not just one breakpoint. */}
         <div className="flex flex-wrap gap-2 items-start sm:justify-end">
-          <StatusUpdater kind="quotation" id={quotation.id} status={quotation.status} disabled={locked} />
+          {canModify && <StatusUpdater kind="quotation" id={quotation.id} status={quotation.status} disabled={locked} />}
           <DownloadPdfButton url={`/api/quotations/${quotation.id}/pdf`} />
           <SendEmailButton
             kind="quotations"
@@ -107,7 +113,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             showCc
           />
           {!signed && signingUrl && <CopySigningLinkButton url={signingUrl} />}
-          {!locked && (
+          {canModify && !locked && (
             <Link href={`/quotations/${quotation.id}/edit`} className="btn-secondary">
               <Pencil size={15} /> {t("Edit")}
             </Link>
@@ -117,7 +123,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             quotationId={quotation.id}
             suggestedName={quotation.title || quotation.customerName || quotation.number}
           />
-          <DeleteButton
+          {canModify && <DeleteButton
             url={`/api/quotations/${quotation.id}`}
             confirmNumber={quotation.number}
             itemLabel={t("quotation")}
@@ -129,7 +135,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
                   })
                 : undefined
             }
-            />
+            />}
         </div>
       </div>
 
@@ -141,7 +147,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
         </div>
       )}
 
-      {!locked && quotation.status !== "REJECTED" && !quotation.invoice && (
+      {canModify && !locked && quotation.status !== "REJECTED" && !quotation.invoice && (
         <div className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-brand-50/60 border-brand-100">
           <p className="text-sm text-brand-700">
             {t("Ready to bill this? Converting locks the quotation and creates a matching invoice.")}
@@ -187,7 +193,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
                   quotation.shareMode === "PERCENT" ? (quotation.total * share.value) / 100 : share.value;
                 return (
                   <div key={share.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium">{share.colleagueName}</span>
+                    <span className="font-medium">{colleagueLabel(share.colleagueName, colleagues)}</span>
                     <span className="font-mono text-ink-muted">
                       {quotation.shareMode === "PERCENT" ? `${share.value}% · ${formatCurrency(amount)}` : formatCurrency(amount)}
                     </span>

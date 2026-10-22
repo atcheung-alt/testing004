@@ -6,6 +6,7 @@ import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, withParsedIte
 import { generateSigningToken } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
 import { quotationShareFieldsFrom } from "@/lib/quotationShares";
+import { bindShareColleagueNames } from "@/lib/quotationAuthor";
 import { getCurrentUser } from "@/lib/auth";
 import { andFilters, currentQuotationFilter } from "@/lib/documentAccess";
 import { setDocumentViewers } from "@/lib/staffDirectory";
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
   if (sharing.error) {
     return NextResponse.json({ error: sharing.error }, { status: 400 });
   }
+  const boundShares = await bindShareColleagueNames(sharing.shares);
   let preparedBy = sharing.preparedBy;
   if (!preparedBy) {
     const session = await getCurrentUser();
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
         create: body.items.map(itemCreateFrom),
       },
       shares: {
-        create: sharing.shares,
+        create: boundShares,
       },
     },
     include: { items: true, shares: { orderBy: { sortOrder: "asc" } } },

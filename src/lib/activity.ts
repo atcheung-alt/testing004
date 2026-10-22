@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { staffCodeFromId } from "@/lib/staffCode";
 
 export type ActivityDocumentType =
   | "quotation"
   | "invoice"
+  | "template"
   | "recruitment"
   | "employee"
   | "payroll"
@@ -52,12 +54,17 @@ export async function logActivity(params: {
   try {
     const actor = params.actor || "STAFF";
     let actorName = params.actorName || null;
-    if (actor === "STAFF" && !actorName) {
+    if (actor === "STAFF") {
       try {
         const user = await getCurrentUser();
         const email = user?.email?.trim();
         const name = user?.name?.trim();
-        actorName = email ? (name && name.toLowerCase() !== email.toLowerCase() ? `${name} <${email}>` : email) : name || null;
+        if (!actorName) {
+          actorName = email ? (name && name.toLowerCase() !== email.toLowerCase() ? `${name} <${email}>` : email) : name || null;
+        }
+        if (user?.userId && actorName && !/#\d{8}\b/.test(actorName)) {
+          actorName = `${actorName} #${staffCodeFromId(user.userId)}`;
+        }
       } catch {
         // No request/session context available (shouldn't normally happen
         // for a STAFF-actor event) — fall back to no name rather than fail.

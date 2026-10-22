@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { convertQuotationToInvoice } from "@/lib/quotationToInvoice";
 import { withParsedItems } from "@/lib/document-helpers";
+import { quotationCanModify } from "@/lib/documentAccess";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await quotationCanModify(params.id))) {
+    return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
+  }
   const body = await request.json().catch(() => ({}));
 
   const quotation = await prisma.quotation.findUnique({

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { itemCreateFrom, documentDefaultsFrom } from "@/lib/document-helpers";
+import { templateVisible } from "@/lib/documentAccess";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await templateVisible(params.id))) {
+    return NextResponse.json({ error: "Template not found." }, { status: 404 });
+  }
   const template = await prisma.quotationTemplate.findUnique({
     where: { id: params.id },
     include: { items: { orderBy: { sortOrder: "asc" } } },
@@ -12,6 +16,9 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await templateVisible(params.id))) {
+    return NextResponse.json({ error: "Template not found." }, { status: 404 });
+  }
   const existing = await prisma.quotationTemplate.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: "Template not found." }, { status: 404 });
 
@@ -55,6 +62,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await templateVisible(params.id))) {
+    return NextResponse.json({ error: "Template not found." }, { status: 404 });
+  }
   const existing = await prisma.quotationTemplate.findUnique({ where: { id: params.id } });
   if (!existing) return NextResponse.json({ error: "Template not found." }, { status: 404 });
   await prisma.quotationTemplate.delete({ where: { id: params.id } });
