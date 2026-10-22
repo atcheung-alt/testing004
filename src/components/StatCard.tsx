@@ -6,6 +6,8 @@ import AnimatedAmount from "@/components/AnimatedAmount";
 export default function StatCard({
   label,
   value,
+  icon: Icon,
+  accent = "brand",
   detail,
   amount,
   className = "",
@@ -21,16 +23,33 @@ export default function StatCard({
   style?: CSSProperties;
 }) {
   const t = getT();
+  const accentClasses =
+    accent === "accent"
+      ? "bg-accent-100 text-accent-600"
+      : accent === "ink"
+      ? "bg-paper text-ink-muted"
+      : accent === "danger"
+      ? "bg-danger-50 text-danger-500"
+      : "bg-brand-50 text-brand-500";
 
   return (
-    <div className={`card px-4 py-4 ${className}`} style={style}>
-      <p className="text-sm text-ink-muted">{t(label)}</p>
-      {typeof amount === "number" ? (
-        <AnimatedAmount value={amount} className="mt-1 block font-mono text-2xl font-semibold text-ink" />
-      ) : (
-        <p className="mt-1 font-mono text-2xl font-semibold text-ink">{value}</p>
-      )}
-      {detail ? <p className="text-xs text-ink-muted mt-1">{detail}</p> : null}
+    <div className={`card p-5 flex items-start justify-between animate-rise ${className}`} style={style}>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">
+          {t(label)}
+        </p>
+        {typeof amount === "number" ? (
+          <AnimatedAmount value={amount} className="font-mono text-2xl font-semibold text-ink" />
+        ) : (
+          <p className="font-mono text-2xl font-semibold text-ink">{value}</p>
+        )}
+        {detail ? <p className="text-xs text-ink-muted mt-1">{detail}</p> : null}
+      </div>
+      {Icon ? (
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${accentClasses}`}>
+          <Icon size={18} />
+        </div>
+      ) : null}
     </div>
   );
 }

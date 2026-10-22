@@ -100,11 +100,11 @@ function NavLink({
       prefetch={false}
       title={collapsed ? label : undefined}
       className={clsx(
-        "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
+        "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
         collapsed && "lg:justify-center lg:px-0 lg:gap-0",
         active
-          ? "bg-ink text-surface font-semibold"
-          : "text-ink-muted hover:bg-paper hover:text-ink"
+          ? "bg-brand-gradient text-white shadow-soft"
+          : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
       )}
     >
       <Icon size={17} strokeWidth={2} className="shrink-0" />
@@ -125,13 +125,13 @@ function NavLinks({
   onNavigate?: () => void;
 }) {
   return (
-    <nav className="flex flex-col gap-3 px-3">
+    <nav className="flex flex-col gap-5 px-3">
       {navGroups.map((group, gi) => (
         <div key={group.label || gi} className="flex flex-col gap-0.5">
           {group.label && (
             <p
               className={clsx(
-                "px-3 pb-1 text-xs font-medium text-ink-muted",
+                "px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-faint",
                 collapsed && "lg:hidden"
               )}
             >
@@ -171,7 +171,7 @@ function SidebarLogo({
 }) {
   if (!logoData) {
     return (
-      <span className="font-sans font-semibold text-base truncate">
+      <span className="font-display font-semibold text-lg tracking-tight truncate">
         {companyName}
       </span>
     );
@@ -222,11 +222,11 @@ function BottomLinks({
           prefetch={false}
           title={collapsed ? t("Management") : undefined}
           className={clsx(
-            "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
+            "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
             collapsed && "lg:justify-center lg:px-0 lg:gap-0",
             managementActive
-              ? "bg-ink text-surface font-semibold"
-              : "text-ink-muted hover:bg-paper hover:text-ink"
+              ? "bg-brand-gradient text-white shadow-soft"
+              : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
           )}
         >
           <Shield size={17} strokeWidth={2} className="shrink-0" />
@@ -240,11 +240,11 @@ function BottomLinks({
         prefetch={false}
         title={collapsed ? t("Settings") : undefined}
         className={clsx(
-          "flex items-center rounded-md py-2 text-sm transition-[background-color,color] duration-100 gap-3 px-3",
+          "flex items-center rounded-xl py-2.5 text-sm font-medium transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] gap-3 px-3",
           collapsed && "lg:justify-center lg:px-0 lg:gap-0",
           settingsActive
-            ? "bg-ink text-surface font-semibold"
-            : "text-ink-muted hover:bg-paper hover:text-ink"
+            ? "bg-brand-gradient text-white shadow-soft"
+            : "text-ink-muted hover:bg-brand-50 hover:text-brand-600"
         )}
       >
         <SettingsIcon size={17} strokeWidth={2} className="shrink-0" />

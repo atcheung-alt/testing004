@@ -79,9 +79,9 @@ export default async function HrLayout({ children }: { children: React.ReactNode
     // child in its own layout, so this ordering is the other deliberate
     // visual cue (on top of the re-tinted color and mobile-drawer direction)
     // that you're in a different system even at a glance.
-    <div data-product="hr" data-shell="staff" className="min-h-screen flex">
+    <div data-product="hr" className="min-h-screen flex">
       <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 pt-4 pb-8">
+        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
           <MpfNotificationPopup alerts={mpfAlerts} />
           <PageTransition>{children}</PageTransition>
         </main>
