@@ -391,6 +391,11 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Pending leave requests": "待處理休假申請",
   "Please upload a PDF, JPG, or PNG file.": "請上載 PDF、JPG 或 PNG 檔案。",
   "This file is too large — please keep it under 8 MB.": "檔案太大 — 請保持在 8 MB 以內。",
+  "This file is too large — please keep it under 3 MB.": "檔案太大 — 請保持在 3 MB 以內。",
+  "The files are too large to send. Please use a smaller photo or PDF.": "檔案太大，無法傳送。請改用較小的相片或 PDF。",
+  "The form could not be saved. Please try again.": "表格未能儲存，請再試一次。",
+  "Could not save your details. Please try again in a moment.": "未能儲存你的資料，請稍後再試。",
+  "That document type isn't recognised.": "無法識別這份文件類型。",
   "Could not read this file — please try again.": "無法讀取此檔案 — 請再試一次。",
   "Please attach all three documents before submitting.": "請先附上全部三份文件再提交。",
   "Please confirm both declarations before submitting.": "請先確認兩項聲明再提交。",
@@ -418,6 +423,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Account holder *": "戶口持有人 *",
   "Account number *": "戶口號碼 *",
   Documents: "文件",
+  "Please attach all three documents below (PDF, JPG, or PNG). Photos are reduced automatically. A PDF must be under 3 MB.":
+    "請附上以下全部三份文件（PDF、JPG 或 PNG）。相片會自動縮小。PDF 須在 3 MB 以內。",
   "Please attach all three documents below (PDF, JPG, or PNG, up to 8 MB each). All three are required to submit.":
     "請在下方附上全部三份文件（PDF、JPG 或 PNG，每份最大 8 MB）。三份都必須附上才可提交。",
   "Upload file": "上載檔案",
