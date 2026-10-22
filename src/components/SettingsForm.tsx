@@ -73,7 +73,7 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (value: boo
   );
 }
 
-export default function SettingsForm() {
+export default function SettingsForm({ part = "appearance" }: { part?: "appearance" | "company" }) {
   const t = useT();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings>(emptySettings);
@@ -173,7 +173,7 @@ export default function SettingsForm() {
         </div>
       )}
 
-      {/* Appearance */}
+      {part === "appearance" && (
       <div className="card p-5 flex flex-col gap-3">
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Appearance")}</h2>
@@ -226,8 +226,10 @@ export default function SettingsForm() {
           </p>
         </div>
       </div>
+      )}
 
-      {/* Company branding */}
+      {part === "company" && (
+      <>
       <div className="card p-5 flex flex-col gap-4">
         <div>
           <h2 className="font-display text-lg font-semibold">{t("Company Branding")}</h2>
@@ -349,6 +351,8 @@ export default function SettingsForm() {
           </p>
         </div>
       </div>
+      </>
+      )}
 
       <div className="flex items-center gap-3">
         <button type="button" onClick={save} disabled={saving} className="btn-primary">
