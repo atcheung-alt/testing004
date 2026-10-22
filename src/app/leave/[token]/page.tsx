@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { ShieldAlert } from "lucide-react";
 import { getPublicEmployeeLeaveView } from "@/lib/publicEmployeeLeave";
 import EmployeeLeaveClient from "@/components/EmployeeLeaveClient";
+import { prisma } from "@/lib/prisma";
+import { defaultTimesheetPeriod, openTimesheet, summarizeSlots, timesheetBasis } from "@/lib/timesheets";
 import { COMPANY } from "@/lib/company";
 import { getT } from "@/lib/i18n/server";
 
@@ -43,5 +45,27 @@ export default async function EmployeeLeavePage({ params }: { params: { token: s
     );
   }
 
-  return <EmployeeLeaveClient token={params.token} initial={view} />;
+  const period = defaultTimesheetPeriod();
+  const sheet = view.canRequestLeave ? await openTimesheet(view.id, period) : null;
+  const employee = sheet
+    ? await prisma.employee.findUnique({
+        where: { id: view.id },
+        select: { employmentType: true, payRateType: true },
+      })
+    : null;
+  const timesheet =
+    sheet && employee
+      ? {
+          token: sheet.token,
+          employeeName: view.name,
+          period: sheet.period,
+          status: sheet.status,
+          note: sheet.note,
+          slots: sheet.slots,
+          basis: timesheetBasis(employee.employmentType, employee.payRateType) || ("HOURLY" as const),
+          ...summarizeSlots(sheet.slots),
+        }
+      : null;
+
+  return <EmployeeLeaveClient token={params.token} initial={view} timesheet={timesheet} />;
 }

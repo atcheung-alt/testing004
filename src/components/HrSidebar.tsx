@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   IdCard,
+  Building2,
   Wallet,
   Clock,
   UserCircle,
@@ -40,7 +41,12 @@ type NavItem = { href: string; label: string; icon: LucideIcon; comingSoon?: boo
 // there's no point showing nav items that would just bounce them back to
 // Profile anyway. Admins see everything, Profile included, since an admin
 // can also be an employee with their own leave balance to check.
-function buildNavItems(isAdmin: boolean, canViewEmployees: boolean, t: (key: string) => string): NavItem[] {
+function buildNavItems(
+  isAdmin: boolean,
+  canViewEmployees: boolean,
+  canManageCompanies: boolean,
+  t: (key: string) => string
+): NavItem[] {
   if (!isAdmin) {
     return canViewEmployees
       ? [
@@ -52,6 +58,9 @@ function buildNavItems(isAdmin: boolean, canViewEmployees: boolean, t: (key: str
   return [
     { href: "/hr", label: t("Dashboard"), icon: LayoutDashboard },
     { href: "/hr/employees", label: t("Employees"), icon: IdCard },
+    ...(canManageCompanies
+      ? [{ href: "/hr/companies", label: t("Client companies"), icon: Building2 }]
+      : []),
     { href: "/hr/payroll", label: t("Payroll"), icon: Wallet },
     { href: "/hr/attendance", label: t("Attendance"), icon: Clock },
     { href: "/hr/profile", label: t("Profile"), icon: UserCircle },
@@ -223,18 +232,20 @@ export default function HrSidebar({
   companyName,
   isAdmin = false,
   canViewEmployees = false,
+  canManageCompanies = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
   companyName?: string;
   isAdmin?: boolean;
   canViewEmployees?: boolean;
+  canManageCompanies?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
   const [narrowOpen, setNarrowOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
-  const items = buildNavItems(isAdmin, canViewEmployees, t);
+  const items = buildNavItems(isAdmin, canViewEmployees, canManageCompanies, t);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(COLLAPSED_STORAGE_KEY);

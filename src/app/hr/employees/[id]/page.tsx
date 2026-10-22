@@ -134,8 +134,8 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
           {leaveUrl && (
             <CopySigningLinkButton
               url={leaveUrl}
-              label={t("Copy leave link")}
-              title={t("Copy this employee's personal leave link")}
+              label={t("Copy personal link")}
+              title={t("Copy this employee's link for leave and work hours")}
             />
           )}
           {isAdmin && (
@@ -195,10 +195,10 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
         </div>
       </div>
 
-      {isAdmin && timesheetBasis(employee.employmentType, employee.payRateType) && (
+      {isAdmin && (
         <EmployeeTimesheetCard
           employeeId={employee.id}
-          basis={timesheetBasis(employee.employmentType, employee.payRateType)!}
+          basis={timesheetBasis(employee.employmentType, employee.payRateType)}
           hasEmail={Boolean(employee.personalEmail || employee.email || employee.companyEmail)}
           initialPeriod={defaultTimesheetPeriod()}
           sheets={await sheetsForEmployee(employee.id)}

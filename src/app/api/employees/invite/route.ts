@@ -23,12 +23,33 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const name = (body.name || "").trim();
   const email = (body.email || "").trim();
+  const employmentType = body.employmentType === "PART_TIME" || body.employmentType === "FREELANCE" ? body.employmentType : body.employmentType === "FULL_TIME" ? "FULL_TIME" : "";
 
   if (!name) {
     return NextResponse.json({ error: "Please enter the employee's name." }, { status: 400 });
   }
   if (!email || !isValidEmail(email)) {
     return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
+  if (!employmentType) {
+    return NextResponse.json({ error: "Choose full time, part time, or freelance." }, { status: 400 });
+  }
+
+  const requestedCompanyId = typeof body.companyId === "string" ? body.companyId : "";
+  let companyId = requestedCompanyId;
+  if (companyId) {
+    const company = await prisma.employerCompany.findUnique({ where: { id: companyId }, select: { id: true } });
+    if (!company) return NextResponse.json({ error: "Choose a company." }, { status: 400 });
+  } else {
+    const companies = await prisma.employerCompany.findMany({ select: { id: true, name: true, sortOrder: true } });
+    const existing = companies.find((company) => company.name.toLowerCase().replace(/[^a-z]/g, "") === "hrplus");
+    if (existing) {
+      companyId = existing.id;
+    } else {
+      const lastOrder = companies.reduce((max, company) => Math.max(max, company.sortOrder), 0);
+      const created = await prisma.employerCompany.create({ data: { name: "HR Plus", sortOrder: lastOrder + 1 } });
+      companyId = created.id;
+    }
   }
 
   // Invited employees start life in ONBOARDING (not the schema default
@@ -43,7 +64,7 @@ export async function POST(request: NextRequest) {
   // the Edit form.
   const { surname: surnameEn, given: givenNameEn } = splitNameGuess(name);
   const employee = await prisma.employee.create({
-    data: { name, surnameEn, givenNameEn, email, status: "ONBOARDING" },
+    data: { name, surnameEn, givenNameEn, email, status: "ONBOARDING", companyId, employmentType },
   });
 
   await logActivity({

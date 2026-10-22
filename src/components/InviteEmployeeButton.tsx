@@ -11,11 +11,18 @@ import { useT } from "@/lib/i18n/client";
  *  everything else (HKID, address, emergency contact, bank details)
  *  themselves via that link; this modal intentionally asks for nothing
  *  more than what's needed to create the record and send it. */
-export default function InviteEmployeeButton() {
+function isHrPlus(name: string) {
+  return name.toLowerCase().replace(/[^a-z]/g, "") === "hrplus";
+}
+
+export default function InviteEmployeeButton({ companies }: { companies: { id: string; name: string }[] }) {
   const router = useRouter();
+  const hrPlus = companies.find((company) => isHrPlus(company.name));
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [companyId, setCompanyId] = useState(hrPlus?.id || "");
+  const [employmentType, setEmploymentType] = useState("FULL_TIME");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const t = useT();
@@ -25,6 +32,8 @@ export default function InviteEmployeeButton() {
     setOpen(false);
     setName("");
     setEmail("");
+    setCompanyId(hrPlus?.id || "");
+    setEmploymentType("FULL_TIME");
     setError(null);
   }
 
@@ -36,7 +45,7 @@ export default function InviteEmployeeButton() {
       const res = await fetch("/api/employees/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, companyId, employmentType }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || t("Something went wrong."));
@@ -57,7 +66,7 @@ export default function InviteEmployeeButton() {
       {open && (
         <Portal>
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm px-4 animate-fade-in">
-            <div className="card p-6 max-w-sm w-full flex flex-col gap-4 animate-scale-in">
+            <div className="card p-6 max-w-md w-full flex flex-col gap-4 animate-scale-in">
               <div>
                 <h2 className="font-display text-lg font-semibold text-ink">{t("Invite an Employee")}</h2>
                 <p className="text-sm text-ink-muted mt-1">
@@ -93,6 +102,25 @@ export default function InviteEmployeeButton() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
+                </div>
+                <div>
+                  <label className="label">{t("Company")}</label>
+                  <select className="input" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+                    {!hrPlus && <option value="">{t("HR Plus")}</option>}
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">{t("Employment type")}</label>
+                  <select className="input" value={employmentType} onChange={(e) => setEmploymentType(e.target.value)}>
+                    <option value="FULL_TIME">{t("Full time")}</option>
+                    <option value="PART_TIME">{t("Part time")}</option>
+                    <option value="FREELANCE">{t("Freelance")}</option>
+                  </select>
                 </div>
 
                 <div className="flex gap-2 mt-1">

@@ -12,8 +12,7 @@ async function viewFor(token: string) {
     select: { name: true, employmentType: true, payRateType: true },
   });
   if (!employee) return null;
-  const basis = timesheetBasis(employee.employmentType, employee.payRateType);
-  if (!basis) return null;
+  const basis = timesheetBasis(employee.employmentType, employee.payRateType) || "HOURLY";
   return {
     employeeName: employee.name,
     period: sheet.period,

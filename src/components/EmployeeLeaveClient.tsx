@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/calculations";
 import LeaveStatusBadge from "@/components/LeaveStatusBadge";
 import CompanyLogo from "@/components/CompanyLogo";
 import type { PublicEmployeeLeaveView } from "@/lib/publicEmployeeLeave";
+import TimesheetForm from "@/components/TimesheetForm";
 import { useT } from "@/lib/i18n/client";
 
 function CompanyHeader({ company }: { company: PublicEmployeeLeaveView["company"] }) {
@@ -28,9 +29,21 @@ function CompanyHeader({ company }: { company: PublicEmployeeLeaveView["company"
 export default function EmployeeLeaveClient({
   token,
   initial,
+  timesheet,
 }: {
   token: string;
   initial: PublicEmployeeLeaveView;
+  timesheet: {
+    token: string;
+    employeeName: string;
+    period: string;
+    status: "SENT" | "SUBMITTED" | "APPROVED" | "REJECTED";
+    note: string;
+    slots: { date: string; start: string; end: string }[];
+    basis: "DAILY" | "HOURLY";
+    hours: number;
+    days: number;
+  } | null;
 }) {
   const [view, setView] = useState(initial);
   const [startDate, setStartDate] = useState("");
@@ -92,7 +105,9 @@ export default function EmployeeLeaveClient({
 
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink">{t("Hi, {name}", { name: view.name })}</h1>
-        <p className="text-sm text-ink-muted mt-0.5">{t("Your annual leave balance and request history.")}</p>
+        <p className="text-sm text-ink-muted mt-0.5">
+          {t("Request leave, and write the days and times you worked. HR Plus approves both.")}
+        </p>
       </div>
 
       <div className="card p-5 grid grid-cols-3 gap-4 text-center">
@@ -221,6 +236,8 @@ placeholder={t("e.g. Family trip")}
 {t("This link is read-only — new leave requests can no longer be submitted.")}
         </div>
       )}
+
+      {timesheet && <TimesheetForm token={timesheet.token} initial={timesheet} embedded />}
 
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("Request History")}</h2>

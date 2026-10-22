@@ -27,7 +27,15 @@ function emptySlot(period: string): Slot {
   return { date: `${period}-01`, start: "09:00", end: "18:00" };
 }
 
-export default function TimesheetForm({ token, initial }: { token: string; initial: View }) {
+export default function TimesheetForm({
+  token,
+  initial,
+  embedded = false,
+}: {
+  token: string;
+  initial: View;
+  embedded?: boolean;
+}) {
   const t = useT();
   const [view, setView] = useState(initial);
   const [slots, setSlots] = useState<Slot[]>(initial.slots.length ? initial.slots : [emptySlot(initial.period)]);
@@ -61,14 +69,20 @@ export default function TimesheetForm({ token, initial }: { token: string; initi
   }
 
   return (
-    <form onSubmit={submit} className="max-w-lg mx-auto px-4 py-10 flex flex-col gap-4">
+    <form onSubmit={submit} className={embedded ? "card p-5 flex flex-col gap-4" : "max-w-lg mx-auto px-4 py-10 flex flex-col gap-4"}>
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">{t("Fill in the days you worked")}</h1>
+        {embedded ? (
+          <h2 className="font-display text-lg font-semibold text-ink">{t("Days and times you worked")}</h2>
+        ) : (
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("Fill in the days you worked")}</h1>
+        )}
         <p className="text-sm text-ink-muted mt-1">
-          {view.employeeName} · {view.period}
+          {embedded
+            ? t("Add each day with a start and end time. HR Plus approves this before it is used.")
+            : `${view.employeeName} · ${view.period}`}
         </p>
       </div>
-      <div className="card p-5 flex flex-col gap-3">
+      <div className={embedded ? "flex flex-col gap-3" : "card p-5 flex flex-col gap-3"}>
         {view.status === "APPROVED" && <p className="text-sm text-ink">{t("These hours are approved and locked.")}</p>}
         {view.status === "SUBMITTED" && (
           <p className="text-sm text-ink-muted">
