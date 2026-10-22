@@ -28,8 +28,9 @@ import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
-import { loadColleagues } from "@/lib/quotationAuthor";
+import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
+import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   if (!(await invoiceVisible(params.id))) notFound();
   const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
-  const [raw, categories, colleagues] = await Promise.all([
+  const [raw, categories, colleagues, invoiceCreator] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -69,9 +70,20 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     }),
     prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" }, select: { name: true } }),
     loadColleagues(),
+    loadCreatorNickname("invoice", params.id),
   ]);
 
   if (!raw) notFound();
+  const quoteCreator =
+    raw.quotation && !isShareHolderNumber(raw.quotation.number)
+      ? await loadCreatorNickname("quotation", raw.quotation.id)
+      : "";
+  const creatorName = invoiceCreator || quoteCreator || raw.quotation?.preparedBy || "";
+  const split = commissionSplitFromStored(
+    raw.quotation?.shareMode || "AMOUNT",
+    raw.quotation?.shares || [],
+    raw.total
+  );
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);
@@ -266,13 +278,12 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
       <QuotationShareEditor
         invoiceId={invoice.id}
         canEdit={canModify}
-        preparedBy={invoice.quotation?.preparedBy || ""}
-        shareMode={invoice.quotation?.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"}
-        shares={(invoice.quotation?.shares || []).map((share) => ({
+        creatorName={creatorName}
+        commissionTotal={split.total}
+        shares={split.partners.map((share) => ({
           colleagueName: colleagueCode(share.colleagueName, colleagues),
-          value: share.value,
+          value: share.percent,
         }))}
-        total={invoice.total}
         colleagues={colleagues}
       />
 

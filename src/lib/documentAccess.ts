@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin, normalizeEmail } from "@/lib/accessControl";
 import { profileFor, readStaffDirectory, type StaffProfile } from "@/lib/staffDirectory";
 import { staffCodeFromId } from "@/lib/staffCode";
-import { SHARE_HOLDER_PREFIX } from "@/lib/quotationShares";
+import { COMMISSION_TOTAL_NAME, SHARE_HOLDER_PREFIX } from "@/lib/quotationShares";
 
 type Person = {
   email: string;
@@ -28,6 +28,7 @@ function actorOwns(actorName: string | null | undefined, person: Person): boolea
 }
 
 function shareHits(colleagueName: string, person: Person): boolean {
+  if (colleagueName.trim() === COMMISSION_TOTAL_NAME) return false;
   const named = colleagueName.trim().toLowerCase();
   if (!named) return false;
   if (named === person.code) return true;

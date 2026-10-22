@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { invoiceCanModify } from "@/lib/documentAccess";
 import { logActivity } from "@/lib/activity";
-import { bindShareColleagueNames } from "@/lib/quotationAuthor";
-import { SHARE_HOLDER_PREFIX, quotationShareFieldsFrom } from "@/lib/quotationShares";
+import { bindShareColleagueNames, loadCreatorNickname } from "@/lib/quotationAuthor";
+import {
+  COMMISSION_TOTAL_NAME,
+  SHARE_HOLDER_PREFIX,
+  isShareHolderNumber,
+  quotationShareFieldsFrom,
+} from "@/lib/quotationShares";
 
 export const dynamic = "force-dynamic";
 
@@ -31,14 +36,20 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       discount: true,
       total: true,
       quotationId: true,
+      quotation: { select: { number: true, preparedBy: true } },
     },
   });
   if (!invoice) return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
-  const sharing = quotationShareFieldsFrom(body);
+  const commissionTotal = Number(body.commissionTotal);
+  if (!Number.isFinite(commissionTotal) || commissionTotal < 0) {
+    return NextResponse.json({ error: "Enter the total commission." }, { status: 400 });
+  }
+  const sharing = quotationShareFieldsFrom({ ...body, shareMode: "PERCENT" });
   if (sharing.error) return NextResponse.json({ error: sharing.error }, { status: 400 });
   const boundShares = await bindShareColleagueNames(sharing.shares);
+  const preparedBy = (await invoiceCreatorName(invoice)) || invoice.quotation?.preparedBy || "";
 
   const quotationId = invoice.quotationId || (await ensureShareHolder(invoice));
   await prisma.$transaction(async (tx) => {
@@ -46,9 +57,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     await tx.quotation.update({
       where: { id: quotationId },
       data: {
-        preparedBy: sharing.preparedBy,
-        shareMode: sharing.shareMode,
-        shares: { create: boundShares },
+        preparedBy,
+        shareMode: "COMMISSION",
+        shares: {
+          create: [
+            { colleagueName: COMMISSION_TOTAL_NAME, value: commissionTotal, sortOrder: 0 },
+            ...boundShares.map((share, index) => ({ ...share, sortOrder: index + 1 })),
+          ],
+        },
       },
     });
   });
@@ -59,6 +75,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     description: "Colleague split updated",
   });
   return NextResponse.json({ ok: true });
+}
+
+async function invoiceCreatorName(invoice: { id: string; quotationId: string | null; quotation: { number: string } | null }) {
+  const fromInvoice = await loadCreatorNickname("invoice", invoice.id);
+  if (fromInvoice) return fromInvoice;
+  if (invoice.quotationId && invoice.quotation && !isShareHolderNumber(invoice.quotation.number)) {
+    return loadCreatorNickname("quotation", invoice.quotationId);
+  }
+  return "";
 }
 
 async function ensureShareHolder(invoice: {
