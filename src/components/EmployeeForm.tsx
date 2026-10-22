@@ -337,6 +337,11 @@ export default function EmployeeForm({
               <option value="INTERN">{t("Intern")}</option>
               <option value="FREELANCE">{t("Freelance")}</option>
             </select>
+            <p className="mt-1 text-xs text-ink-faint">
+              {t(
+                "Full time: monthly salary. Part time: daily or hourly rate. Freelance: daily, hourly, or a fixed project fee. Only daily and hourly workers fill in a timesheet."
+              )}
+            </p>
           </div>
           <div>
             <label className="label flex items-center gap-1.5">

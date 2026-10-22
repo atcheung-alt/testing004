@@ -24,6 +24,11 @@ export default async function NewEmployeePage() {
             "Add a new employee record. Once saved, they get a personal link to view their leave balance and submit leave requests."
           )}
         </p>
+        <p className="text-sm text-ink-muted mt-1">
+          {t(
+            "For a worker parked at another company, enter their name, contact email, company, and whether they are full time or part time. Full time needs a monthly salary. Part time needs a daily or hourly rate. A freelance fixed job needs a project fee. HKID, address, and bank details can wait for the onboarding link."
+          )}
+        </p>
       </div>
       <EmployeeForm companies={companies} />
     </div>

@@ -31,6 +31,8 @@ import MpfVerifyButton from "@/components/MpfVerifyButton";
 import SalaryReportButton from "@/components/SalaryReportButton";
 import IR56BButton from "@/components/IR56BButton";
 import { loadEmploymentHistory } from "@/lib/employmentHistory";
+import { defaultTimesheetPeriod, sheetsForEmployee, timesheetBasis } from "@/lib/timesheets";
+import EmployeeTimesheetCard from "@/components/EmployeeTimesheetCard";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -192,6 +194,16 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
           ))}
         </div>
       </div>
+
+      {isAdmin && timesheetBasis(employee.employmentType, employee.payRateType) && (
+        <EmployeeTimesheetCard
+          employeeId={employee.id}
+          basis={timesheetBasis(employee.employmentType, employee.payRateType)!}
+          hasEmail={Boolean(employee.personalEmail || employee.email || employee.companyEmail)}
+          initialPeriod={defaultTimesheetPeriod()}
+          sheets={await sheetsForEmployee(employee.id)}
+        />
+      )}
 
       {/* Once onboarding is complete (whichever way it got there), this card
           has nothing left to prompt — hide it rather than leave a permanent

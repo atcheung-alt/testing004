@@ -32,6 +32,8 @@ const PUBLIC_PATH_PREFIXES = [
   // Guest survey linked from a massage booking's QR code. Token-scoped to
   // one event (see src/app/massage-survey/[token]/page.tsx).
   "/massage-survey/",
+  // One worker's monthly hours link. Token-scoped, no login.
+  "/timesheet/",
   "/api/auth/",
   "/api/access-requests",
   "/api/public/",
@@ -74,6 +76,7 @@ const PUBLIC_CLIENT_PATH_PREFIXES = [
   "/booking-cancel/",
   "/manage-booking/",
   "/massage-survey/",
+  "/timesheet/",
 ];
 
 function isPublicClientPath(pathname: string): boolean {

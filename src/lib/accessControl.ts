@@ -162,7 +162,12 @@ function parseStringList(value: string): string[] {
   }
 }
 
-const RESERVED_ACCESS_ROW_IDS = new Set(["staff_profiles", "client_service_terms", "access_requests"]);
+const RESERVED_ACCESS_ROW_IDS = new Set([
+  "staff_profiles",
+  "client_service_terms",
+  "access_requests",
+  "work_timesheets",
+]);
 
 function readGroups(rows: { id: string; name: string; pages: string; emails: string }[]): AccessGroupRecord[] {
   return rows.filter((row) => !RESERVED_ACCESS_ROW_IDS.has(row.id)).map((row) => ({

@@ -10,6 +10,7 @@ import {
   defaultMpfApplicable,
   computeEntryTotals,
 } from "@/lib/payroll";
+import { approvedUnitsFor } from "@/lib/timesheets";
 
 export const dynamic = "force-dynamic";
 
@@ -69,30 +70,34 @@ export async function POST(request: NextRequest) {
   }
 
   const employees = await prisma.employee.findMany({ where: { status: "ACTIVE" } });
+  const entryRows = await Promise.all(
+    employees.map(async (emp) => {
+      const payBasis = payBasisFor(emp.employmentType, emp.payRateType);
+      const rate = rateFor(payBasis, emp.salary, emp.payRate);
+      const approved = await approvedUnitsFor(emp.id, period, payBasis);
+      const unitsWorked = approved === null ? defaultUnitsWorked(payBasis, period) : approved;
+      const mpfApplicable = defaultMpfApplicable(emp.employmentType);
+      const totals = computeEntryTotals({ payBasis, rate, unitsWorked, mpfApplicable });
+      return {
+        employeeId: emp.id,
+        employeeName: emp.name,
+        employeeTitle: emp.title,
+        employeeEmail: emp.personalEmail || emp.email || emp.companyEmail,
+        employmentType: emp.employmentType,
+        payBasis,
+        rate,
+        unitsWorked,
+        mpfApplicable,
+        ...totals,
+      };
+    })
+  );
 
   const run = await prisma.payrollRun.create({
     data: {
       period,
       entries: {
-        create: employees.map((emp) => {
-          const payBasis = payBasisFor(emp.employmentType, emp.payRateType);
-          const rate = rateFor(payBasis, emp.salary, emp.payRate);
-          const unitsWorked = defaultUnitsWorked(payBasis, period);
-          const mpfApplicable = defaultMpfApplicable(emp.employmentType);
-          const totals = computeEntryTotals({ payBasis, rate, unitsWorked, mpfApplicable });
-          return {
-            employeeId: emp.id,
-            employeeName: emp.name,
-            employeeTitle: emp.title,
-            employeeEmail: emp.personalEmail || emp.email || emp.companyEmail,
-            employmentType: emp.employmentType,
-            payBasis,
-            rate,
-            unitsWorked,
-            mpfApplicable,
-            ...totals,
-          };
-        }),
+        create: entryRows,
       },
     },
     include: { entries: { orderBy: { employeeName: "asc" } } },

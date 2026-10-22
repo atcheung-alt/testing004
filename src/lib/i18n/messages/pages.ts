@@ -255,6 +255,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "New Employee": "新增員工",
   "Add a new employee record. Once saved, they get a personal link to view their leave balance and submit leave requests.":
     "新增員工紀錄。儲存後，員工會獲得個人連結，用以查看假期結餘及提交假期申請。",
+  "For a worker parked at another company, enter their name, contact email, company, and whether they are full time or part time. Full time needs a monthly salary. Part time needs a daily or hourly rate. A freelance fixed job needs a project fee. HKID, address, and bank details can wait for the onboarding link.":
+    "為其他公司掛靠員工時，填姓名、聯絡電郵、公司，以及全職或兼職。全職填月薪。兼職填日薪或時薪。自由工作的固定項目填項目費用。身份證、地址及銀行資料可留待入職連結再填。",
 
   "Staff records, leave balances, and leave requests submitted through each employee's personal link.":
     "員工紀錄、假期結餘，以及員工經個人連結提交的假期申請。",

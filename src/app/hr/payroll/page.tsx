@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { periodLabel } from "@/lib/payroll";
+import { submittedTimesheets, summarizeSlots } from "@/lib/timesheets";
 import NewPayrollRunButton from "@/components/NewPayrollRunButton";
+import PayrollTimesheetQueue from "@/components/PayrollTimesheetQueue";
 import ClickableTableRow from "@/components/ClickableTableRow";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 
@@ -17,6 +19,14 @@ export default async function PayrollListPage() {
     orderBy: { period: "desc" },
     include: { entries: { select: { grossPay: true, netPay: true } } },
   });
+  const waiting = await submittedTimesheets();
+  const names = waiting.length
+    ? await prisma.employee.findMany({
+        where: { id: { in: waiting.map((sheet) => sheet.employeeId) } },
+        select: { id: true, name: true },
+      })
+    : [];
+  const nameById = new Map(names.map((employee) => [employee.id, employee.name]));
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,6 +41,19 @@ export default async function PayrollListPage() {
         </div>
         <NewPayrollRunButton />
       </div>
+
+      <PayrollTimesheetQueue
+        items={waiting.map((sheet) => {
+          const summary = summarizeSlots(sheet.slots);
+          return {
+            employeeId: sheet.employeeId,
+            employeeName: nameById.get(sheet.employeeId) || sheet.employeeId,
+            period: sheet.period,
+            hours: summary.hours,
+            days: summary.days,
+          };
+        })}
+      />
 
       {runs.length === 0 ? (
         <div className="card p-8 text-center text-sm text-ink-muted">
