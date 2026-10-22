@@ -20,7 +20,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },
-    select: { id: true, name: true, email: true, onboardingCompletedAt: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      personalEmail: true,
+      companyEmail: true,
+      onboardingCompletedAt: true,
+    },
   });
   if (!employee) {
     return NextResponse.json({ error: "Employee not found." }, { status: 404 });
@@ -31,7 +38,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       { status: 409 }
     );
   }
-  if (!employee.email || !isValidEmail(employee.email)) {
+  const to = [employee.email, employee.personalEmail, employee.companyEmail].find(
+    (address) => address && isValidEmail(address)
+  );
+  if (!to) {
     return NextResponse.json(
       { error: "This employee doesn't have a valid email address on file yet." },
       { status: 400 }
@@ -46,7 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   try {
     await sendDocumentEmail({
-      to: employee.email,
+      to,
       subject: "Reminder — please complete your onboarding details",
       body: `Hi ${employee.name},\n\nPlease click the button below to fill in your personal details for our records. This only needs to be done once.`,
       signingUrl: onboardingUrl,
@@ -68,8 +78,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     documentType: "employee",
     documentId: employee.id,
     type: "EMAIL_SENT",
-    description: `Onboarding invite emailed to ${employee.email}`,
+    description: `Onboarding invite emailed to ${to}`,
   });
 
-  return NextResponse.json({ success: true, sentTo: employee.email });
+  return NextResponse.json({ success: true, sentTo: to });
 }

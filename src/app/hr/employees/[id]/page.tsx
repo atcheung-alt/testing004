@@ -195,16 +195,6 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
         </div>
       </div>
 
-      {isAdmin && (
-        <EmployeeTimesheetCard
-          employeeId={employee.id}
-          basis={timesheetBasis(employee.employmentType, employee.payRateType)}
-          hasEmail={Boolean(employee.personalEmail || employee.email || employee.companyEmail)}
-          initialPeriod={defaultTimesheetPeriod()}
-          sheets={await sheetsForEmployee(employee.id)}
-        />
-      )}
-
       {/* Once onboarding is complete (whichever way it got there), this card
           has nothing left to prompt — hide it rather than leave a permanent
           "Onboarding complete" banner taking up space. */}
@@ -244,6 +234,16 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
             )}
           </div>
         </div>
+      )}
+
+      {isAdmin && (
+        <EmployeeTimesheetCard
+          employeeId={employee.id}
+          basis={timesheetBasis(employee.employmentType, employee.payRateType)}
+          hasEmail={Boolean(employee.personalEmail || employee.email || employee.companyEmail)}
+          initialPeriod={defaultTimesheetPeriod()}
+          sheets={await sheetsForEmployee(employee.id)}
+        />
       )}
 
       {/* Only Full time employees get an MPF enrollment deadline reminder —

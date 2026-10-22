@@ -758,6 +758,15 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Project fee, without MPF.": "按項目費用計算，不計強積金。",
   "You can only keep workers in your own company.": "你只能把員工留在自己的公司。",
   "Client companies": "客戶公司",
+  "All companies": "全部公司",
+  "All types": "全部類型",
+  Document: "文件",
+  "All documents": "全部文件",
+  Payslip: "糧單",
+  Detail: "詳情",
+  "Contracts, payslips, salary reports, and IR56B forms. Filter by company and employment type, then download.":
+    "合約、糧單、薪酬報告及 IR56B。可按公司和聘用類型篩選，然後下載。",
+  "No documents match these filters.": "沒有符合這些篩選的文件。",
   "Add the companies you park staff for. HR Plus is the default when you invite someone.":
     "新增你掛靠員工的公司。邀請員工時，預設公司是 HR Plus。",
   "Choose full time, part time, or freelance.": "請選擇全職、兼職或自由工作。",

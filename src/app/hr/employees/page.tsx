@@ -10,11 +10,13 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import InviteEmployeeButton from "@/components/InviteEmployeeButton";
 import EmployeeListClient, { EmployeeListItem } from "@/components/EmployeeListClient";
+import EmployeeListFilters from "@/components/EmployeeListFilters";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["ACTIVE", "ONBOARDING", "FORMER"];
+const TYPES = ["FULL_TIME", "PART_TIME", "FREELANCE"];
 
 /** Short badge label for a contract that still needs action — anything
  *  short of VERIFIED, per the employee detail page's own status badge.
@@ -32,12 +34,16 @@ function contractActionLabel(contract: { status: string } | null): string | null
 async function EmployeeList({
   q,
   status,
+  company,
+  type,
   isAdmin,
   companies,
   scopeWhere,
 }: {
   q?: string;
   status?: string;
+  company?: string;
+  type?: string;
   isAdmin: boolean;
   companies: { id: string; name: string }[];
   scopeWhere: Record<string, unknown> | null;
@@ -51,6 +57,8 @@ async function EmployeeList({
     where: andFilters(
       {
         status: status && STATUSES.includes(status) ? status : undefined,
+        companyId: company && companies.some((item) => item.id === company) ? company : undefined,
+        employmentType: type && TYPES.includes(type) ? type : undefined,
         OR: q
           ? [
               { name: { contains: q, mode: "insensitive" } },
@@ -158,12 +166,14 @@ async function EmployeeList({
 export default async function EmployeesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string };
+  searchParams: { q?: string; status?: string; company?: string; type?: string };
 }) {
   const t = getT();
   function statusHref(status?: string) {
     const params = new URLSearchParams();
     if (searchParams.q) params.set("q", searchParams.q);
+    if (searchParams.company) params.set("company", searchParams.company);
+    if (searchParams.type) params.set("type", searchParams.type);
     if (status) params.set("status", status);
     return `/hr/employees${params.toString() ? `?${params}` : ""}`;
   }
@@ -184,6 +194,8 @@ export default async function EmployeesPage({
   const exportParams = new URLSearchParams();
   if (searchParams.q) exportParams.set("q", searchParams.q);
   if (searchParams.status) exportParams.set("status", searchParams.status);
+  if (searchParams.company) exportParams.set("company", searchParams.company);
+  if (searchParams.type) exportParams.set("type", searchParams.type);
   const exportHref = `/api/employees/export${exportParams.toString() ? `?${exportParams}` : ""}`;
 
   return (
@@ -212,6 +224,7 @@ export default async function EmployeesPage({
 
       <div className="flex flex-col gap-3">
         <SearchBox placeholder="Search by name or title…" />
+        <EmployeeListFilters companies={scope.mode === "self" ? [] : companies} />
         <div className="flex flex-wrap gap-2">
           <Link
             href={statusHref(undefined)}
@@ -235,6 +248,8 @@ export default async function EmployeesPage({
         <EmployeeList
           q={searchParams.q}
           status={searchParams.status}
+          company={searchParams.company}
+          type={searchParams.type}
           isAdmin={isAdmin}
           companies={scope.mode === "self" ? [] : companies}
           scopeWhere={employeeScopeWhere(scope)}
