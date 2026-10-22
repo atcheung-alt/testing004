@@ -50,7 +50,7 @@ export default function ColleagueShareFields({
   return (
     <div className="card p-5 flex flex-col gap-4">
       <div>
-        <h2 className="font-display text-lg font-semibold">{t("Made by & colleague sharing")}</h2>
+        <h2 className="font-display text-lg font-semibold">{t("Split commission")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
           {t("Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.")}
         </p>

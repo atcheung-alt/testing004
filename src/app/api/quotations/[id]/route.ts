@@ -45,11 +45,37 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (body.status !== undefined && !VALID_QUOTATION_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "That's not a valid quotation status." }, { status: 400 });
   }
-  if (existing.status === "CONVERTED") {
-    return NextResponse.json(
-      { error: "This quotation has been converted to an invoice and can no longer be edited." },
-      { status: 409 }
-    );
+  if (body.sharesOnly || existing.status === "CONVERTED") {
+    if (body.shares === undefined) {
+      return NextResponse.json(
+        { error: "This quotation has been converted to an invoice and can no longer be edited." },
+        { status: 409 }
+      );
+    }
+    const sharing = quotationShareFieldsFrom(body);
+    if (sharing.error) {
+      return NextResponse.json({ error: sharing.error }, { status: 400 });
+    }
+    const boundShares = await bindShareColleagueNames(sharing.shares);
+    const quotation = await prisma.$transaction(async (tx) => {
+      await tx.quotationShare.deleteMany({ where: { quotationId: params.id } });
+      return tx.quotation.update({
+        where: { id: params.id },
+        data: {
+          preparedBy: sharing.preparedBy,
+          shareMode: sharing.shareMode,
+          shares: { create: boundShares },
+        },
+        include: { shares: { orderBy: { sortOrder: "asc" } } },
+      });
+    });
+    await logActivity({
+      documentType: "quotation",
+      documentId: quotation.id,
+      type: "EDITED",
+      description: "Colleague split updated",
+    });
+    return NextResponse.json(quotation);
   }
 
   // Status-only update (e.g. marking as SENT/ACCEPTED/REJECTED) does not require items.

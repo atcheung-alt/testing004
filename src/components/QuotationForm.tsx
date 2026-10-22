@@ -93,7 +93,7 @@ export default function QuotationForm({
   const [shares, setShares] = useState<ColleagueShare[]>(
     quotation?.shares?.length
       ? quotation.shares.map((share) => emptyColleagueShare(share.colleagueName, share.value))
-      : [emptyColleagueShare(defaultPreparedBy)]
+      : [emptyColleagueShare()]
   );
 
   // Which language the Reminder/Terms text (and the generated PDF's static
@@ -264,6 +264,17 @@ export default function QuotationForm({
         />
       </div>
 
+      <ColleagueShareFields
+        preparedBy={preparedBy}
+        onPreparedByChange={setPreparedBy}
+        shareMode={shareMode}
+        onShareModeChange={setShareMode}
+        shares={shares}
+        onSharesChange={setShares}
+        total={computeTotals(items, taxRate, discount, repeatCount).total}
+        colleagues={colleagues}
+      />
+
       <div className="card p-5" ref={customerSectionRef}>
         <h2 className="font-display text-lg font-semibold mb-4">{t("Company Information")}</h2>
         <CustomerFields value={customer} onChange={setCustomer} showContactAndPhone={false} />
@@ -303,17 +314,6 @@ export default function QuotationForm({
           onRepeatCountChange={setRepeatCount}
         />
       </div>
-
-      <ColleagueShareFields
-        preparedBy={preparedBy}
-        onPreparedByChange={setPreparedBy}
-        shareMode={shareMode}
-        onShareModeChange={setShareMode}
-        shares={shares}
-        onSharesChange={setShares}
-        total={computeTotals(items, taxRate, discount, repeatCount).total}
-        colleagues={colleagues}
-      />
 
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-1">{t("Also let these people see it")}</h2>

@@ -24,12 +24,11 @@ export const DECIDABLE_FROM_STATUS: Record<BookingStatus, BookingStatus[]> = {
   REJECTED: [],
 };
 
-// A slot's duration is entered by staff via a slider in the admin UI rather
-// than picked from a fixed grid — these bounds/step drive that slider's
-// min/max/step and double as the server-side clamp in src/lib/bookings.ts.
-export const SLOT_DURATION_MIN_MINUTES = 15;
+// Staff type the appointment length in minutes. Any whole number from 1 to
+// 8 hours is allowed — it is not limited to 15, 30, 45, or 60.
+export const SLOT_DURATION_MIN_MINUTES = 1;
 export const SLOT_DURATION_MAX_MINUTES = 480; // 8 hours — covers a full-day workshop session
-export const SLOT_DURATION_STEP_MINUTES = 15;
+export const SLOT_DURATION_STEP_MINUTES = 1;
 export const DEFAULT_SLOT_DURATION_MINUTES = 60;
 
 export const MAX_SLOT_QUOTA = 500;

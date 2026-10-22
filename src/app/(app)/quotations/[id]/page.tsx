@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, FileDown } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate } from "@/lib/calculations";
+import { formatDate } from "@/lib/calculations";
 import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
@@ -25,7 +25,8 @@ import { computeTotals } from "@/lib/calculations";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { quotationCanModify, quotationVisible } from "@/lib/documentAccess";
 import { loadColleagues } from "@/lib/quotationAuthor";
-import { colleagueLabel } from "@/lib/staffCode";
+import { colleagueCode } from "@/lib/staffCode";
+import QuotationShareEditor from "@/components/QuotationShareEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -175,35 +176,18 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
           ))}
       </div>
 
-      {(quotation.preparedBy || quotation.shares.length > 0) && (
-        <div className="card p-5">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-3">
-            {t("Colleague sharing")}
-          </h2>
-          {quotation.preparedBy && (
-            <p className="text-sm text-ink mb-3">{t("Made by {name}", { name: quotation.preparedBy })}</p>
-          )}
-          {quotation.shares.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-ink-faint">
-                {quotation.shareMode === "PERCENT" ? t("Percentage of total") : t("Exact amount")}
-              </p>
-              {quotation.shares.map((share) => {
-                const amount =
-                  quotation.shareMode === "PERCENT" ? (quotation.total * share.value) / 100 : share.value;
-                return (
-                  <div key={share.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium">{colleagueLabel(share.colleagueName, colleagues)}</span>
-                    <span className="font-mono text-ink-muted">
-                      {quotation.shareMode === "PERCENT" ? `${share.value}% · ${formatCurrency(amount)}` : formatCurrency(amount)}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+      <QuotationShareEditor
+        quotationId={quotation.id}
+        canEdit={canModify}
+        preparedBy={quotation.preparedBy}
+        shareMode={quotation.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"}
+        shares={quotation.shares.map((share) => ({
+          colleagueName: colleagueCode(share.colleagueName, colleagues),
+          value: share.value,
+        }))}
+        total={quotation.total}
+        colleagues={colleagues}
+      />
 
       <DocumentItemsTable
         items={quotation.items}
