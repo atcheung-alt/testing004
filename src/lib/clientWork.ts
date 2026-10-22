@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { SHARE_HOLDER_PREFIX } from "@/lib/quotationShares";
 
 export type ClientMatch = {
   name: string;
@@ -62,6 +63,7 @@ export function summarizeClient(client: ClientMatch, quotes: QuoteRow[], invoice
 export async function loadDocumentIndex() {
   const [quotes, invoices] = await Promise.all([
     prisma.quotation.findMany({
+      where: { NOT: { number: { startsWith: SHARE_HOLDER_PREFIX } } },
       select: { customerName: true, customerEmail: true },
     }),
     prisma.invoice.findMany({
@@ -91,6 +93,7 @@ export async function customerFieldsForClient(id: string) {
 export async function loadAllDocuments() {
   const [quotations, invoices] = await Promise.all([
     prisma.quotation.findMany({
+      where: { NOT: { number: { startsWith: SHARE_HOLDER_PREFIX } } },
       select: {
         id: true,
         number: true,

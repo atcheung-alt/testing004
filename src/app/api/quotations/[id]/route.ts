@@ -135,15 +135,16 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const repeatCount = Math.max(1, Math.round(Number(body.repeatCount)) || 1);
   const { subtotal, taxAmount, total } = computeTotals(body.items, taxRate, discount, repeatCount);
   const { paymentDueDays, terms, reminder, language } = documentDefaultsFrom(body);
+  const replaceShares = Array.isArray(body.shares);
   const sharing = quotationShareFieldsFrom(body);
   if (sharing.error) {
     return NextResponse.json({ error: sharing.error }, { status: 400 });
   }
-  const boundShares = await bindShareColleagueNames(sharing.shares);
+  const boundShares = replaceShares ? await bindShareColleagueNames(sharing.shares) : [];
 
   const quotation = await prisma.$transaction(async (tx) => {
     await tx.quotationItem.deleteMany({ where: { quotationId: params.id } });
-    await tx.quotationShare.deleteMany({ where: { quotationId: params.id } });
+    if (replaceShares) await tx.quotationShare.deleteMany({ where: { quotationId: params.id } });
     return tx.quotation.update({
       where: { id: params.id },
       data: {
@@ -163,14 +164,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         subtotal,
         taxAmount,
         total,
-        preparedBy: sharing.preparedBy,
-        shareMode: sharing.shareMode,
+        preparedBy: body.preparedBy !== undefined ? sharing.preparedBy : undefined,
+        shareMode: replaceShares ? sharing.shareMode : undefined,
         items: {
           create: body.items.map(itemCreateFrom),
         },
-        shares: {
-          create: boundShares,
-        },
+        shares: replaceShares ? { create: boundShares } : undefined,
       },
       include: {
         items: true,

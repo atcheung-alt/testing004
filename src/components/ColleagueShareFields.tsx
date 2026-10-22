@@ -52,7 +52,7 @@ export default function ColleagueShareFields({
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Split commission")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t("Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.")}
+          {t("Made by stays your nickname. Pick a colleague by nickname to split this invoice. They can then see the invoice. Clients never see this.")}
         </p>
       </div>
 

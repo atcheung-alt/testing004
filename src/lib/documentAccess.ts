@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin, normalizeEmail } from "@/lib/accessControl";
 import { profileFor, readStaffDirectory, type StaffProfile } from "@/lib/staffDirectory";
 import { staffCodeFromId } from "@/lib/staffCode";
+import { SHARE_HOLDER_PREFIX } from "@/lib/quotationShares";
 
 type Person = {
   email: string;
@@ -154,12 +155,14 @@ type EmployeeIdentity = {
  *  they created after their account existed, plus quotations (and the invoices
  *  converted from them) that were split to their staff number or nickname.
  *  Client pages never use this. */
+const hiddenShareHolders = { NOT: { number: { startsWith: SHARE_HOLDER_PREFIX } } };
+
 export async function currentQuotationFilter() {
   const access = await currentAccess();
-  if (access.mode === "all") return null;
+  if (access.mode === "all") return hiddenShareHolders;
   if (access.mode === "none") return { id: { in: [] } };
   const sets = await quotationAccess(access.person);
-  return idFilter(sets.viewIds);
+  return { AND: [idFilter(sets.viewIds), hiddenShareHolders] };
 }
 
 export async function currentInvoiceFilter() {
