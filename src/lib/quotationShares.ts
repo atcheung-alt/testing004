@@ -1,3 +1,11 @@
+/** Quotations with this number prefix only store an invoice's colleague split.
+ *  They are not shown in the quotation list. */
+export const SHARE_HOLDER_PREFIX = "QS-";
+
+export function isShareHolderNumber(number: string): boolean {
+  return number.startsWith(SHARE_HOLDER_PREFIX);
+}
+
 export const SHARE_MODES = ["AMOUNT", "PERCENT"] as const;
 export type ShareMode = (typeof SHARE_MODES)[number];
 

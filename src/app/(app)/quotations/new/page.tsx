@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { withParsedFeesList } from "@/lib/fees";
 import { withParsedMultipliersList } from "@/lib/multipliers";
 import { customerFieldsForClient } from "@/lib/clientWork";
-import { loadColleagues, loadCurrentNickname } from "@/lib/quotationAuthor";
+import { loadCurrentNickname } from "@/lib/quotationAuthor";
 import { templateVisible } from "@/lib/documentAccess";
 import { getT } from "@/lib/i18n/server";
 
@@ -16,7 +16,7 @@ export default async function NewQuotationPage({
 }) {
   const t = getT();
   const client = searchParams.client ? await customerFieldsForClient(searchParams.client) : null;
-  const [defaultPreparedBy, colleagues] = await Promise.all([loadCurrentNickname(), loadColleagues()]);
+  const defaultPreparedBy = await loadCurrentNickname();
   let preset: QuotationFormPreset | undefined;
   if (searchParams.template && (await templateVisible(searchParams.template))) {
     const template = await prisma.quotationTemplate.findUnique({
@@ -58,7 +58,6 @@ export default async function NewQuotationPage({
         preset={preset}
         customer={client || undefined}
         defaultPreparedBy={defaultPreparedBy}
-        colleagues={colleagues}
       />
     </div>
   );

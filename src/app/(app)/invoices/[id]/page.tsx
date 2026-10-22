@@ -27,7 +27,7 @@ import { getActivityTimeline } from "@/lib/activity";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
-import { invoiceCanModify, invoiceVisible, quotationCanModify } from "@/lib/documentAccess";
+import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 import { loadColleagues } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
@@ -72,7 +72,6 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   ]);
 
   if (!raw) notFound();
-  const canEditSplit = raw.quotation ? await quotationCanModify(raw.quotation.id) : false;
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);
@@ -264,20 +263,18 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         )}
       </div>
 
-      {invoice.quotation && (
-        <QuotationShareEditor
-          quotationId={invoice.quotation.id}
-          canEdit={canEditSplit}
-          preparedBy={invoice.quotation.preparedBy}
-          shareMode={invoice.quotation.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"}
-          shares={invoice.quotation.shares.map((share) => ({
-            colleagueName: colleagueCode(share.colleagueName, colleagues),
-            value: share.value,
-          }))}
-          total={invoice.quotation.total}
-          colleagues={colleagues}
-        />
-      )}
+      <QuotationShareEditor
+        invoiceId={invoice.id}
+        canEdit={canModify}
+        preparedBy={invoice.quotation?.preparedBy || ""}
+        shareMode={invoice.quotation?.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"}
+        shares={(invoice.quotation?.shares || []).map((share) => ({
+          colleagueName: colleagueCode(share.colleagueName, colleagues),
+          value: share.value,
+        }))}
+        total={invoice.total}
+        colleagues={colleagues}
+      />
 
       <DocumentItemsTable
         items={invoice.items}

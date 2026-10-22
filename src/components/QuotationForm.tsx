@@ -15,13 +15,7 @@ import {
 } from "@/lib/settings";
 import type { Quotation, LineItem, CustomerDetails } from "@/types";
 import { computeTotals } from "@/lib/calculations";
-import ColleagueShareFields, {
-  emptyColleagueShare,
-  type ColleagueShare,
-  type ShareMode,
-} from "@/components/ColleagueShareFields";
 import { useT } from "@/lib/i18n/client";
-import type { StaffColleague } from "@/lib/staffCode";
 
 export type QuotationFormPreset = {
   templateName: string;
@@ -47,14 +41,12 @@ export default function QuotationForm({
   preset,
   customer: initialCustomer,
   defaultPreparedBy = "",
-  colleagues = [],
   viewerEmails: initialViewerEmails = "",
 }: {
   quotation?: Quotation;
   preset?: QuotationFormPreset;
   customer?: CustomerDetails;
   defaultPreparedBy?: string;
-  colleagues?: StaffColleague[];
   viewerEmails?: string;
 }) {
   const t = useT();
@@ -85,16 +77,8 @@ export default function QuotationForm({
   const [discount, setDiscount] = useState(source?.discount ?? 0);
   const [repeatCount, setRepeatCount] = useState(source?.repeatCount ?? 1);
   const [notes, setNotes] = useState(source?.notes || "");
-  const [preparedBy, setPreparedBy] = useState(quotation?.preparedBy || defaultPreparedBy);
+  const preparedBy = quotation?.preparedBy || defaultPreparedBy;
   const [viewerEmails, setViewerEmails] = useState(initialViewerEmails);
-  const [shareMode, setShareMode] = useState<ShareMode>(
-    quotation?.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"
-  );
-  const [shares, setShares] = useState<ColleagueShare[]>(
-    quotation?.shares?.length
-      ? quotation.shares.map((share) => emptyColleagueShare(share.colleagueName, share.value))
-      : [emptyColleagueShare()]
-  );
 
   // Which language the Reminder/Terms text (and the generated PDF's static
   // labels) are in — see DocumentLanguage in src/lib/settings.ts.
@@ -184,8 +168,6 @@ export default function QuotationForm({
         language,
         paymentDueDays,
         preparedBy,
-        shareMode,
-        shares: shares.map(({ colleagueName, value }) => ({ colleagueName, value })),
         viewerEmails: viewerEmails
           .split(/[\s,;]+/)
           .map((email) => email.trim().toLowerCase())
@@ -263,17 +245,6 @@ export default function QuotationForm({
           onChange={(e) => setTitle(e.target.value)}
         />
       </div>
-
-      <ColleagueShareFields
-        preparedBy={preparedBy}
-        onPreparedByChange={setPreparedBy}
-        shareMode={shareMode}
-        onShareModeChange={setShareMode}
-        shares={shares}
-        onSharesChange={setShares}
-        total={computeTotals(items, taxRate, discount, repeatCount).total}
-        colleagues={colleagues}
-      />
 
       <div className="card p-5" ref={customerSectionRef}>
         <h2 className="font-display text-lg font-semibold mb-4">{t("Company Information")}</h2>

@@ -14,7 +14,7 @@ import ColleagueShareFields, {
 } from "@/components/ColleagueShareFields";
 
 export default function QuotationShareEditor({
-  quotationId,
+  invoiceId,
   canEdit,
   preparedBy: initialPreparedBy,
   shareMode: initialShareMode,
@@ -22,7 +22,7 @@ export default function QuotationShareEditor({
   total,
   colleagues,
 }: {
-  quotationId: string;
+  invoiceId: string;
   canEdit: boolean;
   preparedBy: string;
   shareMode: ShareMode;
@@ -78,11 +78,10 @@ export default function QuotationShareEditor({
     setSaved(false);
     setError(null);
     try {
-      const res = await fetch(`/api/quotations/${quotationId}`, {
-        method: "PATCH",
+      const res = await fetch(`/api/invoices/${invoiceId}/share`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sharesOnly: true,
           preparedBy,
           shareMode,
           shares: shares.map((share) => ({ colleagueName: share.colleagueName, value: share.value })),

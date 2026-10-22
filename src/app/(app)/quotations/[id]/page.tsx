@@ -24,9 +24,7 @@ import { getActivityTimeline } from "@/lib/activity";
 import { computeTotals } from "@/lib/calculations";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { quotationCanModify, quotationVisible } from "@/lib/documentAccess";
-import { loadColleagues } from "@/lib/quotationAuthor";
-import { colleagueCode } from "@/lib/staffCode";
-import QuotationShareEditor from "@/components/QuotationShareEditor";
+import { isShareHolderNumber } from "@/lib/quotationShares";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +32,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
   const t = getT();
   if (!(await quotationVisible(params.id))) notFound();
   const canModify = await quotationCanModify(params.id);
-  const [raw, colleagues] = await Promise.all([
-    prisma.quotation.findUnique({
+  const raw = await prisma.quotation.findUnique({
     where: { id: params.id },
     include: {
       items: { orderBy: { sortOrder: "asc" } },
@@ -43,11 +40,9 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
       comments: { orderBy: { createdAt: "asc" } },
       shares: { orderBy: { sortOrder: "asc" } },
     },
-  }),
-    loadColleagues(),
-  ]);
+  });
 
-  if (!raw) notFound();
+  if (!raw || isShareHolderNumber(raw.number)) notFound();
   const quotation = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("quotation", quotation.id);
 
@@ -175,19 +170,6 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             </p>
           ))}
       </div>
-
-      <QuotationShareEditor
-        quotationId={quotation.id}
-        canEdit={canModify}
-        preparedBy={quotation.preparedBy}
-        shareMode={quotation.shareMode === "PERCENT" ? "PERCENT" : "AMOUNT"}
-        shares={quotation.shares.map((share) => ({
-          colleagueName: colleagueCode(share.colleagueName, colleagues),
-          value: share.value,
-        }))}
-        total={quotation.total}
-        colleagues={colleagues}
-      />
 
       <DocumentItemsTable
         items={quotation.items}

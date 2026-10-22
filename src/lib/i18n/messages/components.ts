@@ -665,6 +665,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
     "「編製人」預設為你的暱稱。可加入同事，以確實金額或報價總額百分比分成。",
   "Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.":
     "「編製人」仍用你的暱稱。選擇同事的暱稱分成後，對方就能看到這張報價單和轉出的發票。客戶看不到這部分。",
+  "Made by stays your nickname. Pick a colleague by nickname to split this invoice. They can then see the invoice. Clients never see this.":
+    "「編製人」仍用你的暱稱。選擇同事的暱稱，分成這張發票。對方就能看到這張發票。客戶看不到這部分。",
   "Choose a colleague": "選擇同事",
   "Made by": "編製人",
   "e.g. AT": "例如 AT",
