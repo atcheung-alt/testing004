@@ -23,17 +23,17 @@
 
 :root,
 html[data-theme="light"] {
-  --color-paper: 244 241 234;
-  --color-surface: 255 252 247;
-  --color-ink: 36 32 28;
-  --color-ink-muted: 92 84 74;
-  --color-ink-faint: 148 138 126;
-  --color-brand-50: 236 241 232;
-  --color-brand-100: 214 224 206;
-  --color-brand-300: 122 146 104;
-  --color-brand-500: 47 74 42;
-  --color-brand-600: 36 58 32;
-  --color-brand-700: 26 42 24;
+  --color-paper: 245 247 252;
+  --color-surface: 255 255 255;
+  --color-ink: 27 36 54;
+  --color-ink-muted: 102 112 138;
+  --color-ink-faint: 154 163 184;
+  --color-brand-50: 238 244 255;
+  --color-brand-100: 220 232 255;
+  --color-brand-300: 143 182 255;
+  --color-brand-500: 79 124 255;
+  --color-brand-600: 61 99 224;
+  --color-brand-700: 47 79 189;
   --color-cyan-50: 236 254 255;
   --color-cyan-100: 207 250 254;
   --color-cyan-300: 103 232 249;
@@ -43,7 +43,7 @@ html[data-theme="light"] {
   --color-accent-300: 201 166 255;
   --color-accent-500: 155 107 234;
   --color-accent-600: 127 79 209;
-  --color-line: 214 206 194;
+  --color-line: 227 232 243;
   --color-danger-50: 252 238 236;
   --color-danger-500: 196 72 58;
   --color-danger-600: 160 58 47;
@@ -175,18 +175,13 @@ html[data-theme="dark"] [data-product="hr"] {
    explicit override here too, or primary buttons and card hover states
    would stay blue even under the HR shell while everything else re-tints. */
 [data-product="hr"] .btn-primary {
-  background-image: none;
-  background-color: #059669;
+  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
 }
-[data-product="hr"] .btn-primary:hover {
-  background-color: #10b981;
-}
-[data-product="hr"] .btn-primary:active {
-  background-color: #047857;
+[data-product="hr"] .card:hover {
+  box-shadow: 0 12px 32px rgba(16, 185, 129, 0.16);
 }
 [data-product="hr"] .bg-brand-gradient {
-  background-image: none;
-  background-color: #059669;
+  background-image: linear-gradient(135deg, #10b981 0%, #34d399 45%, #059669 100%);
 }
 [data-product="hr"] .shadow-soft {
   box-shadow: 0 12px 32px rgba(16, 185, 129, 0.12);
@@ -230,7 +225,7 @@ html[data-theme="dark"] .theme-logo-dark {
     @apply bg-paper;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-paper text-ink font-sans antialiased bg-app-gradient bg-fixed;
   }
   ::selection {
     @apply bg-brand-100;
@@ -269,27 +264,27 @@ html[data-theme="dark"] .theme-logo-dark {
      `overflow`, so both `shadow-card` and `shadow-soft` still render fully
      rounded and unclipped. */
   .card {
-    @apply bg-surface border border-line rounded-card overflow-hidden;
+    @apply bg-surface/95 border border-line rounded-card shadow-card backdrop-blur-sm overflow-hidden transition-shadow duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-soft;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-[transform,background-color,box-shadow,filter] duration-100 ease-out active:translate-y-px active:scale-[0.97] active:shadow-[inset_0_2px_0_rgba(0,0,0,0.28)] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:scale-100 disabled:active:shadow-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium will-change-transform transition-[transform,background-color,color,border-color,box-shadow,filter] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-px active:translate-y-0 active:scale-[0.96] active:duration-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:active:scale-100;
   }
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:brightness-110 active:brightness-90;
+    @apply btn bg-brand-gradient text-white shadow-soft hover:brightness-105;
   }
   .btn-secondary {
-    @apply btn bg-surface text-ink border border-line hover:bg-paper active:bg-paper;
+    @apply btn bg-surface text-ink border border-line hover:bg-brand-50;
   }
   .btn-danger {
-    @apply btn bg-surface text-danger-500 border border-danger-500/30 hover:bg-danger-50 active:bg-danger-50;
+    @apply btn bg-surface text-danger-500 border border-danger-500/30 hover:bg-danger-50;
   }
   .btn-ghost {
-    @apply btn text-ink-muted hover:text-ink hover:bg-paper active:bg-paper;
+    @apply btn text-ink-muted hover:text-ink hover:bg-brand-50;
   }
 
   .input {
-    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint outline-none transition-[border-color,background-color] duration-100 focus:border-brand-500 focus:bg-paper;
+    @apply w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none transition-colors duration-200;
   }
   .label {
     @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5;
@@ -300,7 +295,7 @@ html[data-theme="dark"] .theme-logo-dark {
   }
 
   .stamp {
-    @apply inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors duration-200 ease-[cubic-bezier(0.16,1,0.3,1)];
   }
 
   .card.divide-y > * {
@@ -312,136 +307,6 @@ html[data-theme="dark"] .theme-logo-dark {
   .card.divide-y > *:active {
     background-color: rgb(var(--color-line));
   }
-}
-
-/* Staff shell only. The public survey stays on the styles above. */
-[data-shell="staff"] .card {
-  border-radius: 2px;
-  border-color: rgb(var(--color-ink) / 0.18);
-  box-shadow: none;
-}
-[data-shell="staff"] .btn,
-[data-shell="staff"] .input {
-  border-radius: 2px;
-}
-[data-shell="staff"] .input:focus {
-  border-color: rgb(var(--color-ink));
-  box-shadow: none;
-}
-[data-shell="staff"] main .uppercase:not(.stamp) {
-  text-transform: none;
-  letter-spacing: 0;
-}
-[data-shell="staff"] .label {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 0.875rem;
-}
-[data-shell="staff"] main h2:not(.font-art) {
-  width: fit-content;
-  border-bottom: 2px solid rgb(var(--color-ink));
-  padding-bottom: 1px;
-}
-[data-shell="staff"] .card.divide-y > a,
-[data-shell="staff"] main a.event-ticket {
-  position: relative;
-}
-[data-shell="staff"] .card.divide-y > a::before,
-[data-shell="staff"] main a.event-ticket::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  background: rgb(var(--color-ink));
-  transition: width 160ms ease;
-}
-[data-shell="staff"] .card.divide-y > a:hover::before,
-[data-shell="staff"] main a.event-ticket:hover::before {
-  width: 3px;
-}
-[data-shell="staff"] main a:not([class*="btn"]):not(.event-ticket) {
-  color: rgb(var(--color-ink));
-}
-[data-shell="staff"] .btn:active {
-  transform: none;
-}
-[data-shell="staff"]:not([data-product="hr"]) .btn-primary:hover {
-  filter: none;
-  background-color: rgb(var(--color-brand-600));
-}
-[data-shell="staff"]:not([data-product="hr"]) .btn-primary:active {
-  filter: none;
-  background-color: rgb(var(--color-brand-700));
-}
-[data-shell="staff"] .btn-secondary:hover {
-  border-color: rgb(var(--color-ink-faint));
-}
-[data-shell="staff"] .input {
-  border-radius: 6px;
-}
-[data-shell="staff"] .label {
-  letter-spacing: 0.04em;
-}
-[data-shell="staff"] .stamp {
-  border-radius: 4px;
-  letter-spacing: 0.02em;
-}
-[data-shell="staff"] .card.divide-y > *:hover {
-  box-shadow: inset 3px 0 0 rgb(var(--color-brand-500));
-}
-[data-shell="staff"] main a:not([class*="btn"]):not(.event-ticket):hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-[data-shell="staff"] ::selection {
-  background: rgb(var(--color-brand-500));
-  color: white;
-}
-[data-shell="staff"] :focus-visible {
-  outline: 2px solid rgb(var(--color-brand-500));
-  outline-offset: 2px;
-}
-[data-shell="staff"] {
-  scrollbar-color: rgb(var(--color-line)) transparent;
-}
-[data-shell="staff"] ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-[data-shell="staff"] ::-webkit-scrollbar-thumb {
-  background: rgb(var(--color-line));
-}
-[data-shell="staff"] main h1 {
-  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0;
-  margin-bottom: 0;
-}
-[data-shell="staff"] main h2:not(.font-art) {
-  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0;
-}
-[data-shell="staff"] main h3:not(.font-art) {
-  font-family: var(--font-inter), "PingFang HK", "PingFang TC", "Noto Sans TC", sans-serif;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  line-height: 1.4;
-  letter-spacing: 0;
-}
-[data-shell="staff"] main .award-stage-head h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-[data-shell="staff"] main .gap-8,
-[data-shell="staff"] main .gap-6 {
-  gap: 1rem;
 }
 
 /* -----------------------------------------------------------------------
