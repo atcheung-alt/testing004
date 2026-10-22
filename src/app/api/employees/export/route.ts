@@ -10,6 +10,7 @@ import { translate } from "@/lib/i18n/translate";
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["ACTIVE", "ONBOARDING", "FORMER"];
+const TYPES = ["FULL_TIME", "PART_TIME", "FREELANCE"];
 
 /**
  * CSV export for the employee list — takes the same `q`/`status` query
@@ -27,11 +28,15 @@ export async function GET(request: NextRequest) {
   const t = (key: string) => translate(language, key);
   const q = request.nextUrl.searchParams.get("q") || undefined;
   const status = request.nextUrl.searchParams.get("status") || undefined;
+  const company = request.nextUrl.searchParams.get("company") || undefined;
+  const type = request.nextUrl.searchParams.get("type") || undefined;
 
   const employees = await prisma.employee.findMany({
     where: andFilters(
       {
         status: status && STATUSES.includes(status) ? status : undefined,
+        companyId: company || undefined,
+        employmentType: type && TYPES.includes(type) ? type : undefined,
         OR: q
           ? [
               { name: { contains: q, mode: "insensitive" } },

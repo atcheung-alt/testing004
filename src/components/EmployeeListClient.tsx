@@ -4,6 +4,7 @@ import { memo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, X } from "lucide-react";
 import Portal from "@/components/Portal";
+import SendOnboardingButton from "@/components/SendOnboardingButton";
 import { formatDate, formatCurrency } from "@/lib/calculations";
 import { EMPLOYMENT_TYPE_LABELS, PAY_RATE_TYPE_LABELS, hasAnnualLeaveEntitlement } from "@/lib/employees";
 import { useT } from "@/lib/i18n/client";
@@ -424,6 +425,9 @@ export default function EmployeeListClient({
                       : t("Not sent yet")
                   }
                 />
+                {!selected.onboardingCompletedAt && (
+                  <SendOnboardingButton employeeId={selected.id} resend={!!selected.onboardingSentAt} />
+                )}
                 {selected.employmentType === "FULL_TIME" && (
                   <Row
                     label={t("MPF")}
