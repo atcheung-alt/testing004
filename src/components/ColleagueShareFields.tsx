@@ -1,12 +1,9 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import clsx from "clsx";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
-
-export type ShareMode = "AMOUNT" | "PERCENT";
 
 export type ColleagueShare = {
   id: string;
@@ -19,89 +16,63 @@ export function emptyColleagueShare(colleagueName = "", value = 0): ColleagueSha
 }
 
 export default function ColleagueShareFields({
-  preparedBy,
-  onPreparedByChange,
-  shareMode,
-  onShareModeChange,
+  creatorName,
+  commissionTotal,
+  onCommissionTotalChange,
   shares,
   onSharesChange,
-  total,
   colleagues,
 }: {
-  preparedBy: string;
-  onPreparedByChange: (value: string) => void;
-  shareMode: ShareMode;
-  onShareModeChange: (value: ShareMode) => void;
+  creatorName: string;
+  commissionTotal: number;
+  onCommissionTotalChange: (value: number) => void;
   shares: ColleagueShare[];
   onSharesChange: (shares: ColleagueShare[]) => void;
-  total: number;
   colleagues: StaffColleague[];
 }) {
   const t = useT();
-  const listId = "colleague-name-suggestions";
 
   function updateShare(index: number, patch: Partial<ColleagueShare>) {
     onSharesChange(shares.map((share, i) => (i === index ? { ...share, ...patch } : share)));
   }
 
   const percentTotal = shares.reduce((sum, share) => sum + (Number(share.value) || 0), 0);
-  const amountTotal = shares.reduce((sum, share) => sum + (Number(share.value) || 0), 0);
 
   return (
     <div className="card p-5 flex flex-col gap-4">
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Split commission")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t("Made by stays your nickname. Pick a colleague by nickname to split this invoice. They can then see the invoice. Clients never see this.")}
+          {t(
+            "Made by is the account that created this invoice. Enter the commission total, then each partner's percentage of it. They can see this invoice. Clients never see this."
+          )}
         </p>
       </div>
 
       <div className="max-w-xs">
-        <label className="label" htmlFor="prepared-by">
-          {t("Made by")}
+        <p className="label">{t("Made by")}</p>
+        <p className="text-sm font-medium text-ink">{creatorName || t("Not set")}</p>
+      </div>
+
+      <div className="max-w-xs">
+        <label className="label" htmlFor="commission-total">
+          {t("Total commission")}
         </label>
         <input
-          id="prepared-by"
+          id="commission-total"
           className="input"
-          list={listId}
-          value={preparedBy}
-          onChange={(e) => onPreparedByChange(e.target.value)}
-          placeholder={t("e.g. AT")}
+          type="number"
+          min={0}
+          step="0.01"
+          inputMode="decimal"
+          value={Number.isFinite(commissionTotal) ? commissionTotal : 0}
+          onChange={(e) => onCommissionTotalChange(Number(e.target.value))}
         />
       </div>
 
-      <div className="inline-flex flex-wrap rounded-full border border-line bg-paper p-1 gap-1 self-start">
-        {(
-          [
-            ["AMOUNT", "Exact amount"],
-            ["PERCENT", "Percentage of total"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={shareMode === value}
-            onClick={() => onShareModeChange(value)}
-            className={clsx(
-              "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-              shareMode === value ? "bg-surface text-ink shadow-sm" : "text-ink-muted hover:text-ink"
-            )}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </div>
-
-      <datalist id={listId}>
-        {colleagues.map((person) => (
-          <option key={person.code} value={person.nickname} />
-        ))}
-      </datalist>
-
       <div className="flex flex-col gap-2">
         {shares.map((share, index) => {
-          const computed =
-            shareMode === "PERCENT" ? (total * (Number(share.value) || 0)) / 100 : Number(share.value) || 0;
+          const amount = (commissionTotal * (Number(share.value) || 0)) / 100;
           return (
             <div key={share.id} className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-2 items-end">
               <div>
@@ -110,6 +81,7 @@ export default function ColleagueShareFields({
                   className="input"
                   value={share.colleagueName}
                   onChange={(e) => updateShare(index, { colleagueName: e.target.value })}
+                  aria-label={t("Colleague")}
                 >
                   <option value="">{t("Choose a colleague")}</option>
                   {colleagues.map((person) => {
@@ -126,23 +98,21 @@ export default function ColleagueShareFields({
                 </select>
               </div>
               <div>
-                {index === 0 && (
-                  <label className="label">{shareMode === "PERCENT" ? t("Percent") : t("Amount")}</label>
-                )}
+                {index === 0 && <label className="label">{t("Percent of commission")}</label>}
                 <input
                   className="input"
                   type="number"
                   min={0}
-                  max={shareMode === "PERCENT" ? 100 : undefined}
-                  step={shareMode === "PERCENT" ? "0.1" : "0.01"}
+                  max={100}
+                  step="0.1"
+                  inputMode="decimal"
+                  aria-label={t("Percent of commission")}
                   value={Number.isFinite(share.value) ? share.value : 0}
                   onChange={(e) => updateShare(index, { value: Number(e.target.value) })}
                 />
               </div>
               <div className="flex items-center gap-2 pb-1">
-                <span className="text-sm text-ink-muted font-mono min-w-[5.5rem]">
-                  {shareMode === "PERCENT" ? formatCurrency(computed) : ""}
-                </span>
+                <span className="text-sm text-ink-muted font-mono min-w-[5.5rem]">{formatCurrency(amount)}</span>
                 <button
                   type="button"
                   className="text-ink-faint hover:text-danger-500"
@@ -166,10 +136,8 @@ export default function ColleagueShareFields({
           <Plus size={15} /> {t("Add colleague")}
         </button>
         <p className="text-xs text-ink-muted">
-          {shareMode === "PERCENT"
-            ? t("Percentages add up to {percent}%.", { percent: Math.round(percentTotal * 10) / 10 })
-            : t("Amounts add up to {amount}.", { amount: formatCurrency(amountTotal) })}
-          {shareMode === "PERCENT" && percentTotal > 100 ? ` ${t("That is over 100%.")}` : ""}
+          {t("Percentages add up to {percent}%.", { percent: Math.round(percentTotal * 10) / 10 })}
+          {percentTotal > 100 ? ` ${t("That is over 100%.")}` : ""}
         </p>
       </div>
     </div>

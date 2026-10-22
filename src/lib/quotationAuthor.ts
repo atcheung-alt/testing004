@@ -40,6 +40,30 @@ export async function bindShareColleagueNames(shares: QuotationShareInput[]): Pr
  * Nickname stamped onto a new quotation. The login account's nickname wins;
  * if that's blank, use the employee record whose company email matches the login.
  */
+/** Nickname of the account that created the document. System events have none. */
+export async function loadCreatorNickname(
+  documentType: "invoice" | "quotation",
+  documentId: string
+): Promise<string> {
+  const event = await prisma.activityEvent.findFirst({
+    where: { documentType, documentId, type: "CREATED", actor: "STAFF" },
+    orderBy: { createdAt: "asc" },
+    select: { actorName: true },
+  });
+  const actorName = event?.actorName || "";
+  if (!actorName) return "";
+  const code = actorName.match(/#(\d{8})\b/)?.[1];
+  const email = actorName.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  const users = await prisma.user.findMany({ select: { id: true, nickname: true, name: true, email: true } });
+  const hit = users.find(
+    (user) =>
+      (code && staffCodeFromId(user.id) === code) ||
+      (email && user.email.toLowerCase() === email.toLowerCase())
+  );
+  if (!hit) return "";
+  return hit.nickname.trim() || hit.name.trim();
+}
+
 export async function loadCurrentNickname(): Promise<string> {
   const session = await getCurrentUser();
   if (!session) return "";

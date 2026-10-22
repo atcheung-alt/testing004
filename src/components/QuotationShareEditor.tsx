@@ -7,68 +7,61 @@ import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
 import { colleagueLabel } from "@/lib/staffCode";
-import ColleagueShareFields, {
-  emptyColleagueShare,
-  type ColleagueShare,
-  type ShareMode,
-} from "@/components/ColleagueShareFields";
+import ColleagueShareFields, { emptyColleagueShare, type ColleagueShare } from "@/components/ColleagueShareFields";
 
 export default function QuotationShareEditor({
   invoiceId,
   canEdit,
-  preparedBy: initialPreparedBy,
-  shareMode: initialShareMode,
+  creatorName,
+  commissionTotal: initialTotal,
   shares: initialShares,
-  total,
   colleagues,
 }: {
   invoiceId: string;
   canEdit: boolean;
-  preparedBy: string;
-  shareMode: ShareMode;
+  creatorName: string;
+  commissionTotal: number;
   shares: { colleagueName: string; value: number }[];
-  total: number;
   colleagues: StaffColleague[];
 }) {
   const t = useT();
   const router = useRouter();
-  const [preparedBy, setPreparedBy] = useState(initialPreparedBy);
-  const [shareMode, setShareMode] = useState<ShareMode>(initialShareMode);
+  const [commissionTotal, setCommissionTotal] = useState(initialTotal);
   const [shares, setShares] = useState<ColleagueShare[]>(
     initialShares.length
       ? initialShares.map((share) => emptyColleagueShare(share.colleagueName, share.value))
-      : [emptyColleagueShare()]
+      : [emptyColleagueShare(), emptyColleagueShare()]
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!canEdit) {
-    if (!initialPreparedBy && initialShares.length === 0) return null;
+    if (!creatorName && initialShares.length === 0 && !(initialTotal > 0)) return null;
     return (
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-3">{t("Split commission")}</h2>
-        {initialPreparedBy && (
-          <p className="text-sm text-ink mb-3">{t("Made by {name}", { name: initialPreparedBy })}</p>
-        )}
-        {initialShares.length > 0 && (
+        {creatorName ? <p className="text-sm text-ink mb-3">{t("Made by {name}", { name: creatorName })}</p> : null}
+        {initialTotal > 0 ? (
+          <p className="text-sm text-ink-muted mb-3">
+            {t("Total commission")} · {formatCurrency(initialTotal)}
+          </p>
+        ) : null}
+        {initialShares.length > 0 ? (
           <div className="flex flex-col gap-2">
-            <p className="text-xs text-ink-faint">
-              {initialShareMode === "PERCENT" ? t("Percentage of total") : t("Exact amount")}
-            </p>
             {initialShares.map((share, index) => {
-              const amount = initialShareMode === "PERCENT" ? (total * share.value) / 100 : share.value;
+              const amount = (initialTotal * share.value) / 100;
               return (
                 <div key={`${share.colleagueName}-${index}`} className="flex items-center justify-between gap-3 text-sm">
                   <span className="font-medium">{colleagueLabel(share.colleagueName, colleagues)}</span>
                   <span className="font-mono text-ink-muted">
-                    {initialShareMode === "PERCENT" ? `${share.value}% · ${formatCurrency(amount)}` : formatCurrency(amount)}
+                    {share.value}% · {formatCurrency(amount)}
                   </span>
                 </div>
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
     );
   }
@@ -82,8 +75,7 @@ export default function QuotationShareEditor({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          preparedBy,
-          shareMode,
+          commissionTotal,
           shares: shares.map((share) => ({ colleagueName: share.colleagueName, value: share.value })),
         }),
       });
@@ -91,8 +83,8 @@ export default function QuotationShareEditor({
       if (!res.ok) throw new Error(data.error || "Could not save the split.");
       setSaved(true);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Could not save the split.");
     } finally {
       setSaving(false);
     }
@@ -101,16 +93,17 @@ export default function QuotationShareEditor({
   return (
     <div className="flex flex-col gap-3">
       <ColleagueShareFields
-        preparedBy={preparedBy}
-        onPreparedByChange={setPreparedBy}
-        shareMode={shareMode}
-        onShareModeChange={setShareMode}
+        creatorName={creatorName}
+        commissionTotal={commissionTotal}
+        onCommissionTotalChange={(next) => {
+          setSaved(false);
+          setCommissionTotal(next);
+        }}
         shares={shares}
         onSharesChange={(next) => {
           setSaved(false);
           setShares(next);
         }}
-        total={total}
         colleagues={colleagues}
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -118,12 +111,12 @@ export default function QuotationShareEditor({
           {saving ? <Loader2 size={15} className="animate-spin" /> : null}
           {saving ? t("Saving split…") : t("Save split")}
         </button>
-        {saved && (
+        {saved ? (
           <span className="flex items-center gap-1.5 text-sm text-emerald-600">
             <CheckCircle2 size={15} /> {t("Split saved")}
           </span>
-        )}
-        {error && <p className="text-sm text-danger-600">{t(error)}</p>}
+        ) : null}
+        {error ? <p className="text-sm text-danger-600">{t(error)}</p> : null}
       </div>
     </div>
   );
