@@ -48,6 +48,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
   const sharing = quotationShareFieldsFrom({ ...body, shareMode: "PERCENT" });
   if (sharing.error) return NextResponse.json({ error: sharing.error }, { status: 400 });
+  const assigned = sharing.shares.reduce((sum, share) => sum + share.value, 0);
+  if (assigned > 100) {
+    return NextResponse.json({ error: "Partner percentages can't add up to more than 100." }, { status: 400 });
+  }
   const boundShares = await bindShareColleagueNames(sharing.shares);
   const preparedBy = (await invoiceCreatorName(invoice)) || invoice.quotation?.preparedBy || "";
 
