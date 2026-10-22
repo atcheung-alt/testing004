@@ -36,7 +36,10 @@ export default function ColleagueShareFields({
     onSharesChange(shares.map((share, i) => (i === index ? { ...share, ...patch } : share)));
   }
 
-  const percentTotal = shares.reduce((sum, share) => sum + (Number(share.value) || 0), 0);
+  const percentTotal = shares.reduce((sum, share) => sum + (Number(share.value) > 0 ? Number(share.value) : 0), 0);
+  const keptPercent = Math.max(0, Math.round((100 - percentTotal) * 10) / 10);
+  const keptAmount = (commissionTotal * keptPercent) / 100;
+  const keeper = creatorName || t("Made by");
 
   return (
     <div className="card p-5 flex flex-col gap-4">
@@ -44,7 +47,7 @@ export default function ColleagueShareFields({
         <h2 className="font-display text-lg font-semibold">{t("Split commission")}</h2>
         <p className="text-sm text-ink-muted mt-0.5">
           {t(
-            "Made by is the account that created this invoice. Enter the commission total, then each partner's percentage of it. They can see this invoice. Clients never see this."
+            "Enter the commission total, then each partner's percentage. The rest stays with the person who created the invoice. If you add no one, the whole amount is theirs. A partner only sees their own amount."
           )}
         </p>
       </div>
@@ -135,9 +138,19 @@ export default function ColleagueShareFields({
         >
           <Plus size={15} /> {t("Add colleague")}
         </button>
-        <p className="text-xs text-ink-muted">
-          {t("Percentages add up to {percent}%.", { percent: Math.round(percentTotal * 10) / 10 })}
-          {percentTotal > 100 ? ` ${t("That is over 100%.")}` : ""}
+        <p className="text-sm text-ink">
+          {percentTotal > 100
+            ? t("Partner percentages can't add up to more than 100.")
+            : keptPercent === 100
+              ? t("{name} keeps the whole commission · {amount}", {
+                  name: keeper,
+                  amount: formatCurrency(keptAmount),
+                })
+              : t("{name} keeps {percent}% · {amount}", {
+                  name: keeper,
+                  percent: String(keptPercent),
+                  amount: formatCurrency(keptAmount),
+                })}
         </p>
       </div>
     </div>

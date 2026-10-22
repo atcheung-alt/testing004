@@ -6,7 +6,6 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
-import { colleagueLabel } from "@/lib/staffCode";
 import ColleagueShareFields, { emptyColleagueShare, type ColleagueShare } from "@/components/ColleagueShareFields";
 
 export default function QuotationShareEditor({
@@ -15,6 +14,7 @@ export default function QuotationShareEditor({
   creatorName,
   commissionTotal: initialTotal,
   shares: initialShares,
+  ownAmount = 0,
   colleagues,
 }: {
   invoiceId: string;
@@ -22,6 +22,7 @@ export default function QuotationShareEditor({
   creatorName: string;
   commissionTotal: number;
   shares: { colleagueName: string; value: number }[];
+  ownAmount?: number;
   colleagues: StaffColleague[];
 }) {
   const t = useT();
@@ -37,36 +38,23 @@ export default function QuotationShareEditor({
   const [error, setError] = useState<string | null>(null);
 
   if (!canEdit) {
-    if (!creatorName && initialShares.length === 0 && !(initialTotal > 0)) return null;
+    if (!(ownAmount > 0)) return null;
     return (
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-3">{t("Split commission")}</h2>
-        {creatorName ? <p className="text-sm text-ink mb-3">{t("Made by {name}", { name: creatorName })}</p> : null}
-        {initialTotal > 0 ? (
-          <p className="text-sm text-ink-muted mb-3">
-            {t("Total commission")} · {formatCurrency(initialTotal)}
-          </p>
-        ) : null}
-        {initialShares.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {initialShares.map((share, index) => {
-              const amount = (initialTotal * share.value) / 100;
-              return (
-                <div key={`${share.colleagueName}-${index}`} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-medium">{colleagueLabel(share.colleagueName, colleagues)}</span>
-                  <span className="font-mono text-ink-muted">
-                    {share.value}% · {formatCurrency(amount)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        ) : null}
+        <h2 className="font-display text-lg font-semibold mb-2">{t("Split commission")}</h2>
+        <p className="text-sm text-ink">
+          {t("Your commission")} · {formatCurrency(ownAmount)}
+        </p>
       </div>
     );
   }
 
   async function save() {
+    const assigned = shares.reduce((sum, share) => sum + (Number(share.value) > 0 ? Number(share.value) : 0), 0);
+    if (assigned > 100) {
+      setError("Partner percentages can't add up to more than 100.");
+      return;
+    }
     setSaving(true);
     setSaved(false);
     setError(null);

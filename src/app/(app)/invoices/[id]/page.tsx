@@ -28,8 +28,9 @@ import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { InvoiceExpensesDisclosure } from "@/components/InvoiceExpensesCard";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
+import { getCurrentUser } from "@/lib/auth";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
-import { colleagueCode } from "@/lib/staffCode";
+import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
@@ -40,7 +41,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   if (!(await invoiceVisible(params.id))) notFound();
   const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
-  const [raw, categories, colleagues, invoiceCreator] = await Promise.all([
+  const [raw, categories, colleagues, invoiceCreator, session] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -71,6 +72,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" }, select: { name: true } }),
     loadColleagues(),
     loadCreatorNickname("invoice", params.id),
+    getCurrentUser(),
   ]);
 
   if (!raw) notFound();
@@ -84,6 +86,12 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     raw.quotation?.shares || [],
     raw.total
   );
+  const viewerCode = session ? staffCodeFromId(session.userId) : "";
+  const ownPercent = split.partners.reduce(
+    (sum, share) => (colleagueCode(share.colleagueName, colleagues) === viewerCode ? sum + share.percent : sum),
+    0
+  );
+  const ownAmount = (split.total * ownPercent) / 100;
   const invoice = { ...raw, items: withParsedFeesList(withParsedMultipliersList(raw.items)) };
   const timeline = await getActivityTimeline("invoice", invoice.id);
   const event = await getEventForInvoice(invoice.id);
@@ -279,12 +287,17 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         invoiceId={invoice.id}
         canEdit={canModify}
         creatorName={creatorName}
-        commissionTotal={split.total}
-        shares={split.partners.map((share) => ({
-          colleagueName: colleagueCode(share.colleagueName, colleagues),
-          value: share.percent,
-        }))}
-        colleagues={colleagues}
+        commissionTotal={canModify ? split.total : 0}
+        ownAmount={ownAmount}
+        shares={
+          canModify
+            ? split.partners.map((share) => ({
+                colleagueName: colleagueCode(share.colleagueName, colleagues),
+                value: share.percent,
+              }))
+            : []
+        }
+        colleagues={canModify ? colleagues : []}
       />
 
       <DocumentItemsTable
