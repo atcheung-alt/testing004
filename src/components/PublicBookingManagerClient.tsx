@@ -19,14 +19,11 @@ import Portal from "@/components/Portal";
 import PublicCompanyHeader, { type PublicCompany } from "@/components/PublicCompanyHeader";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import BookingTimeField from "@/components/BookingTimeField";
+import BookingDurationField from "@/components/BookingDurationField";
 import {
   DEFAULT_SLOT_DURATION_MINUTES,
   MAX_SLOT_QUOTA,
-  SLOT_DURATION_MAX_MINUTES,
-  SLOT_DURATION_MIN_MINUTES,
-  SLOT_DURATION_STEP_MINUTES,
   formatDateLabel,
-  formatDurationLabel,
   formatTimeRangeLabel,
   readJsonOrThrow,
   type BookingStatus,
@@ -579,17 +576,7 @@ export default function PublicBookingManagerClient({
 
           <div className="max-w-[220px]">
             <label className="label">{t("How long is each appointment?")}</label>
-            <input
-              type="number"
-              className="input"
-              min={SLOT_DURATION_MIN_MINUTES}
-              max={SLOT_DURATION_MAX_MINUTES}
-              step={SLOT_DURATION_STEP_MINUTES}
-              value={addDuration}
-              onChange={(e) => setAddDuration(Math.min(SLOT_DURATION_MAX_MINUTES, Math.max(SLOT_DURATION_MIN_MINUTES, Number(e.target.value) || 0)))}
-              required
-            />
-            <p className="mt-1 text-xs text-ink-faint">{formatDurationLabel(addDuration)}</p>
+            <BookingDurationField value={addDuration} onChange={setAddDuration} />
           </div>
 
           <div className="max-w-xs">

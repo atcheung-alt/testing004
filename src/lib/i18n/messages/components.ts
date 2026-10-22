@@ -655,6 +655,12 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "繁體中文 (Traditional Chinese)": "繁體中文",
   "简体中文 (Simplified Chinese)": "簡體中文",
   "Made by & colleague sharing": "編製人及同事分成",
+  "Split commission": "同事分成",
+  "Save split": "儲存分成",
+  "Saving split…": "正在儲存分成…",
+  "Split saved": "分成已儲存",
+  "Could not save the split.": "無法儲存分成。",
+  "Type any number of minutes, for example 20.": "可輸入任何分鐘數，例如 20。",
   "Made by defaults to your nickname. Add colleagues and share either an exact amount or a percentage of the quotation total.":
     "「編製人」預設為你的暱稱。可加入同事，以確實金額或報價總額百分比分成。",
   "Made by stays your nickname. Pick a colleague by nickname to split the share. They can then see this quotation and its invoice. Clients never see this.":
