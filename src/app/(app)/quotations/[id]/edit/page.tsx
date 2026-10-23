@@ -7,20 +7,16 @@ import type { Quotation } from "@/types";
 import { getT } from "@/lib/i18n/server";
 import { quotationCanModify } from "@/lib/documentAccess";
 import { isShareHolderNumber } from "@/lib/quotationShares";
-import { readStaffDirectory, viewersFor } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditQuotationPage({ params }: { params: { id: string } }) {
   const t = getT();
   if (!(await quotationCanModify(params.id))) notFound();
-  const [quotation, directory] = await Promise.all([
-    prisma.quotation.findUnique({
+  const quotation = await prisma.quotation.findUnique({
       where: { id: params.id },
       include: { items: { orderBy: { sortOrder: "asc" } }, shares: { orderBy: { sortOrder: "asc" } } },
-    }),
-    readStaffDirectory(),
-  ]);
+    });
 
   if (!quotation || isShareHolderNumber(quotation.number)) notFound();
   if (quotation.status === "CONVERTED") redirect(`/quotations/${quotation.id}`);
@@ -50,7 +46,6 @@ export default async function EditQuotationPage({ params }: { params: { id: stri
             })),
           } as Quotation
         }
-        viewerEmails={viewersFor(directory, "quotation", quotation.id).join(", ")}
       />
     </div>
   );

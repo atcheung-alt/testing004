@@ -59,7 +59,6 @@ async function currentAccess(): Promise<AccessMode> {
 }
 
 async function quotationAccess(person: Person) {
-  const directory = await readStaffDirectory();
   const created = await prisma.activityEvent.findMany({
     where: { documentType: "quotation", type: "CREATED" },
     select: { documentId: true, actorName: true },
@@ -75,16 +74,12 @@ async function quotationAccess(person: Person) {
     select: { quotationId: true, colleagueName: true },
   });
   const sharedQuoteIds = shares.filter((share) => shareHits(share.colleagueName, person)).map((share) => share.quotationId);
-  const granted = directory.grants
-    .filter((grant) => grant.documentType === "quotation" && grant.emails.includes(person.email))
-    .map((grant) => grant.documentId);
   const editIds = new Set(ownedRows.map((row) => row.id));
-  const viewIds = new Set<string>([...editIds, ...sharedQuoteIds, ...granted]);
+  const viewIds = new Set<string>([...editIds, ...sharedQuoteIds]);
   return { editIds, viewIds, sharedQuoteIds };
 }
 
 async function invoiceAccess(person: Person) {
-  const directory = await readStaffDirectory();
   const quotes = await quotationAccess(person);
   const created = await prisma.activityEvent.findMany({
     where: { documentType: "invoice", type: "CREATED" },
@@ -109,14 +104,8 @@ async function invoiceAccess(person: Person) {
         select: { id: true },
       })
     : [];
-  const grantedIds = directory.grants
-    .filter((grant) => grant.documentType === "invoice" && grant.emails.includes(person.email))
-    .map((grant) => grant.documentId);
-  const grantedRows = grantedIds.length
-    ? await prisma.invoice.findMany({ where: { id: { in: grantedIds } }, select: { id: true } })
-    : [];
   const editIds = new Set([...ownedDirect, ...fromOwnedQuotes].map((row) => row.id));
-  const viewIds = new Set<string>([...editIds, ...fromShares.map((row) => row.id), ...grantedRows.map((row) => row.id)]);
+  const viewIds = new Set<string>([...editIds, ...fromShares.map((row) => row.id)]);
   return { editIds, viewIds };
 }
 

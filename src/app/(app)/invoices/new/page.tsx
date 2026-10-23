@@ -1,12 +1,17 @@
 import InvoiceForm from "@/components/InvoiceForm";
 import { customerFieldsForClient } from "@/lib/clientWork";
 import { getT } from "@/lib/i18n/server";
+import { loadColleagues, loadCurrentNickname } from "@/lib/quotationAuthor";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage({ searchParams }: { searchParams: { client?: string } }) {
   const t = getT();
-  const client = searchParams.client ? await customerFieldsForClient(searchParams.client) : null;
+  const [client, colleagues, creatorName] = await Promise.all([
+    searchParams.client ? customerFieldsForClient(searchParams.client) : Promise.resolve(null),
+    loadColleagues(),
+    loadCurrentNickname(),
+  ]);
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -17,7 +22,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: {
             : t("Create an invoice directly, or convert an accepted quotation instead.")}
         </p>
       </div>
-      <InvoiceForm customer={client || undefined} />
+      <InvoiceForm customer={client || undefined} colleagues={colleagues} creatorName={creatorName} />
     </div>
   );
 }

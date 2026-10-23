@@ -6,6 +6,7 @@ import CustomerFields, { emptyCustomer } from "@/components/CustomerFields";
 import LineItemsEditor, { emptyLineItem } from "@/components/LineItemsEditor";
 import DocumentMetaFields from "@/components/DocumentMetaFields";
 import NewCustomerPrompt, { type PromptCustomer } from "@/components/NewCustomerPrompt";
+import ColleagueShareFields, { emptyColleagueShare, type ColleagueShare } from "@/components/ColleagueShareFields";
 import { formatDate } from "@/lib/calculations";
 import {
   DEFAULT_PAYMENT_DUE_DAYS,
@@ -15,6 +16,7 @@ import {
   type DocumentLanguage,
 } from "@/lib/settings";
 import type { Invoice, LineItem, CustomerDetails } from "@/types";
+import type { StaffColleague } from "@/lib/staffCode";
 import { useT } from "@/lib/i18n/client";
 
 function toDateInput(value?: string | null) {
@@ -41,12 +43,14 @@ export default function InvoiceForm({
   invoice,
   customer: initialCustomer,
   calendarEventName: initialCalendarName,
-  viewerEmails: initialViewerEmails = "",
+  colleagues = [],
+  creatorName = "",
 }: {
   invoice?: Invoice;
   customer?: CustomerDetails;
   calendarEventName?: string | null;
-  viewerEmails?: string;
+  colleagues?: StaffColleague[];
+  creatorName?: string;
 }) {
   const router = useRouter();
   const t = useT();
@@ -63,7 +67,8 @@ export default function InvoiceForm({
         ? { ...emptyCustomer(), ...initialCustomer }
         : emptyCustomer()
   );
-  const [viewerEmails, setViewerEmails] = useState(initialViewerEmails);
+  const [commissionTotal, setCommissionTotal] = useState(0);
+  const [shares, setShares] = useState<ColleagueShare[]>([emptyColleagueShare(), emptyColleagueShare()]);
   const [title, setTitle] = useState(invoice?.title || "");
   const [poNumber, setPoNumber] = useState(invoice?.poNumber || "");
   const [issueDate, setIssueDate] = useState(
@@ -144,6 +149,13 @@ export default function InvoiceForm({
       setError(t("Set both an event start and end date before marking it on the Bookings calendar."));
       return;
     }
+    if (!invoice) {
+      const assigned = shares.reduce((sum, share) => sum + (Number(share.value) > 0 ? Number(share.value) : 0), 0);
+      if (assigned > 100) {
+        setError(t("Partner percentages can't add up to more than 100."));
+        return;
+      }
+    }
 
     setSaving(true);
     try {
@@ -166,10 +178,12 @@ export default function InvoiceForm({
         terms,
         language,
         paymentDueDays,
-        viewerEmails: viewerEmails
-          .split(/[\s,;]+/)
-          .map((email) => email.trim().toLowerCase())
-          .filter(Boolean),
+        ...(invoice
+          ? {}
+          : {
+              commissionTotal,
+              shares: shares.map((share) => ({ colleagueName: share.colleagueName, value: share.value })),
+            }),
       };
       const res = await fetch(invoice ? `/api/invoices/${invoice.id}` : "/api/invoices", {
         method: invoice ? "PATCH" : "POST",
@@ -347,18 +361,16 @@ export default function InvoiceForm({
         />
       </div>
 
-      <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-1">{t("Also let these people see it")}</h2>
-        <p className="text-xs text-ink-faint mb-3">
-          {t("Freelance accounts only see documents they created. Type their email here, separated by commas, to let them open this invoice and its files.")}
-        </p>
-        <input
-          className="input"
-          value={viewerEmails}
-          placeholder="name@company.com"
-          onChange={(e) => setViewerEmails(e.target.value)}
+      {!invoice && (
+        <ColleagueShareFields
+          creatorName={creatorName}
+          commissionTotal={commissionTotal}
+          onCommissionTotalChange={setCommissionTotal}
+          shares={shares}
+          onSharesChange={setShares}
+          colleagues={colleagues}
         />
-      </div>
+      )}
 
       <DocumentMetaFields
         notes={notes}

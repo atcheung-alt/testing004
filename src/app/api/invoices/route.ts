@@ -6,7 +6,7 @@ import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, eventFieldsFr
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
-import { setDocumentViewers } from "@/lib/staffDirectory";
+import { commissionSplitError, commissionSplitRequested, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +51,10 @@ export async function POST(request: NextRequest) {
       { error: "Set both an event start and end date before marking it on the Bookings calendar." },
       { status: 400 }
     );
+  }
+  if (commissionSplitRequested(body)) {
+    const splitProblem = commissionSplitError(body);
+    if (splitProblem) return NextResponse.json({ error: splitProblem }, { status: 400 });
   }
 
   const taxRate = Number(body.taxRate) || 0;
@@ -101,8 +105,8 @@ export async function POST(request: NextRequest) {
     type: "CREATED",
     description: `Invoice ${invoice.number} created`,
   });
-  if (Array.isArray(body.viewerEmails)) {
-    await setDocumentViewers("invoice", invoice.id, body.viewerEmails);
+  if (commissionSplitRequested(body)) {
+    await saveInvoiceCommissionSplit({ ...invoice, quotationId: null, quotation: null }, body);
   }
 
   if (typeof body.markOnCalendar === "boolean") {
