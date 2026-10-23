@@ -9,7 +9,6 @@ import { quotationShareFieldsFrom } from "@/lib/quotationShares";
 import { bindShareColleagueNames } from "@/lib/quotationAuthor";
 import { getCurrentUser } from "@/lib/auth";
 import { andFilters, currentQuotationFilter } from "@/lib/documentAccess";
-import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export const dynamic = "force-dynamic";
 
@@ -109,9 +108,5 @@ export async function POST(request: NextRequest) {
     type: "CREATED",
     description: `Quotation ${quotation.number} created`,
   });
-  if (Array.isArray(body.viewerEmails)) {
-    await setDocumentViewers("quotation", quotation.id, body.viewerEmails);
-  }
-
   return NextResponse.json(withParsedItems(quotation), { status: 201 });
 }

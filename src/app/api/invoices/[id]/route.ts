@@ -6,7 +6,6 @@ import { ensureReceiptForInvoice } from "@/lib/receipt";
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
-import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await invoiceVisible(params.id))) {
@@ -37,9 +36,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const existing = await prisma.invoice.findUnique({ where: { id: params.id } });
   if (!existing) {
     return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
-  }
-  if (Array.isArray(body.viewerEmails)) {
-    await setDocumentViewers("invoice", params.id, body.viewerEmails);
   }
   if (body.status !== undefined && !VALID_INVOICE_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "That's not a valid invoice status." }, { status: 400 });

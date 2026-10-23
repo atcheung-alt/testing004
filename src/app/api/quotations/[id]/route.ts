@@ -6,7 +6,6 @@ import { logActivity } from "@/lib/activity";
 import { quotationShareFieldsFrom } from "@/lib/quotationShares";
 import { quotationCanModify, quotationVisible } from "@/lib/documentAccess";
 import { bindShareColleagueNames } from "@/lib/quotationAuthor";
-import { setDocumentViewers } from "@/lib/staffDirectory";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await quotationVisible(params.id))) {
@@ -38,10 +37,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (!existing) {
     return NextResponse.json({ error: "Quotation not found." }, { status: 404 });
   }
-  if (Array.isArray(body.viewerEmails)) {
-    await setDocumentViewers("quotation", params.id, body.viewerEmails);
-  }
-
   if (body.status !== undefined && !VALID_QUOTATION_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "That's not a valid quotation status." }, { status: 400 });
   }
