@@ -384,6 +384,13 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "設定每個組別可以開啟的頁面。未加入任何組別的人保持全部權限。",
   "Open a row to use it. Each closed row says what it does.":
     "打開一列就能用。未打開時，每一列已寫明用途。",
+  "Three areas. The line under each name says what it is for.":
+    "三個範圍。名稱下面一行說明用途。",
+  "Company settings": "公司設定",
+  "Set the company name, logo, expenses, and emails.": "設定公司名稱、標誌、支出和電郵。",
+  "Who can sign in, and their pay and role.": "誰可以登入，以及出糧和身份。",
+  "Group settings": "組別設定",
+  "Which pages each group can open.": "每個組別可以開哪些頁。",
   "Approve or decline someone waiting to sign in.": "批准或暫不讓等候中的人登入。",
   "Add someone, or change their team, payroll, and role.": "可新增人員，或改組別、出糧和身份。",
   "Pick a group, then turn its pages on or off. Admin always has every page.":

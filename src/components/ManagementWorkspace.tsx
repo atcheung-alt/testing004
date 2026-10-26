@@ -111,7 +111,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
-  const [openSection, setOpenSection] = useState({ requests: false, groups: false, people: false, company: false });
+  const [openSection, setOpenSection] = useState({ groups: false, people: false, company: false });
 
   useEffect(() => {
     fetch("/api/access")
@@ -128,9 +128,6 @@ export default function ManagementWorkspace() {
         if (typeof data.fullGroupId === "string") setFullGroupId(data.fullGroupId);
         setReady(data.ready !== false);
         setSelectedId(data.groups?.[0]?.id ?? null);
-        if (Array.isArray(data.requests) && data.requests.length > 0) {
-          setOpenSection((current) => ({ ...current, requests: true }));
-        }
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
@@ -258,26 +255,157 @@ export default function ManagementWorkspace() {
       )}
 
       <Fold
-        title={t("Access requests")}
-        summary={`${t("{count} waiting", { count: requests.length })}. ${t("Approve or decline someone waiting to sign in.")}`}
-        open={openSection.requests}
+        title={t("Company settings")}
+        summary={t("Set the company name, logo, expenses, and emails.")}
+        open={openSection.company}
         delay="0.02s"
-        onToggle={() => setOpenSection((current) => ({ ...current, requests: !current.requests }))}
+        onToggle={() => setOpenSection((current) => ({ ...current, company: !current.company }))}
       >
-        <AccessRequestQueue
-          requests={requests}
-          companies={companies}
-          saving={saving}
-          onError={setError}
-          onDone={reloadAccess}
-        />
+        <div className="flex flex-col gap-4">
+          <ExpenseCategoriesManager />
+          <SettingsForm part="company" />
+        </div>
       </Fold>
 
       <Fold
-        title={t("Pages")}
-        summary={`${t("{count} Groups", { count: groups.length })}. ${t("Pick a group, then turn its pages on or off. Admin always has every page.")}`}
-        open={openSection.groups}
+        title={t("People")}
+        summary={`${t("{count} People", { count: people.length })}${requests.length ? ` · ${t("{count} waiting", { count: requests.length })}` : ""}. ${t("Who can sign in, and their pay and role.")}`}
+        open={openSection.people}
         delay="0.08s"
+        onToggle={() => setOpenSection((current) => ({ ...current, people: !current.people }))}
+      >
+        <div className="flex flex-col gap-4">
+            {requests.length > 0 && (
+              <AccessRequestQueue
+                requests={requests}
+                companies={companies}
+                saving={saving}
+                onError={setError}
+                onDone={reloadAccess}
+              />
+            )}
+            <StaffAccountsManager />
+            <div>
+            <input
+              className="input sm:max-w-xs mb-3"
+              placeholder={t("Search name or email")}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+            {shownPeople.length === 0 ? (
+              <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
+            ) : (
+              <div className="divide-y divide-line">
+                {shownPeople.map((person) => {
+                  const external = person.label === "EXTERNAL_ADMIN" || person.label === "EXTERNAL_MEMBER";
+                  return (
+                  <div key={person.id} className="flex flex-col gap-2 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm text-ink truncate">{person.name || person.email}</p>
+                      <p className="text-xs text-ink-faint truncate">{person.email}</p>
+                    </div>
+                    <select
+                      className="input w-44 shrink-0"
+                      value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
+                      onChange={(event) => movePerson(person.email, event.target.value)}
+                      disabled={saving || lockedEmails.has(person.email.toLowerCase())}
+                      aria-label={person.email}
+                    >
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.name}
+                        </option>
+                      ))}
+                    </select>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
+                        {t("Payroll category")}
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.category || ""}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, category: event.target.value || null } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="">{t("Not set")}</option>
+                          {CATEGORIES.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {t(label)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
+                        {t("Role")}
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.label || ""}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, label: event.target.value || null } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="">{t("Not set")}</option>
+                          {ROLES.map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {t(label)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {external ? (
+                        <select
+                          className="input py-1 text-sm"
+                          value={person.companyName}
+                          onChange={(event) =>
+                            setPeople((current) =>
+                              current.map((item) =>
+                                item.id === person.id ? { ...item, companyName: event.target.value } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="">{t("Their company")}</option>
+                          {companies.map((company) => (
+                            <option key={company.id} value={company.name}>
+                              {company.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button type="button" className="btn-secondary" disabled={saving} onClick={() => savePersonAccess(person)}>
+                          {t("Save access")}
+                        </button>
+                      )}
+                    </div>
+                    {external && (
+                      <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => savePersonAccess(person)}>
+                        {t("Save access")}
+                      </button>
+                    )}
+                  </div>
+                  );
+                })}
+              </div>
+            )}
+            </div>
+        </div>
+      </Fold>
+
+      <Fold
+        title={t("Group settings")}
+        summary={`${t("{count} Groups", { count: groups.length })}. ${t("Which pages each group can open.")}`}
+        open={openSection.groups}
+        delay="0.14s"
         onToggle={() => setOpenSection((current) => ({ ...current, groups: !current.groups }))}
       >
         <div className="flex flex-col gap-4">
@@ -412,144 +540,6 @@ export default function ManagementWorkspace() {
               </div>
             )}
           </div>
-      </Fold>
-
-      <Fold
-        title={t("People")}
-        summary={`${t("{count} People", { count: people.length })}. ${t("Add someone, or change their team, payroll, and role.")}`}
-        open={openSection.people}
-        delay="0.14s"
-        onToggle={() => setOpenSection((current) => ({ ...current, people: !current.people }))}
-      >
-        <div className="flex flex-col gap-4">
-            <StaffAccountsManager />
-            <div>
-            <input
-              className="input sm:max-w-xs mb-3"
-              placeholder={t("Search name or email")}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            {shownPeople.length === 0 ? (
-              <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
-            ) : (
-              <div className="divide-y divide-line">
-                {shownPeople.map((person) => {
-                  const external = person.label === "EXTERNAL_ADMIN" || person.label === "EXTERNAL_MEMBER";
-                  return (
-                  <div key={person.id} className="flex flex-col gap-2 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm text-ink truncate">{person.name || person.email}</p>
-                      <p className="text-xs text-ink-faint truncate">{person.email}</p>
-                    </div>
-                    <select
-                      className="input w-44 shrink-0"
-                      value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
-                      onChange={(event) => movePerson(person.email, event.target.value)}
-                      disabled={saving || lockedEmails.has(person.email.toLowerCase())}
-                      aria-label={person.email}
-                    >
-                      {groups.map((group) => (
-                        <option key={group.id} value={group.id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
-                        {t("Payroll category")}
-                        <select
-                          className="input py-1 text-sm"
-                          value={person.category || ""}
-                          onChange={(event) =>
-                            setPeople((current) =>
-                              current.map((item) =>
-                                item.id === person.id ? { ...item, category: event.target.value || null } : item
-                              )
-                            )
-                          }
-                        >
-                          <option value="">{t("Not set")}</option>
-                          {CATEGORIES.map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {t(label)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
-                        {t("Role")}
-                        <select
-                          className="input py-1 text-sm"
-                          value={person.label || ""}
-                          onChange={(event) =>
-                            setPeople((current) =>
-                              current.map((item) =>
-                                item.id === person.id ? { ...item, label: event.target.value || null } : item
-                              )
-                            )
-                          }
-                        >
-                          <option value="">{t("Not set")}</option>
-                          {ROLES.map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {t(label)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {external ? (
-                        <select
-                          className="input py-1 text-sm"
-                          value={person.companyName}
-                          onChange={(event) =>
-                            setPeople((current) =>
-                              current.map((item) =>
-                                item.id === person.id ? { ...item, companyName: event.target.value } : item
-                              )
-                            )
-                          }
-                        >
-                          <option value="">{t("Their company")}</option>
-                          {companies.map((company) => (
-                            <option key={company.id} value={company.name}>
-                              {company.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <button type="button" className="btn-secondary" disabled={saving} onClick={() => savePersonAccess(person)}>
-                          {t("Save access")}
-                        </button>
-                      )}
-                    </div>
-                    {external && (
-                      <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => savePersonAccess(person)}>
-                        {t("Save access")}
-                      </button>
-                    )}
-                  </div>
-                  );
-                })}
-              </div>
-            )}
-            </div>
-        </div>
-      </Fold>
-
-      <Fold
-        title={t("Company")}
-        summary={t("Expense types, logo, Drive folder, and email copies.")}
-        open={openSection.company}
-        delay="0.2s"
-        onToggle={() => setOpenSection((current) => ({ ...current, company: !current.company }))}
-      >
-        <div className="flex flex-col gap-4">
-          <ExpenseCategoriesManager />
-          <SettingsForm part="company" />
-        </div>
       </Fold>
     </div>
   );
