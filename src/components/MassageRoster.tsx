@@ -8,10 +8,10 @@ import { useT } from "@/lib/i18n/client";
 
 type Therapist = { id: string; name: string };
 
-export default function MassageRoster({ therapists }: { therapists: Therapist[] }) {
+export default function MassageRoster({ therapists, startOpen = false }: { therapists: Therapist[]; startOpen?: boolean }) {
   const t = useT();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   const [name, setName] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -67,23 +67,7 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
     }
   }
 
-  return (
-    <section className="flex flex-col gap-3">
-      <button
-        type="button"
-        className="card px-4 sm:px-5 py-4 flex items-center justify-between gap-3 text-left w-full"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <span>
-          <span className="font-sans text-lg font-semibold text-ink block">{t("Current Therapists")}</span>
-          <span className="text-sm text-ink-muted mt-1 block">
-            {t("{count} Names Guests Can Choose", { count: therapists.length })}
-          </span>
-        </span>
-        <ChevronDown size={18} className={clsx("shrink-0 text-ink-muted transition-transform", open && "rotate-180")} />
-      </button>
-      {open ? (
+  const list = (
       <div className="card divide-y divide-line">
         <p className="px-4 sm:px-5 py-4 text-sm text-ink-muted">
           {t(
@@ -131,7 +115,27 @@ export default function MassageRoster({ therapists }: { therapists: Therapist[] 
         )}
         {error ? <p className="px-4 sm:px-5 py-3 text-sm text-danger-500">{error}</p> : null}
       </div>
-      ) : null}
+  );
+
+  if (startOpen) return list;
+
+  return (
+    <section className="flex flex-col gap-3">
+      <button
+        type="button"
+        className="card px-4 sm:px-5 py-4 flex items-center justify-between gap-3 text-left w-full"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span>
+          <span className="font-sans text-lg font-semibold text-ink block">{t("Current Therapists")}</span>
+          <span className="text-sm text-ink-muted mt-1 block">
+            {t("{count} Names Guests Can Choose", { count: therapists.length })}
+          </span>
+        </span>
+        <ChevronDown size={18} className={clsx("shrink-0 text-ink-muted transition-transform", open && "rotate-180")} />
+      </button>
+      {open ? list : null}
     </section>
   );
 }

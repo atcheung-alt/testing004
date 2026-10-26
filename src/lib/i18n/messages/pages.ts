@@ -421,6 +421,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   Calendar: "日曆",
   Analysis: "分析",
   Massage: "按摩",
+  Scores: "分數",
+  Team: "師傅",
   "Massage performance": "按摩表現",
   "Therapist scores, before you open an event.": "先看師傅分數，再進入個別活動。",
   "Average of overall, care, pressure, and relief. 5 is the highest. Under 8 surveys is marked Early.":
