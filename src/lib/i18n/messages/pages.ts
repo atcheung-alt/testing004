@@ -382,6 +382,14 @@ export const PAGE_MESSAGES: Record<string, string> = {
   Management: "管理",
   "Choose which pages each group can open. People who are not in a group keep full access.":
     "設定每個組別可以開啟的頁面。未加入任何組別的人保持全部權限。",
+  "Open a row to use it. Each closed row says what it does.":
+    "打開一列就能用。未打開時，每一列已寫明用途。",
+  "Approve or decline someone waiting to sign in.": "批准或暫不讓等候中的人登入。",
+  "Add someone, or change their team, payroll, and role.": "可新增人員，或改組別、出糧和身份。",
+  "Pick a group, then turn its pages on or off. Admin always has every page.":
+    "先選組別，再開關他們能開的頁。管理員永遠可開每一頁。",
+  "Expense types, logo, Drive folder, and email copies.": "支出類別、標誌、雲端資料夾，以及電郵副本。",
+  Pages: "頁面",
   "Everyone is in one group. The Admin group can open every page. Other accounts start in Full access, and you can move them or change a group's pages later.":
     "每個人都屬於一個組別。管理員組別可以開啟每一頁。其他帳戶一開始在全部權限組別，之後可以調動，或更改組別可開啟的頁面。",
   "These accounts are in the Admin group. They can open every page.":
