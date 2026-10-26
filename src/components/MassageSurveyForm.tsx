@@ -38,8 +38,6 @@ export default function MassageSurveyForm({
   const router = useRouter();
   const language = useAppLanguage();
   const setLanguage = useSetAppLanguage();
-  const [timeSlot, setTimeSlot] = useState("");
-  const [nickname, setNickname] = useState("");
   const [therapistId, setTherapistId] = useState("");
   const [scores, setScores] = useState<Scores>(EMPTY_SCORES);
   const [comment, setComment] = useState("");
@@ -60,8 +58,6 @@ export default function MassageSurveyForm({
   }
 
   function reset() {
-    setTimeSlot("");
-    setNickname("");
     setTherapistId("");
     setScores(EMPTY_SCORES);
     setComment("");
@@ -71,8 +67,8 @@ export default function MassageSurveyForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!timeSlot.trim() || !nickname.trim() || !therapistId || QUESTIONS.some((question) => scores[question.key] == null)) {
-      setError(t("Please complete the timeslot, name, therapist, and every rating."));
+    if (!therapistId || QUESTIONS.some((question) => scores[question.key] == null)) {
+      setError(t("Please choose a therapist and complete every rating."));
       return;
     }
     setSending(true);
@@ -82,8 +78,6 @@ export default function MassageSurveyForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          timeSlot: timeSlot.trim(),
-          nickname: nickname.trim(),
           therapistId,
           overall: scores.overall,
           focus: scores.focus,
@@ -159,41 +153,7 @@ export default function MassageSurveyForm({
       ) : (
         <form onSubmit={submit} className="bg-surface border border-line rounded-card shadow-card overflow-hidden">
           <div className="px-5 py-6 sm:px-7 sm:py-7 flex flex-col gap-8">
-            <Section index="01" title={t("Session Details")}>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="timeslot">
-                    {t("Timeslot")}
-                  </label>
-                  <input
-                    id="timeslot"
-                    className="input text-base"
-                    value={timeSlot}
-                    maxLength={80}
-                    placeholder={t("e.g. 10:30")}
-                    onChange={(event) => setTimeSlot(event.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="nickname">
-                    {t("Preferred name")}
-                  </label>
-                  <input
-                    id="nickname"
-                    className="input text-base"
-                    value={nickname}
-                    maxLength={80}
-                    placeholder={t("For example, Amy")}
-                    onChange={(event) => setNickname(event.target.value)}
-                    required
-                    autoComplete="nickname"
-                  />
-                </div>
-              </div>
-            </Section>
-
-            <Section index="02" title={t("Your Therapist")}>
+            <Section index="01" title={t("Your Therapist")}>
               <label className="sr-only" htmlFor="therapist">
                 {t("Your Therapist")}
               </label>
@@ -213,7 +173,7 @@ export default function MassageSurveyForm({
               </select>
             </Section>
 
-            <Section index="03" title={t("Ratings")}>
+            <Section index="02" title={t("Ratings")}>
               <div className="flex justify-between text-xs text-ink-faint">
                 <span>1 · {t("Unsatisfactory")}</span>
                 <span>5 · {t("Excellent")}</span>
@@ -252,7 +212,7 @@ export default function MassageSurveyForm({
               </div>
             </Section>
 
-            <Section index="04" title={t("Additional Comments")}>
+            <Section index="03" title={t("Additional Comments")}>
               <label className="sr-only" htmlFor="comment">
                 {t("Additional Comments")}
               </label>

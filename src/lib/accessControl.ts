@@ -23,8 +23,6 @@ export const ACCESS_PAGES = [
   { id: "massage", href: "/massage", label: "Massage" },
   { id: "clients", href: "/clients", label: "Clients" },
   { id: "items", href: "/items", label: "Item Library" },
-  { id: "calendar", href: "/calendar", label: "Calendar" },
-  { id: "analysis", href: "/analysis", label: "Analysis" },
   { id: "settings", href: "/settings", label: "Settings" },
   { id: "hr", href: "/hr", label: "HR System" },
 ] as const;
@@ -46,8 +44,6 @@ const PATH_RULES: { prefix: string; id: AccessPageId | "management" }[] = [
   { prefix: "/clients", id: "clients" },
   { prefix: "/items", id: "items" },
   { prefix: "/settings", id: "settings" },
-  { prefix: "/calendar", id: "calendar" },
-  { prefix: "/analysis", id: "analysis" },
   { prefix: "/hr", id: "hr" },
 ];
 

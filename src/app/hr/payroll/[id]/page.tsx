@@ -89,8 +89,8 @@ export default async function PayrollRunPage({
   const exportParams = new URLSearchParams();
   if (selected) exportParams.set("company", selected.id);
   const exportHref = `/api/payroll/${run.id}/export${exportParams.toString() ? `?${exportParams}` : ""}`;
-  const hrPlusEmails = new Set(
-    directory.profiles.filter((profile) => profile.category === "HR_PLUS_STAFF").map((profile) => normalizeEmail(profile.email))
+  const categoryByEmail = new Map(
+    directory.profiles.map((profile) => [normalizeEmail(profile.email), profile.category])
   );
   const serialized = visibleEntries.map((entry) => ({
     ...entry,
@@ -122,7 +122,15 @@ export default async function PayrollRunPage({
   ] as const;
   function bucket(entry: { employeeEmail: string | null; employmentType: string | null }) {
     const email = entry.employeeEmail ? normalizeEmail(entry.employeeEmail) : "";
-    if (email && hrPlusEmails.has(email)) return "HR_PLUS_STAFF";
+    const category = email ? categoryByEmail.get(email) : undefined;
+    if (
+      category === "HR_PLUS_STAFF" ||
+      category === "FULL_TIME" ||
+      category === "PART_TIME" ||
+      category === "FREELANCE"
+    ) {
+      return category;
+    }
     if (entry.employmentType === "PART_TIME") return "PART_TIME";
     if (entry.employmentType === "FREELANCE") return "FREELANCE";
     return "FULL_TIME";

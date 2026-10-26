@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { AlertCircle, ChevronDown, Loader2, Lock, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import AccessRequestQueue from "@/components/AccessRequestQueue";
 import ExpenseCategoriesManager from "@/components/ExpenseCategoriesManager";
@@ -109,7 +109,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
-  const [openSection, setOpenSection] = useState<"requests" | "admins" | "groups" | "people" | null>(null);
+  const [openSection, setOpenSection] = useState<"requests" | "groups" | "people" | null>(null);
 
   useEffect(() => {
     fetch("/api/access")
@@ -140,10 +140,6 @@ export default function ManagementWorkspace() {
     return emails;
   }, [fullAccessEmails, people]);
 
-  const lockedPeople = people.filter((person) => lockedEmails.has(person.email.toLowerCase()));
-  const extraLockedEmails = fullAccessEmails.filter(
-    (email) => !lockedPeople.some((person) => person.email.toLowerCase() === email.toLowerCase())
-  );
   const selected = groups.find((group) => group.id === selectedId) || null;
   const shownPeople = people.filter((person) => {
     const haystack = `${person.name} ${person.email}`.toLowerCase();
@@ -273,37 +269,6 @@ export default function ManagementWorkspace() {
           onError={setError}
           onDone={reloadAccess}
         />
-      </Fold>
-
-      <Fold
-        title={t("Always Full Access")}
-        summary={t("{count} Accounts", { count: lockedPeople.length + extraLockedEmails.length })}
-        open={openSection === "admins"}
-        delay="0.02s"
-        icon={<Lock size={16} className="text-brand-500 shrink-0" />}
-        onToggle={() => setOpenSection((current) => (current === "admins" ? null : "admins"))}
-      >
-        <p className="text-sm text-ink-muted mb-3">
-          {t("These accounts are in the Admin group. They can open every page.")}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {lockedPeople.map((person) => (
-            <span key={person.id} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-              {person.name || person.email}
-              <span className="text-ink-faint"> · {person.email}</span>
-              {(person.isAdmin ||
-                fullAccessEmails.some((email) => email.toLowerCase() === person.email.toLowerCase())) && (
-                <span> · {t("Already an admin")}</span>
-              )}
-            </span>
-          ))}
-          {extraLockedEmails.map((email) => (
-            <span key={email} className="rounded-full bg-brand-50 text-brand-600 text-xs font-medium px-3 py-1">
-              {email}
-              <span> · {t("Already an admin")}</span>
-            </span>
-          ))}
-        </div>
       </Fold>
 
       <Fold

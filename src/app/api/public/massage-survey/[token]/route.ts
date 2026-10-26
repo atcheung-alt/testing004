@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   const comment = typeof body.comment === "string" ? body.comment.trim().slice(0, 500) : "";
   const language = body.language === "en" ? "en" : "zh";
 
-  if (!timeSlot || !guestNickname || !therapistId || overall == null || focus == null || pressure == null || relief == null) {
+  if (!therapistId || overall == null || focus == null || pressure == null || relief == null) {
     return NextResponse.json({ error: "Incomplete survey." }, { status: 400 });
   }
 

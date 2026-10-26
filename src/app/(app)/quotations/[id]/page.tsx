@@ -109,7 +109,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             showCc
           />
           {!signed && signingUrl && <CopySigningLinkButton url={signingUrl} />}
-          {canModify && !locked && (
+          {canModify && (
             <Link href={`/quotations/${quotation.id}/edit`} className="btn-secondary">
               <Pencil size={15} /> {t("Edit")}
             </Link>
@@ -146,7 +146,7 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
       {canModify && !locked && quotation.status !== "REJECTED" && !quotation.invoice && (
         <div className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-brand-50/60 border-brand-100">
           <p className="text-sm text-brand-700">
-            {t("Ready to bill this? Converting locks the quotation and creates a matching invoice.")}
+            {t("Ready to bill this? Converting creates a matching invoice.")}
           </p>
           <ConvertToInvoiceButton quotationId={quotation.id} />
         </div>

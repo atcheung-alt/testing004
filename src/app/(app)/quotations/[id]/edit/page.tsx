@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import QuotationForm from "@/components/QuotationForm";
 import { withParsedMultipliersList } from "@/lib/multipliers";
@@ -19,7 +19,6 @@ export default async function EditQuotationPage({ params }: { params: { id: stri
     });
 
   if (!quotation || isShareHolderNumber(quotation.number)) notFound();
-  if (quotation.status === "CONVERTED") redirect(`/quotations/${quotation.id}`);
 
   return (
     <div className="flex flex-col gap-6">
