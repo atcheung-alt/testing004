@@ -389,6 +389,9 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Company settings": "公司設定",
   "Set the company name, logo, expenses, and emails.": "設定公司名稱、標誌、支出和電郵。",
   "Who can sign in, and their pay and role.": "誰可以登入，以及出糧和身份。",
+  "Each person is one line. Open one to change group, pay, or role.":
+    "每人一行。打開一個才改組別、出糧或身份。",
+  Group: "組別",
   "Group settings": "組別設定",
   "Which pages each group can open.": "每個組別可以開哪些頁。",
   "Approve or decline someone waiting to sign in.": "批准或暫不讓等候中的人登入。",
