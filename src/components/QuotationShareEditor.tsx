@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
@@ -40,12 +40,16 @@ export default function QuotationShareEditor({
   if (!canEdit) {
     if (!(ownAmount > 0)) return null;
     return (
-      <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-2">{t("Split commission")}</h2>
-        <p className="text-sm text-ink">
+      <details className="card group" open>
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
+          <span className="text-[15px] font-semibold text-ink">{t("Commission")}</span>
+          <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(ownAmount)}</span>
+          <ChevronDown size={16} className="text-ink-muted transition-transform group-open:rotate-180" />
+        </summary>
+        <p className="px-5 pb-4 text-sm text-ink">
           {t("Your commission")} · {formatCurrency(ownAmount)}
         </p>
-      </div>
+      </details>
     );
   }
 
@@ -79,21 +83,20 @@ export default function QuotationShareEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <ColleagueShareFields
-        creatorName={creatorName}
-        commissionTotal={commissionTotal}
-        onCommissionTotalChange={(next) => {
-          setSaved(false);
-          setCommissionTotal(next);
-        }}
-        shares={shares}
-        onSharesChange={(next) => {
-          setSaved(false);
-          setShares(next);
-        }}
-        colleagues={colleagues}
-      />
+    <ColleagueShareFields
+      creatorName={creatorName}
+      commissionTotal={commissionTotal}
+      onCommissionTotalChange={(next) => {
+        setSaved(false);
+        setCommissionTotal(next);
+      }}
+      shares={shares}
+      onSharesChange={(next) => {
+        setSaved(false);
+        setShares(next);
+      }}
+      colleagues={colleagues}
+    >
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn-primary" onClick={save} disabled={saving}>
           {saving ? <Loader2 size={15} className="animate-spin" /> : null}
@@ -106,6 +109,6 @@ export default function QuotationShareEditor({
         ) : null}
         {error ? <p className="text-sm text-danger-600">{t(error)}</p> : null}
       </div>
-    </div>
+    </ColleagueShareFields>
   );
 }

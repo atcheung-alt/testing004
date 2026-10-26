@@ -94,11 +94,6 @@ module.exports = {
           "Noto Sans TC",
           "sans-serif",
         ],
-        award: [
-          "var(--font-cinzel)",
-          "var(--font-noto-serif-tc)",
-          "serif",
-        ],
       },
       boxShadow: {
         card: "0 1px 2px rgba(41,58,110,0.04), 0 8px 24px rgba(41,58,110,0.07)",

@@ -1,4 +1,3 @@
-import { Trophy } from "lucide-react";
 import { getT } from "@/lib/i18n/server";
 import { adjustedScore, type TherapistStanding } from "@/lib/massage";
 import MassageScoreLookup, { type ScoreNote } from "@/components/MassageScoreLookup";
@@ -11,16 +10,6 @@ const SAMPLE_ROWS: TherapistStanding[] = [
   { id: "sample-3", name: "示範 · 張啟賢", count: 3, score: 4.5, overall: 4.6, focus: 4.4, pressure: 4.5, relief: 4.5, early: true },
 ].map((row) => ({ ...row, adjusted: adjustedScore(row.score, row.count) }));
 
-const STEP_HEIGHT: Record<number, string> = {
-  1: "h-44 lg:h-56",
-  2: "h-32 lg:h-40",
-  3: "h-24 lg:h-32",
-};
-const STEP_DELAY: Record<number, string> = {
-  1: "0.36s",
-  2: "0.16s",
-  3: "0s",
-};
 const SCORE_PARTS = [
   { key: "overall", label: "Overall" },
   { key: "focus", label: "Care" },
@@ -34,62 +23,38 @@ function TopScores({ rows }: { rows: TherapistStanding[] }) {
     .filter((row) => row.count > 0)
     .sort((a, b) => b.adjusted - a.adjusted || b.count - a.count)
     .slice(0, 3);
-  const stage = top.length >= 2 ? [top[1], top[0], ...top.slice(2)] : top;
 
   return (
-    <section className="award-stage card">
-      <div className="award-stage-head">
-        <h3>{t("Top 3")}</h3>
-        <p>{t("The three highest scores.")}</p>
-      </div>
-      <div className="award-floor">
-        <div className="mx-auto flex w-full max-w-5xl items-end justify-center gap-2 px-2 sm:gap-3 sm:px-4">
-          {stage.map((row) => {
-            const rank = top.indexOf(row) + 1;
-            return (
-              <div
-                key={row.id}
-                className={rank === 1 ? "award-column flex min-w-0 flex-[1.25] flex-col items-center" : "award-column flex min-w-0 flex-1 flex-col items-center"}
-                style={{ animationDelay: STEP_DELAY[rank] }}
-                tabIndex={0}
-              >
-                <div className="award-card" role="tooltip">
-                  <div className="award-card-top">
-                    <p className="award-card-name">{row.name}</p>
-                    <p className="award-card-score">{row.adjusted.toFixed(1)}</p>
-                  </div>
-                  <p className="award-card-meta">
-                    {t("{count} Surveys", { count: row.count })}
-                    {row.early ? ` · ${t("Early")}` : ""}
-                  </p>
-                  <ul className="award-card-list">
-                    {SCORE_PARTS.map((part) => (
-                      <li key={part.key}>
-                        <span>{t(part.label)}</span>
-                        <span className="award-card-bar"><span style={{ width: `${(row[part.key] / 5) * 100}%` }} /></span>
-                        <span>{row[part.key].toFixed(1)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="award-body flex w-full flex-col items-center">
-                  <div className="mb-2 flex w-full flex-col items-center">
-                    {rank === 1 ? <Trophy size={20} className="award-trophy mb-1" aria-hidden="true" /> : <span className="mb-1 h-5" />}
-                    <p className="award-name w-full truncate text-center font-award text-sm font-semibold">{row.name}</p>
-                    <p className="award-score text-center font-award text-xs font-semibold">{row.adjusted.toFixed(1)} / 5</p>
-                  </div>
-                  <div className={`award-step w-full ${STEP_HEIGHT[rank] ?? STEP_HEIGHT[3]}`} data-rank={rank}>
-                    <div className="award-lid" aria-hidden="true" />
-                    <div className="award-side" aria-hidden="true" />
-                    <div className="award-face">
-                      <span className={rank === 1 ? "award-rank font-award text-5xl font-semibold leading-none" : "award-rank font-award text-4xl font-semibold leading-none"}>{rank}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+    <section>
+      <h3 className="font-sans text-lg font-semibold text-ink">{t("Top 3")}</h3>
+      <p className="text-sm text-ink-muted mt-1">{t("The three highest scores.")}</p>
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {top.map((row, index) => (
+          <article key={row.id} className="card px-4 py-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="min-w-0 truncate font-sans text-sm font-semibold text-ink">
+                <span className="mr-2 text-brand-600">{index + 1}</span>
+                {row.name}
+              </p>
+              <p className="shrink-0 font-mono text-sm font-semibold text-ink">{row.adjusted.toFixed(1)}</p>
+            </div>
+            <p className="mt-1 text-xs text-ink-muted">
+              {t("{count} Surveys", { count: row.count })}
+              {row.early ? ` · ${t("Early")}` : ""}
+            </p>
+            <ul className="mt-3 flex flex-col gap-1.5">
+              {SCORE_PARTS.map((part) => (
+                <li key={part.key} className="grid grid-cols-[4.5rem_1fr_1.8rem] items-center gap-2 text-xs text-ink">
+                  <span>{t(part.label)}</span>
+                  <span className="h-1.5 overflow-hidden rounded-full bg-paper">
+                    <span className="block h-full rounded-full bg-brand-500" style={{ width: `${(row[part.key] / 5) * 100}%` }} />
+                  </span>
+                  <span className="text-right font-mono">{row[part.key].toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))}
       </div>
     </section>
   );

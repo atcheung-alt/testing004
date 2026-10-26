@@ -53,10 +53,10 @@ export default async function MassagePage() {
         }))}
       />
 
-      <section className="massage-events flex flex-col gap-3">
-        <div className="massage-heading-plate">
+      <section className="flex flex-col gap-3">
+        <div>
           <h2 className="font-sans text-lg font-semibold text-ink">{t("Massage Events")}</h2>
-          <p className="lead">
+          <p className="mt-1 text-sm text-ink-muted">
             {t("Each event has its own QR code. Attach the invoice after the day.")}
           </p>
         </div>

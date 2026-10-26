@@ -127,8 +127,8 @@ export default function MassageSurveyForm({
             ))}
           </div>
         </div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight mt-3">{t("Session Feedback")}</h1>
-        <p className="mt-4 border-l-2 border-brand-600 pl-4 font-display text-lg leading-snug text-ink">
+        <h1 className="font-display text-2xl font-semibold text-ink mt-3">{t("Session Feedback")}</h1>
+        <p className="mt-3 text-sm text-ink">
           {t("Your rating keeps every session to the same standard.")}
         </p>
         <p className="mt-3 text-sm text-ink-muted">{t("Please rate this session. It takes about a minute.")}</p>
@@ -148,7 +148,7 @@ export default function MassageSurveyForm({
               <path d="M4.5 10.5 8 14l7.5-8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <h2 className="font-display text-2xl font-semibold">{t("Thank You for Your Feedback")}</h2>
+          <h2 className="font-display text-2xl font-semibold text-ink">{t("Thank You for Your Feedback")}</h2>
           <p className="text-sm text-ink-muted mt-3 max-w-sm mx-auto">
             {t("Your response has been recorded and will be used to review this session.")}
           </p>
@@ -289,8 +289,8 @@ function Section({ index, title, children }: { index: string; title: string; chi
   return (
     <section className="flex flex-col gap-3">
       <div className="flex items-baseline gap-3 border-b border-line pb-2">
-        <span className="font-mono text-xs text-brand-700">{index}</span>
-        <h2 className="text-sm font-semibold text-ink">{title}</h2>
+        <span className="font-sans text-xs text-brand-700">{index}</span>
+        <h2 className="font-sans text-sm font-semibold text-ink">{title}</h2>
       </div>
       {children}
     </section>

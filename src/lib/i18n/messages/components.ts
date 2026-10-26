@@ -663,6 +663,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "简体中文 (Simplified Chinese)": "簡體中文",
   "Made by & colleague sharing": "編製人及同事分成",
   "Split commission": "同事分成",
+  Commission: "佣金",
   "Save split": "儲存分成",
   "Saving split…": "正在儲存分成…",
   "Split saved": "分成已儲存",
