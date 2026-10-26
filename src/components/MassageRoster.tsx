@@ -93,25 +93,27 @@ export default function MassageRoster({ therapists, startOpen = false }: { thera
         {therapists.length === 0 ? (
           <p className="px-4 sm:px-5 py-6 text-sm text-ink-muted">{t("No therapists yet")}</p>
         ) : (
-          therapists.map((therapist) => (
-            <div key={therapist.id} className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
-              <p className="font-medium min-w-0 truncate">{therapist.name}</p>
-              {pendingId === therapist.id ? (
-                <div className="flex items-center gap-2 shrink-0">
-                  <button type="button" className="btn-danger" disabled={busy} onClick={() => remove(therapist.id)}>
-                    {t("Confirm remove")}
+          <div className="max-h-60 overflow-y-auto divide-y divide-line">
+            {therapists.map((therapist) => (
+              <div key={therapist.id} className="px-3 py-1 flex items-center justify-between gap-2">
+                <p className="text-sm font-medium min-w-0 truncate">{therapist.name}</p>
+                {pendingId === therapist.id ? (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button type="button" className="btn-danger !px-2.5 !py-1 !text-xs" disabled={busy} onClick={() => remove(therapist.id)}>
+                      {t("Confirm remove")}
+                    </button>
+                    <button type="button" className="btn-secondary !px-2.5 !py-1 !text-xs" disabled={busy} onClick={() => setPendingId(null)}>
+                      {t("Cancel")}
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" className="btn-secondary shrink-0 !px-2.5 !py-1 !text-xs" onClick={() => setPendingId(therapist.id)}>
+                    {t("Remove")}
                   </button>
-                  <button type="button" className="btn-secondary" disabled={busy} onClick={() => setPendingId(null)}>
-                    {t("Cancel")}
-                  </button>
-                </div>
-              ) : (
-                <button type="button" className="btn-secondary shrink-0" onClick={() => setPendingId(therapist.id)}>
-                  {t("Remove")}
-                </button>
-              )}
-            </div>
-          ))
+                )}
+              </div>
+            ))}
+          </div>
         )}
         {error ? <p className="px-4 sm:px-5 py-3 text-sm text-danger-500">{error}</p> : null}
       </div>

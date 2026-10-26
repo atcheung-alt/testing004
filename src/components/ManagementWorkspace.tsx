@@ -111,6 +111,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
+  const [openPersonId, setOpenPersonId] = useState<string | null>(null);
   const [openSection, setOpenSection] = useState({ groups: false, people: false, company: false });
 
   useEffect(() => {
@@ -285,9 +286,9 @@ export default function ManagementWorkspace() {
               />
             )}
             <StaffAccountsManager />
-            <div>
+            <p className="text-sm text-ink-muted">{t("Each person is one line. Open one to change group, pay, or role.")}</p>
             <input
-              className="input sm:max-w-xs mb-3"
+              className="input sm:max-w-xs"
               placeholder={t("Search name or email")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
@@ -295,31 +296,49 @@ export default function ManagementWorkspace() {
             {shownPeople.length === 0 ? (
               <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
             ) : (
-              <div className="divide-y divide-line">
+              <div className="max-h-72 overflow-y-auto rounded-xl border border-line">
                 {shownPeople.map((person) => {
+                  const locked = lockedEmails.has(person.email.toLowerCase());
                   const external = person.label === "EXTERNAL_ADMIN" || person.label === "EXTERNAL_MEMBER";
+                  const open = openPersonId === person.id;
+                  const groupName = groups.find((group) => group.id === (locked ? adminGroupId : groupIdFor(person.email) || fullGroupId))?.name || "";
+                  const roleName = ROLES.find(([value]) => value === person.label)?.[1];
+                  const categoryName = CATEGORIES.find(([value]) => value === person.category)?.[1];
                   return (
-                  <div key={person.id} className="flex flex-col gap-2 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm text-ink truncate">{person.name || person.email}</p>
-                      <p className="text-xs text-ink-faint truncate">{person.email}</p>
-                    </div>
-                    <select
-                      className="input w-44 shrink-0"
-                      value={lockedEmails.has(person.email.toLowerCase()) ? adminGroupId : groupIdFor(person.email) || fullGroupId}
-                      onChange={(event) => movePerson(person.email, event.target.value)}
-                      disabled={saving || lockedEmails.has(person.email.toLowerCase())}
-                      aria-label={person.email}
+                  <div key={person.id} className={clsx("border-t border-line first:border-t-0", open && "bg-paper/60")}>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
+                      aria-expanded={open}
+                      onClick={() => setOpenPersonId(open ? null : person.id)}
                     >
-                      {groups.map((group) => (
-                        <option key={group.id} value={group.id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm text-ink">{person.name || person.email}</span>
+                        <span className="block truncate text-xs text-ink-faint">{person.email}</span>
+                      </span>
+                      <span className="flex min-w-0 max-w-[48%] shrink items-center gap-2 text-xs text-ink-muted">
+                        <span className="truncate">{groupName} · {t(roleName || "Not set")} · {t(categoryName || "Not set")}</span>
+                        <ChevronDown size={14} className={clsx("shrink-0 text-ink-faint transition-transform", open && "rotate-180")} />
+                      </span>
+                    </button>
+                    {open && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 px-3 pb-3">
+                      <label className="flex flex-col gap-1 text-xs text-ink-muted">
+                        {t("Group")}
+                        <select
+                          className="input py-1 text-sm"
+                          value={locked ? adminGroupId : groupIdFor(person.email) || fullGroupId}
+                          onChange={(event) => movePerson(person.email, event.target.value)}
+                          disabled={saving || locked}
+                          aria-label={person.email}
+                        >
+                          {groups.map((group) => (
+                            <option key={group.id} value={group.id}>
+                              {group.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       <label className="flex flex-col gap-1 text-xs text-ink-muted">
                         {t("Payroll category")}
                         <select
@@ -362,7 +381,7 @@ export default function ManagementWorkspace() {
                           ))}
                         </select>
                       </label>
-                      {external ? (
+                      {external && (
                         <select
                           className="input py-1 text-sm"
                           value={person.companyName}
@@ -381,23 +400,17 @@ export default function ManagementWorkspace() {
                             </option>
                           ))}
                         </select>
-                      ) : (
-                        <button type="button" className="btn-secondary" disabled={saving} onClick={() => savePersonAccess(person)}>
-                          {t("Save access")}
-                        </button>
                       )}
-                    </div>
-                    {external && (
-                      <button type="button" className="btn-secondary self-start" disabled={saving} onClick={() => savePersonAccess(person)}>
+                      <button type="button" className="btn-secondary self-end" disabled={saving} onClick={() => savePersonAccess(person)}>
                         {t("Save access")}
                       </button>
+                    </div>
                     )}
                   </div>
                   );
                 })}
               </div>
             )}
-            </div>
         </div>
       </Fold>
 
