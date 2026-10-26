@@ -16,9 +16,7 @@ export default async function ManagementPage() {
     <div>
       <PageBar
         title={t("Management")}
-        note={t(
-          "Everyone is in one group. The Admin group can open every page. Other accounts start in Full access, and you can move them or change a group's pages later."
-        )}
+        note={t("Open a row to use it. Each closed row says what it does.")}
       />
       <ManagementWorkspace />
     </div>

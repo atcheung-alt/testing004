@@ -69,19 +69,21 @@ function Fold({
     <section className="card p-5 animate-settle" style={{ animationDelay: delay }}>
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="flex w-full items-start justify-between gap-3 text-left"
         aria-expanded={open}
         onClick={onToggle}
       >
-        <span className="flex items-center gap-2 min-w-0">
-          <ChevronDown
-            size={16}
-            className={clsx("text-ink-faint shrink-0 transition-transform duration-300", open && "rotate-180")}
-          />
-          {icon}
-          <h2 className="font-display text-lg font-semibold">{title}</h2>
+        <span className="min-w-0">
+          <span className="flex items-center gap-2">
+            {icon}
+            <h2 className="font-display text-lg font-semibold">{title}</h2>
+          </span>
+          <span className="mt-1 block text-sm font-normal text-ink-muted">{summary}</span>
         </span>
-        {!open && <span className="text-sm text-ink-muted shrink-0">{summary}</span>}
+        <ChevronDown
+          size={16}
+          className={clsx("mt-1 text-ink-faint shrink-0 transition-transform duration-300", open && "rotate-180")}
+        />
       </button>
       <div className="mgmt-fold" data-open={open ? "true" : "false"}>
         <div className="mgmt-fold-inner">
@@ -109,7 +111,7 @@ export default function ManagementWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
-  const [openSection, setOpenSection] = useState<"requests" | "groups" | "people" | null>(null);
+  const [openSection, setOpenSection] = useState({ requests: false, groups: false, people: false, company: false });
 
   useEffect(() => {
     fetch("/api/access")
@@ -126,7 +128,9 @@ export default function ManagementWorkspace() {
         if (typeof data.fullGroupId === "string") setFullGroupId(data.fullGroupId);
         setReady(data.ready !== false);
         setSelectedId(data.groups?.[0]?.id ?? null);
-        if (Array.isArray(data.requests) && data.requests.length > 0) setOpenSection("requests");
+        if (Array.isArray(data.requests) && data.requests.length > 0) {
+          setOpenSection((current) => ({ ...current, requests: true }));
+        }
       })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
@@ -175,7 +179,7 @@ export default function ManagementWorkspace() {
     const group = { id: newGroupId(), name, pages: pages.map((page) => page.id), emails: [] };
     setDraftName("");
     setSelectedId(group.id);
-    setOpenSection("groups");
+    setOpenSection((current) => ({ ...current, groups: true }));
     persist([...groups, group]);
   }
 
@@ -253,14 +257,12 @@ export default function ManagementWorkspace() {
         </div>
       )}
 
-      <StaffAccountsManager />
-
       <Fold
         title={t("Access requests")}
-        summary={t("{count} waiting", { count: requests.length })}
-        open={openSection === "requests"}
+        summary={`${t("{count} waiting", { count: requests.length })}. ${t("Approve or decline someone waiting to sign in.")}`}
+        open={openSection.requests}
         delay="0.02s"
-        onToggle={() => setOpenSection((current) => (current === "requests" ? null : "requests"))}
+        onToggle={() => setOpenSection((current) => ({ ...current, requests: !current.requests }))}
       >
         <AccessRequestQueue
           requests={requests}
@@ -272,11 +274,11 @@ export default function ManagementWorkspace() {
       </Fold>
 
       <Fold
-        title={t("Groups")}
-        summary={t("{count} Groups", { count: groups.length })}
-        open={openSection === "groups"}
+        title={t("Pages")}
+        summary={`${t("{count} Groups", { count: groups.length })}. ${t("Pick a group, then turn its pages on or off. Admin always has every page.")}`}
+        open={openSection.groups}
         delay="0.08s"
-        onToggle={() => setOpenSection((current) => (current === "groups" ? null : "groups"))}
+        onToggle={() => setOpenSection((current) => ({ ...current, groups: !current.groups }))}
       >
         <div className="flex flex-col gap-4">
             <div className="flex gap-2">
@@ -414,12 +416,14 @@ export default function ManagementWorkspace() {
 
       <Fold
         title={t("People")}
-        summary={t("{count} People", { count: people.length })}
-        open={openSection === "people"}
+        summary={`${t("{count} People", { count: people.length })}. ${t("Add someone, or change their team, payroll, and role.")}`}
+        open={openSection.people}
         delay="0.14s"
-        onToggle={() => setOpenSection((current) => (current === "people" ? null : "people"))}
+        onToggle={() => setOpenSection((current) => ({ ...current, people: !current.people }))}
       >
-        <div>
+        <div className="flex flex-col gap-4">
+            <StaffAccountsManager />
+            <div>
             <input
               className="input sm:max-w-xs mb-3"
               placeholder={t("Search name or email")}
@@ -531,11 +535,22 @@ export default function ManagementWorkspace() {
                 })}
               </div>
             )}
+            </div>
         </div>
       </Fold>
 
-      <ExpenseCategoriesManager />
-      <SettingsForm part="company" />
+      <Fold
+        title={t("Company")}
+        summary={t("Expense types, logo, Drive folder, and email copies.")}
+        open={openSection.company}
+        delay="0.2s"
+        onToggle={() => setOpenSection((current) => ({ ...current, company: !current.company }))}
+      >
+        <div className="flex flex-col gap-4">
+          <ExpenseCategoriesManager />
+          <SettingsForm part="company" />
+        </div>
+      </Fold>
     </div>
   );
 }
