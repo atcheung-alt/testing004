@@ -214,8 +214,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "這亦會刪除已連結的發票 {number}（如已付款，連同收據一併刪除）。",
   "The client requested changes instead of accepting this quotation as-is — see their feedback below.":
     "客戶要求修改，並未按原樣接受此報價單——請查看下方意見。",
-  "Ready to bill this? Converting locks the quotation and creates a matching invoice.":
-    "可以開立帳單？轉換後會鎖定報價單，並建立對應發票。",
+  "Ready to bill this? Converting creates a matching invoice.":
+    "可以開立帳單？轉換後會建立對應發票。",
   Reminder: "提醒",
   Terms: "條款",
   "Client acceptance": "客戶接受",

@@ -603,8 +603,8 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   "Your response has been recorded and will be used to review this session.":
     "我們已收到您的意見，並會用於檢視本次療程。",
   "Start another response": "填寫下一份",
-  "Please complete the timeslot, name, therapist, and every rating.":
-    "請填寫時段、姓名及按摩師，並完成每項評分。",
+  "Please choose a therapist and complete every rating.":
+    "請選擇按摩師，並完成每項評分。",
   "We could not submit this form. Please try again.": "未能提交，請再試一次。",
   Chinese: "中文",
   English: "English",

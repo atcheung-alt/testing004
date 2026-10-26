@@ -59,9 +59,9 @@ export default function ColleagueShareFields({
   const over = percentTotal > 100;
   const keptPercent = Math.max(0, Math.round((100 - percentTotal) * 10) / 10);
   const keptAmount = (commissionTotal * keptPercent) / 100;
-  const keeper = creatorName || t("Not set");
+  const keeper = creatorName.trim();
   const slices = [
-    ...(!over && keptPercent > 0 ? [{ name: keeper, percent: keptPercent, color: "rgb(var(--color-brand-500))" }] : []),
+    ...(!over && keptPercent > 0 && keeper ? [{ name: keeper, percent: keptPercent, color: "rgb(var(--color-brand-500))" }] : []),
     ...shares.flatMap((share, index) => {
       const percent = Number(share.value) || 0;
       if (!(percent > 0) || !share.colleagueName) return [];
@@ -116,17 +116,19 @@ export default function ColleagueShareFields({
 
         {over ? <p className="text-sm text-danger-600">{t("Partner percentages can't add up to more than 100.")}</p> : null}
 
-        <div className="flex items-center gap-2 rounded-xl bg-brand-50 px-2.5 py-2">
-          <span
-            className="grid h-7 w-7 flex-none place-items-center rounded-lg text-[11px] font-extrabold text-white"
-            style={{ background: "rgb(var(--color-brand-500))" }}
-          >
-            {initials(keeper) || "–"}
-          </span>
-          <span className="min-w-0 truncate text-sm font-semibold text-ink">{keeper}</span>
-          <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(over ? 0 : keptAmount)}</span>
-          <span className="w-12 text-right text-sm tabular-nums text-ink-muted">{over ? "0" : keptPercent}%</span>
-        </div>
+        {keeper ? (
+          <div className="flex items-center gap-2 rounded-xl bg-brand-50 px-2.5 py-2">
+            <span
+              className="grid h-7 w-7 flex-none place-items-center rounded-lg text-[11px] font-extrabold text-white"
+              style={{ background: "rgb(var(--color-brand-500))" }}
+            >
+              {initials(keeper)}
+            </span>
+            <span className="min-w-0 truncate text-sm font-semibold text-ink">{keeper}</span>
+            <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(over ? 0 : keptAmount)}</span>
+            <span className="w-12 text-right text-sm tabular-nums text-ink-muted">{over ? "0" : keptPercent}%</span>
+          </div>
+        ) : null}
 
         {shares.map((share, index) => {
           const amount = (commissionTotal * (Number(share.value) || 0)) / 100;

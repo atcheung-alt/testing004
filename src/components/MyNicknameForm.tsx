@@ -7,7 +7,6 @@ import { useT } from "@/lib/i18n/client";
 export default function MyNicknameForm() {
   const t = useT();
   const [nickname, setNickname] = useState("");
-  const [staffCode, setStaffCode] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -18,7 +17,6 @@ export default function MyNicknameForm() {
       .then((res) => res.json())
       .then((data) => {
         setNickname(data.nickname || "");
-        setStaffCode(data.staffCode || "");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -48,17 +46,6 @@ export default function MyNicknameForm() {
     <div className="card p-5 flex flex-col gap-3 max-w-2xl">
       <div>
         <h2 className="font-display text-lg font-semibold">{t("Your nickname")}</h2>
-        <p className="text-sm text-ink-muted mt-0.5">
-          {t("Only you can change this name. Colleagues see it on the quotations and invoices you create.")}
-        </p>
-        {staffCode && (
-          <p className="text-sm text-ink mt-2">
-            {t(
-              "Your staff number is {code}. Colleagues see your nickname. This number stays on our site and is not printed for clients.",
-              { code: staffCode }
-            )}
-          </p>
-        )}
       </div>
       {loading ? (
         <p className="text-sm text-ink-muted">{t("Loading…")}</p>

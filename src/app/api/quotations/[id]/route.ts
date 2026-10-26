@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (body.status !== undefined && !VALID_QUOTATION_STATUSES.includes(body.status)) {
     return NextResponse.json({ error: "That's not a valid quotation status." }, { status: 400 });
   }
-  if (body.sharesOnly || existing.status === "CONVERTED") {
+  if (body.sharesOnly || (existing.status === "CONVERTED" && body.items === undefined)) {
     if (body.shares === undefined) {
       return NextResponse.json(
         { error: "This quotation has been converted to an invoice and can no longer be edited." },
@@ -147,7 +147,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         ...customer,
         issueDate: body.issueDate ? new Date(body.issueDate) : undefined,
         expiryDate: body.expiryDate ? new Date(body.expiryDate) : null,
-        status: body.status ?? existing.status,
+        status: existing.status === "CONVERTED" ? existing.status : (body.status ?? existing.status),
         notes: body.notes ?? null,
         terms,
         reminder,
