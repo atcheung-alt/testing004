@@ -40,7 +40,7 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
-      <div className="massage-events-scroll">
+      <div>
         {shown.length === 0 ? (
           <p className="px-4 py-6 text-sm text-ink-muted sm:px-5">{t("No matching events.")}</p>
         ) : (
