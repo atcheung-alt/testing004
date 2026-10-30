@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Package,
+  IdCard,
 } from "lucide-react";
 import clsx from "clsx";
 import CompanyLogo from "@/components/CompanyLogo";
@@ -65,6 +66,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       label: t("People"),
       items: [
         { href: "/recruitment", label: t("Recruitment"), icon: Briefcase },
+        { href: "/recruitment/online-cv", label: t("Online CV"), icon: IdCard },
         { href: "/massage", label: t("Massage"), icon: Medal },
         { href: "/clients", label: t("Clients"), icon: Users },
       ],
@@ -92,6 +94,8 @@ function NavLink({
       ? pathname === "/"
       : href === "/quotations"
       ? pathname.startsWith("/quotations") && !pathname.startsWith("/quotations/templates")
+      : href === "/recruitment"
+      ? pathname.startsWith("/recruitment") && !pathname.startsWith("/recruitment/online-cv")
       : pathname.startsWith(href);
   return (
     <Link
@@ -306,7 +310,7 @@ export default function Sidebar({
               if (item.href === "/invoices") return allowedPages.includes("invoices");
               if (item.href === "/receipts") return allowedPages.includes("receipts");
               if (item.href === "/expenses") return allowedPages.includes("expenses");
-              if (item.href === "/recruitment") return allowedPages.includes("recruitment");
+              if (item.href === "/recruitment" || item.href === "/recruitment/online-cv") return allowedPages.includes("recruitment");
               if (item.href === "/clients") return allowedPages.includes("clients");
               if (item.href === "/items") return allowedPages.includes("items");
               if (item.href === "/bookings") return allowedPages.includes("bookings");

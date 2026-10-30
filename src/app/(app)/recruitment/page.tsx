@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, Briefcase, Table2, IdCard } from "lucide-react";
+import { Plus, Briefcase, Table2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import { dateRangeFilter } from "@/lib/dateRange";
@@ -99,9 +99,6 @@ export default function RecruitmentPage({
         note={t("Recruitment services terms — a separate system from quotations/invoices/receipts.")}
         actions={
           <>
-            <Link href="/recruitment/online-cv" className="btn-secondary">
-              <IdCard size={15} /> {t("Online CV")}
-            </Link>
             <Link href="/recruitment/fee-scale" className="btn-secondary">
               <Table2 size={15} /> {t("Fee Scale Library")}
             </Link>
