@@ -459,6 +459,9 @@ export function remunerationClause({
   payRateType,
   payRate,
 }: RemunerationInput): string {
+  if (employmentType === "INTERN" && !(salary > 0) && !(payRate > 0)) {
+    return "This is an unpaid internship. The Employee will not receive a salary or other remuneration.";
+  }
   const usesPayRate =
     employmentType === "INTERN" || employmentType === "PART_TIME" || employmentType === "FREELANCE";
   if (usesPayRate) {

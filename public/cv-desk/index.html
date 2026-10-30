@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Online CV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="cv/fflate.js"></script>
+<script src="cv/pdf.min.js"></script>
+<style>
+  :root {
+    --ink: #1b2436;
+    --muted: #66708a;
+    --line: #e3e8f3;
+    --paper: #f5f7fc;
+    --brand: #4f7cff;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: Inter, "PingFang HK", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 28px 16px 72px; }
+  .crumb { margin: 0; color: var(--muted); font-size: 14px; }
+  h1 {
+    margin: 8px 0 0;
+    font-family: Fraunces, Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+  }
+  .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+  .switch { display: flex; gap: 8px; margin-top: 18px; }
+  .switch button {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 650;
+  }
+  .switch button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .panel { margin-top: 16px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px;
+  }
+  .drop {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .file {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--brand);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+  }
+  .file input { display: none; }
+  .ghost, .solid {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-weight: 700;
+  }
+  .ghost { border: 1px solid var(--line); background: #fff; }
+  .solid { border: 0; background: var(--ink); color: #fff; }
+  .hint { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .search {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    font-size: 16px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-top: 10px;
+  }
+  .row h2 { margin: 0; font-size: 16px; }
+  .row p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+  .empty { color: var(--muted); margin-top: 14px; }
+
+  .sheet-wrap { overflow-x: auto; }
+  .sheet {
+    position: relative;
+    width: 794px;
+    min-height: 1123px;
+    margin: 8px auto;
+    background: #fff;
+    color: #000;
+    font-family: Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
+    padding: 18px 22px 64px;
+    box-shadow: 0 8px 30px rgba(27, 36, 54, 0.08);
+    overflow: hidden;
+  }
+  .mark {
+    position: absolute;
+    left: 50%;
+    top: 280px;
+    width: 620px;
+    transform: translateX(-50%);
+    opacity: 0.16;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .sheet > *:not(.mark):not(.foot) { position: relative; z-index: 1; }
+  .head { text-align: right; }
+  .head img { height: 46px; width: auto; }
+  .co { margin: 2px 0 0; font-weight: 700; font-size: 13px; }
+  .title {
+    margin: 18px 0 8px;
+    text-align: center;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+  .meta { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  .meta td { padding: 2px 8px; font-size: 20px; vertical-align: baseline; }
+  .meta .k { width: 42%; text-align: right; font-weight: 700; }
+  .band, .grid, .block { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
+  .band td, .grid td, .block td { border: 0.5pt solid #000; vertical-align: top; }
+  .h {
+    font-weight: 700;
+    font-size: 15px;
+    padding: 4px 8px;
+  }
+  .h.profile { background: #B6C3F2; }
+  .h.edu { background: #E2EFD9; }
+  .h.cert { background: #FCE4D6; }
+  .h.project { background: #DDEBF7; }
+  .h.work { background: #FFF2CC; }
+  .grid .k {
+    width: 168px;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 8px;
+  }
+  .val, .lines, .job line, .plain {
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 6px 8px;
+    outline: none;
+    min-height: 1.2em;
+    white-space: pre-wrap;
+  }
+  .lines { min-height: 72px; }
+  .job .b { font-weight: 700; font-size: 12px; padding: 2px 8px; outline: none; min-height: 1.2em; }
+  .job .lbl { padding: 6px 8px 0; font-size: 12px; }
+  .plain { min-height: 28px; }
+  [contenteditable="true"]:empty:before {
+    content: attr(data-placeholder);
+    color: #8b93a7;
+  }
+  .foot {
+    position: absolute;
+    left: 22px;
+    right: 22px;
+    bottom: 16px;
+    z-index: 1;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.35;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="crumb">Recruitment</p>
+    <h1>Online CV</h1>
+    <p class="lead">Turn a client CV into the HR Plus report, or find one you already saved.</p>
+    <div class="switch">
+      <button type="button" id="tab-make" class="on">Make a CV</button>
+      <button type="button" id="tab-find">Find a CV</button>
+    </div>
+
+    <section class="panel" id="make">
+      <div class="card">
+        <div class="drop">
+          <label class="file">Upload client CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
+          <button type="button" class="ghost" id="sample">Try a sample CV</button>
+        </div>
+        <p class="hint" id="status">Upload a PDF, Word, or text CV. Words that mean the same thing, such as current package or asking salary, are placed in the matching row.</p>
+      </div>
+      <div class="actions" id="save-bar" hidden>
+        <button type="button" class="solid" id="download">Save Word file</button>
+        <button type="button" class="ghost" id="keep">Keep for search</button>
+      </div>
+      <div class="sheet-wrap" id="sheet-wrap" hidden></div>
+    </section>
+
+    <section class="panel" id="find" hidden>
+      <input class="search" id="q" type="search" placeholder="Search by name, skill, or company">
+      <div id="list"></div>
+    </section>
+  </div>
+
+<script>
+const SLOTS = {
+  candidate: "533E4C9B",
+  recruiter: "36D5560F",
+  date: "74BEF5A5",
+  languages: "40197682",
+  skills: ["65E82F16", "10E54944", "176348F2", "56F2193F", "41F2F207", "2303D1D5", "3C2D01F3"],
+  recentSalary: "65541C3A",
+  expectedSalary: "42788A0F",
+  notice: "38C2D466",
+  eduLeft: "4CCB1365",
+  edu: ["637F19D2", "43804DAC", "52FF7FD9", "021E1F38"],
+  certs: ["1691BB5B", "31A6824C"],
+  project: ["0E99DCE9", "588BFFE1", "366E6B72", "3015F4B9", "0DE430C2"],
+  job1: ["6536531E", "10E270B8", "080352D4"],
+  duty1: ["23849F34", "425F33E7", "5956FF6E", "799208FB", "56CDA427", "42642C4B"],
+  job2: ["202F88F4", "57EBF052", "45393CCF"],
+  duty2: ["35132676", "56AD8C27", "5AE6919A", "3AB7483F", "41E6C605"]
+};
+
+const GROUPS = [
+  ["languages", ["spoken languages", "language proficiency", "language skills", "languages", "language", "mother tongue", "語言能力", "語言"]],
+  ["skills", ["programming & tools", "programming and tools", "tools & technologies", "technical skills", "computer skills", "programming skills", "it skills", "core competencies", "key skills", "skill set", "competencies", "competency", "expertise", "skills", "skill", "技能", "專長", "能力"]],
+  ["recentSalary", ["current remuneration", "present remuneration", "current package", "present package", "existing package", "current salary", "present salary", "recent salary", "current pay", "現時薪酬", "目前薪酬", "現薪"]],
+  ["expectedSalary", ["salary expectation", "expected remuneration", "expected package", "asking salary", "asking package", "desired salary", "target salary", "expected salary", "expected pay", "期望薪酬", "要求薪酬"]],
+  ["notice", ["period of notice", "notice period", "availability", "notice", "通知期"]],
+  ["education", ["educational background", "academic background", "education background", "academic qualifications", "qualifications", "qualification", "education", "academic", "學歷", "教育背景"]],
+  ["certs", ["professional qualifications", "certifications", "certification", "certificates", "certificate", "licences", "licenses", "licence", "license", "credentials", "證書", "專業資格"]],
+  ["project", ["project experience", "academic projects", "personal projects", "selected projects", "latest assignment", "recent assignment", "recent project", "latest project", "current project", "key project", "projects", "project", "最近項目", "近期項目"]],
+  ["work", ["internship experience", "professional experience", "employment history", "working experience", "job experience", "career history", "work experience", "work history", "positions held", "internships", "internship", "employment", "工作經驗", "工作經歷", "實習經歷", "實習"]],
+  ["name", ["candidate name", "full name", "candidate", "name", "姓名", "候選人"]]
+].map(([key, names]) => ({ key, names: names.sort((a, b) => b.length - a.length) }));
+
+const DUTY = ["key duties", "job duties", "main duties", "responsibilities", "responsibility", "job description", "duties", "duty", "主要職責", "職責", "工作內容"];
+
+const SAMPLE = `Name: Chan Tai Man
+
+Personal summary
+Retail leader with eight years in multi-site fashion stores.
+
+Spoken languages
+Cantonese, English, Putonghua
+
+Competencies
+Store operations
+Profit and loss
+Visual merchandising
+Team rostering
+Buying follow-up
+
+Current package
+HK$48,000 per month, plus one month bonus
+
+Asking salary
+HK$55,000
+
+Availability
+One month
+
+Academic background
+2014 – 2018
+Hong Kong Polytechnic University
+Bachelor of Business Administration
+
+Licences
+PMP, 2022
+First aid, 2023
+
+Latest assignment
+Led a 12-shop remodel for a fashion group in 2025.
+Opened two new stores in Kowloon.
+Kept the shops trading through the fit-out.
+
+Employment history
+ABC Fashion Limited
+Store Manager
+Mar 2021 – Present
+Key duties:
+- Ran a flagship store and a team of 18
+- Lifted yearly sales by 12 percent
+- Set the weekly roster and the floor standard
+
+XYZ Retail
+Assistant Store Manager
+Jun 2018 – Feb 2021
+Duties:
+- Covered buying follow-up for three shops
+- Trained new supervisors
+`;
+
+const KEY = "hrplus-online-cv-v2";
+
+function today() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return p(d.getDate()) + "/" + p(d.getMonth() + 1) + "/" + d.getFullYear();
+}
+
+function norm(s) {
+  return s.toLowerCase().replace(/[：﹕]/g, ":").replace(/\s+/g, " ").trim();
+}
+
+function escapeReg(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function explodeSections(text) {
+  const labels = [];
+  GROUPS.forEach((group) => {
+    if (group.key === "name") return;
+    group.names.forEach((name) => {
+      if (name.includes(" ") || name.length >= 8) labels.push(name);
+    });
+  });
+  labels.sort((a, b) => b.length - a.length);
+  const re = new RegExp("([^\\n]{10})[ \\t]+(" + labels.map(escapeReg).join("|") + ")(?=[ \\t]*[:：]?\\s)", "gi");
+  return text
+    .replace(re, "$1\n$2")
+    .replace(/([^\n]{10})[ \t]+(job description|responsibilities|key duties|main duties)\b/gi, "$1\n$2");
+}
+
+function matchHeading(line) {
+  const raw = norm(line);
+  const bare = raw.replace(/[:：]\s*$/, "");
+  let best = null;
+  for (const group of GROUPS) {
+    for (const name of group.names) {
+      const exact = bare === name;
+      const colon = raw.startsWith(name + ":");
+      const multi = name.includes(" ") && (exact || colon || raw.startsWith(name + " "));
+      const single = !name.includes(" ") && (exact || colon);
+      if (!exact && !colon && !multi && !single) continue;
+      if (best && best.name.length >= name.length) continue;
+      const inline = line.slice(name.length).replace(/^[:：\-—\s]+/, "");
+      best = { key: group.key, name, inline };
+    }
+  }
+  return best;
+}
+
+function splitDate(line) {
+  const patterns = [
+    /^((?:19|20)\d{2}(?:[./]\d{1,2})?\s*[–—~-]+\s*(?:(?:19|20)\d{2}(?:[./]\d{1,2})?|present|now|current|至今))\s*(.*)$/i,
+    /^((?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2}\s*[–—~-]+\s*(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2}|present|now|current|至今))\s*(.*)$/i,
+    /^((?:19|20)\d{2}\s*年\s*\d{0,2}\s*月?\s*[–—~-到至]+\s*(?:(?:19|20)\d{2}\s*年\s*\d{0,2}\s*月?|至今|现在|現在))\s*(.*)$/
+  ];
+  for (const pattern of patterns) {
+    const match = line.trim().match(pattern);
+    if (match) return { dates: match[1].replace(/\s+/g, " ").trim(), rest: (match[2] || "").trim() };
+  }
+  return null;
+}
+
+function isSchool(text) {
+  return /university|college|polytechnic|polyu|institute|school|academy|大學|學院|理工|\b(hku|cuhk|hkust|cityu|hku\s*space|\bspace\b|vtc|ied)\b/i.test(text || "");
+}
+
+function looksLikeEmployer(text) {
+  return /\b(limited|ltd\.?|inc\.?|corporation|company|intern|engineer|manager|consultant)\b|有限公司/i.test(text || "");
+}
+
+function isDegree(text) {
+  return /\b(bachelor|master|diploma|degree|phd|doctor|bsc|msc|ba|bs|beng|meng|associate|llb|jd)\b|\(bachelor\)|\(master\)/i.test(text || "");
+}
+
+function splitOrgRole(rest) {
+  const orgSuffix = rest.match(/^(.*?(?:\b(?:Limited|Ltd\.?|Inc\.?|Corp\.?|Corporation|Company|Group|Hospital|Bank)\b|有限公司))\s*(.*)$/i);
+  if (orgSuffix && orgSuffix[2].trim()) return { org: orgSuffix[1].trim(), role: orgSuffix[2].trim() };
+  const roleRe = /\b((?:senior|junior|lead|full[\s-]?stack|software|data|system|systems|front[\s-]?end|back[\s-]?end)\s+)*(?:engineer|developer|intern|manager|analyst|consultant|officer|designer|specialist|assistant|director|supervisor)\b.*$/i;
+  const role = rest.match(roleRe);
+  if (role && role.index > 0) return { org: rest.slice(0, role.index).trim(), role: role[0].trim() };
+  return { org: rest.trim(), role: "" };
+}
+
+function splitSchoolDegree(rest) {
+  const school = rest.match(/^(.*?\b(?:University|College|Polytechnic|Institute|School|Academy|大學|學院)(?:\s+of\s+(?:[A-Z][\w.-]*\s*){1,3})?)\s+(.*)$/);
+  if (school && isDegree(school[2])) return [school[1].trim(), school[2].trim()];
+  return [rest.trim()];
+}
+
+function dutyBody(line) {
+  const n = norm(line);
+  const labels = DUTY.slice().sort((a, b) => b.length - a.length);
+  for (const label of labels) {
+    if (n === label || n.startsWith(label + ":") || n.startsWith(label + " ")) {
+      return line.slice(label.length).replace(/^[:：\s]+/, "");
+    }
+  }
+  return null;
+}
+
+function dutyPieces(text) {
+  const cleaned = String(text || "").replace(/^(job description|responsibilities|key duties|main duties|duties)\s*[:：]\s*/i, "");
+  return cleaned
+    .split(/\n+|;\s+|•\s+|(?<=[.。])\s+/)
+    .flatMap((part) => part.length > 280 ? part.split(/:\s+/) : [part])
+    .map((part) => part.replace(/^[-–—•]\s*/, "").trim())
+    .filter((part) => part.length > 2);
+}
+
+function splitSkills(lines) {
+  return lines.flatMap((line) => line.split(/[,，、;；]/).map((part) => part.trim())).filter((part) => part && part.length < 80);
+}
+
+function isBullet(line) {
+  return /^([-•*·]|\d+[.)])\s+/.test(line.trim());
+}
+
+function cleanBullet(line) {
+  return line.trim().replace(/^([-•*·]|\d+[.)])\s+/, "");
+}
+
+function linesOf(text) {
+  return text.split(/\r?\n/).map((line) => line.trim()).filter((line, i, all) => line || (i > 0 && all[i - 1]));
+}
+
+function takeLines(bucket) {
+  return bucket.map((line) => line.trim()).filter(Boolean);
+}
+
+function parseCv(text) {
+  const rows = explodeSections(text).split(/\r?\n/);
+  const bags = {};
+  let current = null;
+  const loose = [];
+  for (const row of rows) {
+    const line = row.trim();
+    if (!line) {
+      if (current) bags[current].push("");
+      continue;
+    }
+    const heading = matchHeading(line) || softHeading(line);
+    if (heading) {
+      current = heading.key;
+      bags[current] = bags[current] || [];
+      if (heading.inline) bags[current].push(heading.inline);
+      continue;
+    }
+    if (current) bags[current].push(line);
+    else loose.push(line);
+  }
+
+  const looseBits = classifyLoose(loose);
+  const peeled = peelMisfiled(takeLines(bags.education || []).concat(looseBits.edu));
+  const data = blank();
+  data.candidate = takeLines(bags.name || [])[0] || "";
+  if (!data.candidate) {
+    const first = loose.find((line) => line.length < 48 && !line.includes(":") && !splitDate(line));
+    if (first) data.candidate = first;
+  }
+  data.date = today();
+  data.languages = takeLines(bags.languages || []).join(", ");
+  data.skills = pad(splitSkills(takeLines(bags.skills || []).concat(peeled.skills, looseBits.skills)), 7);
+  data.recentSalary = takeLines(bags.recentSalary || []).join(" ");
+  data.expectedSalary = takeLines(bags.expectedSalary || []).join(" ");
+  data.notice = takeLines(bags.notice || []).join(" ");
+  fillEducation(data, peeled.edu);
+  data.certs = pad(takeLines(bags.certs || []), 2);
+  data.project = pad(takeLines(bags.project || []), 5);
+  const workRows = (bags.work || []).concat(looseBits.work, peeled.work.length ? [""].concat(peeled.work) : []);
+  fillWork(data, workRows);
+  return rescue(data, text);
+}
+
+function softHeading(line) {
+  const raw = norm(line).replace(/[:：|].*$/, "").replace(/\s+/g, " ").trim();
+  if (!raw || raw.length > 32 || splitDate(line) || /\d{3,}/.test(raw)) return null;
+  const rules = [
+    ["education", /^(education|academic|academics|qualification|qualifications|學歷|学历|教育|教育背景)$/],
+    ["work", /^(experience|experiences|employment|career|work|internship|internships|工作經歷|工作经验|工作經驗|實習|实习|经历|經歷)$/],
+    ["skills", /^(skills|skill|technical skills|competencies|技術|技能|专业技能|專業技能)$/],
+    ["project", /^(projects|project|portfolio|項目|项目|專案)$/],
+    ["certs", /^(certificates|certification|certifications|licenses|licences|awards|證書|证书|獎項)$/],
+    ["languages", /^(languages|language|語言|语言)$/]
+  ];
+  for (const [key, pattern] of rules) {
+    if (pattern.test(raw)) return { key: key, name: raw, inline: "" };
+  }
+  return null;
+}
+
+function looksLikeName(line) {
+  const text = String(line || "").trim();
+  if (text.length < 2 || text.length > 40) return false;
+  if (text.includes("@") || /\d/.test(text) || text.includes(":")) return false;
+  if (matchHeading(text) || softHeading(text) || splitDate(text)) return false;
+  const words = text.split(/\s+/);
+  return words.length <= 5 && words.every((word) => /[\p{L}]/u.test(word));
+}
+
+function skillish(line) {
+  if (splitDate(line) || isSchool(line) || line.length > 180) return false;
+  const bits = line.split(/[,，、;；|]/).map((part) => part.trim()).filter(Boolean);
+  return bits.length >= 3 && bits.every((part) => part.length < 36);
+}
+
+function projectish(text) {
+  const line = String(text || "");
+  if (!line || line.length > 180 || matchHeading(line) || softHeading(line)) return false;
+  if (/\b(exhibition|exhibit|museum|showcase|confluence|festival|展覽|展覽會)\b/i.test(line)) return true;
+  return /\b(project|projects|項目|專案|专案)\b/i.test(line) && line.length < 100 && !/including|such as|etc\./i.test(line);
+}
+
+function mineJobs(lines) {
+  const jobs = [];
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index].trim();
+    const dated = line && splitDate(line);
+    const schoolDate = dated && (isSchool(dated.rest) || isDegree(dated.rest));
+    if (!dated || schoolDate || matchHeading(line) || softHeading(line) || projectish(line)) {
+      index += 1;
+      continue;
+    }
+    const follow = [];
+    let next = index + 1;
+    while (next < lines.length) {
+      const row = lines[next].trim();
+      if (!row) {
+        next += 1;
+        if (follow.length) break;
+        continue;
+      }
+      if (matchHeading(row) || softHeading(row) || splitDate(row) || projectish(row)) break;
+      follow.push(row);
+      next += 1;
+    }
+    const about = [dated.rest].concat(follow).join(" ");
+    if (isSchool(about) || isDegree(about)) {
+      index += 1;
+      continue;
+    }
+    const before = [];
+    for (let back = index - 1; back >= 0 && before.length < 2; back--) {
+      const row = lines[back].trim();
+      if (!row) {
+        if (before.length) break;
+        continue;
+      }
+      if (matchHeading(row) || softHeading(row) || splitDate(row) || projectish(row) || row.length > 60 || /[.。]$/.test(row)) break;
+      if (dutyBody(row) !== null || isBullet(row)) break;
+      before.unshift(row);
+    }
+    while (follow[0] && (dutyBody(follow[0]) === "" || follow[0].length > 70)) {
+      if (dutyBody(follow[0]) === "") follow.shift();
+      else break;
+    }
+    const org = splitOrgRole(dated.rest || before[0] || follow.shift() || "");
+    let title = org.role || before[1] || "";
+    if (!title && follow[0] && follow[0].length < 70 && dutyBody(follow[0]) === null && !isBullet(follow[0])) title = follow.shift();
+    const duties = [];
+    follow.forEach((item) => {
+      const duty = dutyBody(item);
+      if (duty === "") return;
+      if (duty) duties.push.apply(duties, dutyPieces(duty));
+      else if (isBullet(item) || item.length > 20) duties.push.apply(duties, dutyPieces(cleanBullet(item)));
+    });
+    if (org.org || title || duties.length) jobs.push({ company: org.org, title: title || "", dates: dated.dates, duties: duties });
+    index = Math.max(next, index + 1);
+  }
+  return jobs;
+}
+
+function mineProjects(lines) {
+  const blocks = [];
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (!projectish(line)) continue;
+    const block = [line];
+    let next = index + 1;
+    while (next < lines.length && block.length < 5) {
+      const row = lines[next].trim();
+      if (!row || matchHeading(row) || softHeading(row) || splitDate(row)) break;
+      block.push(row);
+      next += 1;
+    }
+    blocks.push(block);
+    index = next - 1;
+  }
+  return blocks;
+}
+
+function rescue(data, text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!data.candidate) {
+    const name = lines.find(looksLikeName);
+    if (name) data.candidate = name;
+  }
+  if (!data.eduLeft && !data.edu.filter(Boolean).length) {
+    const eduLines = [];
+    lines.forEach((line, index) => {
+      const dated = splitDate(line);
+      const ahead = lines.slice(index + 1, index + 4).join(" ");
+      if (dated && (isSchool(dated.rest) || isDegree(dated.rest) || isSchool(ahead) || isDegree(ahead))) eduLines.push(line);
+      else if (!dated && (isSchool(line) || isDegree(line)) && line.length < 90) eduLines.push(line);
+    });
+    if (eduLines.length) fillEducation(data, eduLines);
+  }
+  if (!data.job1[0] && !data.job1[1] && !data.job1[2]) {
+    const jobs = mineJobs(lines);
+    if (jobs[0]) {
+      data.job1 = [jobs[0].company, jobs[0].title, jobs[0].dates];
+      data.duty1 = pad(jobs[0].duties, 6);
+    }
+    if (jobs[1]) {
+      data.job2 = [jobs[1].company, jobs[1].title, jobs[1].dates];
+      data.duty2 = pad(jobs[1].duties, 5);
+    }
+  }
+  if (!data.project.filter(Boolean).length) {
+    const blocks = mineProjects(lines);
+    if (blocks.length) data.project = pad(blocks[0], 5);
+  }
+  if (!data.skills.filter(Boolean).length) {
+    const line = lines.find(skillish);
+    if (line) data.skills = pad(splitSkills([line]), 7);
+  }
+  if (!data.languages) {
+    const line = lines.find((item) => /cantonese|mandarin|english|putonghua|粵語|普通话|英語/i.test(item) && item.length < 80);
+    if (line && !splitDate(line)) data.languages = line.replace(/^(languages?|語言|语言)\s*[:：]?\s*/i, "");
+  }
+  return data;
+}
+
+function classifyLoose(lines) {
+  const edu = [];
+  const work = [];
+  const skills = [];
+  let mode = "";
+  lines.forEach((line) => {
+    const heading = matchHeading(line);
+    if (heading && (heading.key === "education" || heading.key === "work" || heading.key === "skills")) {
+      mode = heading.key === "education" ? "edu" : heading.key;
+      if (heading.inline) (mode === "edu" ? edu : mode === "skills" ? skills : work).push(heading.inline);
+      return;
+    }
+    const dated = splitDate(line);
+    if (dated && (isSchool(dated.rest) || isDegree(dated.rest))) mode = "edu";
+    else if (dated && dated.rest && !isSchool(dated.rest)) mode = "work";
+    if (mode === "edu") edu.push(line);
+    else if (mode === "work") work.push(line);
+    else if (mode === "skills") skills.push(line);
+  });
+  return { edu, work, skills };
+}
+
+function peelMisfiled(lines) {
+  const edu = [];
+  const work = [];
+  const skills = [];
+  let mode = "edu";
+  lines.forEach((line) => {
+    const heading = matchHeading(line);
+    if (heading && (heading.key === "skills" || heading.key === "work")) {
+      mode = heading.key;
+      if (heading.inline) (mode === "skills" ? skills : work).push(heading.inline);
+      return;
+    }
+    const dated = splitDate(line);
+    if (mode === "edu" && dated && looksLikeEmployer(dated.rest) && !isSchool(dated.rest)) mode = "work";
+    if (mode === "skills") skills.push(line);
+    else if (mode === "work") work.push(line);
+    else edu.push(line);
+  });
+  return { edu, work, skills };
+}
+
+function pad(list, n) {
+  const out = list.slice(0, n);
+  while (out.length < n) out.push("");
+  if (list.length > n) out[n - 1] = [out[n - 1], ...list.slice(n)].filter(Boolean).join("; ");
+  return out;
+}
+
+function fillEducation(data, lines) {
+  const right = [];
+  lines.forEach((line) => {
+    if (isSchool(line) === false && isDegree(line) === false && !splitDate(line) && line.length > 180) return;
+    const dated = splitDate(line);
+    if (dated && (isSchool(dated.rest) || isDegree(dated.rest) || !dated.rest)) {
+      if (!data.eduLeft) data.eduLeft = dated.dates;
+      else right.push(dated.dates);
+      if (dated.rest) splitSchoolDegree(dated.rest).forEach((part) => right.push(part));
+      return;
+    }
+    if (isSchool(line) || isDegree(line) || line.length < 120) right.push(line);
+  });
+  data.edu = pad(right.filter((line) => !/^programming\b/i.test(line)), 4);
+}
+
+function fillWork(data, rows) {
+  const jobs = [];
+  let job = null;
+  const push = () => {
+    if (job && (job.company || job.title || job.dates || job.duties.length)) jobs.push(job);
+  };
+  const start = () => {
+    push();
+    job = { company: "", title: "", dates: "", duties: [], phase: "head" };
+  };
+  const addDuties = (text) => {
+    job.phase = "duty";
+    dutyPieces(text).forEach((piece) => job.duties.push(piece));
+  };
+  start();
+  for (const row of rows) {
+    const line = row.trim();
+    if (!line) {
+      if (job.phase === "duty" && job.duties.length) start();
+      continue;
+    }
+    const duty = dutyBody(line);
+    if (duty !== null) {
+      if (duty) addDuties(duty);
+      else job.phase = "duty";
+      continue;
+    }
+    const dated = splitDate(line);
+    if (dated && !isSchool(dated.rest)) {
+      const open = (job.company || job.title) && !job.dates && !job.duties.length;
+      if ((job.dates || job.duties.length || job.company) && !open) start();
+      job.dates = dated.dates;
+      if (dated.rest) {
+        const org = splitOrgRole(dated.rest);
+        if (!job.company) job.company = org.org;
+        if (!job.title) job.title = org.role;
+      }
+      job.phase = "after";
+      continue;
+    }
+    if (isBullet(line) || job.phase === "duty") {
+      addDuties(cleanBullet(line));
+      continue;
+    }
+    if (!job.company) job.company = line;
+    else if (!job.title) job.title = line;
+    else addDuties(line);
+  }
+  push();
+  const a = jobs[0] || { company: "", title: "", dates: "", duties: [] };
+  const b = jobs[1] || { company: "", title: "", dates: "", duties: [] };
+  if (jobs.length > 2) {
+    const extra = jobs.slice(2).map((item) => [item.dates, item.company, item.title].filter(Boolean).join(" ")).filter(Boolean);
+    if (extra.length) b.duties.push("Earlier: " + extra.join("; "));
+  }
+  data.job1 = [a.company, a.title, a.dates];
+  data.duty1 = pad(a.duties, 6);
+  data.job2 = [b.company, b.title, b.dates];
+  data.duty2 = pad(b.duties, 5);
+}
+
+function blank() {
+  return {
+    candidate: "",
+    recruiter: "",
+    date: today(),
+    languages: "",
+    skills: pad([], 7),
+    recentSalary: "",
+    expectedSalary: "",
+    notice: "",
+    eduLeft: "",
+    edu: pad([], 4),
+    certs: pad([], 2),
+    project: pad([], 5),
+    job1: ["", "", ""],
+    duty1: pad([], 6),
+    job2: ["", "", ""],
+    duty2: pad([], 5)
+  };
+}
+
+function esc(text) {
+  return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function setPara(xml, id, text) {
+  const token = 'w14:paraId="' + id + '"';
+  const start = xml.indexOf(token);
+  if (start < 0) return xml;
+  const end = xml.indexOf("</w:p>", start);
+  const slice = xml.slice(start, end);
+  const safe = esc(text);
+  const rEnd = slice.indexOf("</w:r>");
+  let next;
+  if (rEnd >= 0) {
+    const run = slice.slice(0, rEnd);
+    next = run.includes("<w:t")
+      ? slice.replace(/(<w:t[^>]*>)([\s\S]*?)(<\/w:t>)/, "$1" + safe + "$3")
+      : slice.slice(0, rEnd) + '<w:t xml:space="preserve">' + safe + "</w:t>" + slice.slice(rEnd);
+  } else {
+    const fonts = (slice.match(/<w:rFonts[^>]*\/>/) || ['<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'])[0];
+    const sz = (slice.match(/<w:sz w:val="\d+"\/>/) || ['<w:sz w:val="24"/>'])[0];
+    const szCs = (slice.match(/<w:szCs w:val="\d+"\/>/) || ['<w:szCs w:val="24"/>'])[0];
+    next = slice + "<w:r><w:rPr>" + fonts + sz + szCs + '</w:rPr><w:t xml:space="preserve">' + safe + "</w:t></w:r>";
+  }
+  return xml.slice(0, start) + next + xml.slice(end);
+}
+
+function apply(xml, data) {
+  const one = ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice", "eduLeft"];
+  one.forEach((key) => { xml = setPara(xml, SLOTS[key], data[key]); });
+  ["skills", "edu", "certs", "project", "job1", "duty1", "job2", "duty2"].forEach((key) => {
+    SLOTS[key].forEach((id, index) => { xml = setPara(xml, id, data[key][index] || ""); });
+  });
+  return xml;
+}
+
+async function toDocx(data) {
+  const res = await fetch("cv/template.docx");
+  const files = fflate.unzipSync(new Uint8Array(await res.arrayBuffer()));
+  const xml = fflate.strFromU8(files["word/document.xml"]);
+  files["word/document.xml"] = fflate.strToU8(apply(xml, data));
+  return fflate.zipSync(files);
+}
+
+function saveFile(bytes, name) {
+  const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function field(cls, slot, value, placeholder) {
+  return '<div class="' + cls + '" contenteditable="true" data-slot="' + slot + '" data-placeholder="' + placeholder + '">' + esc(value || "") + "</div>";
+}
+
+function render(data) {
+  const skills = data.skills.filter(Boolean).join("\n");
+  const edu = data.edu.filter(Boolean).join("\n");
+  const certs = data.certs.filter(Boolean).join("\n");
+  const project = data.project.filter(Boolean).join("\n");
+  const duty = (list) => list.filter(Boolean).join("\n");
+  document.getElementById("sheet-wrap").hidden = false;
+  document.getElementById("save-bar").hidden = false;
+  document.getElementById("sheet-wrap").innerHTML = `
+    <article class="sheet" id="sheet">
+      <img class="mark" src="cv/mark.png" alt="">
+      <div class="head">
+        <img src="cv/logo.png" alt="HR Plus">
+        <p class="co">HR Plus (Talent) Limited</p>
+      </div>
+      <h2 class="title">Confidential Report</h2>
+      <table class="meta">
+        <tr><td class="k">Candidate:</td><td>${field("val", "candidate", data.candidate, "Candidate name")}</td></tr>
+        <tr><td class="k">Recruiter:</td><td>${field("val", "recruiter", data.recruiter, "Your name")}</td></tr>
+        <tr><td class="k">Date:</td><td>${field("val", "date", data.date, "Date")}</td></tr>
+      </table>
+      <table class="grid">
+        <tr><td class="h profile" colspan="2">Profile</td></tr>
+        <tr><td class="k">Languages</td><td>${field("val", "languages", data.languages, "Languages")}</td></tr>
+        <tr><td class="k">Skills</td><td>${field("lines", "skills", skills, "One skill on each line")}</td></tr>
+        <tr><td class="k">Recent Salary</td><td>${field("val", "recentSalary", data.recentSalary, "Recent salary")}</td></tr>
+        <tr><td class="k">Expected Salary</td><td>${field("val", "expectedSalary", data.expectedSalary, "Expected salary")}</td></tr>
+        <tr><td class="k">Notice Period</td><td>${field("val", "notice", data.notice, "Notice period")}</td></tr>
+      </table>
+      <table class="block">
+        <tr><td class="h edu" colspan="2">Education</td></tr>
+        <tr>
+          <td style="width:168px">${field("val", "eduLeft", data.eduLeft, "Year")}</td>
+          <td>${field("lines", "edu", edu, "School and qualification")}</td>
+        </tr>
+      </table>
+      <table class="block">
+        <tr><td class="h cert">Certifications</td></tr>
+        <tr><td>${field("lines", "certs", certs, "Certificates")}</td></tr>
+      </table>
+      <table class="block">
+        <tr><td class="h project">Recent Project</td></tr>
+        <tr><td>${field("lines", "project", project, "Recent project")}</td></tr>
+      </table>
+      <table class="block">
+        <tr><td class="h work">Work Experience</td></tr>
+        <tr><td class="job">
+          ${field("b", "job1-0", data.job1[0], "Company")}
+          ${field("b", "job1-1", data.job1[1], "Role")}
+          ${field("b", "job1-2", data.job1[2], "Dates")}
+          <div class="lbl">Responsibilities:</div>
+          ${field("lines", "duty1", duty(data.duty1), "What they did")}
+        </td></tr>
+        <tr><td class="job">
+          ${field("b", "job2-0", data.job2[0], "Company")}
+          ${field("b", "job2-1", data.job2[1], "Role")}
+          ${field("b", "job2-2", data.job2[2], "Dates")}
+          <div class="lbl">Responsibilities:</div>
+          ${field("lines", "duty2", duty(data.duty2), "What they did")}
+        </td></tr>
+      </table>
+      <p class="foot">This resume contains information modified by HR Plus (Talent) Limited. Please refrain from duplicating and redistributing this document without permission.</p>
+    </article>`;
+}
+
+function textOf(slot) {
+  const node = document.querySelector('[data-slot="' + slot + '"]');
+  return node ? node.innerText.replace(/\u00a0/g, " ").trim() : "";
+}
+
+function splitSlot(slot, n) {
+  const lines = textOf(slot).split(/\n/).map((line) => line.trim()).filter(Boolean);
+  return pad(lines, n);
+}
+
+function readSheet() {
+  const data = blank();
+  ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice", "eduLeft"].forEach((key) => {
+    data[key] = textOf(key);
+  });
+  data.skills = splitSlot("skills", 7);
+  data.edu = splitSlot("edu", 4);
+  data.certs = splitSlot("certs", 2);
+  data.project = splitSlot("project", 5);
+  data.job1 = [0, 1, 2].map((i) => textOf("job1-" + i));
+  data.job2 = [0, 1, 2].map((i) => textOf("job2-" + i));
+  data.duty1 = splitSlot("duty1", 6);
+  data.duty2 = splitSlot("duty2", 5);
+  return data;
+}
+
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+  catch (e) { return []; }
+}
+
+function storeAll(rows) {
+  localStorage.setItem(KEY, JSON.stringify(rows));
+}
+
+function seed() {
+  if (loadAll().length) return;
+  const chan = parseCv(SAMPLE);
+  chan.recruiter = "AT";
+  const lee = blank();
+  lee.candidate = "Lee Mei Ling";
+  lee.recruiter = "AT";
+  lee.languages = "Cantonese, English";
+  lee.skills = pad(["Accounting", "Payroll", "Excel"], 7);
+  lee.recentSalary = "HK$32,000";
+  lee.expectedSalary = "HK$36,000";
+  lee.notice = "Immediate";
+  lee.eduLeft = "2016 – 2019";
+  lee.edu = pad(["City University of Hong Kong", "Bachelor of Business Administration"], 4);
+  lee.job1 = ["North Ledger Ltd", "Accounts Officer", "Jan 2022 – Present"];
+  lee.duty1 = pad(["Closed the monthly accounts", "Prepared payroll for 40 staff"], 6);
+  storeAll([pack(chan), pack(lee)]);
+}
+
+function pack(data) {
+  return Object.assign({ id: String(Date.now()) + Math.random().toString(16).slice(2) }, data);
+}
+
+function show(text) {
+  let data;
+  try {
+    data = parseCv(text);
+  } catch (error) {
+    document.getElementById("status").textContent = "This CV could not be read. Try a PDF or Word file that has selectable text.";
+    return;
+  }
+  render(data);
+  const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
+  document.getElementById("status").textContent = found
+    ? "Matched rows are filled. Empty rows were not in this CV. Change any line, then save the Word file."
+    : "This CV had no clear sections. Type the missing rows, then save the Word file.";
+}
+
+document.getElementById("tab-make").onclick = () => {
+  document.getElementById("make").hidden = false;
+  document.getElementById("find").hidden = true;
+  document.getElementById("tab-make").classList.add("on");
+  document.getElementById("tab-find").classList.remove("on");
+};
+document.getElementById("tab-find").onclick = () => {
+  document.getElementById("make").hidden = true;
+  document.getElementById("find").hidden = false;
+  document.getElementById("tab-find").classList.add("on");
+  document.getElementById("tab-make").classList.remove("on");
+  drawList();
+};
+document.getElementById("sample").onclick = () => show(SAMPLE);
+function joinParts(parts) {
+  const sorted = parts.slice().sort((a, b) => a.x - b.x);
+  let line = "";
+  let end = 0;
+  sorted.forEach((part) => {
+    if (line && part.x > end + 2) line += " ";
+    line += part.str;
+    end = Math.max(end, part.end);
+  });
+  return line.replace(/[ \t]+/g, " ").trim();
+}
+
+function linesFromItems(items) {
+  const rows = [];
+  items.forEach((item) => {
+    if (!item.str || !String(item.str).trim()) return;
+    const x = item.transform[4];
+    const y = item.transform[5];
+    let row = rows.find((entry) => Math.abs(entry.y - y) < 3);
+    if (!row) {
+      row = { y: y, parts: [] };
+      rows.push(row);
+    }
+    row.parts.push({ x: x, end: x + (item.width || 0), str: item.str });
+  });
+  const xs = rows.flatMap((row) => row.parts.map((part) => part.x)).sort((a, b) => a - b);
+  let gap = 0;
+  let mid = 0;
+  for (let i = 1; i < xs.length; i++) {
+    const size = xs[i] - xs[i - 1];
+    if (size > gap) {
+      gap = size;
+      mid = (xs[i] + xs[i - 1]) / 2;
+    }
+  }
+  const left = [];
+  const right = [];
+  rows.forEach((row) => {
+    const onLeft = row.parts.filter((part) => part.x < mid);
+    const onRight = row.parts.filter((part) => part.x >= mid);
+    if (onLeft.length) left.push({ y: row.y, parts: onLeft });
+    if (onRight.length) right.push({ y: row.y, parts: onRight });
+  });
+  const twoColumns = gap > 80 && left.length >= 4 && right.length >= 4;
+  const emit = (list) => list.sort((a, b) => b.y - a.y).map((row) => joinParts(row.parts)).filter(Boolean);
+  if (!twoColumns) return emit(rows).join("\n");
+  return emit(left).concat([""]).concat(emit(right)).join("\n");
+}
+
+function decodeXml(value) {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, "\"")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
+}
+
+function docxToText(xml) {
+  return xml.split(/<\/w:p>/).map((para) => {
+    const bits = [];
+    const marks = para.match(/<w:t[^>]*>[^<]*<\/w:t>|<w:tab\/>|<w:br[^>]*\/>/g) || [];
+    marks.forEach((mark) => {
+      if (mark.startsWith("<w:tab")) bits.push("\t");
+      else if (mark.startsWith("<w:br")) bits.push("\n");
+      else bits.push(decodeXml(mark.replace(/<[^>]+>/g, "")));
+    });
+    return bits.join("");
+  }).join("\n");
+}
+
+async function pdfToText(bytes) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "cv/pdf.worker.min.js";
+  const doc = await pdfjsLib.getDocument({ data: bytes }).promise;
+  const pages = [];
+  for (let i = 1; i <= doc.numPages; i++) {
+    const page = await doc.getPage(i);
+    const content = await page.getTextContent();
+    pages.push(linesFromItems(content.items));
+  }
+  return pages.filter(Boolean).join("\n\n");
+}
+
+document.getElementById("file").onchange = async (event) => {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById("status");
+  const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+  const isDocx = /\.docx$/i.test(file.name);
+  status.textContent = isPdf ? "Reading the PDF…" : "Reading the CV…";
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let text = "";
+    if (isPdf) text = await pdfToText(bytes);
+    else if (isDocx) text = docxToText(fflate.strFromU8(fflate.unzipSync(bytes)["word/document.xml"]));
+    else text = new TextDecoder().decode(bytes);
+    if (!text.trim()) {
+      status.textContent = "This PDF has no text to read. A scanned picture needs a Word or text CV.";
+      return;
+    }
+    show(text);
+  } catch (error) {
+    status.textContent = "That file could not be read. Use a PDF, Word, or text CV.";
+  }
+};
+document.getElementById("download").onclick = async () => {
+  const data = readSheet();
+  const bytes = await toDocx(data);
+  const name = data.candidate || "Candidate";
+  saveFile(bytes, "HR Plus CV - " + name + ".docx");
+};
+document.getElementById("keep").onclick = () => {
+  const data = readSheet();
+  if (!data.candidate) {
+    document.getElementById("status").textContent = "Add the candidate name before keeping this CV.";
+    return;
+  }
+  const rows = loadAll().filter((row) => row.candidate.toLowerCase() !== data.candidate.toLowerCase());
+  rows.unshift(pack(data));
+  storeAll(rows);
+  document.getElementById("status").textContent = "Saved. Open Find a CV to search and download it.";
+};
+
+function drawList() {
+  const q = norm(document.getElementById("q").value || "");
+  const rows = loadAll().filter((row) => {
+    const hay = [row.candidate, row.recruiter, row.languages, row.recentSalary, ...(row.skills || []), ...(row.job1 || []), ...(row.job2 || [])].join(" ");
+    return !q || norm(hay).includes(q);
+  });
+  const list = document.getElementById("list");
+  if (!rows.length) {
+    list.innerHTML = '<p class="empty">No matching CV.</p>';
+    return;
+  }
+  list.innerHTML = rows.map((row) => `
+    <article class="row">
+      <div>
+        <h2>${esc(row.candidate)}</h2>
+        <p>${esc(row.date || "")}${row.skills && row.skills[0] ? " · " + esc(row.skills.filter(Boolean).slice(0, 3).join(", ")) : ""}</p>
+      </div>
+      <button type="button" class="ghost" data-id="${row.id}">Download</button>
+    </article>`).join("");
+  list.querySelectorAll("button").forEach((button) => {
+    button.onclick = async () => {
+      const row = loadAll().find((item) => item.id === button.dataset.id);
+      const bytes = await toDocx(row);
+      saveFile(bytes, "HR Plus CV - " + row.candidate + ".docx");
+    };
+  });
+}
+document.getElementById("q").oninput = drawList;
+seed();
+</script>
+</body>
+</html>

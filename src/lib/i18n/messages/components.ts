@@ -298,6 +298,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Compensation & Leave": "薪酬及假期",
   "Pay type": "支薪方式",
   "Monthly salary": "月薪",
+  "Unpaid internship": "無薪實習",
+  "This internship is unpaid. It stays off the payroll run.": "此實習為無薪，不會列入出糧。",
   "Hourly rate": "時薪",
   "Salary (monthly)": "薪金（每月）",
   "Pay rate type": "薪酬率類型",

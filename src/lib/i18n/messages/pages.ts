@@ -141,6 +141,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Recruitment services terms — a separate system from quotations/invoices/receipts.":
     "招聘服務條款——獨立於報價單、發票及收據。",
   "Fee Scale Library": "收費表資料庫",
+  "Online CV": "網上履歷",
   "Search by company…": "按公司搜尋…",
   SIGNED: "已簽署",
   "New Recruitment Agreement": "新增招聘協議",

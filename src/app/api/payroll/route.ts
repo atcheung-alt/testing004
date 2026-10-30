@@ -9,6 +9,7 @@ import {
   defaultUnitsWorked,
   defaultMpfApplicable,
   computeEntryTotals,
+  isUnpaidIntern,
 } from "@/lib/payroll";
 import { approvedUnitsFor } from "@/lib/timesheets";
 
@@ -69,7 +70,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const employees = await prisma.employee.findMany({ where: { status: "ACTIVE" } });
+  const employees = (await prisma.employee.findMany({ where: { status: "ACTIVE" } })).filter(
+    (emp) => !isUnpaidIntern(emp)
+  );
   const entryRows = await Promise.all(
     employees.map(async (emp) => {
       const payBasis = payBasisFor(emp.employmentType, emp.payRateType);

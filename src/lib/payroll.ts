@@ -175,6 +175,16 @@ export function rateFor(payBasis: string, salary: number, payRate: number): numb
   return payBasis === "SALARY" ? salary : payRate;
 }
 
+/** An intern with no monthly salary and no hourly rate. They can still get
+ *  an onboarding contract. Payroll runs leave them out. */
+export function isUnpaidIntern(input: {
+  employmentType: string | null;
+  salary: number;
+  payRate: number;
+}): boolean {
+  return input.employmentType === "INTERN" && !(input.salary > 0) && !(input.payRate > 0);
+}
+
 /**
  * Freelancers are typically contractors-for-service rather than employees
  * in the MPF sense — a genuinely self-employed person enrols themselves in

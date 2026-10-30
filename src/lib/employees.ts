@@ -6,6 +6,7 @@
 // /leave/{token} self-service link.
 // -----------------------------------------------------------------------------
 
+import { isUnpaidIntern } from "@/lib/payroll";
 import { isValidEmail } from "@/lib/settings";
 
 // ONBOARDING is a system-managed transitional state: an invited employee
@@ -683,9 +684,8 @@ export function getContractPrerequisiteIssues(employee: ContractPrerequisiteInpu
   }
   // Part time/Freelance are paid a rate (hour/day/project fee) instead of a
   // monthly salary, so the "pay is set" check branches on employmentType
-  // rather than always requiring `salary`. Intern is the one type that can
-  // legitimately go either way (see PAY_RATE_TYPES_BY_EMPLOYMENT_TYPE above)
-  // — accept whichever one is actually filled in.
+  // rather than always requiring `salary`. An intern may be unpaid, on a
+  // monthly stipend, or hourly. Unpaid needs no amount.
   const requiresPayRate =
     employee.employmentType === "PART_TIME" || employee.employmentType === "FREELANCE";
   const hasValidPayRate = !!employee.payRateType && !!employee.payRate && employee.payRate > 0;
@@ -695,7 +695,9 @@ export function getContractPrerequisiteIssues(employee: ContractPrerequisiteInpu
       issues.push("Pay rate");
     }
   } else if (employee.employmentType === "INTERN") {
-    if (!hasValidPayRate && !hasValidSalary) {
+    // Zero pay is a real unpaid internship, not a missing number. An hourly
+    // intern still needs a rate above zero.
+    if (employee.payRateType && !hasValidPayRate) {
       issues.push("Salary or pay rate");
     }
   } else if (!hasValidSalary) {
@@ -743,8 +745,10 @@ export function getManualOnboardingCompletionIssues(employee: ManualOnboardingCo
   if (!employee.hkid?.trim()) issues.push("HKID");
   if (!employee.address?.trim()) issues.push("Address");
   if (!employee.birthday) issues.push("Date of birth");
-  if (!employee.bankName?.trim()) issues.push("Bank name");
-  if (!employee.bankAccount?.trim()) issues.push("Bank account number");
+  if (!isUnpaidIntern(employee)) {
+    if (!employee.bankName?.trim()) issues.push("Bank name");
+    if (!employee.bankAccount?.trim()) issues.push("Bank account number");
+  }
   issues.push(...getContractPrerequisiteIssues({ ...employee, onboardingCompletedAt: new Date() }));
   return issues;
 }

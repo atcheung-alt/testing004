@@ -123,7 +123,12 @@ export default function EmployeeForm({
   // so a stale value never quietly rides along to the wrong pay structure.
   const allowedPayRateTypes = employmentType ? PAY_RATE_TYPES_BY_EMPLOYMENT_TYPE[employmentType] : undefined;
   const isIntern = employmentType === "INTERN";
-  const usesPayRate = !!allowedPayRateTypes && (!isIntern || payRateType === "HOURLY");
+  const [internPayMode, setInternPayMode] = useState<"UNPAID" | "SALARY" | "HOURLY">(() => {
+    if (employee?.payRateType === "HOURLY") return "HOURLY";
+    if (employee?.employmentType === "INTERN" && !(employee.salary > 0)) return "UNPAID";
+    return "SALARY";
+  });
+  const usesPayRate = !!allowedPayRateTypes && (!isIntern || internPayMode === "HOURLY");
   // Only Full time accrues annual leave — see hasAnnualLeaveEntitlement in
   // src/lib/employees.ts (Intern/Part time/Freelance are all explicitly not
   // entitled to it).
@@ -140,19 +145,33 @@ export default function EmployeeForm({
     }
     // Zero it out immediately rather than leaving a stale number on screen
     // that the server is just going to drop anyway.
+    if (value === "INTERN") {
+      const mode = payRateType === "HOURLY" ? "HOURLY" : salary > 0 ? "SALARY" : "UNPAID";
+      setInternPayMode(mode);
+      if (mode === "UNPAID") {
+        setPayRateType("");
+        setSalary(0);
+        setPayRate(0);
+      }
+    }
     if (!hasAnnualLeaveEntitlement(value || null)) {
       setAnnualLeaveDays(0);
     }
   }
 
-  // Intern-only: toggle between the two pay structures ("" = flat monthly
-  // salary, "HOURLY" = hourly rate). Zeroes out whichever field no longer
-  // applies, same reasoning as handleEmploymentTypeChange above.
+  // Intern-only: unpaid, a flat monthly salary, or an hourly rate.
   function handleInternPayTypeChange(value: string) {
-    setPayRateType(value);
-    if (value === "HOURLY") {
+    const mode = value === "HOURLY" ? "HOURLY" : value === "UNPAID" ? "UNPAID" : "SALARY";
+    setInternPayMode(mode);
+    if (mode === "HOURLY") {
+      setPayRateType("HOURLY");
       setSalary(0);
+    } else if (mode === "UNPAID") {
+      setPayRateType("");
+      setSalary(0);
+      setPayRate(0);
     } else {
+      setPayRateType("");
       setPayRate(0);
     }
   }
@@ -388,24 +407,32 @@ export default function EmployeeForm({
                 <label className="label">{t("Pay type")}</label>
                 <select
                   className="input"
-                  value={payRateType === "HOURLY" ? "HOURLY" : ""}
+                  value={internPayMode}
                   onChange={(e) => handleInternPayTypeChange(e.target.value)}
                 >
-                  <option value="">{t("Monthly salary")}</option>
+                  <option value="UNPAID">{t("Unpaid internship")}</option>
+                  <option value="SALARY">{t("Monthly salary")}</option>
                   <option value="HOURLY">{t("Hourly rate")}</option>
                 </select>
+                {internPayMode === "UNPAID" && (
+                  <p className="mt-1 text-xs text-ink-faint">
+                    {t("This internship is unpaid. It stays off the payroll run.")}
+                  </p>
+                )}
               </div>
+              {internPayMode !== "UNPAID" && (
               <div>
-                <label className="label">{payRateType === "HOURLY" ? t("Hourly rate") : t("Salary (monthly)")}</label>
+                <label className="label">{internPayMode === "HOURLY" ? t("Hourly rate") : t("Salary (monthly)")}</label>
                 <CurrencyInput
                   className="input"
-                  value={payRateType === "HOURLY" ? payRate : salary}
+                  value={internPayMode === "HOURLY" ? payRate : salary}
                   onChange={(value) => {
-                    if (payRateType === "HOURLY") setPayRate(value);
+                    if (internPayMode === "HOURLY") setPayRate(value);
                     else setSalary(value);
                   }}
                 />
               </div>
+              )}
             </>
           ) : usesPayRate ? (
             <>
