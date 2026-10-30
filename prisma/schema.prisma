@@ -979,10 +979,12 @@ model PayrollEntry {
   // bonus as ordinary wages for MPF purposes is a call HR Plus should make
   // deliberately per bonus, not one this app should bake in silently.
   bonus          Float      @default(0)
-  // Whether Mandatory Provident Fund applies to this entry — defaults per
-  // employment type (see defaultMpfApplicable in src/lib/payroll.ts) but
-  // editable per entry, since MPF eligibility ultimately depends on
-  // specifics (age, contract type) this app doesn't otherwise track.
+  // Whether the employee MPF deduction applies this month. Defaults off for
+  // freelance and intern, and off during the MPFA employee contribution
+  // holiday (first 30 days plus the rest of that month). On after that.
+  // Staff can still change the tick. Employer MPF is counted from day 1
+  // for an ordinary employee even while this tick is off for the holiday
+  // (see computeEntryTotals in src/lib/payroll.ts).
   mpfApplicable  Boolean    @default(true)
   employeeMpf    Float      @default(0)
   employerMpf    Float      @default(0)
@@ -992,6 +994,9 @@ model PayrollEntry {
   // Set the first time this entry's payslip is emailed — shown in the run
   // detail table so staff can see at a glance who's still owed a payslip.
   payslipSentAt  DateTime?
+  // Set when staff tick Paid after the money is sent. Separate from the
+  // payslip email above. Null means this person is still to pay.
+  paidAt         DateTime?
 
   // Google Drive — set once the run is finalized (see syncPayrollRunToDrive
   // in src/lib/driveSync.ts), which uploads this entry's payslip PDF into

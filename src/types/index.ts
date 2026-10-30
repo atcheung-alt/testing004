@@ -268,6 +268,9 @@ export type PayrollEntry = {
   employeeId: string;
   employeeName: string;
   employeeTitle: string;
+  preferredName?: string | null;
+  nickname?: string | null;
+  nameChinese?: string | null;
   employeeEmail?: string | null;
   employmentType?: EmploymentType | null;
   payBasis: PayBasis;
@@ -284,6 +287,7 @@ export type PayrollEntry = {
   netPay: number;
   notes?: string | null;
   payslipSentAt?: string | null;
+  paidAt?: string | null;
   driveFileId?: string | null;
   driveFileUrl?: string | null;
   createdAt: string;

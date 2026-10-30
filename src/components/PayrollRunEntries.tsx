@@ -45,6 +45,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Could not save that change.");
       setEntries((prev) => prev.map((e) => (e.id === entryId ? { ...e, ...data } : e)));
+      if ("paid" in patch) router.refresh();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -101,6 +102,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
               <th className="px-4 py-3">{t("Employee MPF")}</th>
               <th className="px-4 py-3">{t("Net pay")}</th>
               <th className="px-4 py-3">{t("Payslip")}</th>
+              <th className="px-4 py-3">{t("Paid")}</th>
             </tr>
           </thead>
           <tbody>
@@ -115,9 +117,14 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                 language,
               });
               return (
-                <tr key={entry.id} className="border-b border-line last:border-0 align-top">
+                <tr id={`payroll-${entry.id}`} key={entry.id} className="border-b border-line last:border-0 align-top">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-ink">{entry.employeeName}</p>
+                    <p className="font-medium text-ink">
+                      {entry.employeeName}
+                      {entry.preferredName ? ` (${entry.preferredName})` : ""}
+                      {entry.nameChinese ? ` ${entry.nameChinese}` : ""}
+                      {entry.nickname ? <span className="font-normal text-ink-muted"> · {entry.nickname}</span> : null}
+                    </p>
                     <p className="text-xs text-ink-muted">{entry.employeeTitle}</p>
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{t(PAY_BASIS_LABELS[entry.payBasis] || entry.payBasis)}</td>
@@ -225,6 +232,15 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                       )}
                     </div>
                   </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(entry.paidAt)}
+                      onChange={(e) => patchEntry(entry.id, { paid: e.target.checked })}
+                      className="w-4 h-4"
+                      aria-label={t("Paid")}
+                    />
+                  </td>
                 </tr>
               );
             })}
@@ -239,6 +255,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
               <td className="px-4 py-3" />
               <td className="px-4 py-3 font-mono">{formatCurrency(totals.employeeMpf)}</td>
               <td className="px-4 py-3 font-mono">{formatCurrency(totals.net)}</td>
+              <td className="px-4 py-3" />
               <td className="px-4 py-3" />
             </tr>
           </tfoot>

@@ -687,6 +687,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Percent of commission": "佔佣金百分比",
   "Enter the total commission.": "請輸入佣金總額。",
   "Choose a colleague": "選擇同事",
+  "Search colleague": "搜尋同事",
+  "No matching colleague": "沒有相符的同事",
   "Made by": "編製人",
   "e.g. AT": "例如 AT",
   "Exact amount": "確實金額",

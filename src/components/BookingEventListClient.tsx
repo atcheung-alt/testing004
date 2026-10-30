@@ -72,13 +72,13 @@ export default function BookingEventListClient({ events }: { events: BookingEven
                 className="event-ticket flex items-center gap-3 border-b border-line px-4 py-3 no-underline last:border-b-0 hover:bg-paper sm:px-5"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-art text-base font-semibold tracking-wide text-ink">{event.name}</span>
-                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 font-art text-sm text-ink">
+                  <span className="block truncate font-sans text-base font-semibold text-ink">{event.name}</span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-ink">
                     <span>{dateRangeLabel(event.startDate, event.endDate)}</span>
                     {event.description ? <span className="truncate">{event.description}</span> : null}
                   </span>
                 </span>
-                <span className={clsx("stamp shrink-0", event.active ? "border-brand-500 text-brand-600" : "border-line text-ink-muted")}>
+                <span className={clsx("stamp shrink-0", event.active ? "border-brand-500 text-brand-600" : "border-line bg-paper text-ink")}>
                   {event.active ? t("Active") : t("Inactive")}
                 </span>
               </Link>

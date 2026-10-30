@@ -38,9 +38,9 @@ export const PAY_BASIS_UNIT_LABELS: Record<string, string> = {
 // now. This is a mechanical implementation of the standard statutory
 // formula for a typical monthly-paid employee — not a substitute for
 // professional payroll/tax advice, and it doesn't account for every
-// exemption (under-18/over-65, domestic helpers, the first-30-days employee
-// contribution holiday for new hires, etc.) — the per-entry "MPF applicable"
-// toggle exists precisely so staff can override it case by case.
+// exemption (under-18/over-65, domestic helpers, and so on). The employee
+// contribution holiday is the default tick for a new run (see
+// employeeMpfOnHoliday). Staff can still change that tick on the row.
 // -----------------------------------------------------------------------------
 export const MPF_MIN_RELEVANT_INCOME = 7100;
 export const MPF_MAX_RELEVANT_INCOME = 30000;
@@ -66,6 +66,50 @@ export function computeMpf(
   return { employeeMpf, employerMpf };
 }
 
+const HK_SHIFT_MS = 8 * 60 * 60 * 1000;
+
+function hkYmd(date: Date): { y: number; m: number; d: number } {
+  const shifted = new Date(date.getTime() + HK_SHIFT_MS);
+  return {
+    y: shifted.getUTCFullYear(),
+    m: shifted.getUTCMonth() + 1,
+    d: shifted.getUTCDate(),
+  };
+}
+
+function ymdNumber(y: number, m: number, d: number): number {
+  return y * 10000 + m * 100 + d;
+}
+
+function addCalendarDays(y: number, m: number, d: number, days: number): { y: number; m: number; d: number } {
+  const next = new Date(Date.UTC(y, m - 1, d + days));
+  return { y: next.getUTCFullYear(), m: next.getUTCMonth() + 1, d: next.getUTCDate() };
+}
+
+function endOfMonth(y: number, m: number): { y: number; m: number; d: number } {
+  const last = new Date(Date.UTC(y, m, 0));
+  return { y: last.getUTCFullYear(), m: last.getUTCMonth() + 1, d: last.getUTCDate() };
+}
+
+/**
+ * Employee MPF holiday for one payroll month (MPFA).
+ * No employee deduction for the first 30 days of employment, or for the
+ * rest of the calendar month that contains the 30th day. The next month
+ * is the first month with an employee deduction. Employer MPF is not on
+ * this holiday — it is counted from the first day.
+ * Example: onboard 8 Oct 2026 → 30th day is 6 Nov → holiday through
+ * November → employee MPF starts December.
+ */
+export function employeeMpfOnHoliday(startDate: Date | null, period: string): boolean {
+  if (!startDate || !isValidPeriod(period)) return false;
+  const start = hkYmd(startDate);
+  const day30 = addCalendarDays(start.y, start.m, start.d, 29);
+  const holidayEnd = endOfMonth(day30.y, day30.m);
+  const [year, month] = period.split("-").map(Number);
+  const periodEnd = endOfMonth(year, month);
+  return ymdNumber(periodEnd.y, periodEnd.m, periodEnd.d) <= ymdNumber(holidayEnd.y, holidayEnd.m, holidayEnd.d);
+}
+
 /** Gross pay for one entry, given its pay basis/rate/units worked. */
 export function computeGrossPay(payBasis: string, rate: number, unitsWorked: number): number {
   if (payBasis === "DAILY" || payBasis === "HOURLY") {
@@ -87,9 +131,25 @@ export function computeEntryTotals(input: {
   // the schema comment on PayrollEntry.bonus) — computeMpf still runs off
   // grossPay alone.
   bonus?: number;
+  // Used only to keep employer MPF on during the employee holiday when the
+  // tick is off. Missing values keep the old "tick controls both sides".
+  employmentType?: string | null;
+  startDate?: Date | null;
+  period?: string | null;
 }): { grossPay: number; employeeMpf: number; employerMpf: number; netPay: number } {
   const grossPay = computeGrossPay(input.payBasis, input.rate, input.unitsWorked);
-  const { employeeMpf, employerMpf } = computeMpf(grossPay, input.mpfApplicable);
+  const holiday =
+    input.startDate && input.period ? employeeMpfOnHoliday(input.startDate, input.period) : false;
+  const eligible =
+    input.employmentType != null
+      ? input.employmentType !== "FREELANCE" && input.employmentType !== "INTERN"
+      : false;
+  // The tick is the employee deduction. Staff can turn it on during the
+  // holiday or off after it. Employer 5% still runs from day 1 for an
+  // ordinary employee while that holiday is the reason the tick is off.
+  const employerOn = input.mpfApplicable || (eligible && holiday);
+  const employeeMpf = computeMpf(grossPay, input.mpfApplicable).employeeMpf;
+  const employerMpf = computeMpf(grossPay, employerOn).employerMpf;
   const bonus = round2(input.bonus || 0);
   return { grossPay, employeeMpf, employerMpf, netPay: round2(grossPay + bonus - employeeMpf) };
 }
@@ -123,12 +183,20 @@ export function rateFor(payBasis: string, salary: number, payRate: number): numb
  * internships run under the 60-day casual-employee exemption (or close to
  * it) before MPF enrolment would even apply, so defaulting to "on" would be
  * wrong far more often than not. Full time/Part time are ordinary ongoing
- * employees and default to MPF applying. Always just a starting point —
- * editable per entry (e.g. a long-term intern/freelancer the company treats
- * as a de facto employee for MPF purposes).
+ * employees and default to MPF applying, except during the employee
+ * contribution holiday (see employeeMpfOnHoliday). Always just a starting
+ * point — editable per entry (e.g. a long-term intern/freelancer the
+ * company treats as a de facto employee for MPF purposes, or a holiday
+ * month where staff still want the employee deduction).
  */
-export function defaultMpfApplicable(employmentType: string | null): boolean {
-  return employmentType !== "FREELANCE" && employmentType !== "INTERN";
+export function defaultMpfApplicable(
+  employmentType: string | null,
+  startDate?: Date | null,
+  period?: string | null
+): boolean {
+  if (employmentType === "FREELANCE" || employmentType === "INTERN") return false;
+  if (startDate && period && employeeMpfOnHoliday(startDate, period)) return false;
+  return true;
 }
 
 // -----------------------------------------------------------------------------

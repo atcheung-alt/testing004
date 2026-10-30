@@ -7,10 +7,12 @@ export default function PayrollCompanyFilter({
   runId,
   companies,
   selected,
+  query = "",
 }: {
   runId: string;
   companies: { id: string; name: string }[];
   selected: string;
+  query?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function PayrollCompanyFilter({
       onChange={(event) => {
         const params = new URLSearchParams();
         if (event.target.value) params.set("company", event.target.value);
+        if (query) params.set("q", query);
         router.push(`/hr/payroll/${runId}${params.toString() ? `?${params}` : ""}`);
       }}
     >

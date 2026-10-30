@@ -285,7 +285,7 @@ export function PayslipPdf({ data }: { data: PayslipPdfData }) {
 
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>{t.deductions}</Text>
-          {data.mpfApplicable ? (
+          {data.mpfApplicable || data.employerMpf > 0 ? (
             <View style={styles.lineRowFirst}>
               <Text style={styles.lineLabel}>{t.employeeMpf}</Text>
               <Text style={styles.lineValue}>{currency(data.employeeMpf)}</Text>
@@ -307,7 +307,7 @@ export function PayslipPdf({ data }: { data: PayslipPdfData }) {
           <Text style={styles.netPayValue}>{currency(data.netPay)}</Text>
         </View>
 
-        {data.mpfApplicable && (
+        {(data.mpfApplicable || data.employerMpf > 0) && (
           <Text style={styles.employerNote}>
             {t.employerNote(currency(data.employerMpf))}
           </Text>

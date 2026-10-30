@@ -23,6 +23,10 @@ export async function PATCH(
 
   const entry = await prisma.payrollEntry.findUnique({
     where: { id: params.entryId },
+    include: {
+      run: { select: { period: true } },
+      employee: { select: { startDate: true } },
+    },
   });
   if (!entry || entry.runId !== params.id) {
     return NextResponse.json({ error: "Payroll entry not found." }, { status: 404 });
@@ -50,12 +54,22 @@ export async function PATCH(
     );
   }
   const bonus = body.bonus !== undefined ? Math.max(0, Number(body.bonus) || 0) : entry.bonus;
+  const paidAt = typeof body.paid === "boolean" ? (body.paid ? new Date() : null) : entry.paidAt;
 
-  const totals = computeEntryTotals({ payBasis: entry.payBasis, rate, unitsWorked, mpfApplicable, bonus });
+  const totals = computeEntryTotals({
+    payBasis: entry.payBasis,
+    rate,
+    unitsWorked,
+    mpfApplicable,
+    bonus,
+    employmentType: entry.employmentType,
+    startDate: entry.employee?.startDate ?? null,
+    period: entry.run.period,
+  });
 
   const updated = await prisma.payrollEntry.update({
     where: { id: entry.id },
-    data: { unitsWorked, mpfApplicable, notes, rate, bonus, ...totals },
+    data: { unitsWorked, mpfApplicable, notes, rate, bonus, paidAt, ...totals },
   });
 
   return NextResponse.json(updated);

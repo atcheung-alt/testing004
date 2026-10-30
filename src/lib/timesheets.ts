@@ -218,12 +218,19 @@ async function applyApprovedUnits(sheet: WorkSheet): Promise<void> {
   const entry = run.entries.find((item) => item.employeeId === sheet.employeeId);
   if (!entry || (entry.payBasis !== "DAILY" && entry.payBasis !== "HOURLY")) return;
   const unitsWorked = unitsFromSlots(entry.payBasis, sheet.slots);
+  const employee = await prisma.employee.findUnique({
+    where: { id: entry.employeeId },
+    select: { startDate: true },
+  });
   const totals = computeEntryTotals({
     payBasis: entry.payBasis,
     rate: entry.rate,
     unitsWorked,
     mpfApplicable: entry.mpfApplicable,
     bonus: entry.bonus,
+    employmentType: entry.employmentType,
+    startDate: employee?.startDate ?? null,
+    period: run.period,
   });
   await prisma.payrollEntry.update({
     where: { id: entry.id },

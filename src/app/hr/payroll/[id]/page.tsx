@@ -14,6 +14,7 @@ import { findClientBill, readClientTerms, serviceFeeFor, termFor } from "@/lib/c
 import { formatCurrency } from "@/lib/calculations";
 import ClientInvoiceButton from "@/components/ClientInvoiceButton";
 import PayrollCompanyFilter from "@/components/PayrollCompanyFilter";
+import SearchBox from "@/components/SearchBox";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function PayrollRunPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { company?: string };
+  searchParams: { company?: string; q?: string };
 }) {
   const t = getT();
   await requireAdminPage();
@@ -32,7 +33,17 @@ export default async function PayrollRunPage({
     include: {
       entries: {
         orderBy: { employeeName: "asc" },
-        include: { employee: { select: { companyId: true, company: { select: { id: true, name: true } } } } },
+        include: {
+          employee: {
+            select: {
+              companyId: true,
+              preferredName: true,
+              nickname: true,
+              nameChinese: true,
+              company: { select: { id: true, name: true } },
+            },
+          },
+        },
       },
     },
   });
@@ -83,9 +94,20 @@ export default async function PayrollRunPage({
   const companies = clientBills.map((bill) => ({ id: bill.companyId, name: bill.name }));
   const selected = companies.find((company) => company.id === searchParams.company) || null;
   const shownBills = selected ? clientBills.filter((bill) => bill.companyId === selected.id) : clientBills;
-  const visibleEntries = selected
+  const companyEntries = selected
     ? run.entries.filter((entry) => entry.employee.companyId === selected.id)
     : run.entries;
+  const unpaid = companyEntries.filter((entry) => !entry.paidAt);
+  const q = (searchParams.q || "").trim().toLowerCase();
+  const visibleEntries = q
+    ? companyEntries.filter((entry) =>
+        [entry.employeeName, entry.employeeTitle, entry.employee.preferredName, entry.employee.nickname, entry.employee.nameChinese]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+    : companyEntries;
   const exportParams = new URLSearchParams();
   if (selected) exportParams.set("company", selected.id);
   const exportHref = `/api/payroll/${run.id}/export${exportParams.toString() ? `?${exportParams}` : ""}`;
@@ -94,9 +116,13 @@ export default async function PayrollRunPage({
   );
   const serialized = visibleEntries.map((entry) => ({
     ...entry,
+    preferredName: entry.employee.preferredName,
+    nickname: entry.employee.nickname,
+    nameChinese: entry.employee.nameChinese,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
     payslipSentAt: entry.payslipSentAt ? entry.payslipSentAt.toISOString() : null,
+    paidAt: entry.paidAt ? entry.paidAt.toISOString() : null,
   }));
   const sections = [
     {
@@ -159,9 +185,38 @@ export default async function PayrollRunPage({
             : t("{count} Employees", { count: visibleEntries.length })}
           {selected ? ` · ${selected.name}` : ""}
         </p>
+        {companyEntries.length > 0 ? (
+          <p className="text-sm text-ink-muted mt-1">
+            {unpaid.length === 0 ? (
+              t("Everyone is paid.")
+            ) : (
+              <>
+                {t("{count} still to pay", { count: unpaid.length })}
+                {": "}
+                {unpaid.map((entry, index) => (
+                  <span key={entry.id}>
+                    {index > 0 ? ", " : ""}
+                    <a
+                      href={`/hr/payroll/${run.id}${selected ? `?company=${selected.id}` : ""}#payroll-${entry.id}`}
+                      className="text-ink hover:text-brand-600"
+                    >
+                      {entry.employee.preferredName || entry.employee.nickname || entry.employeeName}
+                    </a>
+                  </span>
+                ))}
+              </>
+            )}
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-center gap-2 mt-3">
+          <SearchBox placeholder="Search by name or nickname" />
           {companies.length > 0 ? (
-            <PayrollCompanyFilter runId={run.id} companies={companies} selected={selected?.id || ""} />
+            <PayrollCompanyFilter
+              runId={run.id}
+              companies={companies}
+              selected={selected?.id || ""}
+              query={searchParams.q || ""}
+            />
           ) : null}
           <a href={exportHref} className="btn-secondary">
             <Download size={15} /> {t("Export CSV")}
@@ -205,6 +260,10 @@ export default async function PayrollRunPage({
         </section>
       )}
 
+      {q && visibleEntries.length === 0 ? (
+        <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
+      ) : null}
+
       {sections.map((section) => {
         const entries = serialized.filter((entry) => bucket(entry) === section.key);
         if (entries.length === 0) return null;
@@ -215,6 +274,7 @@ export default async function PayrollRunPage({
               <p className="text-sm text-ink-muted">{t(section.note)}</p>
             </div>
             <PayrollRunEntries
+              key={`${section.key}-${q}`}
               runId={run.id}
               entries={entries as any}
               periodLabel={label}

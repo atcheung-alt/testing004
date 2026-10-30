@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
@@ -25,6 +25,93 @@ function initials(name: string) {
   return `${parts[0][0] || ""}${parts[1][0] || ""}`.toUpperCase();
 }
 
+function colleagueMatches(person: StaffColleague, needle: string) {
+  if (!needle) return true;
+  return [person.nickname, person.name, person.code].join(" ").toLowerCase().includes(needle);
+}
+
+function ColleaguePicker({
+  share,
+  colleagues,
+  open,
+  query,
+  pickerRef,
+  onQueryChange,
+  onToggle,
+  onChoose,
+  labelFor,
+}: {
+  share: ColleagueShare;
+  colleagues: StaffColleague[];
+  open: boolean;
+  query: string;
+  pickerRef?: RefObject<HTMLDivElement>;
+  onQueryChange: (value: string) => void;
+  onToggle: () => void;
+  onChoose: (code: string) => void;
+  labelFor: (code: string) => string;
+}) {
+  const t = useT();
+  const needle = query.trim().toLowerCase();
+  const options = colleagues.filter((person) => colleagueMatches(person, needle));
+  const storedOutsideList =
+    share.colleagueName && !colleagues.some((person) => person.code === share.colleagueName) ? share.colleagueName : "";
+  const showStored = Boolean(storedOutsideList) && (!needle || storedOutsideList.toLowerCase().includes(needle));
+  const chosen = share.colleagueName ? labelFor(share.colleagueName) : "";
+
+  return (
+    <div className="relative min-w-[9rem] flex-1" ref={pickerRef}>
+      <button
+        type="button"
+        className="input flex w-full items-center justify-between gap-2 py-1.5 text-left"
+        aria-label={t("Colleague")}
+        aria-expanded={open}
+        onClick={onToggle}
+      >
+        <span className={chosen ? "truncate" : "truncate text-ink-faint"}>{chosen || t("Choose a colleague")}</span>
+        <ChevronDown size={14} className="shrink-0 text-ink-muted" />
+      </button>
+      {open ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 min-w-[220px] rounded-xl border border-line bg-surface p-1.5 shadow-card">
+          <input
+            className="input py-1.5"
+            type="search"
+            autoFocus
+            placeholder={t("Search colleague")}
+            aria-label={t("Search colleague")}
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+          />
+          <div className="mt-1 max-h-56 overflow-auto">
+            {showStored ? (
+              <button
+                type="button"
+                className="block w-full rounded-lg bg-paper px-2 py-1.5 text-left text-sm text-ink"
+                onClick={() => onChoose(storedOutsideList)}
+              >
+                {storedOutsideList}
+              </button>
+            ) : null}
+            {options.map((person) => (
+              <button
+                key={person.code}
+                type="button"
+                className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-paper ${person.code === share.colleagueName ? "bg-paper" : ""}`}
+                onClick={() => onChoose(person.code)}
+              >
+                {labelFor(person.code)}
+              </button>
+            ))}
+            {options.length === 0 && !showStored ? (
+              <p className="px-2 py-2 text-sm text-ink-muted">{t("No matching colleague")}</p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function ColleagueShareFields({
   creatorName,
   commissionTotal,
@@ -43,6 +130,29 @@ export default function ColleagueShareFields({
   children?: ReactNode;
 }) {
   const t = useT();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!openId) return;
+    function onPointer(event: MouseEvent) {
+      if (pickerRef.current?.contains(event.target as Node)) return;
+      setOpenId(null);
+      setQuery("");
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpenId(null);
+      setQuery("");
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [openId]);
 
   function updateShare(index: number, patch: Partial<ColleagueShare>) {
     onSharesChange(shares.map((share, i) => (i === index ? { ...share, ...patch } : share)));
@@ -71,7 +181,7 @@ export default function ColleagueShareFields({
   const scale = over ? Math.max(percentTotal, 0.1) : 100;
 
   return (
-    <details className="card group" open>
+    <details className="card group overflow-visible" open>
       <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
         <span className="text-[15px] font-semibold text-ink">{t("Commission")}</span>
         <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(commissionTotal)}</span>
@@ -142,25 +252,24 @@ export default function ColleagueShareFields({
               >
                 {initials(name) || "–"}
               </span>
-              <select
-                className="input min-w-[9rem] flex-1 py-1.5"
-                value={share.colleagueName}
-                onChange={(e) => updateShare(index, { colleagueName: e.target.value })}
-                aria-label={t("Colleague")}
-              >
-                <option value="">{t("Choose a colleague")}</option>
-                {colleagues.map((person) => {
-                  const sharedNickname = colleagues.filter((other) => other.nickname === person.nickname).length > 1;
-                  return (
-                    <option key={person.code} value={person.code}>
-                      {sharedNickname ? `${person.nickname} · ${person.code}` : person.nickname}
-                    </option>
-                  );
-                })}
-                {share.colleagueName && !colleagues.some((person) => person.code === share.colleagueName) && (
-                  <option value={share.colleagueName}>{share.colleagueName}</option>
-                )}
-              </select>
+              <ColleaguePicker
+                share={share}
+                colleagues={colleagues}
+                open={openId === share.id}
+                query={openId === share.id ? query : ""}
+                pickerRef={openId === share.id ? pickerRef : undefined}
+                onQueryChange={setQuery}
+                onToggle={() => {
+                  setOpenId((current) => (current === share.id ? null : share.id));
+                  setQuery("");
+                }}
+                onChoose={(code) => {
+                  updateShare(index, { colleagueName: code });
+                  setOpenId(null);
+                  setQuery("");
+                }}
+                labelFor={personLabel}
+              />
               <span className="min-w-[5.5rem] text-right text-sm tabular-nums text-ink-muted">{formatCurrency(amount)}</span>
               <label className="flex items-center gap-1 rounded-lg border border-line bg-surface px-2 py-1.5">
                 <input

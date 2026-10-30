@@ -76,8 +76,16 @@ export async function POST(request: NextRequest) {
       const rate = rateFor(payBasis, emp.salary, emp.payRate);
       const approved = await approvedUnitsFor(emp.id, period, payBasis);
       const unitsWorked = approved === null ? defaultUnitsWorked(payBasis, period) : approved;
-      const mpfApplicable = defaultMpfApplicable(emp.employmentType);
-      const totals = computeEntryTotals({ payBasis, rate, unitsWorked, mpfApplicable });
+      const mpfApplicable = defaultMpfApplicable(emp.employmentType, emp.startDate, period);
+      const totals = computeEntryTotals({
+        payBasis,
+        rate,
+        unitsWorked,
+        mpfApplicable,
+        employmentType: emp.employmentType,
+        startDate: emp.startDate,
+        period,
+      });
       return {
         employeeId: emp.id,
         employeeName: emp.name,
