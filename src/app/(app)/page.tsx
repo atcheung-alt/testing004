@@ -3,13 +3,14 @@ import { FileText, ReceiptText, Wallet, AlertTriangle, ArrowRight, TrendingUp } 
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
-import { getMonthDashboard } from "@/lib/finance";
+import { getMonthDashboard, getTrendMonths } from "@/lib/finance";
 import StatCard from "@/components/StatCard";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import PageBar from "@/components/PageBar";
 import DashboardMonthSelect from "@/components/DashboardMonthSelect";
+import DashboardTrend from "@/components/DashboardTrend";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 
@@ -50,13 +51,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const quotationWhere = quotationFilter || undefined;
   const invoiceWhere = invoiceFilter || undefined;
   const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
-  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, expenseTotal, recentExpenses] =
+  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, trendMonths, expenseTotal, recentExpenses] =
     await Promise.all([
       prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
       prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
       prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
       getMonthDashboard(chosen.year, chosen.month, invoiceFilter || undefined),
+      getTrendMonths(invoiceFilter || undefined),
       prisma.invoiceExpense.aggregate({ _sum: { amount: true }, where: expenseWhere }),
       prisma.invoiceExpense.findMany({
         where: expenseWhere,
@@ -98,7 +100,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     },
   ];
   const monthName = `${t(MONTH_NAMES[chosen.month])} ${chosen.year}`;
-  const dayPeak = Math.max(...monthFinance.days.map((day) => Math.max(day.revenue, day.expenses)), 1);
 
   return (
     <div className="flex flex-col gap-4">
@@ -151,7 +152,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
       <div className="card p-5">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="font-display text-lg font-semibold">{t("This Month")}</h2>
+          <h2 className="font-display text-lg font-semibold">{viewingCurrent ? t("This Month") : monthName}</h2>
           <DashboardMonthSelect year={chosen.year} month={chosen.month} />
         </div>
         <div className="flex flex-col gap-4">
@@ -180,38 +181,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         </p>
       </div>
 
-      <div className="card p-5">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{monthName}</p>
-          <div className="flex gap-3.5 text-xs text-ink-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-brand-500" />
-              {t("Revenue")}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-danger-500" />
-              {t("Expenses")}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-end gap-1 h-40">
-          {monthFinance.days.map((day) => (
-            <div key={day.day} className="flex-1 min-w-0 h-full flex flex-col items-center">
-              <div className="flex-1 w-full flex items-end justify-center gap-0.5">
-                <div
-                  className="w-[42%] rounded-t-sm bg-brand-500"
-                  style={{ height: day.revenue === 0 ? 0 : `${Math.max(4, Math.round((day.revenue / dayPeak) * 100))}%` }}
-                />
-                <div
-                  className="w-[42%] rounded-t-sm bg-danger-500"
-                  style={{ height: day.expenses === 0 ? 0 : `${Math.max(4, Math.round((day.expenses / dayPeak) * 100))}%` }}
-                />
-              </div>
-              <span className="mt-1.5 text-[10px] leading-none text-ink-faint">{day.day}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <DashboardTrend months={trendMonths} year={chosen.year} month={chosen.month} />
 
       <section>
         <div className="flex items-center justify-between mb-3">

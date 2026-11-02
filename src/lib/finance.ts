@@ -403,3 +403,64 @@ export async function getMonthDashboard(
   const expenseTotal = days.reduce((sum, day) => sum + day.expenses, 0);
   return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, days };
 }
+
+export type TrendMonth = {
+  year: number;
+  month: number;
+  revenue: number;
+  expenses: number;
+  profit: number;
+};
+
+/** One point per month from the first recorded amount through the current month. */
+export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Promise<TrendMonth[]> {
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const [invoices, expenses] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { not: null, lt: end }, ...(invoiceWhere || {}) },
+      select: { total: true, paidAt: true },
+    }),
+    prisma.invoiceExpense.findMany({
+      where: {
+        createdAt: { lt: end },
+        ...(invoiceWhere ? { invoice: invoiceWhere } : {}),
+      },
+      select: { amount: true, createdAt: true },
+    }),
+  ]);
+
+  const nowKey = now.getFullYear() * 12 + now.getMonth();
+  let startKey = nowKey;
+  const earlier = (date: Date) => {
+    const key = date.getFullYear() * 12 + date.getMonth();
+    if (key < startKey) startKey = key;
+  };
+  for (const invoice of invoices) if (invoice.paidAt) earlier(invoice.paidAt);
+  for (const expense of expenses) earlier(expense.createdAt);
+
+  const months: TrendMonth[] = [];
+  for (let key = startKey; key <= nowKey; key++) {
+    months.push({
+      year: Math.floor(key / 12),
+      month: key % 12,
+      revenue: 0,
+      expenses: 0,
+      profit: 0,
+    });
+  }
+  const index = new Map(months.map((row, i) => [row.year * 12 + row.month, i]));
+  for (const invoice of invoices) {
+    if (!invoice.paidAt) continue;
+    const at = index.get(invoice.paidAt.getFullYear() * 12 + invoice.paidAt.getMonth());
+    if (at === undefined) continue;
+    months[at].revenue += invoice.total;
+  }
+  for (const expense of expenses) {
+    const at = index.get(expense.createdAt.getFullYear() * 12 + expense.createdAt.getMonth());
+    if (at === undefined) continue;
+    months[at].expenses += expense.amount;
+  }
+  for (const row of months) row.profit = row.revenue - row.expenses;
+  return months;
+}
