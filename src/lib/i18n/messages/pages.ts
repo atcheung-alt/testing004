@@ -17,6 +17,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "按本曆月已付款發票計算，並扣除已記錄的支出。",
   "Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.":
     "收入按本曆月已付款發票計算。開支長條是本月在開支頁記錄的總額。",
+  "Revenue is invoices paid in {month}. The expenses bar is the total recorded on the Expenses page in {month}.":
+    "收入按{month}已付款發票計算。開支長條是{month}在開支頁記錄的總額。",
   Outstanding: "未收帳款",
   Overdue: "逾期",
   "Recent Quotations": "最近的報價單",

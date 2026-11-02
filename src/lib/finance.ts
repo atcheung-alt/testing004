@@ -352,3 +352,54 @@ export async function getCurrentMonthFinance(invoiceWhere?: Record<string, unkno
   const [current] = await getMonthlyFinance(1, invoiceWhere);
   return current;
 }
+
+export type MonthDay = { day: number; revenue: number; expenses: number };
+
+/**
+ * Dashboard "This Month" for one calendar month.
+ * Revenue is invoices marked paid on that day. Expenses are costs recorded
+ * on the Expenses page that day. The two are not tied to the same invoice.
+ */
+export async function getMonthDashboard(
+  year: number,
+  month: number,
+  invoiceWhere?: Record<string, unknown>
+): Promise<{ revenue: number; expenses: number; profit: number; days: MonthDay[] }> {
+  const start = new Date(year, month, 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(year, month + 1, 1);
+  const count = new Date(year, month + 1, 0).getDate();
+  const days: MonthDay[] = Array.from({ length: count }, (_, index) => ({
+    day: index + 1,
+    revenue: 0,
+    expenses: 0,
+  }));
+
+  const [invoices, expenses] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { gte: start, lt: end }, ...(invoiceWhere || {}) },
+      select: { total: true, paidAt: true },
+    }),
+    prisma.invoiceExpense.findMany({
+      where: {
+        createdAt: { gte: start, lt: end },
+        ...(invoiceWhere ? { invoice: invoiceWhere } : {}),
+      },
+      select: { amount: true, createdAt: true },
+    }),
+  ]);
+
+  for (const invoice of invoices) {
+    if (!invoice.paidAt) continue;
+    const bucket = days[invoice.paidAt.getDate() - 1];
+    if (bucket) bucket.revenue += invoice.total;
+  }
+  for (const expense of expenses) {
+    const bucket = days[expense.createdAt.getDate() - 1];
+    if (bucket) bucket.expenses += expense.amount;
+  }
+
+  const revenue = days.reduce((sum, day) => sum + day.revenue, 0);
+  const expenseTotal = days.reduce((sum, day) => sum + day.expenses, 0);
+  return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, days };
+}

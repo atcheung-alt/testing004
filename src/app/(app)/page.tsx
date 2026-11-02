@@ -3,40 +3,61 @@ import { FileText, ReceiptText, Wallet, AlertTriangle, ArrowRight, TrendingUp } 
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
-import { getCurrentMonthFinance } from "@/lib/finance";
+import { getMonthDashboard } from "@/lib/finance";
 import StatCard from "@/components/StatCard";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import PageBar from "@/components/PageBar";
+import DashboardMonthSelect from "@/components/DashboardMonthSelect";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function chosenMonth(value: string | undefined) {
+  const now = new Date();
+  const current = { year: now.getFullYear(), month: now.getMonth() };
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return current;
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7)) - 1;
+  if (month < 0 || month > 11) return current;
+  if (year < now.getFullYear() - 5 || year > now.getFullYear()) return current;
+  return { year, month };
+}
+
+export default async function DashboardPage({ searchParams }: { searchParams: { month?: string } }) {
   const t = getT();
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const nextMonth = new Date(monthStart);
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  const chosen = chosenMonth(searchParams.month);
+  const now = new Date();
+  const viewingCurrent = chosen.year === now.getFullYear() && chosen.month === now.getMonth();
   const [quotationFilter, invoiceFilter] = await Promise.all([currentQuotationFilter(), currentInvoiceFilter()]);
   const quotationWhere = quotationFilter || undefined;
   const invoiceWhere = invoiceFilter || undefined;
   const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
-  const [quotations, invoices, recentQuotations, recentInvoices, thisMonth, expenseTotal, monthExpenses, recentExpenses] =
+  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, expenseTotal, recentExpenses] =
     await Promise.all([
       prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
       prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
       prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
-      getCurrentMonthFinance(invoiceFilter || undefined),
+      getMonthDashboard(chosen.year, chosen.month, invoiceFilter || undefined),
       prisma.invoiceExpense.aggregate({ _sum: { amount: true }, where: expenseWhere }),
-      prisma.invoiceExpense.aggregate({
-        _sum: { amount: true },
-        where: { createdAt: { gte: monthStart, lt: nextMonth }, ...expenseWhere },
-      }),
       prisma.invoiceExpense.findMany({
         where: expenseWhere,
         orderBy: { createdAt: "desc" },
@@ -50,8 +71,7 @@ export default async function DashboardPage() {
     .reduce((sum, i) => sum + i.total, 0);
   const paid = invoices.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.total, 0);
   const expenseSum = expenseTotal._sum.amount || 0;
-  const monthExpenseSum = monthExpenses._sum.amount || 0;
-  const monthProfit = thisMonth.revenue - monthExpenseSum;
+  const monthProfit = monthFinance.profit;
 
   const outstanding = invoices
     .filter(
@@ -67,16 +87,18 @@ export default async function DashboardPage() {
   const overdueCount = overdueInvoices.length;
   const overdueAmount = overdueInvoices.reduce((sum, i) => sum + i.total, 0);
   const collected = invoiced > 0 ? Math.round((paid / invoiced) * 100) : 0;
-  const monthMax = Math.max(thisMonth.revenue, monthExpenseSum, Math.abs(monthProfit), 1);
+  const monthMax = Math.max(monthFinance.revenue, monthFinance.expenses, Math.abs(monthProfit), 1);
   const monthRows = [
-    { label: t("Revenue"), amount: thisMonth.revenue, color: "bg-brand-500" },
-    { label: t("Expenses"), amount: monthExpenseSum, color: "bg-danger-500" },
+    { label: t("Revenue"), amount: monthFinance.revenue, color: "bg-brand-500" },
+    { label: t("Expenses"), amount: monthFinance.expenses, color: "bg-danger-500" },
     {
       label: t("Net Profit"),
       amount: monthProfit,
       color: monthProfit < 0 ? "bg-danger-500" : "bg-accent-500",
     },
   ];
+  const monthName = `${t(MONTH_NAMES[chosen.month])} ${chosen.year}`;
+  const dayPeak = Math.max(...monthFinance.days.map((day) => Math.max(day.revenue, day.expenses)), 1);
 
   return (
     <div className="flex flex-col gap-4">
@@ -128,7 +150,10 @@ export default async function DashboardPage() {
       </div>
 
       <div className="card p-5">
-        <h2 className="font-display text-lg font-semibold mb-4">{t("This Month")}</h2>
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h2 className="font-display text-lg font-semibold">{t("This Month")}</h2>
+          <DashboardMonthSelect year={chosen.year} month={chosen.month} />
+        </div>
         <div className="flex flex-col gap-4">
           {monthRows.map((row) => {
             const width = row.amount === 0 ? "0%" : `${Math.max(8, Math.round((Math.abs(row.amount) / monthMax) * 100))}%`;
@@ -149,8 +174,43 @@ export default async function DashboardPage() {
           })}
         </div>
         <p className="text-xs text-ink-faint mt-4">
-          {t("Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.")}
+          {viewingCurrent
+            ? t("Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.")
+            : t("Revenue is invoices paid in {month}. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
         </p>
+      </div>
+
+      <div className="card p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{monthName}</p>
+          <div className="flex gap-3.5 text-xs text-ink-muted">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-brand-500" />
+              {t("Revenue")}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-danger-500" />
+              {t("Expenses")}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-end gap-1 h-40">
+          {monthFinance.days.map((day) => (
+            <div key={day.day} className="flex-1 min-w-0 h-full flex flex-col items-center">
+              <div className="flex-1 w-full flex items-end justify-center gap-0.5">
+                <div
+                  className="w-[42%] rounded-t-sm bg-brand-500"
+                  style={{ height: day.revenue === 0 ? 0 : `${Math.max(4, Math.round((day.revenue / dayPeak) * 100))}%` }}
+                />
+                <div
+                  className="w-[42%] rounded-t-sm bg-danger-500"
+                  style={{ height: day.expenses === 0 ? 0 : `${Math.max(4, Math.round((day.expenses / dayPeak) * 100))}%` }}
+                />
+              </div>
+              <span className="mt-1.5 text-[10px] leading-none text-ink-faint">{day.day}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <section>
