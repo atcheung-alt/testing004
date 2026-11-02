@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Package,
   IdCard,
+  HandCoins,
 } from "lucide-react";
 import clsx from "clsx";
 import CompanyLogo from "@/components/CompanyLogo";
@@ -60,6 +61,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
         { href: "/invoices", label: t("Invoices"), icon: ReceiptText },
         { href: "/receipts", label: t("Receipts"), icon: ReceiptIcon },
         { href: "/expenses", label: t("Expenses"), icon: Wallet },
+        { href: "/commission", label: t("Commission"), icon: HandCoins },
       ],
     },
     {
@@ -309,7 +311,7 @@ export default function Sidebar({
               if (item.href === "/quotations") return allowedPages.includes("quotations");
               if (item.href === "/invoices") return allowedPages.includes("invoices");
               if (item.href === "/receipts") return allowedPages.includes("receipts");
-              if (item.href === "/expenses") return allowedPages.includes("expenses");
+              if (item.href === "/expenses" || item.href === "/commission") return allowedPages.includes("expenses");
               if (item.href === "/recruitment" || item.href === "/recruitment/online-cv") return allowedPages.includes("recruitment");
               if (item.href === "/clients") return allowedPages.includes("clients");
               if (item.href === "/items") return allowedPages.includes("items");

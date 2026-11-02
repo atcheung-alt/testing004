@@ -13,6 +13,7 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
+import { commissionDateName } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +26,13 @@ async function InvoiceList({
   status,
   from,
   to,
+  kind,
 }: {
   q?: string;
   status?: string;
   from?: string;
   to?: string;
+  kind?: string;
 }) {
   const t = getT();
   const invoices = await prisma.invoice.findMany({
@@ -38,6 +41,7 @@ async function InvoiceList({
         status: status === "OVERDUE" ? "UNPAID" : status || undefined,
         dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
         issueDate: dateRangeFilter(from, to),
+        workKind: kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : undefined,
         OR: q
           ? [
               { customerName: { contains: q, mode: "insensitive" } },
@@ -87,8 +91,16 @@ async function InvoiceList({
                 <InvoiceStatusToggle id={inv.id} displayStatus={getInvoiceDisplayStatus(inv)} />
               </div>
               <p className="text-xs text-ink-muted truncate mt-0.5">
+                {inv.workKind === "EVENT" || inv.workKind === "RECRUITMENT" ? (
+                  <span className="stamp border-line text-ink-muted mr-1.5">
+                    {t(inv.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}
+                  </span>
+                ) : null}
                 {inv.customerName} · {t("Issued {date}", { date: formatDate(inv.issueDate) })}
                 {inv.dueDate ? ` · ${t("Due {date}", { date: formatDate(inv.dueDate) })}` : ""}
+                {inv.workKind && inv.commissionOn
+                  ? ` · ${t(commissionDateName(inv.workKind))} ${formatDate(inv.commissionOn)}`
+                  : ""}
               </p>
               {/* Always rendered (even blank) so every row reserves the same
                   vertical space regardless of item count — what keeps every
@@ -127,7 +139,7 @@ async function InvoiceList({
 export default function InvoicesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; from?: string; to?: string };
+  searchParams: { q?: string; status?: string; from?: string; to?: string; kind?: string };
 }) {
   const t = getT();
   const exportParams = new URLSearchParams();
@@ -137,18 +149,21 @@ export default function InvoicesPage({
   if (searchParams.to) exportParams.set("to", searchParams.to);
   const exportHref = `/api/invoices/export${exportParams.toString() ? `?${exportParams}` : ""}`;
 
-  function statusHref(status?: string) {
+  function listHref(next: { status?: string; kind?: string }) {
     const params = new URLSearchParams();
     if (searchParams.q) params.set("q", searchParams.q);
     if (searchParams.from) params.set("from", searchParams.from);
     if (searchParams.to) params.set("to", searchParams.to);
+    const status = next.status === undefined ? searchParams.status : next.status;
+    const kind = next.kind === undefined ? searchParams.kind : next.kind;
     if (status) params.set("status", status);
+    if (kind) params.set("kind", kind);
     return `/invoices${params.toString() ? `?${params}` : ""}`;
   }
 
   // Distinct per filter/search combo, so returning to a different view of
   // this same list doesn't restore some other view's scroll position.
-  const restoreKey = statusHref(searchParams.status);
+  const restoreKey = listHref({});
 
   return (
     <div>
@@ -176,7 +191,7 @@ export default function InvoicesPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
-            href={statusHref(undefined)}
+            href={listHref({ status: "" })}
             className={`stamp ${!searchParams.status ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
           >
             {t("All")}
@@ -184,12 +199,32 @@ export default function InvoicesPage({
           {STATUSES.map((s) => (
             <Link
               key={s}
-              href={statusHref(s)}
+              href={listHref({ status: s })}
               className={`stamp ${searchParams.status === s ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
             >
               {t(s)}
             </Link>
           ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={listHref({ kind: "" })}
+            className={`stamp ${!searchParams.kind ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
+          >
+            {t("All")}
+          </Link>
+          <Link
+            href={listHref({ kind: "event" })}
+            className={`stamp ${searchParams.kind === "event" ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
+          >
+            {t("Event")}
+          </Link>
+          <Link
+            href={listHref({ kind: "recruitment" })}
+            className={`stamp ${searchParams.kind === "recruitment" ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
+          >
+            {t("Recruitment")}
+          </Link>
         </div>
       </div>
       </StickyListHeader>
@@ -200,6 +235,7 @@ export default function InvoicesPage({
           status={searchParams.status}
           from={searchParams.from}
           to={searchParams.to}
+          kind={searchParams.kind}
         />
       </Suspense>
     </div>

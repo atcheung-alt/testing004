@@ -334,6 +334,8 @@ export type Invoice = CustomerDetails & {
   eventEndTime?: string | null;
   status: InvoiceStatus;
   paidAt?: string | null; // when the invoice actually became PAID — basis for monthly revenue
+  workKind?: string;
+  commissionOn?: string | null;
   notes?: string | null;
   terms?: string | null;
   reminder?: string | null;

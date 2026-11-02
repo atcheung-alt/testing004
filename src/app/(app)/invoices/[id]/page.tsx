@@ -32,6 +32,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
+import { commissionDateName } from "@/lib/commission";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
 export const dynamic = "force-dynamic";
@@ -165,6 +166,9 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
               · {t("Issued {date}", { date: formatDate(invoice.issueDate) })}
               {invoice.dueDate ? ` · ${t("Due {date}", { date: formatDate(invoice.dueDate) })}` : ""}
               {invoice.poNumber ? ` · ${t("PO {number}", { number: invoice.poNumber })}` : ""}
+              {invoice.workKind && invoice.commissionOn
+                ? ` · ${t(invoice.workKind === "RECRUITMENT" ? "Recruitment" : "Event")} · ${t(commissionDateName(invoice.workKind))} ${formatDate(invoice.commissionOn)}`
+                : ""}
             </p>
             {invoice.quotation && (
               <p className="text-sm text-accent-600 mt-1">

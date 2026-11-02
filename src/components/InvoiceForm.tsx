@@ -69,6 +69,13 @@ export default function InvoiceForm({
   );
   const [commissionTotal, setCommissionTotal] = useState(0);
   const [shares, setShares] = useState<ColleagueShare[]>([emptyColleagueShare(), emptyColleagueShare()]);
+  const [workKind, setWorkKind] = useState(
+    invoice?.workKind === "EVENT" || invoice?.workKind === "RECRUITMENT" ? invoice.workKind : ""
+  );
+  const [commissionOn, setCommissionOn] = useState(
+    invoice?.commissionOn ? String(invoice.commissionOn).slice(0, 10) : ""
+  );
+  const typeLocked = invoice?.workKind === "EVENT" || invoice?.workKind === "RECRUITMENT";
   const [title, setTitle] = useState(invoice?.title || "");
   const [poNumber, setPoNumber] = useState(invoice?.poNumber || "");
   const [issueDate, setIssueDate] = useState(
@@ -149,6 +156,14 @@ export default function InvoiceForm({
       setError(t("Set both an event start and end date before marking it on the Bookings calendar."));
       return;
     }
+    if (!invoice && (!workKind || !commissionOn)) {
+      setError(t("Choose Event or Recruitment, and fill in the date."));
+      return;
+    }
+    if (workKind && !commissionOn) {
+      setError(t("Fill in the date."));
+      return;
+    }
     if (!invoice) {
       const assigned = shares.reduce((sum, share) => sum + (Number(share.value) > 0 ? Number(share.value) : 0), 0);
       if (assigned > 100) {
@@ -161,6 +176,8 @@ export default function InvoiceForm({
     try {
       const payload = {
         title,
+        workKind,
+        commissionOn,
         poNumber: poNumber.trim() || null,
         ...customer,
         issueDate,
@@ -233,6 +250,52 @@ export default function InvoiceForm({
           {error}
         </div>
       )}
+
+      <div className="card p-5">
+        <h2 className="font-display text-lg font-semibold mb-4">{t("Type")}</h2>
+        {typeLocked ? (
+          <span className="stamp border-brand-500 text-brand-500">{t(workKind === "RECRUITMENT" ? "Recruitment" : "Event")}</span>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setWorkKind("EVENT")}
+              className={`rounded-xl border p-4 text-left ${workKind === "EVENT" ? "border-brand-500 bg-brand-50" : "border-line"}`}
+            >
+              <span className="block font-semibold">{t("Event")}</span>
+              <span className="block text-sm text-ink-muted mt-1">{t("A job with a recognise invoice day.")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setWorkKind("RECRUITMENT")}
+              className={`rounded-xl border p-4 text-left ${workKind === "RECRUITMENT" ? "border-brand-500 bg-brand-50" : "border-line"}`}
+            >
+              <span className="block font-semibold">{t("Recruitment")}</span>
+              <span className="block text-sm text-ink-muted mt-1">{t("A hire with a target onboarding day.")}</span>
+            </button>
+          </div>
+        )}
+        {workKind ? (
+          <div className="mt-4 max-w-xs">
+            <label className="label" htmlFor="commission-on">
+              {t(workKind === "RECRUITMENT" ? "Target onboarding day" : "Recognise invoice day")}
+            </label>
+            <input
+              id="commission-on"
+              type="date"
+              className="input"
+              required
+              value={commissionOn}
+              onChange={(e) => setCommissionOn(e.target.value)}
+            />
+            <p className="mt-1.5 text-xs text-ink-faint">
+              {invoice
+                ? t("This date decides Commission. Pending before the day. Done once the day has arrived.")
+                : t("You can change this date later.")}
+            </p>
+          </div>
+        ) : null}
+      </div>
 
       <div className="card p-5">
         <label className="label">{t("Title / subject")}</label>

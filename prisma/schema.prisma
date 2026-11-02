@@ -320,6 +320,12 @@ model Invoice {
   // to null if a PAID invoice is ever reverted to another status.
   paidAt          DateTime?
 
+  // EVENT or RECRUITMENT. Blank on invoices created before this choice.
+  workKind        String        @default("")
+  // Recognise invoice day for an event, or the target onboarding day for
+  // recruitment. Commission stays pending until this calendar day.
+  commissionOn    DateTime?
+
   // Public "view & pay" link, and the client-submitted "Mark as Paid" claim
   viewToken             String?   @unique // random token used in the public /invoice/{token} link
   paymentSubmittedAt    DateTime? // when the client clicked "Mark as Paid"

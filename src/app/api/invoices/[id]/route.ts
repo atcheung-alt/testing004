@@ -6,6 +6,7 @@ import { ensureReceiptForInvoice } from "@/lib/receipt";
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
+import { commissionFieldsFrom } from "@/lib/commission";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await invoiceVisible(params.id))) {
@@ -152,6 +153,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     );
   }
 
+  const commission = commissionFieldsFrom(body, Boolean(existing.workKind));
+  if (commission.error) {
+    return NextResponse.json({ error: commission.error }, { status: 400 });
+  }
+
   const taxRate = Number(body.taxRate) || 0;
   const discount = Number(body.discount) || 0;
   const { subtotal, taxAmount, total } = computeTotals(body.items, taxRate, discount);
@@ -164,6 +170,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       where: { id: params.id },
       data: {
         title: body.title !== undefined ? (body.title || "").trim() : undefined,
+        workKind: commission.workKind || existing.workKind,
+        commissionOn: commission.commissionOn ?? existing.commissionOn,
         poNumber: body.poNumber !== undefined ? body.poNumber?.trim() || null : undefined,
         ...customer,
         issueDate,

@@ -7,6 +7,7 @@ import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 import { commissionSplitError, commissionSplitRequested, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
+import { commissionFieldsFrom } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,10 @@ export async function POST(request: NextRequest) {
     const splitProblem = commissionSplitError(body);
     if (splitProblem) return NextResponse.json({ error: splitProblem }, { status: 400 });
   }
+  const commission = commissionFieldsFrom(body, true);
+  if (commission.error) {
+    return NextResponse.json({ error: commission.error }, { status: 400 });
+  }
 
   const taxRate = Number(body.taxRate) || 0;
   const discount = Number(body.discount) || 0;
@@ -68,6 +73,8 @@ export async function POST(request: NextRequest) {
     data: {
       number,
       title: (body.title || "").trim(),
+      workKind: commission.workKind,
+      commissionOn: commission.commissionOn,
       poNumber: body.poNumber?.trim() || null,
       ...customer,
       issueDate,

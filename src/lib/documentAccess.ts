@@ -37,6 +37,21 @@ function shareHits(colleagueName: string, person: Person): boolean {
   return false;
 }
 
+export type CommissionAccess = AccessMode;
+
+export async function currentCommissionAccess(): Promise<AccessMode> {
+  return currentAccess();
+}
+
+/** Admin sees every colleague. Anyone else sees only a share that names them. */
+export function commissionShareVisible(colleagueName: string, access: AccessMode): boolean {
+  const named = colleagueName.trim();
+  if (!named || named === COMMISSION_TOTAL_NAME) return false;
+  if (access.mode === "all") return true;
+  if (access.mode === "none") return false;
+  return shareHits(named, access.person);
+}
+
 async function currentAccess(): Promise<AccessMode> {
   const session = await getCurrentUser();
   if (!session) return { mode: "none" };

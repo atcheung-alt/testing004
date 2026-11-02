@@ -38,6 +38,7 @@ const PATH_RULES: { prefix: string; id: AccessPageId | "management" }[] = [
   { prefix: "/invoices", id: "invoices" },
   { prefix: "/receipts", id: "receipts" },
   { prefix: "/expenses", id: "expenses" },
+  { prefix: "/commission", id: "expenses" },
   { prefix: "/recruitment", id: "recruitment" },
   { prefix: "/bookings", id: "bookings" },
   { prefix: "/massage", id: "massage" },
