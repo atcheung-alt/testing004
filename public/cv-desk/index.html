@@ -28,79 +28,100 @@
   }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
-  .wrap { max-width: 920px; margin: 0 auto; padding: 28px 16px 72px; }
-  .crumb { margin: 0; color: var(--muted); font-size: 14px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; font-size: 14px; }
+  .bar { margin-bottom: 16px; }
   h1 {
-    margin: 8px 0 0;
+    margin: 0 0 4px;
     font-family: Fraunces, Georgia, serif;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 600;
+    line-height: 1.25;
   }
-  .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
-  .switch { display: flex; gap: 8px; margin-top: 18px; }
-  .switch button {
+  .note { margin: 0; color: var(--muted); font-size: 14px; }
+  .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .stamp {
     border: 1px solid var(--line);
     background: #fff;
+    color: var(--muted);
     border-radius: 999px;
-    padding: 8px 14px;
+    padding: 4px 12px;
+    font-size: 11px;
     font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
-  .switch button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
-  .panel { margin-top: 16px; }
+  .stamp.on { border-color: var(--brand); color: var(--brand); }
+  .panel { display: flex; flex-direction: column; gap: 16px; }
   .card {
     background: #fff;
     border: 1px solid var(--line);
     border-radius: 16px;
-    padding: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 2px rgba(41, 58, 110, 0.04), 0 8px 24px rgba(41, 58, 110, 0.07);
   }
-  .drop {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
+  .label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
-  .file {
+  .drop, .save-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    background: var(--brand);
+    justify-content: center;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+  }
+  .btn.primary {
+    border: 0;
     color: #fff;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-weight: 700;
+    background: linear-gradient(135deg, #4F7CFF 0%, #7F9BFA 45%, #9B6BEA 100%);
+    box-shadow: 0 12px 32px rgba(79, 124, 255, 0.12);
   }
+  .btn.secondary { background: #fff; color: var(--ink); border-color: var(--line); }
+  .file { position: relative; }
   .file input { display: none; }
-  .ghost, .solid {
-    border-radius: 10px;
-    padding: 10px 14px;
-    font-weight: 700;
-  }
-  .ghost { border: 1px solid var(--line); background: #fff; }
-  .solid { border: 0; background: var(--ink); color: #fff; }
   .hint { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
-  .search {
+  .input, .search {
     width: 100%;
     border: 1px solid var(--line);
     border-radius: 12px;
-    padding: 12px 14px;
+    padding: 8px 12px;
     background: #fff;
-    font-size: 16px;
+    font-size: 14px;
+    outline: none;
+  }
+  .input:focus, .search:focus { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+  .save-row .input { flex: 1 1 220px; width: auto; }
+  #save-bar { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .filters {
+    display: grid;
+    grid-template-columns: 1.3fr 1.1fr 0.85fr 0.85fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+  @media (max-width: 800px) {
+    .filters { grid-template-columns: 1fr 1fr; }
   }
   .row {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     align-items: center;
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 12px 14px;
-    margin-top: 10px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--line);
   }
-  .row h2 { margin: 0; font-size: 16px; }
-  .row p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
-  .empty { color: var(--muted); margin-top: 14px; }
+  .row:first-child { border-top: 0; }
+  .row h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .row p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+  .empty { color: var(--muted); margin: 0; padding: 16px 20px; font-size: 14px; }
 
   .sheet-wrap { overflow-x: auto; }
   .sheet {
@@ -187,32 +208,57 @@
 </head>
 <body>
   <div class="wrap">
-    <p class="crumb">Recruitment</p>
-    <h1>Online CV</h1>
-    <p class="lead">Turn a client CV into the HR Plus report, or find one you already saved.</p>
-    <div class="switch">
-      <button type="button" id="tab-make" class="on">Make a CV</button>
-      <button type="button" id="tab-find">Find a CV</button>
+    <div class="bar">
+      <h1>Online CV</h1>
+      <p class="note">Upload a CV, check the report, then save or download Word.</p>
+    </div>
+    <div class="stamps">
+      <button type="button" id="tab-make" class="stamp on">Make a CV</button>
+      <button type="button" id="tab-find" class="stamp">Search CV</button>
     </div>
 
     <section class="panel" id="make">
       <div class="card">
         <div class="drop">
-          <label class="file">Upload client CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
-          <button type="button" class="ghost" id="sample">Try a sample CV</button>
+          <label class="file btn primary">Upload CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
+          <button type="button" class="btn secondary" id="sample">Try a sample</button>
         </div>
-        <p class="hint" id="status">Upload a PDF, Word, or text CV. Words that mean the same thing, such as current package or asking salary, are placed in the matching row.</p>
-      </div>
-      <div class="actions" id="save-bar" hidden>
-        <button type="button" class="solid" id="download">Save Word file</button>
-        <button type="button" class="ghost" id="keep">Keep for search</button>
+        <div id="save-bar" hidden>
+          <label class="label" for="file-name">File name</label>
+          <div class="save-row">
+            <input class="input" id="file-name" type="text" placeholder="HR Plus CV - Chan Tai Man">
+            <button type="button" class="btn secondary" id="keep">Save</button>
+            <button type="button" class="btn primary" id="download">Download Word</button>
+          </div>
+        </div>
+        <p class="hint" id="status">PDF, Word, or text. Click any line in the report to change it.</p>
       </div>
       <div class="sheet-wrap" id="sheet-wrap" hidden></div>
     </section>
 
     <section class="panel" id="find" hidden>
-      <input class="search" id="q" type="search" placeholder="Search by name, skill, or company">
-      <div id="list"></div>
+      <div class="card">
+        <div class="filters">
+          <div>
+            <label class="label" for="q-file">File name</label>
+            <input class="input" id="q-file" type="search" placeholder="File name">
+          </div>
+          <div>
+            <label class="label" for="q-name">Candidate</label>
+            <input class="input" id="q-name" type="search" placeholder="Candidate name">
+          </div>
+          <div>
+            <label class="label" for="q-from">Date from</label>
+            <input class="input" id="q-from" type="date">
+          </div>
+          <div>
+            <label class="label" for="q-to">Date to</label>
+            <input class="input" id="q-to" type="date">
+          </div>
+          <button type="button" class="btn secondary" id="clear-filters">Clear</button>
+        </div>
+      </div>
+      <div class="card list" id="list"></div>
     </section>
   </div>
 
@@ -416,8 +462,95 @@ function dutyPieces(text) {
     .filter((part) => part.length > 2);
 }
 
+function joinParen(lines) {
+  const out = [];
+  let buf = "";
+  let depth = 0;
+  lines.forEach((line) => {
+    const text = String(line || "").trim();
+    if (!text) return;
+    if (!buf) buf = text;
+    else buf += (depth > 0 && !buf.endsWith("(") ? ", " : " ") + text;
+    depth += (text.match(/\(/g) || []).length - (text.match(/\)/g) || []).length;
+    if (depth <= 0) {
+      out.push(buf.replace(/\s+/g, " ").trim());
+      buf = "";
+      depth = 0;
+    }
+  });
+  if (buf) out.push(buf.replace(/\s+/g, " ").trim());
+  return out;
+}
+
+function splitOutsideParens(text) {
+  const parts = [];
+  let buf = "";
+  let depth = 0;
+  for (const ch of String(text || "")) {
+    if (ch === "(") depth += 1;
+    else if (ch === ")" && depth) depth -= 1;
+    if ((ch === ";" || ch === "；" || ch === "," || ch === "，" || ch === "、") && depth === 0) {
+      if (buf.trim()) parts.push(buf.trim());
+      buf = "";
+      continue;
+    }
+    buf += ch;
+  }
+  if (buf.trim()) parts.push(buf.trim());
+  return parts;
+}
+
+function tidyPiece(text) {
+  return String(text || "")
+    .replace(/\s*\(\s*/g, " (")
+    .replace(/\s+/g, " ")
+    .replace(/\s*\)/g, ")")
+    .replace(/[.;]+$/g, "")
+    .replace(/\bmicrosoft word\b/i, "Microsoft Word")
+    .trim();
+}
+
+function isPersonalNoise(text) {
+  const line = String(text || "").trim();
+  if (!line || line.length < 2) return true;
+  if (/@/.test(line)) return true;
+  if (/^\+?\d[\d\s-]{5,}$/.test(line)) return true;
+  if (/^(about me|personal details|contact details|contact|自我介紹|關於我)$/i.test(line)) return true;
+  if (/^(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}$/i.test(line)) return true;
+  if (/^(19|20)\d{2}$/.test(line)) return true;
+  if (/^(hong kong|kowloon|yuen long|new territories|sha tin|tsuen wan|tuen mun|香港|元朗|九龍)$/i.test(line)) return true;
+  return false;
+}
+
+function isJobTitle(text) {
+  return text.length < 90 && !/\(/.test(text) && /\b(intern|engineer|developer|manager|analyst|officer|assistant|consultant|designer|supervisor)\b/i.test(text);
+}
+
+function collectRelated(lines) {
+  const skills = [];
+  const edu = [];
+  const work = [];
+  const seen = new Set();
+  const keep = (list, text) => {
+    const key = norm(text);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    list.push(text);
+  };
+  joinParen(lines).forEach((line) => {
+    splitOutsideParens(line).forEach((part) => {
+      const text = tidyPiece(part);
+      if (isPersonalNoise(text)) return;
+      if (isDegree(text)) keep(edu, text);
+      else if (isJobTitle(text)) keep(work, text);
+      else if (text.length < 90) keep(skills, text);
+    });
+  });
+  return { skills, edu, work };
+}
+
 function splitSkills(lines) {
-  return lines.flatMap((line) => line.split(/[,，、;；]/).map((part) => part.trim())).filter((part) => part && part.length < 80);
+  return collectRelated(lines).skills;
 }
 
 function isBullet(line) {
@@ -468,15 +601,18 @@ function parseCv(text) {
   }
   data.date = today();
   data.languages = takeLines(bags.languages || []).join(", ");
-  data.skills = pad(splitSkills(takeLines(bags.skills || []).concat(peeled.skills, looseBits.skills)), 7);
+  const related = collectRelated(takeLines(bags.skills || []).concat(peeled.skills, looseBits.skills));
+  data.skills = pad(related.skills, 7);
   data.recentSalary = takeLines(bags.recentSalary || []).join(" ");
   data.expectedSalary = takeLines(bags.expectedSalary || []).join(" ");
   data.notice = takeLines(bags.notice || []).join(" ");
   fillEducation(data, peeled.edu);
-  data.certs = pad(takeLines(bags.certs || []), 2);
-  data.project = pad(takeLines(bags.project || []), 5);
+  placeStudy(data, related.edu);
+  data.certs = pad(takeLines(bags.certs || []).filter((line) => !isPersonalNoise(tidyPiece(line))), 2);
+  data.project = pad(takeLines(bags.project || []).filter((line) => !isPersonalNoise(tidyPiece(line))), 5);
   const workRows = (bags.work || []).concat(looseBits.work, peeled.work.length ? [""].concat(peeled.work) : []);
   fillWork(data, workRows);
+  placeTitles(data, related.work);
   return rescue(data, text);
 }
 
@@ -681,6 +817,24 @@ function peelMisfiled(lines) {
     else edu.push(line);
   });
   return { edu, work, skills };
+}
+
+function placeStudy(data, lines) {
+  lines.forEach((line) => {
+    if (data.edu.some((item) => norm(item) === norm(line))) return;
+    const empty = data.edu.findIndex((item) => !item);
+    if (empty >= 0) data.edu[empty] = line;
+  });
+}
+
+function placeTitles(data, titles) {
+  const slots = [data.job1, data.job2];
+  titles.forEach((title) => {
+    const taken = slots.some((job) => norm(job[0]) === norm(title) || norm(job[1]) === norm(title));
+    if (taken) return;
+    const open = slots.find((job) => !job[0] && !job[1]);
+    if (open) open[1] = title;
+  });
 }
 
 function pad(list, n) {
@@ -962,11 +1116,28 @@ function seed() {
   lee.edu = pad(["City University of Hong Kong", "Bachelor of Business Administration"], 4);
   lee.job1 = ["North Ledger Ltd", "Accounts Officer", "Jan 2022 – Present"];
   lee.duty1 = pad(["Closed the monthly accounts", "Prepared payroll for 40 staff"], 6);
-  storeAll([pack(chan), pack(lee)]);
+  chan.date = "01/10/2026";
+  lee.date = "15/09/2026";
+  storeAll([
+    pack(chan, "HR Plus CV - Chan Tai Man"),
+    pack(lee, "HR Plus CV - Lee Mei Ling")
+  ]);
 }
 
-function pack(data) {
-  return Object.assign({ id: String(Date.now()) + Math.random().toString(16).slice(2) }, data);
+function cleanFileName(value, fallback) {
+  const name = String(value || "").trim().replace(/\.docx$/i, "").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim();
+  return name || fallback || "HR Plus CV";
+}
+
+function chosenFileName(data) {
+  const fallback = data && data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
+  const input = document.getElementById("file-name");
+  return cleanFileName(input ? input.value : "", fallback);
+}
+
+function pack(data, fileName) {
+  const name = cleanFileName(fileName, data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV");
+  return Object.assign({ id: String(Date.now()) + Math.random().toString(16).slice(2), fileName: name }, data);
 }
 
 function show(text) {
@@ -978,10 +1149,11 @@ function show(text) {
     return;
   }
   render(data);
+  document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
   const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
   document.getElementById("status").textContent = found
-    ? "Matched rows are filled. Empty rows were not in this CV. Change any line, then save the Word file."
-    : "This CV had no clear sections. Type the missing rows, then save the Word file.";
+    ? "Filled. Click any line to change it, then save or download."
+    : "Some rows were empty. Type them in, then save or download.";
 }
 
 document.getElementById("tab-make").onclick = () => {
@@ -1106,49 +1278,90 @@ document.getElementById("file").onchange = async (event) => {
 document.getElementById("download").onclick = async () => {
   const data = readSheet();
   const bytes = await toDocx(data);
-  const name = data.candidate || "Candidate";
-  saveFile(bytes, "HR Plus CV - " + name + ".docx");
+  saveFile(bytes, chosenFileName(data) + ".docx");
 };
 document.getElementById("keep").onclick = () => {
   const data = readSheet();
-  if (!data.candidate) {
-    document.getElementById("status").textContent = "Add the candidate name before keeping this CV.";
-    return;
-  }
-  const rows = loadAll().filter((row) => row.candidate.toLowerCase() !== data.candidate.toLowerCase());
-  rows.unshift(pack(data));
+  const fileName = chosenFileName(data);
+  document.getElementById("file-name").value = fileName;
+  const rows = loadAll().filter((row) => cleanFileName(row.fileName, row.candidate).toLowerCase() !== fileName.toLowerCase());
+  rows.unshift(pack(data, fileName));
   storeAll(rows);
-  document.getElementById("status").textContent = "Saved. Open Find a CV to search and download it.";
+  document.getElementById("status").textContent = "Saved as " + fileName + ". Open Search CV to find it.";
 };
 
+function parseCvDate(value) {
+  const text = String(value || "").trim();
+  const months = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+  let match = text.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/);
+  if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+  match = text.match(/(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
+  if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  match = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})/);
+  if (match && months[match[2].slice(0, 3).toLowerCase()] != null) {
+    return new Date(Number(match[3]), months[match[2].slice(0, 3).toLowerCase()], Number(match[1]));
+  }
+  return null;
+}
+
+function sameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 function drawList() {
-  const q = norm(document.getElementById("q").value || "");
+  const fileQuery = norm(document.getElementById("q-file").value || "");
+  const nameQuery = norm(document.getElementById("q-name").value || "");
+  const fromValue = document.getElementById("q-from").value;
+  const toValue = document.getElementById("q-to").value;
+  const from = fromValue ? new Date(fromValue + "T00:00:00") : null;
+  const to = toValue ? new Date(toValue + "T00:00:00") : null;
   const rows = loadAll().filter((row) => {
-    const hay = [row.candidate, row.recruiter, row.languages, row.recentSalary, ...(row.skills || []), ...(row.job1 || []), ...(row.job2 || [])].join(" ");
-    return !q || norm(hay).includes(q);
+    const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
+    if (fileQuery && !norm(fileName).includes(fileQuery)) return false;
+    if (nameQuery && !norm(row.candidate || "").includes(nameQuery)) return false;
+    if (from || to) {
+      const when = parseCvDate(row.date);
+      if (!when) return false;
+      if (from && when < from && !sameDay(when, from)) return false;
+      if (to && when > to && !sameDay(when, to)) return false;
+    }
+    return true;
   });
   const list = document.getElementById("list");
   if (!rows.length) {
     list.innerHTML = '<p class="empty">No matching CV.</p>';
     return;
   }
-  list.innerHTML = rows.map((row) => `
+  list.innerHTML = rows.map((row) => {
+    const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
+    const detail = [row.candidate, row.date].filter(Boolean).join(" · ");
+    return `
     <article class="row">
       <div>
-        <h2>${esc(row.candidate)}</h2>
-        <p>${esc(row.date || "")}${row.skills && row.skills[0] ? " · " + esc(row.skills.filter(Boolean).slice(0, 3).join(", ")) : ""}</p>
+        <h2>${esc(fileName)}</h2>
+        <p>${esc(detail)}</p>
       </div>
-      <button type="button" class="ghost" data-id="${row.id}">Download</button>
-    </article>`).join("");
+      <button type="button" class="btn secondary" data-id="${row.id}">Download Word</button>
+    </article>`;
+  }).join("");
   list.querySelectorAll("button").forEach((button) => {
     button.onclick = async () => {
       const row = loadAll().find((item) => item.id === button.dataset.id);
       const bytes = await toDocx(row);
-      saveFile(bytes, "HR Plus CV - " + row.candidate + ".docx");
+      const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
+      saveFile(bytes, fileName + ".docx");
     };
   });
 }
-document.getElementById("q").oninput = drawList;
+["q-file", "q-name", "q-from", "q-to"].forEach((id) => {
+  document.getElementById(id).oninput = drawList;
+});
+document.getElementById("clear-filters").onclick = () => {
+  ["q-file", "q-name", "q-from", "q-to"].forEach((id) => {
+    document.getElementById(id).value = "";
+  });
+  drawList();
+};
 seed();
 </script>
 </body>
