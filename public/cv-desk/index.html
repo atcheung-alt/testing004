@@ -31,13 +31,14 @@
   .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; font-size: 14px; }
   .bar { margin-bottom: 16px; }
   h1 {
-    margin: 0 0 4px;
-    font-family: Fraunces, Georgia, serif;
-    font-size: 24px;
+    margin: 0;
+    font-family: Fraunces, "PingFang HK", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Georgia, serif;
+    font-size: 1.5rem;
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 2rem;
+    letter-spacing: 0;
   }
-  .note { margin: 0; color: var(--muted); font-size: 14px; }
+  .note { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
   .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .stamp {
     border: 1px solid var(--line);
@@ -200,23 +201,21 @@
     white-space: pre-wrap;
   }
   .lines { min-height: 72px; }
-  .job .b { font-weight: 700; font-size: 12px; padding: 2px 8px; outline: none; min-height: 1.2em; }
+  .job .b { font-weight: 700; font-size: 12px; padding: 0; outline: none; min-height: 1.2em; }
   .job .lbl { padding: 6px 8px 0; font-size: 12px; }
-  .h, .job { position: relative; }
-  .remove {
-    position: absolute;
-    right: 6px;
-    top: 3px;
-    z-index: 2;
-    border: 0;
-    background: transparent;
-    color: #5c6578;
-    font-family: Inter, "PingFang HK", sans-serif;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 0 4px;
-  }
-  .remove:hover { color: #be3454; }
+  .job > .col-text { display: block; padding: 2px 8px 0; }
+  .line-row { display: flex; align-items: flex-start; gap: 6px; }
+  .line-row + .line-row { margin-top: 4px; }
+  .col-text { flex: 1; outline: none; font-size: 12px; line-height: 1.35; min-height: 1.2em; white-space: pre-wrap; }
+  .col-text.b { font-weight: 700; }
+  .col-x, .add-btn { border: 0; background: transparent; font-family: Inter, "PingFang HK", sans-serif; }
+  .col-x { color: #8b93a7; font-size: 16px; line-height: 1; padding: 0 2px; }
+  .col-x:hover { color: #be3454; }
+  .add-row { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; }
+  .add-btn { color: #4f7cff; font-size: 12px; font-weight: 600; padding: 2px 0; }
+  .add-btn:hover { text-decoration: underline; }
+  .section-add { margin: 0 0 10px; }
+  .job + .job { border-top: 1px solid #e3e8f3; margin-top: 8px; padding-top: 8px; }
   .plain { min-height: 28px; }
   [contenteditable="true"]:empty:before {
     content: attr(data-placeholder);
@@ -238,7 +237,7 @@
   <div class="wrap">
     <div class="bar">
       <h1>Online CV</h1>
-      <p class="note">Upload a CV, check the report, then save or download Word. Click a saved file name to edit it.</p>
+      <p class="note">Upload a CV to format it.</p>
     </div>
     <div class="stamps">
       <button type="button" id="tab-make" class="stamp on">Make a CV</button>
@@ -259,7 +258,7 @@
             <button type="button" class="btn primary" id="download">Download Word</button>
           </div>
         </div>
-        <p class="hint" id="status">PDF, Word, or text. Click any line to change it. Remove a box you do not need.</p>
+        <p class="hint" id="status">PDF, Word, or text.</p>
       </div>
       <div class="sheet-wrap" id="sheet-wrap" hidden></div>
     </section>
@@ -1186,16 +1185,51 @@ function field(cls, slot, value, placeholder) {
   return '<div class="' + cls + '" contenteditable="true" data-slot="' + slot + '" data-placeholder="' + placeholder + '">' + esc(value || "") + "</div>";
 }
 
+function addBtn(act, label) {
+  return `<button type="button" class="add-btn" data-add-act="${esc(act)}">${esc(label)}</button>`;
+}
+
+function linesOf(list) {
+  return (list || []).map((item) => String(item || "").trim()).filter(Boolean);
+}
+
+function entriesFrom(data) {
+  const saved = data.more;
+  if (saved && saved.edu && saved.certs && saved.jobs) return saved;
+  const edu = [{ year: data.eduLeft || "", school: linesOf(data.edu).join("\n") }];
+  const certs = linesOf(data.certs);
+  const job = (pair, duties) => ({
+    company: (pair && pair[0]) || "",
+    role: (pair && pair[1]) || "",
+    dates: (pair && pair[2]) || "",
+    duties: linesOf(duties).join("\n"),
+  });
+  const jobs = [job(data.job1, data.duty1)];
+  const second = job(data.job2, data.duty2);
+  if (second.company || second.role || second.dates || second.duties) jobs.push(second);
+  return { edu: edu, certs: certs, jobs: jobs };
+}
+
+function eduRow(entry) {
+  const fresh = entry.fresh ? ' data-new="1"' : "";
+  return `<tr data-entry><td><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${esc(entry.year || "")}</div></td><td><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${esc(entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div></td></tr>`;
+}
+
+function certRow(text, fresh) {
+  return `<div class="line-row" data-entry><div class="col-text" contenteditable="true" data-field="text" data-placeholder="Certificate"${fresh ? ' data-new="1"' : ""}>${esc(text || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove certificate">×</button></div>`;
+}
+
+function jobBlock(job) {
+  const duties = Array.isArray(job.duties) ? linesOf(job.duties).join("\n") : (job.duties || "");
+  const fresh = job.fresh ? ' data-new="1"' : "";
+  return `<div class="job" data-entry><div class="line-row"><div class="col-text b" contenteditable="true" data-field="company" data-placeholder="Company"${fresh}>${esc(job.company || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove job">×</button></div><div class="col-text b" contenteditable="true" data-field="role" data-placeholder="Role">${esc(job.role || "")}</div><div class="col-text b" contenteditable="true" data-field="dates" data-placeholder="Dates">${esc(job.dates || "")}</div><div class="lbl">Responsibilities:</div><div class="col-text" contenteditable="true" data-field="duties" data-placeholder="Responsibility">${esc(duties)}</div></div>`;
+}
+
 function render(data) {
-  const skills = data.skills.filter(Boolean).join("\n");
-  const edu = data.edu.filter(Boolean).join("\n");
-  const certs = data.certs.filter(Boolean).join("\n");
-  const project = data.project.filter(Boolean).join("\n");
-  const duty = (list) => list.filter(Boolean).join("\n");
-  const removed = new Set(data.removed || []);
-  const showJob1 = !removed.has("job1");
-  const showJob2 = !removed.has("job2");
-  const removeBtn = (key) => '<button type="button" class="remove" data-remove="' + key + '">Remove</button>';
+  const more = entriesFrom(data);
+  data.more = more;
+  const skills = linesOf(data.skills).join("\n");
+  const project = linesOf(data.project).join("\n");
   document.getElementById("sheet-wrap").hidden = false;
   document.getElementById("save-bar").hidden = false;
   document.getElementById("sheet-wrap").innerHTML = `
@@ -1214,55 +1248,46 @@ function render(data) {
       <table class="grid">
         <tr><td class="h profile" colspan="2">Profile</td></tr>
         <tr><td class="k">Languages</td><td>${field("val", "languages", data.languages, "Languages")}</td></tr>
-        <tr><td class="k">Skills</td><td>${field("lines", "skills", skills, "One skill on each line")}</td></tr>
+        <tr><td class="k">Skills</td><td>${field("lines", "skills", skills, "Skills")}</td></tr>
         <tr><td class="k">Recent Salary</td><td>${field("val", "recentSalary", data.recentSalary, "Recent salary")}</td></tr>
         <tr><td class="k">Expected Salary</td><td>${field("val", "expectedSalary", data.expectedSalary, "Expected salary")}</td></tr>
         <tr><td class="k">Notice Period</td><td>${field("val", "notice", data.notice, "Notice period")}</td></tr>
       </table>
-      ${removed.has("edu") ? "" : `<table class="block" data-box="edu">
-        <tr><td class="h edu" colspan="2">Education ${removeBtn("edu")}</td></tr>
-        <tr>
-          <td style="width:168px">${field("val", "eduLeft", data.eduLeft, "Year")}</td>
-          <td>${field("lines", "edu", edu, "School and qualification")}</td>
-        </tr>
-      </table>`}
-      ${removed.has("certs") ? "" : `<table class="block" data-box="certs">
-        <tr><td class="h cert">Certifications ${removeBtn("certs")}</td></tr>
-        <tr><td>${field("lines", "certs", certs, "Certificates")}</td></tr>
-      </table>`}
-      ${removed.has("project") ? "" : `<table class="block" data-box="project">
-        <tr><td class="h project">Recent Project ${removeBtn("project")}</td></tr>
-        <tr><td>${field("lines", "project", project, "Recent project")}</td></tr>
-      </table>`}
-      ${showJob1 || showJob2 ? `<table class="block" data-box="work">
+      <table class="grid" id="edu">
+        <tr><td class="h edu" colspan="2">Education</td></tr>
+        ${more.edu.map(eduRow).join("")}
+        <tr><td colspan="2"><div class="add-row">${addBtn("edu", "+ Add education")}</div></td></tr>
+      </table>
+      <table class="block" id="certs">
+        <tr><td class="h cert">Certifications</td></tr>
+        <tr><td>${more.certs.map((text, index) => certRow(text, more.certFresh && index === more.certs.length - 1)).join("")}<div class="add-row">${addBtn("cert", "+ Add certificate")}</div></td></tr>
+      </table>
+      <table class="block">
+        <tr><td class="h project">Recent Project</td></tr>
+        <tr><td>${field("lines", "project", project, "Project")}</td></tr>
+      </table>
+      <table class="block" id="work">
         <tr><td class="h work">Work Experience</td></tr>
-        ${showJob1 ? `<tr data-box="job1"><td class="job">
-          ${removeBtn("job1")}
-          ${field("b", "job1-0", data.job1[0], "Company")}
-          ${field("b", "job1-1", data.job1[1], "Role")}
-          ${field("b", "job1-2", data.job1[2], "Dates")}
-          <div class="lbl">Responsibilities:</div>
-          ${field("lines", "duty1", duty(data.duty1), "What they did")}
-        </td></tr>` : ""}
-        ${showJob2 ? `<tr data-box="job2"><td class="job">
-          ${removeBtn("job2")}
-          ${field("b", "job2-0", data.job2[0], "Company")}
-          ${field("b", "job2-1", data.job2[1], "Role")}
-          ${field("b", "job2-2", data.job2[2], "Dates")}
-          <div class="lbl">Responsibilities:</div>
-          ${field("lines", "duty2", duty(data.duty2), "What they did")}
-        </td></tr>` : ""}
-      </table>` : ""}
+        <tr><td>${more.jobs.map(jobBlock).join("")}<div class="add-row">${addBtn("job", "+ Add job")}</div></td></tr>
+      </table>
       <p class="foot">This resume contains information modified by HR Plus (Talent) Limited. Please refrain from duplicating and redistributing this document without permission.</p>
     </article>`;
-  document.querySelectorAll("[data-remove]").forEach((button) => {
+  document.querySelectorAll("[data-remove-entry]").forEach((button) => {
     button.onclick = () => {
-      const box = button.closest("[data-box]");
-      if (box) box.remove();
-      const work = document.querySelector("[data-box='work']");
-      if (work && !work.querySelector("[data-box='job1'], [data-box='job2']")) work.remove();
+      const entry = button.closest("[data-entry]");
+      if (entry) entry.remove();
+      render(readSheet());
     };
   });
+  document.querySelectorAll("[data-add-act]").forEach((button) => {
+    button.onclick = () => runAdd(button.dataset.addAct);
+  });
+  const fresh = document.querySelector("[data-new]");
+  if (fresh) fresh.focus();
+}
+
+function columnText(node) {
+  return node ? node.innerText.replace(/\u00a0/g, " ").replace(/\n+$/g, "").trim() : "";
 }
 
 function textOf(slot) {
@@ -1275,21 +1300,72 @@ function splitSlot(slot, n) {
   return pad(lines, n);
 }
 
+function fieldText(row, name) {
+  return columnText(row.querySelector('[data-field="' + name + '"]'));
+}
+
 function readSheet() {
   const data = blank();
-  ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice", "eduLeft"].forEach((key) => {
+  ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice"].forEach((key) => {
     data[key] = textOf(key);
   });
-  data.skills = splitSlot("skills", 7);
-  data.edu = splitSlot("edu", 4);
-  data.certs = splitSlot("certs", 2);
-  data.project = splitSlot("project", 5);
-  data.job1 = [0, 1, 2].map((i) => textOf("job1-" + i));
-  data.job2 = [0, 1, 2].map((i) => textOf("job2-" + i));
-  data.duty1 = splitSlot("duty1", 6);
-  data.duty2 = splitSlot("duty2", 5);
-  data.removed = ["edu", "certs", "project", "job1", "job2"].filter((key) => !document.querySelector('[data-box="' + key + '"]'));
+  data.skills = pad(textOf("skills").split(/\n/).map((line) => line.trim()).filter(Boolean), 7);
+  data.project = pad(textOf("project").split(/\n/).map((line) => line.trim()).filter(Boolean), 5);
+  const edu = Array.from(document.querySelectorAll("#edu [data-entry]")).map((row) => ({
+    year: fieldText(row, "year"),
+    school: fieldText(row, "school"),
+  }));
+  const certs = Array.from(document.querySelectorAll("#certs [data-entry]")).map((row) => fieldText(row, "text"));
+  const jobs = Array.from(document.querySelectorAll("#work [data-entry]")).map((row) => ({
+    company: fieldText(row, "company"),
+    role: fieldText(row, "role"),
+    dates: fieldText(row, "dates"),
+    duties: fieldText(row, "duties"),
+  }));
+  data.more = { edu: edu, certs: certs, jobs: jobs };
+  data.eduLeft = edu[0] ? edu[0].year : "";
+  data.edu = packLines(edu.flatMap((row, index) => {
+    const schools = String(row.school || "").split(/\n/).map((line) => line.trim()).filter(Boolean);
+    if (index === 0) return schools;
+    const head = [row.year, schools[0]].filter(Boolean).join(" — ");
+    return [head].concat(schools.slice(1)).filter(Boolean);
+  }), 4);
+  data.certs = packLines(certs, 2);
+  const first = jobs[0] || {};
+  const second = jobs[1] || {};
+  const extra = jobs.slice(2).flatMap((job) => {
+    const head = [job.company, job.role, job.dates].filter(Boolean).join(" — ");
+    const duties = String(job.duties || "").split(/\n/).map((line) => line.trim()).filter(Boolean);
+    return [head].concat(duties).filter(Boolean);
+  });
+  data.job1 = [first.company || "", first.role || "", first.dates || ""];
+  data.job2 = [second.company || "", second.role || "", second.dates || ""];
+  data.duty1 = pad(String(first.duties || "").split(/\n/).map((line) => line.trim()).filter(Boolean), 6);
+  data.duty2 = packLines(String(second.duties || "").split(/\n/).map((line) => line.trim()).filter(Boolean).concat(extra), 5);
+  data.removed = [];
   return data;
+}
+
+function packLines(lines, n) {
+  const clean = lines.map((line) => String(line || "").trim()).filter(Boolean);
+  if (clean.length <= n) return pad(clean, n);
+  return pad(clean.slice(0, n - 1).concat([clean.slice(n - 1).join("\n")]), n);
+}
+
+function runAdd(act) {
+  const data = readSheet();
+  if (act === "edu") {
+    data.more.edu.push({ year: "", school: "", fresh: true });
+    document.getElementById("status").textContent = "Type the education.";
+  } else if (act === "cert") {
+    data.more.certs.push("");
+    data.more.certFresh = true;
+    document.getElementById("status").textContent = "Type the certificate.";
+  } else if (act === "job") {
+    data.more.jobs.push({ company: "", role: "", dates: "", duties: "", fresh: true });
+    document.getElementById("status").textContent = "Type the company.";
+  } else return;
+  render(data);
 }
 
 function loadAll() {
@@ -1356,7 +1432,7 @@ function openSaved(row) {
   editingId = row.id;
   render(row);
   document.getElementById("file-name").value = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
-  document.getElementById("status").textContent = "Editing this CV. Change any line or the file name, then save.";
+  document.getElementById("status").textContent = "";
   showTab("make");
 }
 
@@ -1373,8 +1449,8 @@ function show(text) {
   document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
   const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
   document.getElementById("status").textContent = found
-    ? "Filled. Click any line to change it. Remove a box you do not need, then save or download."
-    : "Some rows were empty. Type them in, or remove a box you do not need.";
+    ? "Filled."
+    : "Some rows were empty. Type them in.";
 }
 
 document.getElementById("tab-make").onclick = () => showTab("make");
