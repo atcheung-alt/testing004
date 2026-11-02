@@ -73,8 +73,6 @@ export async function POST(request: NextRequest) {
     data: {
       number,
       title: (body.title || "").trim(),
-      workKind: commission.workKind,
-      commissionOn: commission.commissionOn,
       poNumber: body.poNumber?.trim() || null,
       ...customer,
       issueDate,

@@ -153,8 +153,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     );
   }
 
-  const commission = commissionFieldsFrom(body, Boolean(existing.workKind));
-  if (commission.error) {
+  const commission = commissionFieldsFrom(body, false);
+  if (body.workKind && commission.error) {
     return NextResponse.json({ error: commission.error }, { status: 400 });
   }
 
@@ -170,8 +170,6 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       where: { id: params.id },
       data: {
         title: body.title !== undefined ? (body.title || "").trim() : undefined,
-        workKind: commission.workKind || existing.workKind,
-        commissionOn: commission.commissionOn ?? existing.commissionOn,
         poNumber: body.poNumber !== undefined ? body.poNumber?.trim() || null : undefined,
         ...customer,
         issueDate,

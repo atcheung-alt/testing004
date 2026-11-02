@@ -39,8 +39,6 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
     data: {
       number,
       title: original.title,
-      workKind: original.workKind,
-      commissionOn: original.commissionOn,
       poNumber: null,
       customerName: original.customerName,
       customerContact: original.customerContact,

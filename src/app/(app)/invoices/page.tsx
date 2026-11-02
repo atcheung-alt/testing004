@@ -13,7 +13,6 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
-import { commissionDateName } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +25,11 @@ async function InvoiceList({
   status,
   from,
   to,
-  kind,
 }: {
   q?: string;
   status?: string;
   from?: string;
   to?: string;
-  kind?: string;
 }) {
   const t = getT();
   const invoices = await prisma.invoice.findMany({
@@ -41,7 +38,6 @@ async function InvoiceList({
         status: status === "OVERDUE" ? "UNPAID" : status || undefined,
         dueDate: status === "OVERDUE" ? { lt: new Date() } : undefined,
         issueDate: dateRangeFilter(from, to),
-        workKind: kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : undefined,
         OR: q
           ? [
               { customerName: { contains: q, mode: "insensitive" } },
@@ -91,16 +87,8 @@ async function InvoiceList({
                 <InvoiceStatusToggle id={inv.id} displayStatus={getInvoiceDisplayStatus(inv)} />
               </div>
               <p className="text-xs text-ink-muted truncate mt-0.5">
-                {inv.workKind === "EVENT" || inv.workKind === "RECRUITMENT" ? (
-                  <span className="stamp border-line text-ink-muted mr-1.5">
-                    {t(inv.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}
-                  </span>
-                ) : null}
                 {inv.customerName} · {t("Issued {date}", { date: formatDate(inv.issueDate) })}
                 {inv.dueDate ? ` · ${t("Due {date}", { date: formatDate(inv.dueDate) })}` : ""}
-                {inv.workKind && inv.commissionOn
-                  ? ` · ${t(commissionDateName(inv.workKind))} ${formatDate(inv.commissionOn)}`
-                  : ""}
               </p>
               {/* Always rendered (even blank) so every row reserves the same
                   vertical space regardless of item count — what keeps every
@@ -235,7 +223,6 @@ export default function InvoicesPage({
           status={searchParams.status}
           from={searchParams.from}
           to={searchParams.to}
-          kind={searchParams.kind}
         />
       </Suspense>
     </div>

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate } from "@/lib/calculations";
-import { commissionDateName, commissionReached } from "@/lib/commission";
+import { formatCurrency } from "@/lib/calculations";
 import { commissionShareVisible, currentCommissionAccess } from "@/lib/documentAccess";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
 import { colleagueLabel } from "@/lib/staffCode";
@@ -24,19 +23,13 @@ export default async function CommissionPage({
     access.mode === "none"
       ? Promise.resolve([])
       : prisma.invoice.findMany({
-          where: {
-            workKind: kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : { in: ["EVENT", "RECRUITMENT"] },
-            commissionOn: { not: null },
-          },
-          orderBy: { commissionOn: "asc" },
+          orderBy: { createdAt: "desc" },
           select: {
             id: true,
             number: true,
             customerName: true,
             title: true,
             total: true,
-            workKind: true,
-            commissionOn: true,
             quotation: {
               select: {
                 shareMode: true,
@@ -48,14 +41,11 @@ export default async function CommissionPage({
     loadColleagues(),
   ]);
 
-  const rows = invoices.flatMap((invoice) => {
-    if (!invoice.commissionOn) return [];
-    const done = commissionReached(invoice.commissionOn);
-    if (state === "pending" && done) return [];
-    if (state === "done" && !done) return [];
+  const rows = kind || state ? [] : invoices.flatMap((invoice) => {
     const split = commissionSplitFromStored(invoice.quotation?.shareMode || "AMOUNT", invoice.quotation?.shares || [], invoice.total);
     return split.partners.flatMap((partner) => {
       if (!commissionShareVisible(partner.colleagueName, access)) return [];
+      if (!(split.total > 0) && !(partner.percent > 0)) return [];
       return [
         {
           id: `${invoice.id}-${partner.colleagueName}`,
@@ -63,9 +53,6 @@ export default async function CommissionPage({
           number: invoice.number,
           customerName: invoice.customerName,
           title: invoice.title,
-          workKind: invoice.workKind,
-          commissionOn: invoice.commissionOn as Date,
-          done,
           person: colleagueLabel(partner.colleagueName, colleagues),
           amount: (split.total * partner.percent) / 100,
         },
@@ -113,16 +100,11 @@ export default async function CommissionPage({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-medium">{row.number}</span>
-                  <span className="stamp border-line text-ink-muted">{t(row.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}</span>
-                  <span className={`stamp ${row.done ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}>
-                    {t(row.done ? "Done" : "Pending")}
-                  </span>
                 </div>
                 <p className="text-xs text-ink-muted mt-1 truncate">
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                   {access.mode === "all" ? ` · ${row.person}` : ""}
-                  {` · ${t(commissionDateName(row.workKind))} ${formatDate(row.commissionOn)}`}
                 </p>
               </div>
               <div className="text-right shrink-0">

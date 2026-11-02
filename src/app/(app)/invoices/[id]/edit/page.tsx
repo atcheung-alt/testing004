@@ -11,7 +11,6 @@ import { invoiceCanModify } from "@/lib/documentAccess";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
-import { hongKongDay } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
 
@@ -62,8 +61,6 @@ export default async function EditInvoicePage({ params }: { params: { id: string
           {
             ...invoice,
             items: withParsedFeesList(withParsedMultipliersList(invoice.items)),
-            workKind: invoice.workKind,
-            commissionOn: invoice.commissionOn ? hongKongDay(invoice.commissionOn) : null,
             issueDate: invoice.issueDate.toISOString(),
             dueDate: invoice.dueDate?.toISOString() || null,
             createdAt: invoice.createdAt.toISOString(),
