@@ -112,15 +112,17 @@
   }
   .row {
     display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
     padding: 16px 20px;
     border-top: 1px solid var(--line);
   }
   .row:first-child { border-top: 0; }
   .row h2 { margin: 0; font-size: 14px; font-weight: 600; }
   .row p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+  .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .btn.danger { background: #fff; color: #be3454; border-color: rgba(190, 52, 84, 0.35); }
   .empty { color: var(--muted); margin: 0; padding: 16px 20px; font-size: 14px; }
 
   .sheet-wrap { overflow-x: auto; }
@@ -210,7 +212,7 @@
   <div class="wrap">
     <div class="bar">
       <h1>Online CV</h1>
-      <p class="note">Upload a CV, check the report, then save or download Word.</p>
+      <p class="note">Upload a CV, check the report, then save or download Word. Saved CVs can be edited or deleted.</p>
     </div>
     <div class="stamps">
       <button type="button" id="tab-make" class="stamp on">Make a CV</button>
@@ -1135,9 +1137,28 @@ function chosenFileName(data) {
   return cleanFileName(input ? input.value : "", fallback);
 }
 
-function pack(data, fileName) {
+function pack(data, fileName, id) {
   const name = cleanFileName(fileName, data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV");
-  return Object.assign({ id: String(Date.now()) + Math.random().toString(16).slice(2), fileName: name }, data);
+  return Object.assign({ id: id || String(Date.now()) + Math.random().toString(16).slice(2), fileName: name }, data);
+}
+
+let editingId = null;
+
+function showTab(name) {
+  const make = name === "make";
+  document.getElementById("make").hidden = !make;
+  document.getElementById("find").hidden = make;
+  document.getElementById("tab-make").classList.toggle("on", make);
+  document.getElementById("tab-find").classList.toggle("on", !make);
+  if (!make) drawList();
+}
+
+function openSaved(row) {
+  editingId = row.id;
+  render(row);
+  document.getElementById("file-name").value = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
+  document.getElementById("status").textContent = "Editing this CV. Change any line or the file name, then save.";
+  showTab("make");
 }
 
 function show(text) {
@@ -1148,6 +1169,7 @@ function show(text) {
     document.getElementById("status").textContent = "This CV could not be read. Try a PDF or Word file that has selectable text.";
     return;
   }
+  editingId = null;
   render(data);
   document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
   const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
@@ -1156,19 +1178,8 @@ function show(text) {
     : "Some rows were empty. Type them in, then save or download.";
 }
 
-document.getElementById("tab-make").onclick = () => {
-  document.getElementById("make").hidden = false;
-  document.getElementById("find").hidden = true;
-  document.getElementById("tab-make").classList.add("on");
-  document.getElementById("tab-find").classList.remove("on");
-};
-document.getElementById("tab-find").onclick = () => {
-  document.getElementById("make").hidden = true;
-  document.getElementById("find").hidden = false;
-  document.getElementById("tab-find").classList.add("on");
-  document.getElementById("tab-make").classList.remove("on");
-  drawList();
-};
+document.getElementById("tab-make").onclick = () => showTab("make");
+document.getElementById("tab-find").onclick = () => showTab("find");
 document.getElementById("sample").onclick = () => show(SAMPLE);
 function joinParts(parts) {
   const sorted = parts.slice().sort((a, b) => a.x - b.x);
@@ -1284,8 +1295,13 @@ document.getElementById("keep").onclick = () => {
   const data = readSheet();
   const fileName = chosenFileName(data);
   document.getElementById("file-name").value = fileName;
-  const rows = loadAll().filter((row) => cleanFileName(row.fileName, row.candidate).toLowerCase() !== fileName.toLowerCase());
-  rows.unshift(pack(data, fileName));
+  const rows = loadAll().filter((row) => {
+    if (editingId && row.id === editingId) return false;
+    return cleanFileName(row.fileName, row.candidate).toLowerCase() !== fileName.toLowerCase();
+  });
+  const saved = pack(data, fileName, editingId);
+  editingId = saved.id;
+  rows.unshift(saved);
   storeAll(rows);
   document.getElementById("status").textContent = "Saved as " + fileName + ". Open Search CV to find it.";
 };
@@ -1341,12 +1357,28 @@ function drawList() {
         <h2>${esc(fileName)}</h2>
         <p>${esc(detail)}</p>
       </div>
-      <button type="button" class="btn secondary" data-id="${row.id}">Download Word</button>
+      <div class="row-actions">
+        <button type="button" class="btn secondary" data-act="edit" data-id="${row.id}">Edit</button>
+        <button type="button" class="btn secondary" data-act="download" data-id="${row.id}">Download Word</button>
+        <button type="button" class="btn danger" data-act="delete" data-id="${row.id}">Delete</button>
+      </div>
     </article>`;
   }).join("");
   list.querySelectorAll("button").forEach((button) => {
     button.onclick = async () => {
       const row = loadAll().find((item) => item.id === button.dataset.id);
+      if (!row) return;
+      if (button.dataset.act === "edit") {
+        openSaved(row);
+        return;
+      }
+      if (button.dataset.act === "delete") {
+        if (!window.confirm("Delete this saved CV?")) return;
+        storeAll(loadAll().filter((item) => item.id !== row.id));
+        if (editingId === row.id) editingId = null;
+        drawList();
+        return;
+      }
       const bytes = await toDocx(row);
       const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
       saveFile(bytes, fileName + ".docx");
