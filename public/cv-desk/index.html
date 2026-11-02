@@ -202,6 +202,21 @@
   .lines { min-height: 72px; }
   .job .b { font-weight: 700; font-size: 12px; padding: 2px 8px; outline: none; min-height: 1.2em; }
   .job .lbl { padding: 6px 8px 0; font-size: 12px; }
+  .h, .job { position: relative; }
+  .remove {
+    position: absolute;
+    right: 6px;
+    top: 3px;
+    z-index: 2;
+    border: 0;
+    background: transparent;
+    color: #5c6578;
+    font-family: Inter, "PingFang HK", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 0 4px;
+  }
+  .remove:hover { color: #be3454; }
   .plain { min-height: 28px; }
   [contenteditable="true"]:empty:before {
     content: attr(data-placeholder);
@@ -244,7 +259,7 @@
             <button type="button" class="btn primary" id="download">Download Word</button>
           </div>
         </div>
-        <p class="hint" id="status">PDF, Word, or text. Click any line in the report to change it.</p>
+        <p class="hint" id="status">PDF, Word, or text. Click any line to change it. Remove a box you do not need.</p>
       </div>
       <div class="sheet-wrap" id="sheet-wrap" hidden></div>
     </section>
@@ -582,6 +597,130 @@ function takeLines(bucket) {
   return bucket.map((line) => line.trim()).filter(Boolean);
 }
 
+const SPOKEN = [
+  [/cantonese|粵語|廣東話|广东话/i, "Cantonese"],
+  [/putonghua|mandarin|普通話|普通话|國語|国语/i, "Putonghua"],
+  [/english|英語|英文/i, "English"],
+  [/french|法語|法文/i, "French"],
+  [/japanese|日語|日文/i, "Japanese"],
+  [/korean|韓語|韩语|韓文/i, "Korean"],
+  [/spanish|西班牙語|西班牙语/i, "Spanish"],
+  [/german|德語|德语/i, "German"],
+  [/italian|意大利語|義大利語|意大利语/i, "Italian"],
+  [/portuguese|葡萄牙語|葡萄牙语/i, "Portuguese"],
+  [/thai|泰語|泰语|泰文/i, "Thai"],
+  [/vietnamese|越南語|越南语/i, "Vietnamese"],
+  [/hindi|印地語|印地语/i, "Hindi"],
+  [/malay|馬來語|马来语/i, "Malay"],
+  [/tagalog|他加祿|他加禄/i, "Tagalog"],
+  [/arabic|阿拉伯語|阿拉伯语/i, "Arabic"],
+  [/russian|俄語|俄语/i, "Russian"],
+  [/dutch|荷蘭語|荷兰语/i, "Dutch"],
+  [/chinese|中文/i, "Chinese"]
+];
+
+function spokenFrom(text) {
+  const hits = [];
+  const raw = String(text || "");
+  SPOKEN.forEach(([pattern, label]) => {
+    const re = new RegExp(pattern.source, "gi");
+    let match;
+    while ((match = re.exec(raw))) hits.push({ index: match.index, label: label });
+  });
+  hits.sort((a, b) => a.index - b.index);
+  const found = [];
+  hits.forEach((hit) => {
+    if (!found.includes(hit.label)) found.push(hit.label);
+  });
+  if (found.includes("Cantonese") || found.includes("Putonghua")) return found.filter((item) => item !== "Chinese");
+  return found;
+}
+
+function looksLikeLanguageList(line) {
+  const spoken = spokenFrom(line);
+  if (!spoken.length || String(line || "").length > 80 || splitDate(line)) return false;
+  let rest = String(line || "");
+  SPOKEN.forEach(([pattern]) => {
+    rest = rest.replace(new RegExp(pattern.source, "ig"), " ");
+  });
+  rest = rest.replace(/languages?|spoken|native|fluent|proficient|mother tongue|語言|语言|能力|和|及|與|与|and|\/|,|，|、|;|；|:|：|\(|\)|level|basic|intermediate|advanced|good|fair|excellent/gi, " ");
+  return rest.replace(/\s+/g, " ").trim().length <= 12;
+}
+
+function collectLangs(lines, allowSingle) {
+  const found = [];
+  (lines || []).forEach((line) => {
+    const spoken = spokenFrom(line);
+    if (!spoken.length || !looksLikeLanguageList(line)) return;
+    const marked = /\b(native|fluent|spoken|mother tongue|proficient)\b|語言|语言/i.test(line);
+    if (!allowSingle && spoken.length < 2 && !marked) return;
+    spoken.forEach((lang) => {
+      if (!found.includes(lang)) found.push(lang);
+    });
+  });
+  return found;
+}
+
+function pickLanguages(text, bagLines) {
+  const fromBag = collectLangs(bagLines, true);
+  if (fromBag.length) return fromBag.join(", ");
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const fromDoc = collectLangs(lines, false);
+  return fromDoc.length ? fromDoc.join(", ") : "Cantonese, English";
+}
+
+function nameWords(line) {
+  let text = String(line || "").split(/[|｜]/)[0];
+  text = text.replace(/\([^)]*\)/g, " ");
+  text = text.replace(/\S+@\S+/g, " ");
+  text = text.replace(/\+?\d[\d\s()-]{5,}/g, " ");
+  const dash = text.split(/\s+[–—-]\s+/);
+  if (dash.length > 1) text = dash[0];
+  text = text.replace(/^(mr|mrs|ms|miss|dr|prof)\.?\s+/i, "");
+  text = text.replace(/[,，]/g, " ");
+  text = text.replace(/\b[\p{Lu}]\./gu, " ");
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function isPersonName(line) {
+  const text = nameWords(line);
+  if (!text || text.length < 2 || text.length > 40) return false;
+  if (text.includes("@") || text.includes(":") || /\d/.test(text)) return false;
+  if (matchHeading(text) || softHeading(text) || splitDate(text)) return false;
+  if (isPersonalNoise(text) || isJobTitle(text) || isSchool(text) || isDegree(text) || looksLikeEmployer(text)) return false;
+  if (/^(curriculum vitae|resume|cv|personal information|personal details|personal summary|profile|about me|contact|objective|summary|cover letter|confidential)$/i.test(text)) return false;
+  if (/^[\u4e00-\u9fff]{2,4}$/.test(text.replace(/\s/g, ""))) return true;
+  if (/[.。!?]/.test(text)) return false;
+  const words = text.split(" ");
+  if (words.length < 2 || words.length > 4) return false;
+  const role = /\b(leader|executive|officer|specialist|coordinator|representative|consultant|director|supervisor|assistant|associate|intern|engineer|developer|manager|analyst|designer|secretary|teacher|nurse|accountant|cashier|sales|marketing|operations|summary|profile|objective|curriculum|vitae|resume|limited|company)\b/i;
+  if (role.test(text)) return false;
+  return words.every((word) => {
+    if (/^[\p{Lu}]$/u.test(word)) return true;
+    return /^[\p{L}][\p{L}'’-]*$/u.test(word) && word.length > 1 && (word === word.toUpperCase() || /^[\p{Lu}\u4e00-\u9fff]/u.test(word));
+  });
+}
+
+function pickCandidateName(text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const stop = new Set(["work", "education", "project", "certs", "skills"]);
+  const head = [];
+  for (const line of lines) {
+    if (head.length >= 18) break;
+    const heading = matchHeading(line) || softHeading(line);
+    if (heading && stop.has(heading.key)) break;
+    if (heading && heading.key === "name") {
+      if (isPersonName(heading.inline)) return nameWords(heading.inline);
+      continue;
+    }
+    head.push(line);
+  }
+  const labeled = head.find((line) => /^(full name|candidate name|name|姓名|候選人|候选人)\s*[:：]/i.test(line));
+  if (labeled && isPersonName(labeled.replace(/^[^:：]+[:：]\s*/, ""))) return nameWords(labeled.replace(/^[^:：]+[:：]\s*/, ""));
+  const named = head.find(isPersonName);
+  return named ? nameWords(named) : "";
+}
+
 function parseCv(text) {
   const rows = explodeSections(text).split(/\r?\n/);
   const bags = {};
@@ -607,13 +746,9 @@ function parseCv(text) {
   const looseBits = classifyLoose(loose);
   const peeled = peelMisfiled(takeLines(bags.education || []).concat(looseBits.edu));
   const data = blank();
-  data.candidate = takeLines(bags.name || [])[0] || "";
-  if (!data.candidate) {
-    const first = loose.find((line) => line.length < 48 && !line.includes(":") && !splitDate(line));
-    if (first) data.candidate = first;
-  }
+  data.candidate = pickCandidateName(text);
   data.date = today();
-  data.languages = takeLines(bags.languages || []).join(", ");
+  data.languages = pickLanguages(text, takeLines(bags.languages || []));
   const related = collectRelated(takeLines(bags.skills || []).concat(peeled.skills, looseBits.skills));
   data.skills = pad(related.skills, 7);
   data.recentSalary = takeLines(bags.recentSalary || []).join(" ");
@@ -644,15 +779,6 @@ function softHeading(line) {
     if (pattern.test(raw)) return { key: key, name: raw, inline: "" };
   }
   return null;
-}
-
-function looksLikeName(line) {
-  const text = String(line || "").trim();
-  if (text.length < 2 || text.length > 40) return false;
-  if (text.includes("@") || /\d/.test(text) || text.includes(":")) return false;
-  if (matchHeading(text) || softHeading(text) || splitDate(text)) return false;
-  const words = text.split(/\s+/);
-  return words.length <= 5 && words.every((word) => /[\p{L}]/u.test(word));
 }
 
 function skillish(line) {
@@ -749,10 +875,6 @@ function mineProjects(lines) {
 
 function rescue(data, text) {
   const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (!data.candidate) {
-    const name = lines.find(looksLikeName);
-    if (name) data.candidate = name;
-  }
   if (!data.eduLeft && !data.edu.filter(Boolean).length) {
     const eduLines = [];
     lines.forEach((line, index) => {
@@ -781,10 +903,6 @@ function rescue(data, text) {
   if (!data.skills.filter(Boolean).length) {
     const line = lines.find(skillish);
     if (line) data.skills = pad(splitSkills([line]), 7);
-  }
-  if (!data.languages) {
-    const line = lines.find((item) => /cantonese|mandarin|english|putonghua|粵語|普通话|英語/i.test(item) && item.length < 80);
-    if (line && !splitDate(line)) data.languages = line.replace(/^(languages?|語言|语言)\s*[:：]?\s*/i, "");
   }
   return data;
 }
@@ -986,8 +1104,63 @@ function apply(xml, data) {
   const one = ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice", "eduLeft"];
   one.forEach((key) => { xml = setPara(xml, SLOTS[key], data[key]); });
   ["skills", "edu", "certs", "project", "job1", "duty1", "job2", "duty2"].forEach((key) => {
-    SLOTS[key].forEach((id, index) => { xml = setPara(xml, id, data[key][index] || ""); });
+    SLOTS[key].forEach((id, index) => { xml = setPara(xml, id, (data[key] && data[key][index]) || ""); });
   });
+  return dropRemoved(xml, data.removed || []);
+}
+
+function cutElementContaining(xml, tag, id, alsoEmptyP) {
+  const at = xml.indexOf('w14:paraId="' + id + '"');
+  if (at < 0) return xml;
+  const openRe = new RegExp("<w:" + tag + "(?=[\\s>])", "g");
+  let start = -1;
+  let mark;
+  while ((mark = openRe.exec(xml))) {
+    if (mark.index > at) break;
+    start = mark.index;
+  }
+  if (start < 0) return xml;
+  const close = "</w:" + tag + ">";
+  openRe.lastIndex = start;
+  let depth = 0;
+  let i = start;
+  while (i < xml.length) {
+    openRe.lastIndex = i;
+    const nextOpen = openRe.exec(xml);
+    const nextClose = xml.indexOf(close, i);
+    if (nextClose < 0) return xml;
+    if (nextOpen && nextOpen.index < nextClose) {
+      depth += 1;
+      i = nextOpen.index + nextOpen[0].length;
+    } else {
+      depth -= 1;
+      i = nextClose + close.length;
+      if (depth === 0) {
+        let next = xml.slice(0, start) + xml.slice(i);
+        if (alsoEmptyP) {
+          const rest = next.slice(start);
+          const self = rest.match(/^<w:p\b[^>]*\/>/);
+          const pair = rest.match(/^<w:p\b[\s\S]*?<\/w:p>/);
+          const hit = self || (pair && !pair[0].includes("<w:t") ? pair : null);
+          if (hit) next = next.slice(0, start) + rest.slice(hit[0].length);
+        }
+        return next;
+      }
+    }
+  }
+  return xml;
+}
+
+function dropRemoved(xml, removed) {
+  const gone = new Set(removed || []);
+  [["edu", "077984BF"], ["certs", "6A838ABA"], ["project", "4445BF81"]].forEach(([key, id]) => {
+    if (gone.has(key)) xml = cutElementContaining(xml, "tbl", id, true);
+  });
+  if (gone.has("job1") && gone.has("job2")) xml = cutElementContaining(xml, "tbl", "703ABBDA", true);
+  else {
+    if (gone.has("job1")) xml = cutElementContaining(xml, "tr", "6536531E", false);
+    if (gone.has("job2")) xml = cutElementContaining(xml, "tr", "202F88F4", false);
+  }
   return xml;
 }
 
@@ -1019,6 +1192,10 @@ function render(data) {
   const certs = data.certs.filter(Boolean).join("\n");
   const project = data.project.filter(Boolean).join("\n");
   const duty = (list) => list.filter(Boolean).join("\n");
+  const removed = new Set(data.removed || []);
+  const showJob1 = !removed.has("job1");
+  const showJob2 = !removed.has("job2");
+  const removeBtn = (key) => '<button type="button" class="remove" data-remove="' + key + '">Remove</button>';
   document.getElementById("sheet-wrap").hidden = false;
   document.getElementById("save-bar").hidden = false;
   document.getElementById("sheet-wrap").innerHTML = `
@@ -1042,40 +1219,50 @@ function render(data) {
         <tr><td class="k">Expected Salary</td><td>${field("val", "expectedSalary", data.expectedSalary, "Expected salary")}</td></tr>
         <tr><td class="k">Notice Period</td><td>${field("val", "notice", data.notice, "Notice period")}</td></tr>
       </table>
-      <table class="block">
-        <tr><td class="h edu" colspan="2">Education</td></tr>
+      ${removed.has("edu") ? "" : `<table class="block" data-box="edu">
+        <tr><td class="h edu" colspan="2">Education ${removeBtn("edu")}</td></tr>
         <tr>
           <td style="width:168px">${field("val", "eduLeft", data.eduLeft, "Year")}</td>
           <td>${field("lines", "edu", edu, "School and qualification")}</td>
         </tr>
-      </table>
-      <table class="block">
-        <tr><td class="h cert">Certifications</td></tr>
+      </table>`}
+      ${removed.has("certs") ? "" : `<table class="block" data-box="certs">
+        <tr><td class="h cert">Certifications ${removeBtn("certs")}</td></tr>
         <tr><td>${field("lines", "certs", certs, "Certificates")}</td></tr>
-      </table>
-      <table class="block">
-        <tr><td class="h project">Recent Project</td></tr>
+      </table>`}
+      ${removed.has("project") ? "" : `<table class="block" data-box="project">
+        <tr><td class="h project">Recent Project ${removeBtn("project")}</td></tr>
         <tr><td>${field("lines", "project", project, "Recent project")}</td></tr>
-      </table>
-      <table class="block">
+      </table>`}
+      ${showJob1 || showJob2 ? `<table class="block" data-box="work">
         <tr><td class="h work">Work Experience</td></tr>
-        <tr><td class="job">
+        ${showJob1 ? `<tr data-box="job1"><td class="job">
+          ${removeBtn("job1")}
           ${field("b", "job1-0", data.job1[0], "Company")}
           ${field("b", "job1-1", data.job1[1], "Role")}
           ${field("b", "job1-2", data.job1[2], "Dates")}
           <div class="lbl">Responsibilities:</div>
           ${field("lines", "duty1", duty(data.duty1), "What they did")}
-        </td></tr>
-        <tr><td class="job">
+        </td></tr>` : ""}
+        ${showJob2 ? `<tr data-box="job2"><td class="job">
+          ${removeBtn("job2")}
           ${field("b", "job2-0", data.job2[0], "Company")}
           ${field("b", "job2-1", data.job2[1], "Role")}
           ${field("b", "job2-2", data.job2[2], "Dates")}
           <div class="lbl">Responsibilities:</div>
           ${field("lines", "duty2", duty(data.duty2), "What they did")}
-        </td></tr>
-      </table>
+        </td></tr>` : ""}
+      </table>` : ""}
       <p class="foot">This resume contains information modified by HR Plus (Talent) Limited. Please refrain from duplicating and redistributing this document without permission.</p>
     </article>`;
+  document.querySelectorAll("[data-remove]").forEach((button) => {
+    button.onclick = () => {
+      const box = button.closest("[data-box]");
+      if (box) box.remove();
+      const work = document.querySelector("[data-box='work']");
+      if (work && !work.querySelector("[data-box='job1'], [data-box='job2']")) work.remove();
+    };
+  });
 }
 
 function textOf(slot) {
@@ -1101,6 +1288,7 @@ function readSheet() {
   data.job2 = [0, 1, 2].map((i) => textOf("job2-" + i));
   data.duty1 = splitSlot("duty1", 6);
   data.duty2 = splitSlot("duty2", 5);
+  data.removed = ["edu", "certs", "project", "job1", "job2"].filter((key) => !document.querySelector('[data-box="' + key + '"]'));
   return data;
 }
 
@@ -1185,8 +1373,8 @@ function show(text) {
   document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
   const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
   document.getElementById("status").textContent = found
-    ? "Filled. Click any line to change it, then save or download."
-    : "Some rows were empty. Type them in, then save or download.";
+    ? "Filled. Click any line to change it. Remove a box you do not need, then save or download."
+    : "Some rows were empty. Type them in, or remove a box you do not need.";
 }
 
 document.getElementById("tab-make").onclick = () => showTab("make");
