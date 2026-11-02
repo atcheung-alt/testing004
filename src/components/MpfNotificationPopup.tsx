@@ -33,7 +33,10 @@ export default function MpfNotificationPopup({ alerts }: { alerts: Alert[] }) {
   useEffect(() => {
     if (!open) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") dismiss();
+      if (event.key !== "Escape") return;
+      const signature = alerts.map((alert) => `${alert.id}:${alert.daysRemaining}`).join("|");
+      sessionStorage.setItem(STORAGE_KEY, signature);
+      setOpen(false);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

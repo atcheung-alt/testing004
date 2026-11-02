@@ -332,6 +332,7 @@ export default function LineItemsEditor({
                     autoComplete="off"
                     role="combobox"
                     aria-expanded={activeSuggest === index}
+                    aria-controls={`item-suggestions-${index}`}
                     aria-autocomplete="list"
                     onFocus={() => {
                       setActiveSuggest(index);
@@ -369,6 +370,7 @@ export default function LineItemsEditor({
                   />
                   {activeSuggest === index && (
                     <ItemSuggestionList
+                      id={`item-suggestions-${index}`}
                       query={item.name}
                       suggestions={suggestionsFor(item.name)}
                       highlight={highlight}
@@ -804,6 +806,7 @@ export default function LineItemsEditor({
 }
 
 function ItemSuggestionList({
+  id,
   query,
   suggestions,
   highlight,
@@ -811,6 +814,7 @@ function ItemSuggestionList({
   onHighlight,
   onPick,
 }: {
+  id: string;
   query: string;
   suggestions: ItemSuggestion[];
   highlight: number;
@@ -823,6 +827,7 @@ function ItemSuggestionList({
 
   return (
     <div
+      id={id}
       role="listbox"
       className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-soft"
     >
