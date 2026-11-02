@@ -119,7 +119,18 @@
     border-top: 1px solid var(--line);
   }
   .row:first-child { border-top: 0; }
-  .row h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .file-name {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .file-name:hover { color: var(--brand); }
   .row p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
   .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .btn.danger { background: #fff; color: #be3454; border-color: rgba(190, 52, 84, 0.35); }
@@ -212,7 +223,7 @@
   <div class="wrap">
     <div class="bar">
       <h1>Online CV</h1>
-      <p class="note">Upload a CV, check the report, then save or download Word. Saved CVs can be edited or deleted.</p>
+      <p class="note">Upload a CV, check the report, then save or download Word. Click a saved file name to edit it.</p>
     </div>
     <div class="stamps">
       <button type="button" id="tab-make" class="stamp on">Make a CV</button>
@@ -1354,11 +1365,10 @@ function drawList() {
     return `
     <article class="row">
       <div>
-        <h2>${esc(fileName)}</h2>
+        <button type="button" class="file-name" data-act="edit" data-id="${row.id}">${esc(fileName)}</button>
         <p>${esc(detail)}</p>
       </div>
       <div class="row-actions">
-        <button type="button" class="btn secondary" data-act="edit" data-id="${row.id}">Edit</button>
         <button type="button" class="btn secondary" data-act="download" data-id="${row.id}">Download Word</button>
         <button type="button" class="btn danger" data-act="delete" data-id="${row.id}">Delete</button>
       </div>
