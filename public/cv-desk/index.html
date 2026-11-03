@@ -1468,10 +1468,78 @@ function joinParts(parts) {
   return line.replace(/[ \t]+/g, " ").trim();
 }
 
+function marginNote(text) {
+  const value = String(text || "").trim();
+  if (!value || value.length > 26) return false;
+  if (/\d{4}/.test(value)) return true;
+  return /^(present|current|now|to date)$/i.test(value);
+}
+
+function columnGutters(rows) {
+  const gaps = [];
+  rows.forEach((row) => {
+    const parts = row.parts.slice().sort((a, b) => a.x - b.x);
+    for (let i = 1; i < parts.length; i++) {
+      const width = parts[i].x - parts[i - 1].end;
+      if (width < 36) continue;
+      gaps.push({ mid: (parts[i - 1].end + parts[i].x) / 2, width: width });
+    }
+  });
+  if (gaps.length < 4) return [];
+  gaps.sort((a, b) => a.mid - b.mid);
+  const clusters = [];
+  gaps.forEach((gap) => {
+    const last = clusters[clusters.length - 1];
+    if (!last || Math.abs(gap.mid - last.mid) > 28) clusters.push({ mid: gap.mid, gaps: [gap] });
+    else {
+      last.gaps.push(gap);
+      last.mid = last.gaps.reduce((sum, item) => sum + item.mid, 0) / last.gaps.length;
+    }
+  });
+  const needed = Math.max(4, Math.floor(rows.length * 0.35));
+  return clusters.filter((cluster) => {
+    if (cluster.gaps.length < needed) return false;
+    const widths = cluster.gaps.map((gap) => gap.width).sort((a, b) => a - b);
+    if (widths[Math.floor(widths.length / 2)] < 40) return false;
+    const mid = cluster.mid;
+    let leftLines = 0;
+    let rightLines = 0;
+    let crossing = 0;
+    let rightLong = 0;
+    let rightNotes = 0;
+    let rightOther = 0;
+    rows.forEach((row) => {
+      const crosses = row.parts.some((part) => part.x < mid - 6 && part.end > mid + 6);
+      if (crosses) crossing += 1;
+      if (row.parts.some((part) => part.end <= mid + 4)) leftLines += 1;
+      const right = row.parts.filter((part) => part.x >= mid - 4).map((part) => part.str).join(" ").trim();
+      if (!right) return;
+      rightLines += 1;
+      if (marginNote(right)) rightNotes += 1;
+      else rightOther += 1;
+      if (right.length > 18 && !marginNote(right)) rightLong += 1;
+    });
+    return leftLines >= 4 && rightLines >= 4 && crossing <= rows.length * 0.25 && rightNotes * 2 < rightLines && (rightLong >= 3 || rightOther >= 4);
+  }).map((cluster) => cluster.mid).sort((a, b) => a - b);
+}
+
+function partsInColumn(parts, gutters, index) {
+  const from = index === 0 ? -Infinity : gutters[index - 1];
+  const to = index === gutters.length ? Infinity : gutters[index];
+  return parts.filter((part) => {
+    const center = (part.x + part.end) / 2;
+    return center >= from && center < to;
+  });
+}
+
+function rowSpans(row, gutters) {
+  return gutters.some((mid) => row.parts.some((part) => part.x < mid - 6 && part.end > mid + 6));
+}
+
 function linesFromItems(items) {
   const rows = [];
   items.forEach((item) => {
-    if (!item.str || !String(item.str).trim()) return;
+    if (!item.str || !String(item.str).trim() || !item.transform) return;
     const x = item.transform[4];
     const y = item.transform[5];
     let row = rows.find((entry) => Math.abs(entry.y - y) < 3);
@@ -1481,28 +1549,28 @@ function linesFromItems(items) {
     }
     row.parts.push({ x: x, end: x + (item.width || 0), str: item.str });
   });
-  const xs = rows.flatMap((row) => row.parts.map((part) => part.x)).sort((a, b) => a - b);
-  let gap = 0;
-  let mid = 0;
-  for (let i = 1; i < xs.length; i++) {
-    const size = xs[i] - xs[i - 1];
-    if (size > gap) {
-      gap = size;
-      mid = (xs[i] + xs[i - 1]) / 2;
+  const ordered = rows.slice().sort((a, b) => b.y - a.y);
+  const gutters = columnGutters(ordered);
+  if (!gutters.length) return ordered.map((row) => joinParts(row.parts)).filter(Boolean).join("\n");
+  const lines = [];
+  let block = [];
+  const flush = () => {
+    if (!block.length) return;
+    for (let index = 0; index <= gutters.length; index++) {
+      const text = block.map((row) => joinParts(partsInColumn(row.parts, gutters, index))).filter(Boolean);
+      if (text.length) lines.push(text.join("\n"));
     }
-  }
-  const left = [];
-  const right = [];
-  rows.forEach((row) => {
-    const onLeft = row.parts.filter((part) => part.x < mid);
-    const onRight = row.parts.filter((part) => part.x >= mid);
-    if (onLeft.length) left.push({ y: row.y, parts: onLeft });
-    if (onRight.length) right.push({ y: row.y, parts: onRight });
+    block = [];
+  };
+  ordered.forEach((row) => {
+    if (rowSpans(row, gutters)) {
+      flush();
+      const line = joinParts(row.parts);
+      if (line) lines.push(line);
+    } else block.push(row);
   });
-  const twoColumns = gap > 80 && left.length >= 4 && right.length >= 4;
-  const emit = (list) => list.sort((a, b) => b.y - a.y).map((row) => joinParts(row.parts)).filter(Boolean);
-  if (!twoColumns) return emit(rows).join("\n");
-  return emit(left).concat([""]).concat(emit(right)).join("\n");
+  flush();
+  return lines.join("\n\n");
 }
 
 function decodeXml(value) {
