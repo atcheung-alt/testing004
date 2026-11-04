@@ -13,6 +13,7 @@ import DashboardMonthSelect from "@/components/DashboardMonthSelect";
 import DashboardTrend from "@/components/DashboardTrend";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
+import { sumGeneralExpenses } from "@/lib/generalExpense";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const quotationWhere = quotationFilter || undefined;
   const invoiceWhere = invoiceFilter || undefined;
   const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
-  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, trendMonths, expenseTotal, recentExpenses] =
+  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, trendMonths, expenseTotal, recentExpenses, generalExpenseSum] =
     await Promise.all([
       prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
       prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
@@ -66,13 +67,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         take: 5,
         include: { invoice: { select: { id: true, number: true, customerName: true } } },
       }),
+      sumGeneralExpenses(),
     ]);
 
   const invoiced = invoices
     .filter((i) => i.status !== "CANCELLED")
     .reduce((sum, i) => sum + i.total, 0);
   const paid = invoices.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.total, 0);
-  const expenseSum = expenseTotal._sum.amount || 0;
+  const expenseSum = (expenseTotal._sum.amount || 0) + generalExpenseSum;
   const monthProfit = monthFinance.profit;
 
   const outstanding = invoices

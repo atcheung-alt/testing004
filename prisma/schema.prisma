@@ -404,6 +404,26 @@ model ExpenseDocument {
   createdAt DateTime       @default(now())
 }
 
+// A cost that is not tied to an invoice: rent, supplies, travel, software.
+// Receipt bytes stay on the row, the same way invoice receipts do.
+model GeneralExpense {
+  id        String   @id @default(cuid())
+  name      String
+  category  String   @default("Others")
+  amount    Float    @default(0)
+  spentAt   DateTime
+  vendor    String   @default("")
+  notes     String   @default("")
+  invoiceId String @default("")
+  invoiceNumber String @default("")
+  fileName  String   @default("")
+  mimeType  String   @default("")
+  fileData  String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([spentAt])
+}
+
 // A reusable quotation format. The next quotation started from it copies the
 // activity title, line items, and terms, then staff change the name, items,
 // and dates for that job. Customer details are never part of a template.

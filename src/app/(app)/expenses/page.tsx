@@ -2,10 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import ExpenseWorkspace from "@/components/ExpenseWorkspace";
+import GeneralExpenses from "@/components/GeneralExpenses";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
+import { listGeneralExpenses } from "@/lib/generalExpense";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,7 @@ export default async function ExpensesPage({
   const t = getT();
   await ensureDefaultExpenseCategories();
   const invoiceFilter = await currentInvoiceFilter();
-  const [invoices, categories, expenses] = await Promise.all([
+  const [invoices, categories, expenses, general] = await Promise.all([
     prisma.invoice.findMany({
       where: invoiceFilter || undefined,
       select: {
@@ -47,11 +49,47 @@ export default async function ExpensesPage({
         },
       },
     }),
+    listGeneralExpenses(),
   ]);
+  const history = [
+    ...general.map((expense) => ({
+      id: expense.id,
+      source: "general" as const,
+      name: expense.name,
+      category: expense.category,
+      amount: expense.amount,
+      date: expense.spentAt.toISOString().slice(0, 10),
+      vendor: expense.vendor,
+      link: expense.invoiceNumber || "General",
+      receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
+    })),
+    ...expenses.map((expense) => ({
+      id: expense.id,
+      source: "invoice" as const,
+      name: expense.label || expense.category,
+      category: expense.category,
+      amount: expense.amount,
+      date: expense.createdAt.toISOString().slice(0, 10),
+      vendor: expense.invoice.customerName,
+      link: expense.invoice.number,
+      receiptHref: expense.documents[0]
+        ? `/api/invoices/${expense.invoice.id}/expenses/${expense.id}/documents/${expense.documents[0].id}`
+        : "",
+    })),
+  ].sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return (
     <div>
-      <PageBar title={t("Expenses")} note={t("Record a cost on an invoice, and keep the receipt with it.")} />
+      <PageBar title={t("Expenses")} note={t("Record a cost on an invoice, or a general expense that is not tied to one.")} />
+      <GeneralExpenses
+        invoices={invoices.filter((invoice) => invoice.status !== "CANCELLED").map((invoice) => ({
+          id: invoice.id,
+          number: invoice.number,
+          customerName: invoice.customerName,
+          total: invoice.total,
+        }))}
+        history={history}
+      />
       <ExpenseWorkspace
         invoices={invoices.map((invoice) => ({
           id: invoice.id,

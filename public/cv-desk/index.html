@@ -314,17 +314,17 @@
   .sheet:not(.cover) .block { margin: 0 0 24px; }
   .sheet:not(.cover) .band td,
   .sheet:not(.cover) .grid td,
-  .sheet:not(.cover) .block td { padding: 10px 14px; }
+  .sheet:not(.cover) .block td { padding: 10px 14px 10px 8px; }
   .sheet:not(.cover) .h {
     font-size: 16pt;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    padding: 10px 14px;
+    padding: 10px 14px 10px 8px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
   }
   .sheet:not(.cover) .title-edit { font-size: 16pt; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
-  .sheet:not(.cover) .grid .k { font-size: 12pt; padding: 10px 14px; }
+  .sheet:not(.cover) .grid .k { font-size: 12pt; padding: 10px 14px 10px 8px; }
   .sheet:not(.cover) .val,
   .sheet:not(.cover) .lines,
   .sheet:not(.cover) .plain,
@@ -439,10 +439,11 @@
   .job + .job { border-top: 1px solid #e3e8f3; margin-top: 8px; padding-top: 8px; }
   .entry + .entry { margin-top: 8px; }
   .plain { min-height: 28px; }
-  #sheet [contenteditable="true"] ul,
-  #sheet [contenteditable="true"] ol {
-    margin: 0.1em 0 0.1em 1.15em;
+  .sheet:not(.cover) [contenteditable="true"] ul,
+  .sheet:not(.cover) [contenteditable="true"] ol {
+    margin: 0.1em 0;
     padding: 0;
+    list-style-position: inside;
   }
   .sheet:not(.cover) [contenteditable="true"] li { margin: 0 0 8px; }
   #fmt-bar {

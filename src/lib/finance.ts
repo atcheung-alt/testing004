@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { generalExpensesBetween } from "@/lib/generalExpense";
 
 export type MonthlyFinance = {
   month: string; // "2026-07", sortable
@@ -181,10 +182,13 @@ export async function getFinanceByPeriod(
     locale
   );
 
-  const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
-    select: { total: true, paidAt: true, expenses: { select: { amount: true } } },
-  });
+  const [invoices, general] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+      select: { total: true, paidAt: true, expenses: { select: { amount: true } } },
+    }),
+    generalExpensesBetween(rangeStart, rangeEndExclusive),
+  ]);
 
   const bucketMap = new Map(emptyBuckets.map((b) => [b.month, b]));
   for (const inv of invoices) {
@@ -193,6 +197,10 @@ export async function getFinanceByPeriod(
     if (!bucket) continue; // shouldn't happen given the query's own date range filter
     bucket.revenue += inv.total;
     bucket.expenses += inv.expenses.reduce((sum, e) => sum + e.amount, 0);
+  }
+  for (const expense of general) {
+    const bucket = bucketMap.get(bucketKeyFor(expense.spentAt));
+    if (bucket) bucket.expenses += expense.amount;
   }
   for (const b of emptyBuckets) b.profit = b.revenue - b.expenses;
 
@@ -209,12 +217,17 @@ export async function getPeriodTotals(
   locale = "en-US"
 ): Promise<PeriodTotals> {
   const { rangeStart, rangeEndExclusive, rangeLabel } = periodRange(granularity, referenceDate, locale);
-  const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
-    select: { total: true, expenses: { select: { amount: true } } },
-  });
+  const [invoices, general] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+      select: { total: true, expenses: { select: { amount: true } } },
+    }),
+    generalExpensesBetween(rangeStart, rangeEndExclusive),
+  ]);
   const revenue = invoices.reduce((sum, i) => sum + i.total, 0);
-  const expenses = invoices.reduce((sum, i) => sum + i.expenses.reduce((s, e) => s + e.amount, 0), 0);
+  const expenses =
+    invoices.reduce((sum, i) => sum + i.expenses.reduce((s, e) => s + e.amount, 0), 0) +
+    general.reduce((sum, expense) => sum + expense.amount, 0);
   return { revenue, expenses, profit: revenue - expenses, rangeLabel };
 }
 
@@ -236,10 +249,13 @@ export async function getExpenseBreakdown(
   referenceDate: Date
 ): Promise<{ revenue: number; categories: ExpenseCategoryBreakdown[] }> {
   const { rangeStart, rangeEndExclusive } = periodRange(granularity, referenceDate);
-  const invoices = await prisma.invoice.findMany({
-    where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
-    select: { total: true, expenses: { select: { category: true, amount: true } } },
-  });
+  const [invoices, general] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { gte: rangeStart, lt: rangeEndExclusive } },
+      select: { total: true, expenses: { select: { category: true, amount: true } } },
+    }),
+    generalExpensesBetween(rangeStart, rangeEndExclusive),
+  ]);
   const revenue = invoices.reduce((sum, i) => sum + i.total, 0);
 
   const byCategory = new Map<string, number>();
@@ -247,6 +263,9 @@ export async function getExpenseBreakdown(
     for (const e of inv.expenses) {
       byCategory.set(e.category, (byCategory.get(e.category) || 0) + e.amount);
     }
+  }
+  for (const expense of general) {
+    byCategory.set(expense.category, (byCategory.get(expense.category) || 0) + expense.amount);
   }
 
   const categories = Array.from(byCategory.entries())
@@ -375,7 +394,7 @@ export async function getMonthDashboard(
     expenses: 0,
   }));
 
-  const [invoices, expenses] = await Promise.all([
+  const [invoices, expenses, general] = await Promise.all([
     prisma.invoice.findMany({
       where: { status: "PAID", paidAt: { gte: start, lt: end }, ...(invoiceWhere || {}) },
       select: { total: true, paidAt: true },
@@ -387,6 +406,7 @@ export async function getMonthDashboard(
       },
       select: { amount: true, createdAt: true },
     }),
+    generalExpensesBetween(start, end),
   ]);
 
   for (const invoice of invoices) {
@@ -396,6 +416,10 @@ export async function getMonthDashboard(
   }
   for (const expense of expenses) {
     const bucket = days[expense.createdAt.getDate() - 1];
+    if (bucket) bucket.expenses += expense.amount;
+  }
+  for (const expense of general) {
+    const bucket = days[expense.spentAt.getDate() - 1];
     if (bucket) bucket.expenses += expense.amount;
   }
 
@@ -416,7 +440,7 @@ export type TrendMonth = {
 export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Promise<TrendMonth[]> {
   const now = new Date();
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const [invoices, expenses] = await Promise.all([
+  const [invoices, expenses, general] = await Promise.all([
     prisma.invoice.findMany({
       where: { status: "PAID", paidAt: { not: null, lt: end }, ...(invoiceWhere || {}) },
       select: { total: true, paidAt: true },
@@ -428,6 +452,7 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
       },
       select: { amount: true, createdAt: true },
     }),
+    generalExpensesBetween(new Date(2000, 0, 1), end),
   ]);
 
   const nowKey = now.getFullYear() * 12 + now.getMonth();
@@ -438,6 +463,7 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
   };
   for (const invoice of invoices) if (invoice.paidAt) earlier(invoice.paidAt);
   for (const expense of expenses) earlier(expense.createdAt);
+  for (const expense of general) earlier(expense.spentAt);
 
   const months: TrendMonth[] = [];
   for (let key = startKey; key <= nowKey; key++) {
@@ -458,6 +484,11 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
   }
   for (const expense of expenses) {
     const at = index.get(expense.createdAt.getFullYear() * 12 + expense.createdAt.getMonth());
+    if (at === undefined) continue;
+    months[at].expenses += expense.amount;
+  }
+  for (const expense of general) {
+    const at = index.get(expense.spentAt.getFullYear() * 12 + expense.spentAt.getMonth());
     if (at === undefined) continue;
     months[at].expenses += expense.amount;
   }
