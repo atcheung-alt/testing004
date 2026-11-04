@@ -310,6 +310,36 @@
     text-align: center;
   }
   .sheet:not(.cover) > *:not(.mark):not(.foot) { position: relative; z-index: 1; }
+  .sheet:not(.cover) .grid,
+  .sheet:not(.cover) .block { margin: 0 0 24px; }
+  .sheet:not(.cover) .band td,
+  .sheet:not(.cover) .grid td,
+  .sheet:not(.cover) .block td { padding: 10px 14px; }
+  .sheet:not(.cover) .h {
+    font-size: 16pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+  .sheet:not(.cover) .title-edit { font-size: 16pt; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .sheet:not(.cover) .grid .k { font-size: 12pt; padding: 10px 14px; }
+  .sheet:not(.cover) .val,
+  .sheet:not(.cover) .lines,
+  .sheet:not(.cover) .plain,
+  .sheet:not(.cover) .col-text {
+    font-size: 12pt;
+    line-height: 1.65;
+  }
+  .sheet:not(.cover) .job .line-row .col-text,
+  .sheet:not(.cover) .job > .col-text.b { font-size: 14pt; font-weight: 700; line-height: 1.45; }
+  .sheet:not(.cover) .job > .col-text.b + .col-text.b { font-size: 13pt; font-weight: 600; }
+  .sheet:not(.cover) .job .lbl { font-size: 12pt; padding: 10px 0 4px; }
+  .sheet:not(.cover) .job > .col-text { margin-bottom: 10px; }
+  .sheet:not(.cover) .job + .job { margin-top: 16px; padding-top: 16px; }
+  .sheet:not(.cover) li { margin-bottom: 8px; }
+  .sheet:not(.cover) .line-row + .line-row { margin-top: 8px; }
   .head { text-align: right; }
   .head img { height: 46px; width: auto; }
   #profile td.photo-cell {
@@ -338,7 +368,21 @@
   .meta td { padding: 2px 8px; font-size: 20px; vertical-align: baseline; }
   .meta .k { width: 42%; text-align: right; font-weight: 700; }
   .band, .grid, .block { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
-  .grid, .block, .job, [data-box] { break-inside: avoid; page-break-inside: avoid; }
+  .sheet:not(.cover) .grid,
+  .sheet:not(.cover) .block,
+  .sheet:not(.cover) .job,
+  .sheet:not(.cover) [data-box],
+  .sheet:not(.cover) tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .sheet:not(.cover) .h,
+  .sheet:not(.cover) .job .line-row,
+  .sheet:not(.cover) .job > .col-text.b,
+  .sheet:not(.cover) .job .lbl {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
   .band td, .grid td, .block td { border: 0.5pt solid #000; vertical-align: top; text-align: left; padding: 1px 3px; }
   .h {
     font-family: Georgia, "Times New Roman", serif;
@@ -400,7 +444,7 @@
     margin: 0.1em 0 0.1em 1.15em;
     padding: 0;
   }
-  #sheet [contenteditable="true"] li { margin: 0; }
+  .sheet:not(.cover) [contenteditable="true"] li { margin: 0 0 8px; }
   #fmt-bar {
     position: fixed;
     z-index: 30;
@@ -679,6 +723,8 @@
           <button type="button" id="draft-tab-draft" class="stamp on">Drafts</button>
           <button type="button" id="draft-tab-sent" class="stamp">Sent Mail</button>
         </div>
+        <label class="label" for="draft-q">Search drafts</label>
+        <input class="input" id="draft-q" type="search" placeholder="File ID, candidate, or company" style="margin-bottom:12px">
         <p class="hint" id="draft-status">Saved emails stay here until you send them.</p>
         <div class="draft-list" id="draft-list"></div>
       </div>
@@ -2003,21 +2049,22 @@ function paginateSheets(root) {
   const sheet = root.querySelector(".sheet:not(.cover)");
   if (!sheet) return;
   const add = sheet.querySelector(".section-add");
-  const extras = sheet.querySelector(".extras");
-  const blocks = [];
-  [...sheet.children].forEach((el) => {
+  const budget = 1123 - sheetChromeHeight(sheet) - (add ? blockHeight(add) : 0);
+  const kids = [...sheet.children];
+  const atoms = [];
+  kids.forEach((el) => {
     if (el.matches(".mark, .head, .foot") || el === add) return;
-    if (el === extras) {
-      [...el.children].forEach((box) => blocks.push(box));
+    if (el.classList.contains("extras")) {
+      [...el.children].forEach((box) => atoms.push(...fitBlock(box, budget, sheet)));
+      el.remove();
       return;
     }
-    blocks.push(el);
+    atoms.push(...fitBlock(el, budget, sheet));
   });
-  const budget = 1123 - sheetChromeHeight(sheet) - (add ? blockHeight(add) : 0);
   const groups = [];
   let current = [];
   let used = 0;
-  blocks.forEach((el) => {
+  atoms.forEach((el) => {
     const height = blockHeight(el);
     if (current.length && used + height > budget) {
       groups.push(current);
@@ -2028,20 +2075,184 @@ function paginateSheets(root) {
     used += height;
   });
   if (current.length) groups.push(current);
-  if (groups.length < 2) return;
-  if (extras) extras.remove();
-  const wrap = root;
   const mark = sheet.querySelector(".mark");
   const head = sheet.querySelector(".head");
   const foot = sheet.querySelector(".foot");
   groups.forEach((group, index) => {
     const page = index === 0 ? sheet : continuationSheet(mark, head, foot);
-    if (index > 0) wrap.appendChild(page);
+    if (index > 0) root.appendChild(page);
     const anchor = page.querySelector(".foot");
     group.forEach((el) => page.insertBefore(el, anchor));
   });
-  const last = wrap.querySelector("article.sheet:last-of-type");
-  if (add && last) last.insertBefore(add, last.querySelector(".foot"));
+  const last = root.querySelector("article.sheet:last-of-type");
+  if (add && last && !last.classList.contains("cover")) last.insertBefore(add, last.querySelector(".foot"));
+}
+
+function fitBlock(el, budget, sheet) {
+  if (blockHeight(el) <= budget) return [el];
+  if (el.querySelector(".job")) return fitJobs(el, budget, sheet);
+  if (el.querySelector(".h.cert")) return fitLines(el, budget, sheet);
+  if (el.querySelector("[data-field='year']") || el.id === "profile") return fitRows(el, budget, sheet);
+  if (el.querySelector("[data-slot='project'], [data-field='text'], [data-field='duties']")) return fitText(el, budget, sheet);
+  return [el];
+}
+
+function fitRows(table, budget, sheet) {
+  if (blockHeight(table) <= budget) return [table];
+  const header = table.rows[0] && table.rows[0].querySelector(".h") ? table.rows[0] : null;
+  const minRows = header ? 2 : 1;
+  const pieces = [table];
+  let current = table;
+  while (blockHeight(current) > budget && current.rows.length > minRows) {
+    const next = current.cloneNode(false);
+    next.removeAttribute("id");
+    if (header) next.appendChild(header.cloneNode(true));
+    const overflow = [];
+    while (blockHeight(current) > budget && current.rows.length > minRows) {
+      const addRow = current.rows[current.rows.length - 1].querySelector(".add-row");
+      if (addRow && current.rows.length > minRows + 1) {
+        overflow.unshift(current.rows[current.rows.length - 1]);
+        current.deleteRow(current.rows.length - 1);
+        continue;
+      }
+      overflow.unshift(current.rows[current.rows.length - 1]);
+      current.deleteRow(current.rows.length - 1);
+    }
+    overflow.forEach((row) => next.appendChild(row));
+    sheet.insertBefore(next, current.nextSibling);
+    pieces.push(next);
+    current = next;
+  }
+  return pieces;
+}
+
+function fitLines(table, budget, sheet) {
+  if (blockHeight(table) <= budget) return [table];
+  const cell = table.querySelector("td:not(.h)") || table;
+  const lines = [...cell.querySelectorAll(":scope > .line-row")];
+  const pieces = [table];
+  let current = table;
+  let guard = 0;
+  while (blockHeight(current) > budget && lines.length > 1 && guard < 20) {
+    guard += 1;
+    const next = current.cloneNode(true);
+    next.removeAttribute("id");
+    const nextCell = next.querySelector("td:not(.h)") || next;
+    nextCell.querySelectorAll(".line-row, .add-row").forEach((node) => node.remove());
+    const keep = Math.max(1, Math.ceil(lines.length / 2));
+    const moved = lines.splice(keep);
+    const live = [...current.querySelectorAll(".line-row")];
+    live.forEach((row, index) => { if (index >= keep) row.remove(); });
+    moved.forEach((row) => nextCell.appendChild(row));
+    const addRow = current.querySelector(".add-row");
+    if (addRow) nextCell.appendChild(addRow);
+    sheet.insertBefore(next, current.nextSibling);
+    pieces.push(next);
+    current = next;
+    lines.length = 0;
+    lines.push(...current.querySelectorAll(".line-row"));
+  }
+  return pieces;
+}
+
+function fitJobs(table, budget, sheet) {
+  const header = table.rows[0];
+  const jobs = [...table.querySelectorAll(".job")];
+  if (jobs.length < 2 && blockHeight(table) <= budget) return [table];
+  if (jobs.length < 2) return fitText(table, budget, sheet);
+  const pieces = [];
+  jobs.forEach((job) => {
+    const wrap = table.cloneNode(false);
+    wrap.removeAttribute("id");
+    wrap.appendChild(header.cloneNode(true));
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    tr.appendChild(td);
+    td.appendChild(job);
+    wrap.appendChild(tr);
+    sheet.insertBefore(wrap, table);
+    pieces.push(...(blockHeight(wrap) > budget ? fitText(wrap, budget, sheet) : [wrap]));
+  });
+  const addRow = table.querySelector(".add-row");
+  table.remove();
+  if (addRow && pieces.length) {
+    const cells = pieces[pieces.length - 1].querySelectorAll("td");
+    cells[cells.length - 1].appendChild(addRow);
+  }
+  return pieces;
+}
+
+function htmlUnits(html) {
+  const holder = document.createElement("div");
+  holder.innerHTML = html || "";
+  const units = [];
+  [...holder.childNodes].forEach((node) => {
+    if (node.nodeType === 3) {
+      node.textContent.split(/\n/).forEach((line) => {
+        if (line.trim()) units.push(document.createTextNode(line.trim()));
+      });
+      return;
+    }
+    if (!node.tagName || /^BR$/i.test(node.tagName)) return;
+    if (/^(UL|OL)$/i.test(node.tagName)) {
+      [...node.children].forEach((li) => {
+        const list = document.createElement(node.tagName.toLowerCase());
+        list.appendChild(li.cloneNode(true));
+        units.push(list);
+      });
+      return;
+    }
+    units.push(node.cloneNode(true));
+  });
+  return units;
+}
+
+function fitText(el, budget, sheet) {
+  if (blockHeight(el) <= budget) return [el];
+  const field = el.querySelector("[data-field='duties'], [data-field='text'], [data-slot='project']");
+  if (!field) return [el];
+  const units = htmlUnits(field.innerHTML);
+  if (units.length < 2) return [el];
+  field.innerHTML = "";
+  const pieces = [el];
+  let current = el;
+  let index = 0;
+  const place = (target, start) => {
+    const box = target.querySelector("[data-field='duties'], [data-field='text'], [data-slot='project']");
+    let at = start;
+    while (at < units.length) {
+      if (box.childNodes.length && units[at].nodeType === 3) box.appendChild(document.createElement("br"));
+      box.appendChild(units[at]);
+      if (blockHeight(target) > budget && box.childNodes.length > 1) {
+        box.removeChild(units[at]);
+        break;
+      }
+      at += 1;
+      if (blockHeight(target) > budget) break;
+    }
+    return at;
+  };
+  index = place(current, 0);
+  while (index < units.length) {
+    const next = current.cloneNode(true);
+    next.removeAttribute("id");
+    next.setAttribute("data-part", "continue");
+    const job = next.querySelector(".job");
+    if (job) job.setAttribute("data-part", "continue");
+    next.querySelectorAll("[data-field='company'], [data-field='role'], [data-field='dates'], [data-field='title']").forEach((node) => {
+      const row = node.closest(".line-row") || node;
+      if (row !== next) row.remove();
+    });
+    const box = next.querySelector("[data-field='duties'], [data-field='text'], [data-slot='project']");
+    box.innerHTML = "";
+    sheet.insertBefore(next, current.nextSibling);
+    current = next;
+    pieces.push(current);
+    const nextIndex = place(current, index);
+    if (nextIndex === index) break;
+    index = nextIndex;
+  }
+  return pieces;
 }
 
 function columnText(node) {
@@ -2049,8 +2260,10 @@ function columnText(node) {
 }
 
 function textOf(slot) {
-  const node = document.querySelector('[data-slot="' + slot + '"]');
-  return node ? node.innerText.replace(/\u00a0/g, " ").trim() : "";
+  const nodes = slot === "candidate" || slot === "recruiter" || slot === "date"
+    ? document.querySelectorAll('.sheet.cover [data-slot="' + slot + '"]')
+    : document.querySelectorAll('#sheet-wrap .sheet:not(.cover) [data-slot="' + slot + '"]');
+  return [...nodes].map((node) => node.innerText.replace(/\u00a0/g, " ").trim()).filter(Boolean).join("\n");
 }
 
 function splitSlot(slot, n) {
@@ -2068,8 +2281,8 @@ function fieldHtml(row, name) {
 }
 
 function slotHtml(slot) {
-  const node = document.querySelector('#sheet [data-slot="' + slot + '"]');
-  return node ? sanitizeRich(node.innerHTML) : "";
+  const nodes = document.querySelectorAll('#sheet-wrap .sheet:not(.cover) [data-slot="' + slot + '"]');
+  return [...nodes].map((node) => sanitizeRich(node.innerHTML)).join("");
 }
 
 function readSheet() {
@@ -2088,31 +2301,55 @@ function readSheet() {
   };
   data.skills = pad(textOf("skills").split(/\n/).map((line) => line.trim()).filter(Boolean), 7);
   data.project = pad(textOf("project").split(/\n/).map((line) => line.trim()).filter(Boolean), 5);
-  const edu = Array.from(document.querySelectorAll("#edu [data-entry]")).map((row) => ({
+  const edu = Array.from(document.querySelectorAll("#sheet-wrap .sheet:not(.cover) tr[data-entry]")).filter((row) => row.querySelector("[data-field='year']")).map((row) => ({
     year: fieldText(row, "year"),
     school: fieldText(row, "school"),
     yearHtml: fieldHtml(row, "year"),
     schoolHtml: fieldHtml(row, "school")
   }));
-  const certs = Array.from(document.querySelectorAll("#certs [data-entry]")).map((row) => fieldText(row, "text"));
-  data.rich.certs = Array.from(document.querySelectorAll("#certs [data-entry]")).map((row) => fieldHtml(row, "text"));
-  const jobs = Array.from(document.querySelectorAll("#work [data-entry]")).map((row) => ({
-    company: fieldText(row, "company"),
-    role: fieldText(row, "role"),
-    dates: fieldText(row, "dates"),
-    duties: fieldText(row, "duties"),
-    companyHtml: fieldHtml(row, "company"),
-    roleHtml: fieldHtml(row, "role"),
-    datesHtml: fieldHtml(row, "dates"),
-    dutiesHtml: fieldHtml(row, "duties")
-  }));
-  const boxes = Array.from(document.querySelectorAll("#sheet-wrap [data-box]")).map((row, index) => ({
-    title: fieldText(row, "title"),
-    text: fieldText(row, "text"),
-    titleHtml: fieldHtml(row, "title"),
-    textHtml: fieldHtml(row, "text"),
-    color: boxColor(row.querySelector("[data-color]") && row.querySelector("[data-color]").getAttribute("data-color"), index),
-  }));
+  const certRows = Array.from(document.querySelectorAll("#sheet-wrap .sheet:not(.cover) .line-row[data-entry]")).filter((row) => {
+    const table = row.closest("table");
+    return table && table.querySelector(".h.cert");
+  });
+  const certs = certRows.map((row) => fieldText(row, "text"));
+  data.rich.certs = certRows.map((row) => fieldHtml(row, "text"));
+  const jobs = [];
+  Array.from(document.querySelectorAll("#sheet-wrap .sheet:not(.cover) .job")).forEach((row) => {
+    if (row.getAttribute("data-part") === "continue" && jobs.length) {
+      const prev = jobs[jobs.length - 1];
+      const extra = fieldText(row, "duties");
+      const extraHtml = fieldHtml(row, "duties");
+      prev.duties = [prev.duties, extra].filter(Boolean).join("\n");
+      prev.dutiesHtml = (prev.dutiesHtml || "") + (extraHtml || "");
+      return;
+    }
+    jobs.push({
+      company: fieldText(row, "company"),
+      role: fieldText(row, "role"),
+      dates: fieldText(row, "dates"),
+      duties: fieldText(row, "duties"),
+      companyHtml: fieldHtml(row, "company"),
+      roleHtml: fieldHtml(row, "role"),
+      datesHtml: fieldHtml(row, "dates"),
+      dutiesHtml: fieldHtml(row, "duties")
+    });
+  });
+  const boxes = [];
+  Array.from(document.querySelectorAll("#sheet-wrap [data-box]")).forEach((row) => {
+    if (row.getAttribute("data-part") === "continue" && boxes.length) {
+      const prev = boxes[boxes.length - 1];
+      prev.text = [prev.text, fieldText(row, "text")].filter(Boolean).join("\n");
+      prev.textHtml = (prev.textHtml || "") + (fieldHtml(row, "text") || "");
+      return;
+    }
+    boxes.push({
+      title: fieldText(row, "title"),
+      text: fieldText(row, "text"),
+      titleHtml: fieldHtml(row, "title"),
+      textHtml: fieldHtml(row, "text"),
+      color: boxColor(row.querySelector("[data-color]") && row.querySelector("[data-color]").getAttribute("data-color"), boxes.length),
+    });
+  });
   data.more = { edu: edu, certs: certs, jobs: jobs, boxes: boxes };
   const photoNode = document.querySelector("#sheet .photo");
   data.photo = photoNode && photoNode.getAttribute("src") ? photoNode.getAttribute("src") : "";
@@ -2313,6 +2550,8 @@ function sectionFill(data) {
 }
 
 let mailLocked = false;
+let mailDraftId = "";
+let mailFileId = "";
 let draftView = "DRAFT";
 let mailPicked = [];
 let mailTouched = false;
@@ -2506,6 +2745,7 @@ function openMail(draft) {
   document.getElementById("mail-send").hidden = mailLocked;
   document.getElementById("mail-draft").hidden = mailLocked;
   mailDraftId = draft && draft.id ? draft.id : "";
+  mailFileId = draft && draft.fileId ? draft.fileId : "";
   mailPicked = draft && Array.isArray(draft.candidates)
     ? draft.candidates.map((item) => ({ id: item.id || (item.cv && item.cv.id) || "", format: item.format === "docx" ? "docx" : "pdf", cv: item.cv || item })).filter((item) => item.id)
     : [];
@@ -2534,6 +2774,7 @@ function closeMail() {
 function mailPayload() {
   return {
     id: mailDraftId,
+    fileId: mailFileId,
     to: document.getElementById("mail-to").value.trim(),
     company: document.getElementById("mail-company").value.trim(),
     position: document.getElementById("mail-position").value.trim(),
@@ -2584,23 +2825,38 @@ async function filesForPicks() {
   return files;
 }
 
-async function drawDrafts() {
+let draftCache = [];
+let draftReady = false;
+
+function draftNames(draft) {
+  return (draft.candidates || []).map((item) => {
+    const cv = item && item.cv ? item.cv : {};
+    return item.name || cv.candidate || "";
+  }).filter(Boolean).join(" ");
+}
+
+function draftMatches(draft, query) {
+  if (!query) return true;
+  const hay = [draft.fileId, draft.company, draft.subject, draftNames(draft)].join(" ").toLowerCase();
+  return hay.includes(query);
+}
+
+function paintDrafts() {
   const list = document.getElementById("draft-list");
   const status = document.getElementById("draft-status");
-  document.getElementById("draft-tab-draft").classList.toggle("on", draftView === "DRAFT");
-  document.getElementById("draft-tab-sent").classList.toggle("on", draftView === "SENT");
+  const query = (document.getElementById("draft-q").value || "").trim().toLowerCase();
+  const drafts = draftCache.filter((draft) => (draft.status === "SENT") === (draftView === "SENT") && draftMatches(draft, query));
   list.innerHTML = "";
-  try {
-    const response = await fetch("/api/cv-email", { credentials: "same-origin" });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || "Could not load drafts.");
-    const drafts = (payload.drafts || []).filter((draft) => (draft.status === "SENT") === (draftView === "SENT"));
-    if (!drafts.length) {
-      status.textContent = draftView === "SENT" ? "No sent emails yet." : "No saved emails yet.";
-      return;
-    }
-    status.textContent = "";
-    list.innerHTML = drafts.map((draft) => "<div class=\"draft-row\"><span><strong>" + esc(draft.subject || "Untitled email") + "</strong><br><span class=\"hint\">"
+  if (!draftReady) {
+    status.textContent = "Drafts are available when this page is opened inside HR Plus.";
+    return;
+  }
+  if (!drafts.length) {
+    status.textContent = query ? "No matching email." : (draftView === "SENT" ? "No sent emails yet." : "No saved emails yet.");
+    return;
+  }
+  status.textContent = "";
+    list.innerHTML = drafts.map((draft) => "<div class=\"draft-row\"><span><strong>" + (draft.fileId ? "[" + esc(draft.fileId) + "] " : "") + esc(draft.subject || "Untitled email") + "</strong><br><span class=\"hint\">"
       + esc(draft.to || "") + "</span></span><span class=\"row-actions\">"
       + "<button type=\"button\" class=\"btn secondary\" data-draft=\"" + esc(draft.id) + "\">Open</button>"
       + "<button type=\"button\" class=\"btn secondary\" data-rename-draft=\"" + esc(draft.id) + "\">Rename</button>"
@@ -2618,7 +2874,23 @@ async function drawDrafts() {
         drawDrafts();
       };
     });
+}
+
+async function drawDrafts() {
+  const status = document.getElementById("draft-status");
+  document.getElementById("draft-tab-draft").classList.toggle("on", draftView === "DRAFT");
+  document.getElementById("draft-tab-sent").classList.toggle("on", draftView === "SENT");
+  try {
+    const response = await fetch("/api/cv-email", { credentials: "same-origin" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Could not load drafts.");
+    draftCache = payload.drafts || [];
+    draftReady = true;
+    paintDrafts();
   } catch (error) {
+    draftCache = [];
+    draftReady = false;
+    document.getElementById("draft-list").innerHTML = "";
     status.textContent = "Drafts are available when this page is opened inside HR Plus.";
   }
 }
@@ -2698,6 +2970,7 @@ document.getElementById("mail-draft").onclick = async () => {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Could not save the draft.");
     mailDraftId = payload.draft.id;
+    mailFileId = payload.draft.fileId || mailFileId;
     status.textContent = "Draft saved. Open Email drafts to come back to it.";
   } catch (error) {
     status.textContent = error.message || "Could not save the draft.";
@@ -2739,6 +3012,7 @@ document.getElementById("mail-send").onclick = async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: mailDraftId,
+        fileId: mailFileId,
         to,
         company: document.getElementById("mail-company").value.trim(),
         position: document.getElementById("mail-position").value.trim(),
@@ -3336,6 +3610,7 @@ document.getElementById("clear-filters").onclick = () => {
   drawList();
 };
 pullCvs().finally(() => { if (!loadAll().length) seed(); });
+document.getElementById("draft-q").oninput = () => { if (draftReady) paintDrafts(); };
 document.getElementById("draft-tab-draft").onclick = () => { draftView = "DRAFT"; drawDrafts(); };
 document.getElementById("draft-tab-sent").onclick = () => { draftView = "SENT"; drawDrafts(); };
 </script>

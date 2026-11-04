@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
   try {
     const draft = await saveCvEmail({
       id: typeof body.id === "string" ? body.id : "",
+      fileId: typeof body.fileId === "string" ? body.fileId : "",
       to: String(body.to || ""),
       company: String(body.company || ""),
       position: String(body.position || ""),

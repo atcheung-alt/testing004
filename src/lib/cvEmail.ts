@@ -5,6 +5,7 @@ const DOCUMENT_TYPE = "cv-email";
 
 export type CvEmailDraft = {
   id: string;
+  fileId: string;
   status: "DRAFT" | "SENT";
   to: string;
   company: string;
@@ -21,6 +22,7 @@ function readStored(description: string): Stored {
   try {
     const parsed = JSON.parse(description || "{}");
     return {
+      fileId: String(parsed.fileId || ""),
       to: String(parsed.to || ""),
       company: String(parsed.company || ""),
       position: String(parsed.position || ""),
@@ -29,7 +31,7 @@ function readStored(description: string): Stored {
       candidates: Array.isArray(parsed.candidates) ? parsed.candidates : [],
     };
   } catch {
-    return { to: "", company: "", position: "", subject: "", bodyHtml: "", candidates: [] };
+    return { fileId: "", to: "", company: "", position: "", subject: "", bodyHtml: "", candidates: [] };
   }
 }
 
@@ -55,13 +57,47 @@ async function actorName(): Promise<string | null> {
   }
 }
 
+function newFileId(taken: Set<string>): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const day = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let id = "";
+  do {
+    let tail = "";
+    for (let i = 0; i < 4; i += 1) tail += alphabet[Math.floor(Math.random() * alphabet.length)];
+    id = `ECV-${day}-${tail}`;
+  } while (taken.has(id));
+  taken.add(id);
+  return id;
+}
+
 export async function listCvEmails(): Promise<CvEmailDraft[]> {
   const rows = await prisma.activityEvent.findMany({
     where: { documentType: DOCUMENT_TYPE },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  return rows.map(toDraft);
+  const taken = new Set<string>();
+  rows.forEach((row) => {
+    const stored = readStored(row.description);
+    if (stored.fileId) taken.add(stored.fileId);
+  });
+  const drafts: CvEmailDraft[] = [];
+  for (const row of rows) {
+    const stored = readStored(row.description);
+    if (stored.fileId) {
+      drafts.push(toDraft(row));
+      continue;
+    }
+    stored.fileId = newFileId(taken);
+    const updated = await prisma.activityEvent.update({
+      where: { id: row.id },
+      data: { description: JSON.stringify(stored) },
+    });
+    drafts.push(toDraft(updated));
+  }
+  return drafts;
 }
 
 export async function getCvEmail(id: string): Promise<CvEmailDraft | null> {
@@ -72,19 +108,24 @@ export async function getCvEmail(id: string): Promise<CvEmailDraft | null> {
 }
 
 export async function saveCvEmail(input: Stored & { id?: string }): Promise<CvEmailDraft> {
-  const description = JSON.stringify({
-    to: input.to || "",
-    company: input.company || "",
-    position: input.position || "",
-    subject: input.subject || "",
-    bodyHtml: input.bodyHtml || "",
-    candidates: input.candidates || [],
-  });
+  let fileId = String(input.fileId || "");
   if (input.id) {
     const existing = await prisma.activityEvent.findFirst({
       where: { id: input.id, documentType: DOCUMENT_TYPE },
     });
     if (existing) {
+      const previous = readStored(existing.description);
+      if (!fileId) fileId = previous.fileId;
+      if (!fileId) fileId = newFileId(new Set(previous.fileId ? [previous.fileId] : []));
+      const description = JSON.stringify({
+        fileId,
+        to: input.to || "",
+        company: input.company || "",
+        position: input.position || "",
+        subject: input.subject || "",
+        bodyHtml: input.bodyHtml || "",
+        candidates: input.candidates || [],
+      });
       const row = await prisma.activityEvent.update({
         where: { id: existing.id },
         data: { description, type: existing.type === "SENT" ? "SENT" : "DRAFT" },
@@ -92,6 +133,16 @@ export async function saveCvEmail(input: Stored & { id?: string }): Promise<CvEm
       return toDraft(row);
     }
   }
+  if (!fileId) fileId = newFileId(new Set());
+  const description = JSON.stringify({
+    fileId,
+    to: input.to || "",
+    company: input.company || "",
+    position: input.position || "",
+    subject: input.subject || "",
+    bodyHtml: input.bodyHtml || "",
+    candidates: input.candidates || [],
+  });
   const row = await prisma.activityEvent.create({
     data: {
       documentType: DOCUMENT_TYPE,

@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     });
     const saved = await saveCvEmail({
       id: typeof body.id === "string" ? body.id : "",
+      fileId: typeof body.fileId === "string" ? body.fileId : "",
       to,
       company: String(body.company || ""),
       position: String(body.position || ""),
