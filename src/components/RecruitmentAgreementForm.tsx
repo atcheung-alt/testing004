@@ -17,7 +17,7 @@ import {
   type FeeScaleRowFields,
   type RecruitmentLanguage,
 } from "@/lib/recruitmentTerms";
-import { useT } from "@/lib/i18n/client";
+import SaveRecruitmentTemplateButton from "@/components/SaveRecruitmentTemplateButton";
 
 export type RecruitmentAgreementFormData = {
   id: string;
@@ -119,8 +119,19 @@ function InlineFeeScaleTable({
 
 export default function RecruitmentAgreementForm({
   agreement,
+  preset,
 }: {
   agreement?: RecruitmentAgreementFormData;
+  preset?: {
+    name: string;
+    role: string;
+    requirements: string;
+    paymentDueDays: number;
+    language: RecruitmentLanguage;
+    terms: string;
+    feeScalePermanent: FeeScaleRowFields[];
+    feeScaleContract: FeeScaleRowFields[];
+  };
 }) {
   const t = useT();
   const router = useRouter();
@@ -128,7 +139,7 @@ export default function RecruitmentAgreementForm({
   const [companyEmail, setCompanyEmail] = useState(agreement?.companyEmail || "");
   const [agreementDate, setAgreementDate] = useState(toDateInput(agreement?.createdAt));
   const [paymentDueDays, setPaymentDueDays] = useState(
-    agreement?.paymentDueDays ?? DEFAULT_RECRUITMENT_PAYMENT_DUE_DAYS
+    agreement?.paymentDueDays ?? preset?.paymentDueDays ?? DEFAULT_RECRUITMENT_PAYMENT_DUE_DAYS
   );
   // Which language the terms clause TEXT is generated in — company data and
   // fee scale row values are unaffected (see the schema comment on
@@ -136,7 +147,7 @@ export default function RecruitmentAgreementForm({
   // terms from that language's template, even if termsDirty — a deliberate
   // "start fresh in this language" action, unlike the other auto-sync
   // inputs below which respect a manual edit.
-  const [language, setLanguage] = useState<RecruitmentLanguage>(agreement?.language || "EN");
+  const [language, setLanguage] = useState<RecruitmentLanguage>(agreement?.language || preset?.language || "EN");
 
   // Fee scale tables (Clause 13.b) — belong to THIS agreement, edited
   // directly below (same idea as Payment Due Days). A brand-new agreement
@@ -144,25 +155,26 @@ export default function RecruitmentAgreementForm({
   // library's current rates once fetched (see the effect below); editing an
   // existing agreement always starts from what's already stored on it.
   const [permanentRows, setPermanentRows] = useState<FeeScaleRowFields[]>(
-    agreement?.feeScalePermanent || DEFAULT_FEE_SCALE_PERMANENT.map((r) => ({ ...r }))
+    agreement?.feeScalePermanent || (preset?.feeScalePermanent.length ? preset.feeScalePermanent : DEFAULT_FEE_SCALE_PERMANENT.map((r) => ({ ...r })))
   );
   const [contractRows, setContractRows] = useState<FeeScaleRowFields[]>(
-    agreement?.feeScaleContract || DEFAULT_FEE_SCALE_CONTRACT.map((r) => ({ ...r }))
+    agreement?.feeScaleContract || (preset?.feeScaleContract.length ? preset.feeScaleContract : DEFAULT_FEE_SCALE_CONTRACT.map((r) => ({ ...r })))
   );
   // Gates the one-time "upgrade to live library defaults" fetch below — once
   // staff has touched a row themselves, that fetch backs off entirely.
-  const [rowsTouched, setRowsTouched] = useState(false);
+  const [rowsTouched, setRowsTouched] = useState(Boolean(preset?.feeScalePermanent.length || preset?.feeScaleContract.length));
 
   const feeScaleTables = buildFeeScaleTables({ permanent: permanentRows, contract: contractRows }, language);
 
   const [terms, setTerms] = useState(
     agreement?.terms ||
+      preset?.terms ||
       renderRecruitmentTerms(RECRUITMENT_TERMS_TEMPLATES[language], companyName, paymentDueDays, feeScaleTables)
   );
   // Once staff directly edits the terms text, stop overwriting it when
   // company name / payment days / fee scale rows change — same "dirty flag"
   // pattern the Q-I-R system uses for its own terms template.
-  const [termsDirty, setTermsDirty] = useState(
+  const [termsDirty, setTermsDirty] = useState(Boolean(preset?.terms) || (
     Boolean(agreement?.terms) &&
       agreement!.terms !==
         renderRecruitmentTerms(
@@ -171,6 +183,7 @@ export default function RecruitmentAgreementForm({
           agreement!.paymentDueDays,
           feeScaleTables
         )
+    )
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -471,11 +484,21 @@ export default function RecruitmentAgreementForm({
         />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <button type="submit" disabled={saving} className="btn-primary">
           {saving && <Loader2 size={15} className="animate-spin" />}
           {saving ? t("Saving…") : agreement ? t("Save changes") : t("Create agreement")}
         </button>
+        <SaveRecruitmentTemplateButton
+          suggestedName={preset?.name || companyName}
+          role={preset?.role || companyName}
+          requirements={preset?.requirements || ""}
+          paymentDueDays={paymentDueDays}
+          language={language}
+          terms={terms}
+          feeScalePermanent={permanentRows}
+          feeScaleContract={contractRows}
+        />
         <button type="button" onClick={() => router.back()} className="btn-secondary">
           {t("Cancel")}
         </button>

@@ -241,8 +241,22 @@ export const ZH: Record<string, string> = {
     "PDF 或圖片，每項開支最多 {count} 個檔案，每個 {size}MB。會隨這張發票保存，供你留底。",
   Templates: "範本",
   "Quotation Templates": "報價範本",
-  "Reuse a saved quotation. Update the activity, items, and dates each time.":
-    "可重複使用的報價格式。每次更新活動、項目和日期。",
+  "Manage and reuse saved quotation and recruitment templates.": "管理並重用已儲存的報價範本和招聘範本。",
+  "All Templates": "全部範本",
+  "Recruitment Templates": "招聘範本",
+  "Search templates": "搜尋範本",
+  "No templates match.": "沒有符合的範本。",
+  Type: "類型",
+  Details: "內容",
+  Quotation: "報價",
+  Recruitment: "招聘",
+  "Job role": "職位",
+  Requirements: "要求",
+  "Quotation templates still use the existing form, with activity name and line items.":
+    "報價範本仍使用原有表格，包括活動名稱和項目。",
+  Continue: "繼續",
+  "This agreement started from “{name}”. Update the client details before you save.":
+    "這份協議由範本「{name}」開始。儲存前請更新客戶資料。",
   "New Template": "新增範本",
   "No Templates Yet": "尚未有範本",
   "Create one here, or open a quotation and choose Save as template.":

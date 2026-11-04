@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import PageBar from "@/components/PageBar";
+import SaveRecruitmentTemplateButton from "@/components/SaveRecruitmentTemplateButton";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -102,6 +103,7 @@ export default function RecruitmentPage({
             <Link href="/recruitment/fee-scale" className="btn-secondary">
               <Table2 size={15} /> {t("Fee Scale Library")}
             </Link>
+            <SaveRecruitmentTemplateButton />
             <Link href="/recruitment/new" className="btn-primary">
               <Plus size={15} /> {t("New agreement")}
             </Link>
