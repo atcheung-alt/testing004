@@ -330,15 +330,57 @@
   .sheet:not(.cover) .plain,
   .sheet:not(.cover) .col-text {
     font-size: 12pt;
-    line-height: 1.65;
+    font-weight: 400;
+    line-height: 1.6;
   }
-  .sheet:not(.cover) .job .line-row .col-text,
-  .sheet:not(.cover) .job > .col-text.b { font-size: 14pt; font-weight: 700; line-height: 1.45; }
-  .sheet:not(.cover) .job > .col-text.b + .col-text.b { font-size: 13pt; font-weight: 600; }
-  .sheet:not(.cover) .job .lbl { font-size: 12pt; padding: 10px 0 4px; }
-  .sheet:not(.cover) .job > .col-text { margin-bottom: 10px; }
-  .sheet:not(.cover) .job + .job { margin-top: 16px; padding-top: 16px; }
-  .sheet:not(.cover) li { margin-bottom: 8px; }
+  .sheet:not(.cover) .job-head { display: flex; align-items: baseline; gap: 12px; }
+  .sheet:not(.cover) .job-head [data-field="role"] { flex: 1; font-size: 14pt; font-weight: 700; line-height: 1.6; text-align: left; }
+  .sheet:not(.cover) .job [data-field="company"] { display: block; width: 100%; font-size: 13pt; font-weight: 600; line-height: 1.6; color: #3d4a63; margin: 0; text-align: left; }
+  .sheet:not(.cover) .job [data-field="dates"],
+  .sheet:not(.cover) #edu [data-field="year"] {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-size: 12pt;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.6;
+    white-space: normal;
+  }
+  .sheet:not(.cover) .job { margin: 0 0 18px; padding: 0; border: 0; }
+  .sheet:not(.cover) .job + .job { margin-top: 0; padding-top: 0; border-top: 0; }
+  .sheet:not(.cover) #edu [data-field="school"] { display: block; width: 100%; text-align: left; font-size: 13pt; font-weight: 600; line-height: 1.6; }
+  .sheet:not(.cover) [data-field="duties"],
+  .sheet:not(.cover) .lines[data-field="text"],
+  .sheet:not(.cover) [data-slot="project"] {
+    display: block;
+    width: 100%;
+    font-size: 12pt;
+    font-weight: 400;
+    line-height: 1.6;
+    min-height: 1.6em;
+    text-align: left;
+  }
+  .sheet:not(.cover) [data-field="duties"] ul,
+  .sheet:not(.cover) .lines[data-field="text"] ul,
+  .sheet:not(.cover) [data-slot="project"] ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+  }
+  .sheet:not(.cover) [data-field="duties"] li,
+  .sheet:not(.cover) .lines[data-field="text"] li,
+  .sheet:not(.cover) [data-slot="project"] li {
+    margin: 0;
+    padding: 0;
+    font-size: 12pt;
+    font-weight: 400;
+    line-height: 1.6;
+    text-align: left;
+  }
   .sheet:not(.cover) .line-row + .line-row { margin-top: 8px; }
   .head { text-align: right; }
   .head img { height: 46px; width: auto; }
@@ -439,13 +481,17 @@
   .job + .job { border-top: 1px solid #e3e8f3; margin-top: 8px; padding-top: 8px; }
   .entry + .entry { margin-top: 8px; }
   .plain { min-height: 28px; }
-  .sheet:not(.cover) [contenteditable="true"] ul,
-  .sheet:not(.cover) [contenteditable="true"] ol {
-    margin: 0.1em 0;
+  .sheet:not(.cover) [contenteditable="true"] ul {
+    margin: 0;
     padding: 0;
-    list-style-position: inside;
+    list-style: none;
   }
-  .sheet:not(.cover) [contenteditable="true"] li { margin: 0 0 8px; }
+  .sheet:not(.cover) [contenteditable="true"] ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .sheet:not(.cover) [contenteditable="true"] li { margin: 0; padding: 0; }
   #fmt-bar {
     position: fixed;
     z-index: 30;
@@ -838,9 +884,9 @@ const GROUPS = [
   ["recentSalary", ["current remuneration", "present remuneration", "current package", "present package", "existing package", "current salary", "present salary", "recent salary", "current pay", "現時薪酬", "目前薪酬", "現薪"]],
   ["expectedSalary", ["salary expectation", "expected remuneration", "expected package", "asking salary", "asking package", "desired salary", "target salary", "expected salary", "expected pay", "期望薪酬", "要求薪酬"]],
   ["notice", ["period of notice", "notice period", "availability", "notice", "通知期"]],
-  ["education", ["educational background", "academic background", "education background", "academic qualifications", "qualifications", "qualification", "education", "academic", "學歷", "教育背景"]],
+  ["education", ["educational background", "academic background", "education background", "academic qualifications", "education & courses", "education and courses", "qualifications", "qualification", "education", "academic", "學歷", "教育背景"]],
   ["certs", ["professional qualifications", "certifications", "certification", "certificates", "certificate", "licences", "licenses", "licence", "license", "credentials", "證書", "專業資格"]],
-  ["project", ["project experience", "academic projects", "personal projects", "selected projects", "latest assignment", "recent assignment", "recent project", "latest project", "current project", "key project", "projects", "project", "最近項目", "近期項目"]],
+  ["project", ["project experience", "academic projects", "personal projects", "selected projects", "latest assignment", "recent assignment", "recent project", "latest project", "current project", "key project", "achievements", "achievement", "projects", "project", "最近項目", "近期項目"]],
   ["work", ["internship experience", "professional experience", "employment history", "working experience", "job experience", "career history", "work experience", "work history", "positions held", "internships", "internship", "employment", "工作經驗", "工作經歷", "實習經歷", "實習"]],
   ["name", ["candidate name", "full name", "candidate", "name", "姓名", "候選人"]]
 ].map(([key, names]) => ({ key, names: names.sort((a, b) => b.length - a.length) }));
@@ -952,6 +998,43 @@ function matchHeading(line) {
   return best;
 }
 
+function prepareCvText(text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.replace(/[ \t]+/g, " ").trim()).filter((line) => {
+    if (!line) return false;
+    if (/^\d{4,}$/.test(line)) return false;
+    if (/^(center)?\d{6,}$/i.test(line.replace(/\s/g, ""))) return false;
+    return true;
+  });
+  const unique = [];
+  lines.forEach((line) => {
+    if (unique[unique.length - 1] !== line) unique.push(line);
+  });
+  const joined = [];
+  for (let index = 0; index < unique.length; index++) {
+    const line = unique[index];
+    const next = unique[index + 1] || "";
+    if (/[–—-]\s*$/.test(line) && /^(present|now|current|至今|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2})/i.test(next)) {
+      joined.push((line.replace(/[–—-]\s*$/, "–") + " " + next).replace(/\s+/g, " "));
+      index += 1;
+      continue;
+    }
+    joined.push(splitGlued(line));
+  }
+  return joined.join("\n");
+}
+
+function splitGlued(line) {
+  return line
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b([A-Z][\w'’-]*(?:\s+[A-Z][\w'’-]*){0,5})\s+((?:Hogeschool|University|College|School|Institute|Academy)\b.*)/g, "$1 | $2")
+    .replace(/\b((?:junior|senior|assistant|lead)\s+)?([A-Za-z]+(?:\s+[A-Za-z]+){0,4}\s+(?:manager|coordinator|marketeer|designer|analyst|officer|director|assistant|specialist|engineer|consultant))\s+([A-Z][^,\n]{1,40},\s*[^,\n]+)/gi, "$1$2 | $3");
+}
+
+function isDateFragment(line) {
+  const value = String(line || "").trim();
+  return /^(present|now|current|至今)$/i.test(value) || /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:19|20)\d{2}\s*[–—-]*$/i.test(value);
+}
+
 function splitDate(line) {
   const patterns = [
     /^((?:19|20)\d{2}(?:[./]\d{1,2})?\s*[–—~-]+\s*(?:(?:19|20)\d{2}(?:[./]\d{1,2})?|present|now|current|至今))\s*(.*)$/i,
@@ -978,11 +1061,13 @@ function isDegree(text) {
 }
 
 function splitOrgRole(rest) {
+  const glued = rest.split(/\s+\|\s+/);
+  if (glued.length === 2) return { org: glued[1].trim(), role: glued[0].trim() };
   const orgSuffix = rest.match(/^(.*?(?:\b(?:Limited|Ltd\.?|Inc\.?|Corp\.?|Corporation|Company|Group|Hospital|Bank)\b|有限公司))\s*(.*)$/i);
   if (orgSuffix && orgSuffix[2].trim()) return { org: orgSuffix[1].trim(), role: orgSuffix[2].trim() };
   const roleRe = /\b((?:senior|junior|lead|full[\s-]?stack|software|data|system|systems|front[\s-]?end|back[\s-]?end)\s+)*(?:engineer|developer|intern|manager|analyst|consultant|officer|designer|specialist|assistant|director|supervisor)\b.*$/i;
   const role = rest.match(roleRe);
-  if (role && role.index > 0) return { org: rest.slice(0, role.index).trim(), role: role[0].trim() };
+  if (role && role.index > 0 && role.index < 48 && rest.length < 90 && !/[.。]/.test(rest)) return { org: rest.slice(0, role.index).trim(), role: role[0].trim() };
   return { org: rest.trim(), role: "" };
 }
 
@@ -1244,6 +1329,7 @@ function pickCandidateName(text) {
 }
 
 function parseCv(text) {
+  text = prepareCvText(text);
   const rows = explodeSections(text).split(/\r?\n/);
   const bags = {};
   let current = null;
@@ -1505,10 +1591,13 @@ function fillEducation(data, lines) {
     if (dated && (isSchool(dated.rest) || isDegree(dated.rest) || !dated.rest)) {
       if (!data.eduLeft) data.eduLeft = dated.dates;
       else right.push(dated.dates);
-      if (dated.rest) splitSchoolDegree(dated.rest).forEach((part) => right.push(part));
+      const rest = splitGlued(dated.rest || "");
+      if (rest) rest.split(/\s+\|\s+/).forEach((part) => right.push(part));
       return;
     }
-    if (isSchool(line) || isDegree(line) || line.length < 120) right.push(line);
+    splitGlued(line).split(/\s+\|\s+/).forEach((part) => {
+      if (isSchool(part) || isDegree(part) || part.length < 120) right.push(part);
+    });
   });
   data.edu = pad(right.filter((line) => !/^programming\b/i.test(line)), 4);
 }
@@ -1527,11 +1616,16 @@ function fillWork(data, rows) {
     job.phase = "duty";
     dutyPieces(text).forEach((piece) => job.duties.push(piece));
   };
+  const dates = [];
   start();
   for (const row of rows) {
     const line = row.trim();
     if (!line) {
       if (job.phase === "duty" && job.duties.length) start();
+      continue;
+    }
+    if (isDateFragment(line)) {
+      dates.push(line.replace(/\s+/g, " "));
       continue;
     }
     const duty = dutyBody(line);
@@ -1542,23 +1636,33 @@ function fillWork(data, rows) {
     }
     const dated = splitDate(line);
     if (dated && !isSchool(dated.rest)) {
-      const open = (job.company || job.title) && !job.dates && !job.duties.length;
-      if ((job.dates || job.duties.length || job.company) && !open) start();
-      job.dates = dated.dates;
-      if (dated.rest) {
-        const org = splitOrgRole(dated.rest);
-        if (!job.company) job.company = org.org;
-        if (!job.title) job.title = org.role;
+      dates.push(dated.dates);
+      const rest = dated.rest;
+      if (rest) {
+        const org = splitOrgRole(splitGlued(rest));
+        if (job.title || job.company) start();
+        job.company = org.org;
+        job.title = org.role;
+        job.dates = dates.shift() || dated.dates;
+        job.phase = "after";
       }
+      continue;
+    }
+    const org = splitOrgRole(splitGlued(line));
+    if (org.role && org.org && !isBullet(line)) {
+      if (job.title || job.company || job.duties.length) start();
+      job.title = org.role;
+      job.company = org.org;
+      job.dates = dates.shift() || "";
       job.phase = "after";
       continue;
     }
-    if (isBullet(line) || job.phase === "duty") {
+    if (isBullet(line) || job.phase === "duty" || (job.title && line.length > 40)) {
       addDuties(cleanBullet(line));
       continue;
     }
-    if (!job.company) job.company = line;
-    else if (!job.title) job.title = line;
+    if (!job.title && !isDateFragment(line)) job.title = line;
+    else if (!job.company && !isDateFragment(line)) job.company = line;
     else addDuties(line);
   }
   push();
@@ -1622,6 +1726,57 @@ function sanitizeRich(html) {
   return root.innerHTML.replace(/(?:<br>\s*)+$/gi, "");
 }
 
+function bulletHtml(html, plain) {
+  const clean = sanitizeRich(html);
+  if (/<li\b/i.test(clean)) return clean;
+  const lines = String(plain || "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022]+/, "").trim()).filter(Boolean);
+  const items = lines.length ? lines : [""];
+  return "<ul>" + items.map((line) => "<li>" + (line ? esc(line) : "<br>") + "</li>").join("") + "</ul>";
+}
+function proseField(node) {
+  const host = editableHost(node);
+  if (!host || !host.closest("#sheet-wrap .sheet:not(.cover)")) return null;
+  if (host.matches("[data-field='duties'], .lines[data-field='text'], [data-slot='project']")) return host;
+  return null;
+}
+function placeCaret(node) {
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  range.collapse(true);
+  const sel = document.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+function ensureDutyList(host) {
+  let list = host.querySelector("ul");
+  if (list) return list;
+  const lines = host.innerText.replace(/\u200b/g, "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022]+/, "").trim()).filter(Boolean);
+  host.innerHTML = bulletHtml("", lines.join("\n"));
+  return host.querySelector("ul");
+}
+function splitDuty(host) {
+  const list = ensureDutyList(host);
+  const sel = document.getSelection();
+  const li = sel && sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest("li");
+  if (!li || !list.contains(li)) {
+    const item = document.createElement("li");
+    item.innerHTML = "<br>";
+    list.appendChild(item);
+    placeCaret(item);
+    return;
+  }
+  const range = sel.getRangeAt(0);
+  const rest = range.cloneRange();
+  rest.selectNodeContents(li);
+  rest.setStart(range.endContainer, range.endOffset);
+  const tail = rest.extractContents();
+  const next = document.createElement("li");
+  if (!tail.textContent.trim()) next.innerHTML = "<br>";
+  else next.appendChild(tail);
+  if (!li.textContent.trim()) li.innerHTML = "<br>";
+  li.after(next);
+  placeCaret(next);
+}
 function richOrText(html, value) {
   const clean = sanitizeRich(html);
   if (/<(b|strong|i|em|ul|ol|li|br)\b/i.test(clean)) return clean;
@@ -1901,7 +2056,7 @@ function entriesFrom(data) {
 
 function eduRow(entry) {
   const fresh = entry.fresh ? ' data-new="1"' : "";
-  return `<tr data-entry><td><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${richOrText(entry.yearHtml, entry.year || "")}</div></td><td><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${richOrText(entry.schoolHtml, entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div></td></tr>`;
+  return `<tr data-entry><td colspan="2"><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${richOrText(entry.schoolHtml, entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${richOrText(entry.yearHtml, entry.year || "")}</div></td></tr>`;
 }
 
 function profilePair(label, cls, slot, value, placeholder) {
@@ -1917,7 +2072,7 @@ function boxColor(color, index) {
 function boxBlock(box, index) {
   const fresh = box.fresh ? ' data-new="1"' : "";
   const color = boxColor(box.color, index);
-  return `<table class="block" data-box data-entry><tr><td class="h extra" data-color="${color}" style="background:${color}"><div class="line-row"><div class="col-text b title-edit" contenteditable="true" data-field="title"${fresh}>${richOrText(box.titleHtml, box.title || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove section">×</button></div></td></tr><tr><td><div class="lines" contenteditable="true" data-field="text">${richOrText(box.textHtml, box.text || "")}</div></td></tr></table>`;
+  return `<table class="block" data-box data-entry><tr><td class="h extra" data-color="${color}" style="background:${color}"><div class="line-row"><div class="col-text b title-edit" contenteditable="true" data-field="title"${fresh}>${richOrText(box.titleHtml, box.title || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove section">×</button></div></td></tr><tr><td><div class="lines" contenteditable="true" data-field="text">${bulletHtml(box.textHtml, box.text || "")}</div></td></tr></table>`;
 }
 
 function certRow(text, fresh, html) {
@@ -1927,7 +2082,7 @@ function certRow(text, fresh, html) {
 function jobBlock(job) {
   const duties = Array.isArray(job.duties) ? linesOf(job.duties).join("\n") : (job.duties || "");
   const fresh = job.fresh ? ' data-new="1"' : "";
-  return `<div class="job" data-entry><div class="line-row"><div class="col-text b" contenteditable="true" data-field="company" data-placeholder="Company"${fresh}>${richOrText(job.companyHtml, job.company || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove job">×</button></div><div class="col-text b" contenteditable="true" data-field="role" data-placeholder="Role">${richOrText(job.roleHtml, job.role || "")}</div><div class="col-text b" contenteditable="true" data-field="dates" data-placeholder="Dates">${richOrText(job.datesHtml, job.dates || "")}</div><div class="lbl">Responsibilities:</div><div class="col-text" contenteditable="true" data-field="duties" data-placeholder="Responsibility">${richOrText(job.dutiesHtml, duties)}</div></div>`;
+  return `<div class="job" data-entry><div class="job-head line-row"><div class="col-text b" contenteditable="true" data-field="role" data-placeholder="Job title">${richOrText(job.roleHtml, job.role || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove job">×</button></div><div class="col-text" contenteditable="true" data-field="company" data-placeholder="Company"${fresh}>${richOrText(job.companyHtml, job.company || "")}</div><div class="col-text" contenteditable="true" data-field="dates" data-placeholder="Dates">${richOrText(job.datesHtml, job.dates || "")}</div><div class="col-text" contenteditable="true" data-field="duties" data-placeholder="Responsibility">${bulletHtml(job.dutiesHtml, duties)}</div></div>`;
 }
 
 function profileTable(data, skills) {
@@ -2521,7 +2676,104 @@ function openSaved(row) {
   showTab("make");
 }
 
-function show(text) {
+function foldCv(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g, "");
+}
+
+function citedCv(value, sourceFold) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const folded = foldCv(text);
+  if (folded.length < 2 || !sourceFold.includes(folded)) return "";
+  return text;
+}
+
+function citedParts(value, sourceFold) {
+  return String(value || "").split(/[,，、;/|]+/).map((part) => citedCv(part, sourceFold)).filter(Boolean);
+}
+
+function preferSplit(current, incoming) {
+  const kept = (current || []).map((item) => String(item || "").trim()).filter(Boolean);
+  if (!kept.length || kept.length <= incoming.length) return incoming;
+  const joined = foldCv(incoming.join(" "));
+  return kept.every((item) => joined.includes(foldCv(item))) ? kept : incoming;
+}
+
+function applyAiCv(local, ai, source) {
+  const sourceFold = foldCv(source);
+  const cite = (value) => citedCv(value, sourceFold);
+  const name = cite(ai.candidate);
+  if (name) local.candidate = name;
+  const languages = citedParts(ai.languages, sourceFold);
+  if (languages.length) local.languages = languages.join(", ");
+  const skills = preferSplit(local.skills, (Array.isArray(ai.skills) ? ai.skills : []).map((item) => cite(item)).filter(Boolean));
+  if (skills.length) local.skills = pad(skills, 7);
+  ["recentSalary", "expectedSalary", "notice"].forEach((key) => {
+    const value = cite(ai[key]);
+    if (value) local[key] = value;
+  });
+  const education = ai.education && typeof ai.education === "object" ? ai.education : {};
+  const eduDates = cite(education.dates);
+  if (eduDates) local.eduLeft = eduDates;
+  const eduLines = preferSplit(local.edu, (Array.isArray(education.lines) ? education.lines : []).map((item) => cite(item)).filter(Boolean));
+  if (eduLines.length) local.edu = pad(eduLines, 4);
+  const certs = preferSplit(local.certs, (Array.isArray(ai.certs) ? ai.certs : []).map((item) => cite(item)).filter(Boolean));
+  if (certs.length) local.certs = pad(certs, 2);
+  const project = preferSplit(local.project, (Array.isArray(ai.project) ? ai.project : []).map((item) => cite(item)).filter(Boolean));
+  if (project.length) local.project = pad(project, 5);
+  const jobs = (Array.isArray(ai.jobs) ? ai.jobs : []).map((job, index) => {
+    const slot = index === 0 ? local.duty1 : local.duty2;
+    const duties = preferSplit(slot, (Array.isArray(job && job.duties) ? job.duties : []).map((item) => cite(item)).filter(Boolean));
+    return {
+      company: cite(job && job.company),
+      role: cite(job && job.role),
+      dates: cite(job && job.dates),
+      duties: duties
+    };
+  }).filter((job) => job.company || job.role || job.dates);
+  if (jobs[0]) {
+    local.job1 = [jobs[0].company, jobs[0].role, jobs[0].dates];
+    if (jobs[0].duties.length) local.duty1 = pad(jobs[0].duties, 6);
+  }
+  if (jobs[1]) {
+    local.job2 = [jobs[1].company, jobs[1].role, jobs[1].dates];
+    if (jobs[1].duties.length) local.duty2 = pad(jobs[1].duties, 5);
+  }
+  return local;
+}
+
+async function askCvAi(text) {
+  const source = String(text || "").slice(0, 14000);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 25000);
+  try {
+    const response = await fetch("https://text.pollinations.ai/openai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: "openai",
+        messages: [{
+          role: "user",
+          content: "You place text from a CV into fields. Copy words exactly from the CV. Do not invent, translate, or summarise. Dates stay with the job or course they belong to. A date is never a job title. Return JSON only with this shape: {\"candidate\":\"\",\"languages\":\"\",\"skills\":[],\"recentSalary\":\"\",\"expectedSalary\":\"\",\"notice\":\"\",\"education\":{\"dates\":\"\",\"lines\":[]},\"certs\":[],\"project\":[],\"jobs\":[{\"company\":\"\",\"role\":\"\",\"dates\":\"\",\"duties\":[]}]}. skills, certs, project, education.lines, and duties are arrays of short copied lines. jobs are newest first, at most 4.\n\nCV:\n" + source
+        }]
+      })
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const content = payload && payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content;
+    const raw = String(content || "").replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start < 0 || end <= start) return null;
+    return JSON.parse(raw.slice(start, end + 1));
+  } catch (error) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function show(text, options) {
   let data;
   try {
     data = parseCv(text);
@@ -2529,13 +2781,21 @@ function show(text) {
     document.getElementById("status").textContent = "This CV could not be read. Try a PDF or Word file that has selectable text.";
     return;
   }
+  const useAi = !(options && options.ai === false);
+  if (useAi) {
+    document.getElementById("status").textContent = "Checking each field with AI…";
+    const ai = await askCvAi(text);
+    if (ai) data = applyAiCv(data, ai, text);
+    else useAi && (options = { failed: true });
+  }
   editingId = null;
   editingSample = false;
   sheetDirty = false;
   render(data);
   document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
   const found = sectionFill(data);
-  document.getElementById("status").textContent = "CV Uploaded Successfully • " + found.filled + " section" + (found.filled === 1 ? "" : "s") + " auto-filled, " + found.empty + " section" + (found.empty === 1 ? "" : "s") + " empty";
+  const note = !useAi ? "" : (options && options.failed ? " • AI was busy, so the document reader filled the fields" : " • AI checked the fields against the CV");
+  document.getElementById("status").textContent = "CV Uploaded Successfully • " + found.filled + " section" + (found.filled === 1 ? "" : "s") + " auto-filled, " + found.empty + " section" + (found.empty === 1 ? "" : "s") + " empty" + note;
 }
 
 function sectionFill(data) {
@@ -3048,7 +3308,7 @@ document.getElementById("tab-find").onclick = () => showTab("find");
 document.getElementById("tab-mail").onclick = () => showTab("mail");
 document.getElementById("sample").onclick = () => {
   if (!confirmReplace()) return;
-  show(SAMPLE);
+  show(SAMPLE, { ai: false });
 };
 const fmtBar = document.getElementById("fmt-bar");
 function fmtHostFrom(node) {
@@ -3122,6 +3382,34 @@ function editableHost(node) {
   if (!start || !start.closest) return null;
   return start.closest("#sheet-wrap [contenteditable='true'], #mail-body");
 }
+document.addEventListener("paste", (event) => {
+  const host = proseField(event.target);
+  if (!host) return;
+  const text = event.clipboardData && event.clipboardData.getData("text/plain");
+  if (!text || !/\n/.test(text)) return;
+  event.preventDefault();
+  const list = ensureDutyList(host);
+  const lines = text.split(/\r?\n/).map((line) => line.replace(/^[\s•\-\u2022]+/, "").trim()).filter(Boolean);
+  const sel = document.getSelection();
+  const current = sel && sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest("li");
+  let anchor = current && host.contains(current) ? current : list.lastElementChild;
+  lines.forEach((line) => {
+    const item = document.createElement("li");
+    item.textContent = line;
+    if (anchor && !anchor.textContent.trim()) {
+      anchor.replaceWith(item);
+      anchor = item;
+    } else if (anchor) {
+      anchor.after(item);
+      anchor = item;
+    } else {
+      list.appendChild(item);
+      anchor = item;
+    }
+  });
+  rememberField(host);
+  sheetDirty = true;
+});
 document.addEventListener("input", (event) => {
   const host = editableHost(event.target);
   if (!host) return;
@@ -3129,6 +3417,29 @@ document.addEventListener("input", (event) => {
   rememberField(host);
 });
 document.addEventListener("keydown", (event) => {
+  const prose = proseField(event.target);
+  if (prose && event.key === "Enter" && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+    event.preventDefault();
+    splitDuty(prose);
+    rememberField(prose);
+    sheetDirty = true;
+    return;
+  }
+  if (prose && event.key === "Backspace" && !event.metaKey && !event.ctrlKey) {
+    const sel = document.getSelection();
+    const li = sel && sel.anchorNode && (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest("li");
+    if (li && sel.isCollapsed && sel.anchorOffset === 0 && !li.textContent.trim()) {
+      const prev = li.previousElementSibling;
+      if (prev) {
+        event.preventDefault();
+        li.remove();
+        placeCaret(prev);
+        rememberField(prose);
+        sheetDirty = true;
+      }
+      return;
+    }
+  }
   const host = editableHost(event.target);
   if (!host || !(event.metaKey || event.ctrlKey)) return;
   const key = event.key.toLowerCase();
