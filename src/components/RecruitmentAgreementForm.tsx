@@ -18,6 +18,7 @@ import {
   type RecruitmentLanguage,
 } from "@/lib/recruitmentTerms";
 import SaveRecruitmentTemplateButton from "@/components/SaveRecruitmentTemplateButton";
+import { useT } from "@/lib/i18n/client";
 
 export type RecruitmentAgreementFormData = {
   id: string;

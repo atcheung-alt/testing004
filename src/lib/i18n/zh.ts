@@ -249,7 +249,6 @@ export const ZH: Record<string, string> = {
   Type: "類型",
   Details: "內容",
   Quotation: "報價",
-  Recruitment: "招聘",
   "Job role": "職位",
   Requirements: "要求",
   "Quotation templates still use the existing form, with activity name and line items.":
