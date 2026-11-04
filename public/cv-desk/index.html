@@ -6,9 +6,10 @@
 <title>Online CV</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="cv/fflate.js"></script>
 <script src="cv/pdf.min.js"></script>
+<script src="cv/html2canvas.min.js"></script>
 <style>
   :root {
     --ink: #1b2436;
@@ -19,7 +20,7 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  html, body { margin: 0; }
+  html, body { margin: 0; overflow-x: hidden; }
   body {
     min-height: 100vh;
     color: var(--ink);
@@ -28,7 +29,7 @@
   }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; font-size: 14px; }
+  .wrap { max-width: min(980px, 100%); margin: 0 auto; padding: 32px 16px 64px; font-size: 14px; overflow-x: hidden; }
   .bar { margin-bottom: 16px; }
   h1 {
     margin: 0;
@@ -101,7 +102,6 @@
   }
   .input:focus, .search:focus { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
   .save-row .input { flex: 1 1 220px; width: auto; }
-  #save-bar { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
   .filters {
     display: grid;
     grid-template-columns: 1.3fr 1.1fr 0.85fr 0.85fr auto;
@@ -135,14 +135,52 @@
   .row p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
   .row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .btn.danger { background: #fff; color: #be3454; border-color: rgba(190, 52, 84, 0.35); }
-  .empty { color: var(--muted); margin: 0; padding: 16px 20px; font-size: 14px; }
+  .sample-tag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #eef2fb;
+    color: #4a5568;
+    font-size: 11px;
+    font-weight: 600;
+    vertical-align: 1px;
+  }
+  #export-root {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 794px;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0;
+  }
+  .ask-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(27, 36, 54, 0.35);
+  }
+  .ask-panel {
+    width: min(440px, 100%);
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+  }
+  .ask-panel p { margin: 0 0 16px; }
+  .ask-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-  .sheet-wrap { overflow-x: auto; }
+  .sheet-wrap { max-width: 100%; overflow-x: auto; }
   .sheet {
     position: relative;
     width: 794px;
     min-height: 1123px;
-    margin: 8px auto;
+    margin: 18px auto;
     background: #fff;
     color: #000;
     font-family: Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
@@ -160,14 +198,139 @@
     pointer-events: none;
     z-index: 0;
   }
-  .sheet > *:not(.mark):not(.foot) { position: relative; z-index: 1; }
+  .sheet.cover {
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    max-height: 297mm;
+    padding: 0;
+    overflow: hidden;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #000;
+  }
+  .cover .centre-logo {
+    top: 284px;
+    left: -205px;
+    width: 1000px;
+    transform: none;
+    opacity: 0.09;
+    pointer-events: none;
+  }
+  .sheet.cover .head {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    left: auto;
+    width: 280px;
+    margin: 0;
+    z-index: 2;
+    text-align: right;
+    pointer-events: none;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  .sheet.cover .head img { height: 46px; }
+  .sheet.cover .cover-center {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .sheet.cover .title {
+    position: absolute;
+    top: 230px;
+    left: 210px;
+    width: auto;
+    margin: 0;
+    transform: none;
+    white-space: nowrap;
+    text-align: center;
+    pointer-events: none;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: #000;
+  }
+  .sheet.cover .meta {
+    position: absolute;
+    top: 306px;
+    left: 70px;
+    width: 640px;
+    margin: 0;
+    transform: none;
+    text-align: center;
+    pointer-events: none;
+    font-family: "Segoe UI", Arial, sans-serif;
+  }
+  .cover .meta-line {
+    display: block;
+    margin: 0 0 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 20px;
+    line-height: 1.6;
+    text-align: center;
+  }
+  .cover .meta-line:last-child { margin-bottom: 0; }
+  .cover .meta-line .k {
+    display: inline;
+    width: auto;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #000;
+  }
+  .cover .meta-line .val {
+    display: inline;
+    pointer-events: auto;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #000;
+    min-height: 0;
+    padding: 0;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 80px;
+    display: inline-block;
+    vertical-align: baseline;
+    cursor: text;
+  }
+  .sheet.cover .foot {
+    left: 22px;
+    right: 22px;
+    bottom: 16px;
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #444;
+    text-align: center;
+  }
+  .sheet:not(.cover) > *:not(.mark):not(.foot) { position: relative; z-index: 1; }
   .head { text-align: right; }
   .head img { height: 46px; width: auto; }
+  #profile td.photo-cell {
+    width: 102px;
+    padding: 6px;
+    vertical-align: middle;
+    text-align: center;
+  }
+  #profile .photo {
+    width: 90px;
+    height: 110px;
+    object-fit: cover;
+    display: block;
+    border-radius: 6px;
+  }
   .co { margin: 2px 0 0; font-weight: 700; font-size: 13px; }
   .title {
     margin: 18px 0 8px;
     text-align: center;
-    font-size: 34px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 40pt;
     font-weight: 700;
     letter-spacing: 0;
   }
@@ -175,11 +338,14 @@
   .meta td { padding: 2px 8px; font-size: 20px; vertical-align: baseline; }
   .meta .k { width: 42%; text-align: right; font-weight: 700; }
   .band, .grid, .block { width: 100%; border-collapse: collapse; margin: 0 0 10px; }
-  .band td, .grid td, .block td { border: 0.5pt solid #000; vertical-align: top; }
+  .grid, .block, .job, [data-box] { break-inside: avoid; page-break-inside: avoid; }
+  .band td, .grid td, .block td { border: 0.5pt solid #000; vertical-align: top; text-align: left; padding: 1px 3px; }
   .h {
+    font-family: Georgia, "Times New Roman", serif;
     font-weight: 700;
     font-size: 15px;
-    padding: 4px 8px;
+    padding: 1px 3px;
+    text-align: left;
   }
   .h.profile { background: #B6C3F2; }
   .h.edu { background: #E2EFD9; }
@@ -187,23 +353,34 @@
   .h.project { background: #DDEBF7; }
   .h.work { background: #FFF2CC; }
   .grid .k {
-    width: 168px;
+    width: 22%;
+    font-family: Georgia, "Times New Roman", serif;
     font-weight: 700;
     font-size: 12px;
-    padding: 8px;
+    padding: 1px 3px;
+    text-align: left;
   }
-  .val, .lines, .job line, .plain {
-    font-size: 12px;
+  .val, .lines, .job line, .plain, .pair, .col-text, .lbl {
+    text-align: left;
+  }
+  .val, .lines, .job line, .plain, .col-text {
+    font-family: Garamond, "EB Garamond", Palatino, "Palatino Linotype", serif;
+    font-weight: 400;
+    font-size: 11pt;
     line-height: 1.35;
-    padding: 6px 8px;
+    padding: 0;
     outline: none;
     min-height: 1.2em;
     white-space: pre-wrap;
   }
+  .pair { padding: 6px 0 0; }
+  .pair .lbl { padding: 0 0 2px; font-size: 12px; font-weight: 700; }
+  .pair .val, .pair .lines { padding: 0 0 4px; }
+  .title-edit { font-family: Georgia, "Times New Roman", serif; font-size: 15px; font-weight: 700; padding: 0; }
   .lines { min-height: 72px; }
-  .job .b { font-weight: 700; font-size: 12px; padding: 0; outline: none; min-height: 1.2em; }
-  .job .lbl { padding: 6px 8px 0; font-size: 12px; }
-  .job > .col-text { display: block; padding: 2px 8px 0; }
+  .job .b { font-family: Garamond, "EB Garamond", Palatino, "Palatino Linotype", serif; font-weight: 700; font-size: 11pt; padding: 0; outline: none; min-height: 1.2em; }
+  .job .lbl { padding: 4px 0 0; font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 12px; }
+  .job > .col-text { display: block; padding: 2px 0 0; }
   .line-row { display: flex; align-items: flex-start; gap: 6px; }
   .line-row + .line-row { margin-top: 4px; }
   .col-text { flex: 1; outline: none; font-size: 12px; line-height: 1.35; min-height: 1.2em; white-space: pre-wrap; }
@@ -216,7 +393,40 @@
   .add-btn:hover { text-decoration: underline; }
   .section-add { margin: 0 0 10px; }
   .job + .job { border-top: 1px solid #e3e8f3; margin-top: 8px; padding-top: 8px; }
+  .entry + .entry { margin-top: 8px; }
   .plain { min-height: 28px; }
+  #sheet [contenteditable="true"] ul,
+  #sheet [contenteditable="true"] ol {
+    margin: 0.1em 0 0.1em 1.15em;
+    padding: 0;
+  }
+  #sheet [contenteditable="true"] li { margin: 0; }
+  #fmt-bar {
+    position: fixed;
+    z-index: 30;
+    display: none;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(27, 36, 54, 0.12);
+  }
+  #fmt-bar.on { display: flex; }
+  #fmt-bar button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #24304a;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  #fmt-bar button:hover { background: #eef2fb; }
   [contenteditable="true"]:empty:before {
     content: attr(data-placeholder);
     color: #8b93a7;
@@ -231,6 +441,175 @@
     font-size: 10px;
     line-height: 1.35;
   }
+  .sheet.exporting { box-shadow: none; }
+  .sheet.exporting .col-x,
+  .sheet.exporting .add-row { display: none; }
+  .sheet.exporting .cover-drag { outline: none; }
+  .sheet.exporting [contenteditable="true"]:empty:before { content: none; }
+  .mail-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(27, 36, 54, 0.35);
+    overflow: hidden;
+  }
+  .mail-panel {
+    width: min(1080px, 100%);
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 40px rgba(27, 36, 54, 0.12);
+    overflow: hidden;
+  }
+  .mail-head, .mail-foot { flex: none; padding: 16px 20px; }
+  .mail-head { padding-bottom: 8px; }
+  .mail-foot { border-top: 1px solid var(--line); }
+  .mail-panel h2 { margin: 0 0 4px; font-size: 1.25rem; }
+  .mail-columns {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(340px, 1.1fr);
+    gap: 16px;
+    padding: 0 20px 12px;
+    overflow: hidden;
+  }
+  .mail-side, .mail-preview {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mail-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+    flex: none;
+  }
+  .mail-label {
+    display: block;
+    margin: 0 0 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  #mail-send:disabled { opacity: 0.6; }
+  .mail-results {
+    flex: none;
+    max-height: 220px;
+    margin-top: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .mail-more {
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 2px 2px;
+    text-align: left;
+  }
+  .mail-picks {
+    flex: none;
+    max-height: 96px;
+    margin-top: 8px;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .mail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 4px 6px 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #f5f7fc;
+    font-size: 12px;
+  }
+  .mail-badge .name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mail-hit, .draft-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .mail-hit { width: 100%; background: #fff; text-align: left; flex: none; }
+  .format-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: #fff; }
+  .format-toggle button { border: 0; background: #fff; padding: 3px 8px; font-size: 11px; }
+  .format-toggle button.on { background: #4F7CFF; color: #fff; }
+  .mail-editor {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .mail-editor:focus-within { border-color: var(--brand); box-shadow: 0 0 0 1px var(--brand); }
+  .mail-tools {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--line);
+    background: #f7f8fb;
+  }
+  .mail-tools button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #4a5568;
+  }
+  .mail-tools button:hover { background: #e6ebf5; }
+  .mail-tools svg { width: 15px; height: 15px; display: block; }
+  .mail-tools .spacer { flex: 1; }
+  .mail-editor-wrap {
+    flex: 1;
+    min-height: 180px;
+    max-height: 550px;
+    overflow-y: auto;
+  }
+  #mail-body {
+    min-height: 220px;
+    padding: 12px;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .draft-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  @media (max-width: 800px) {
+    .mail-columns { grid-template-columns: 1fr; overflow: auto; }
+    .mail-results { max-height: 220px; }
+    .mail-editor-wrap { max-height: 320px; }
+  }
 </style>
 </head>
 <body>
@@ -242,6 +621,7 @@
     <div class="stamps">
       <button type="button" id="tab-make" class="stamp on">Make a CV</button>
       <button type="button" id="tab-find" class="stamp">Search CV</button>
+      <button type="button" id="tab-mail" class="stamp">Email drafts</button>
     </div>
 
     <section class="panel" id="make">
@@ -249,13 +629,18 @@
         <div class="drop">
           <label class="file btn primary">Upload CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
           <button type="button" class="btn secondary" id="sample">Try a sample</button>
+          <button type="button" class="btn primary" id="send-cv">Send CV</button>
         </div>
         <div id="save-bar" hidden>
           <label class="label" for="file-name">File name</label>
           <div class="save-row">
             <input class="input" id="file-name" type="text" placeholder="HR Plus CV - Chan Tai Man">
-            <button type="button" class="btn secondary" id="keep">Save</button>
+            <button type="button" class="btn secondary" id="rename-file">Rename</button>
+            <button type="button" class="btn secondary" id="keep">Save CV</button>
+            <button type="button" class="btn primary" id="download-pdf">Download PDF</button>
             <button type="button" class="btn primary" id="download">Download Word</button>
+            <label class="file btn secondary" id="photo-add"><span id="photo-add-label">+ Candidate Photo</span><input id="photo-file" type="file" accept="image/*"></label>
+            <button type="button" class="btn secondary" id="photo-clear" hidden>Remove Photo</button>
           </div>
         </div>
         <p class="hint" id="status">PDF, Word, or text.</p>
@@ -272,7 +657,7 @@
           </div>
           <div>
             <label class="label" for="q-name">Candidate</label>
-            <input class="input" id="q-name" type="search" placeholder="Candidate name">
+            <input class="input" id="q-name" type="search" placeholder="Name, skill, position, or company">
           </div>
           <div>
             <label class="label" for="q-from">Date from</label>
@@ -287,6 +672,97 @@
       </div>
       <div class="card list" id="list"></div>
     </section>
+
+    <section class="panel" id="mail" hidden>
+      <div class="card">
+        <div class="stamps" style="margin-bottom:12px">
+          <button type="button" id="draft-tab-draft" class="stamp on">Drafts</button>
+          <button type="button" id="draft-tab-sent" class="stamp">Sent Mail</button>
+        </div>
+        <p class="hint" id="draft-status">Saved emails stay here until you send them.</p>
+        <div class="draft-list" id="draft-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="mail-modal" id="mail-modal" hidden>
+    <div class="mail-panel" role="dialog" aria-labelledby="mail-title">
+      <div class="mail-head">
+        <h2 id="mail-title">Send CV</h2>
+      </div>
+      <div class="mail-columns">
+        <div class="mail-side">
+          <div class="mail-fields">
+            <div>
+              <label class="mail-label" for="mail-to">Recipient Email (To:)</label>
+              <input class="input" id="mail-to" type="email" placeholder="e.g. hr@company.com">
+            </div>
+            <div>
+              <label class="mail-label" for="mail-company">Client / Company Name</label>
+              <input class="input" id="mail-company" type="text" placeholder="Company name">
+            </div>
+            <div>
+              <label class="mail-label" for="mail-position">Job Position</label>
+              <input class="input" id="mail-position" type="text" placeholder="Job title">
+            </div>
+            <div>
+              <label class="mail-label" for="mail-search">Select Candidates</label>
+              <input class="input" id="mail-search" type="search" placeholder="Name, skill, position, or company">
+            </div>
+          </div>
+          <div class="mail-picks" id="mail-picks"></div>
+          <div class="mail-results" id="mail-results"></div>
+        </div>
+        <div class="mail-preview">
+          <label class="mail-label" for="mail-subject">Subject</label>
+          <input class="input" id="mail-subject" type="text">
+          <div class="mail-editor">
+            <div class="mail-tools" role="toolbar" aria-label="Format">
+              <button type="button" data-cmd="bold" aria-label="Bold" title="Bold"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 2.5h4.4c1.7 0 2.8.9 2.8 2.3 0 .9-.5 1.6-1.2 2 .9.3 1.5 1.1 1.5 2.1 0 1.6-1.3 2.6-3.2 2.6H4V2.5zm2 3.6h2.1c.7 0 1.1-.3 1.1-.9s-.4-.9-1.1-.9H6v1.8zm0 3.7h2.4c.8 0 1.3-.4 1.3-1s-.5-1-1.3-1H6v2z"/></svg></button>
+              <button type="button" data-cmd="italic" aria-label="Italic" title="Italic"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M7 2.5h5.2v1.6H10l-1.7 7.8h2.2V13.5H5.2v-1.6H7.3L9 4.1H7V2.5z"/></svg></button>
+              <button type="button" data-cmd="insertUnorderedList" aria-label="List" title="List"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2.2 3.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0 3.8a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0 3.8a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM5.4 3.6h8.2v1.4H5.4V3.6zm0 3.8h8.2v1.4H5.4V7.4zm0 3.8h8.2V12.6H5.4v-1.4z"/></svg></button>
+              <span class="spacer"></span>
+              <button type="button" id="mail-refresh" aria-label="Refresh highlights" title="Refresh highlights"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M13.2 8a5.2 5.2 0 1 1-1.4-3.5"/><path d="M13.4 2.6v3.2H10.2"/></svg></button>
+            </div>
+            <div class="mail-editor-wrap">
+              <div id="mail-body" contenteditable="true"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mail-foot">
+        <p class="hint" id="mail-status"></p>
+        <div class="mail-actions">
+          <button type="button" class="btn secondary" id="mail-draft">Save as Draft</button>
+          <button type="button" class="btn primary" id="mail-send">Send email</button>
+          <button type="button" class="btn secondary" id="mail-close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ask-modal" id="ask-modal" hidden>
+    <div class="ask-panel" role="dialog" aria-labelledby="ask-text">
+      <p id="ask-text"></p>
+      <input class="input" id="ask-input" type="text" hidden style="margin:0 0 16px">
+      <div class="ask-actions" id="ask-actions"></div>
+    </div>
+  </div>
+  <div id="export-root" aria-hidden="true"></div>
+  <div id="fmt-bar" role="toolbar" aria-label="Format">
+    <button type="button" data-cmd="bold" title="Bold" aria-label="Bold">B</button>
+    <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><span style="font-style:italic">I</span></button>
+    <button type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">•</button>
+    <button type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1.</button>
+    <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">↺</button>
+    <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">↻</button>
+  </div>
+    <button type="button" data-cmd="bold" title="Bold" aria-label="Bold">B</button>
+    <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><span style="font-style:italic">I</span></button>
+    <button type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">•</button>
+    <button type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1.</button>
+    <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">↺</button>
+    <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">↻</button>
   </div>
 
 <script>
@@ -1076,6 +1552,35 @@ function esc(text) {
   return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function sanitizeRich(html) {
+  const root = document.createElement("div");
+  root.innerHTML = String(html || "");
+  const keep = { b: 1, strong: 1, i: 1, em: 1, ul: 1, ol: 1, li: 1, br: 1 };
+  const walk = (node) => {
+    [...node.childNodes].forEach((child) => {
+      if (child.nodeType === 3) return;
+      if (child.nodeType !== 1) { child.remove(); return; }
+      const tag = child.tagName.toLowerCase();
+      if (keep[tag]) {
+        [...child.attributes].forEach((attr) => child.removeAttribute(attr.name));
+        walk(child);
+        return;
+      }
+      walk(child);
+      if (tag === "div" || tag === "p") child.replaceWith(...child.childNodes, document.createElement("br"));
+      else child.replaceWith(...child.childNodes);
+    });
+  };
+  walk(root);
+  return root.innerHTML.replace(/(?:<br>\s*)+$/gi, "");
+}
+
+function richOrText(html, value) {
+  const clean = sanitizeRich(html);
+  if (/<(b|strong|i|em|ul|ol|li|br)\b/i.test(clean)) return clean;
+  return esc(value || "");
+}
+
 function setPara(xml, id, text) {
   const token = 'w14:paraId="' + id + '"';
   const start = xml.indexOf(token);
@@ -1083,17 +1588,16 @@ function setPara(xml, id, text) {
   const end = xml.indexOf("</w:p>", start);
   const slice = xml.slice(start, end);
   const safe = esc(text);
-  const rEnd = slice.indexOf("</w:r>");
+  const texts = [...slice.matchAll(/<w:t\b[^>]*>[\s\S]*?<\/w:t>/g)];
   let next;
-  if (rEnd >= 0) {
-    const run = slice.slice(0, rEnd);
-    next = run.includes("<w:t")
-      ? slice.replace(/(<w:t[^>]*>)([\s\S]*?)(<\/w:t>)/, "$1" + safe + "$3")
-      : slice.slice(0, rEnd) + '<w:t xml:space="preserve">' + safe + "</w:t>" + slice.slice(rEnd);
+  if (texts.length) {
+    const last = texts[texts.length - 1];
+    const filled = last[0].replace(/(<w:t\b[^>]*>)[\s\S]*?(<\/w:t>)/, "$1" + safe + "$2");
+    next = slice.slice(0, last.index) + filled + slice.slice(last.index + last[0].length);
   } else {
-    const fonts = (slice.match(/<w:rFonts[^>]*\/>/) || ['<w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'])[0];
-    const sz = (slice.match(/<w:sz w:val="\d+"\/>/) || ['<w:sz w:val="24"/>'])[0];
-    const szCs = (slice.match(/<w:szCs w:val="\d+"\/>/) || ['<w:szCs w:val="24"/>'])[0];
+    const fonts = (slice.match(/<w:rFonts[^>]*\/>/) || ['<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>'])[0];
+    const sz = (slice.match(/<w:sz w:val="\d+"\/>/) || ['<w:sz w:val="40"/>'])[0];
+    const szCs = (slice.match(/<w:szCs w:val="\d+"\/>/) || ['<w:szCs w:val="40"/>'])[0];
     next = slice + "<w:r><w:rPr>" + fonts + sz + szCs + '</w:rPr><w:t xml:space="preserve">' + safe + "</w:t></w:r>";
   }
   return xml.slice(0, start) + next + xml.slice(end);
@@ -1164,15 +1668,15 @@ function dropRemoved(xml, removed) {
 }
 
 async function toDocx(data) {
-  const res = await fetch("cv/template.docx");
+  const res = await fetch("cv/template.docx?v=42");
   const files = fflate.unzipSync(new Uint8Array(await res.arrayBuffer()));
   const xml = fflate.strFromU8(files["word/document.xml"]);
   files["word/document.xml"] = fflate.strToU8(apply(xml, data));
   return fflate.zipSync(files);
 }
 
-function saveFile(bytes, name) {
-  const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+function saveFile(bytes, name, type) {
+  const blob = new Blob([bytes], { type: type || "application/octet-stream" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -1181,8 +1685,144 @@ function saveFile(bytes, name) {
   URL.revokeObjectURL(url);
 }
 
-function field(cls, slot, value, placeholder) {
-  return '<div class="' + cls + '" contenteditable="true" data-slot="' + slot + '" data-placeholder="' + placeholder + '">' + esc(value || "") + "</div>";
+async function captureSheets(root) {
+  const host = root || document.getElementById("sheet-wrap");
+  const sheets = [...host.querySelectorAll(".sheet")];
+  const blanks = [...host.querySelectorAll("[contenteditable='true']")].filter((node) => !node.textContent.trim());
+  blanks.forEach((node) => { node.textContent = "\u200b"; });
+  const pages = [];
+  try {
+    for (const sheet of sheets) {
+      const canvas = await html2canvas(sheet, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+        onclone(doc) {
+          const hidden = doc.getElementById("export-root");
+          if (hidden) { hidden.style.opacity = "1"; hidden.style.zIndex = "1"; }
+          doc.querySelectorAll(".col-x, .add-row").forEach((node) => node.remove());
+          doc.querySelectorAll(".cover-drag").forEach((node) => { node.style.outline = "none"; });
+        }
+      });
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
+      pages.push({
+        bytes: new Uint8Array(await blob.arrayBuffer()),
+        width: canvas.width,
+        height: canvas.height
+      });
+    }
+  } finally {
+    blanks.forEach((node) => { node.textContent = ""; });
+  }
+  return pages;
+}
+
+function pdfFromPages(pages) {
+  const parts = [];
+  const offsets = [];
+  let size = 0;
+  const asBytes = (data) => typeof data === "string" ? fflate.strToU8(data) : data;
+  function add(data) {
+    const bytes = asBytes(data);
+    parts.push(bytes);
+    size += bytes.length;
+  }
+  add("%PDF-1.4\n");
+  const ids = pages.map((_, index) => ({
+    page: 3 + index * 3,
+    content: 4 + index * 3,
+    image: 5 + index * 3
+  }));
+  function obj(body) {
+    offsets.push(size);
+    add(body);
+  }
+  obj("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+  obj("2 0 obj\n<< /Type /Pages /Count " + pages.length + " /Kids [" + ids.map((id) => id.page + " 0 R").join(" ") + "] >>\nendobj\n");
+  pages.forEach((page, index) => {
+    const id = ids[index];
+    const content = "q\n595.28 0 0 841.89 0 0 cm\n/Im0 Do\nQ\n";
+    obj(id.page + " 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents " + id.content + " 0 R /Resources << /XObject << /Im0 " + id.image + " 0 R >> >> >>\nendobj\n");
+    obj(id.content + " 0 obj\n<< /Length " + asBytes(content).length + " >>\nstream\n" + content + "endstream\nendobj\n");
+    offsets.push(size);
+    add(id.image + " 0 obj\n<< /Type /XObject /Subtype /Image /Width " + page.width + " /Height " + page.height + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + page.bytes.length + " >>\nstream\n");
+    add(page.bytes);
+    add("\nendstream\nendobj\n");
+  });
+  const xref = size;
+  let table = "xref\n0 " + (offsets.length + 1) + "\n0000000000 65535 f \n";
+  offsets.forEach((offset) => { table += String(offset).padStart(10, "0") + " 00000 n \n"; });
+  add(table);
+  add("trailer\n<< /Size " + (offsets.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF");
+  const out = new Uint8Array(size);
+  let at = 0;
+  parts.forEach((part) => { out.set(part, at); at += part.length; });
+  return out;
+}
+
+function wordDrawing(relId, docPr, name) {
+  const cx = 7560310;
+  const cy = 10692130;
+  return `<w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="${docPr}" name="${name}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="0"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${docPr}" name="${name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="${relId}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>`;
+}
+
+function docxFromPages(pages) {
+  const text = (value) => fflate.strToU8(value);
+  const sect = `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="0" w:right="0" w:bottom="0" w:left="0" w:header="0" w:footer="0" w:gutter="0"/>`;
+  const rels = [];
+  const body = pages.map((page, index) => {
+    const n = index + 1;
+    rels.push(`<Relationship Id="rId${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/page${n}.jpg"/>`);
+    const next = index < pages.length - 1 ? `<w:sectPr><w:type w:val="nextPage"/>${sect}</w:sectPr>` : "";
+    return `<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/>${next}</w:pPr>${wordDrawing("rId" + n, n, "page" + n + ".jpg")}</w:p>`;
+  }).join("");
+  const files = {
+    "[Content_Types].xml": text(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`),
+    "_rels/.rels": text(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`),
+    "word/_rels/document.xml.rels": text(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${rels.join("")}</Relationships>`),
+    "word/document.xml": text(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><w:body>${body}<w:sectPr>${sect}</w:sectPr></w:body></w:document>`)
+  };
+  pages.forEach((page, index) => { files["word/media/page" + (index + 1) + ".jpg"] = page.bytes; });
+  return fflate.zipSync(files);
+}
+
+async function exportData(data, kind) {
+  const root = document.getElementById("export-root");
+  renderInto(root, data, false);
+  try {
+    const pages = await captureSheets(root);
+    const name = cleanFileName(data.fileName, data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV");
+    if (kind === "pdf") saveFile(pdfFromPages(pages), name + ".pdf", "application/pdf");
+    else saveFile(docxFromPages(pages), name + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  } finally {
+    root.innerHTML = "";
+  }
+}
+
+async function downloadPages(kind) {
+  const status = document.getElementById("status");
+  if (!document.querySelector("#sheet-wrap .sheet")) {
+    status.textContent = "Open a CV first.";
+    return;
+  }
+  const data = readSheet();
+  data.fileName = chosenFileName(data);
+  status.textContent = "Preparing the file…";
+  try {
+    await exportData(data, kind);
+    status.textContent = "Downloaded.";
+  } catch (error) {
+    status.textContent = "The file could not be prepared.";
+  }
+}
+
+function field(cls, slot, value, placeholder, html) {
+  return '<div class="' + cls + '" contenteditable="true" data-slot="' + slot + '" data-placeholder="' + placeholder + '">' + richOrText(html, value) + "</div>";
+}
+
+function coverLine(label, slot, value, placeholder) {
+  return '<p class="meta-line"><span class="k">' + esc(label) + '</span> <span class="val" contenteditable="true" data-slot="' + slot + '" data-placeholder="' + esc(placeholder) + '">' + esc(value || "") + "</span></p>";
 }
 
 function addBtn(act, label) {
@@ -1195,7 +1835,9 @@ function linesOf(list) {
 
 function entriesFrom(data) {
   const saved = data.more;
-  if (saved && saved.edu && saved.certs && saved.jobs) return saved;
+  if (saved && saved.edu && saved.certs && saved.jobs) {
+    return { edu: saved.edu, certs: saved.certs, jobs: saved.jobs, boxes: saved.boxes || [] };
+  }
   const edu = [{ year: data.eduLeft || "", school: linesOf(data.edu).join("\n") }];
   const certs = linesOf(data.certs);
   const job = (pair, duties) => ({
@@ -1207,83 +1849,199 @@ function entriesFrom(data) {
   const jobs = [job(data.job1, data.duty1)];
   const second = job(data.job2, data.duty2);
   if (second.company || second.role || second.dates || second.duties) jobs.push(second);
-  return { edu: edu, certs: certs, jobs: jobs };
+  return { edu: edu, certs: certs, jobs: jobs, boxes: [] };
 }
 
 function eduRow(entry) {
   const fresh = entry.fresh ? ' data-new="1"' : "";
-  return `<tr data-entry><td><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${esc(entry.year || "")}</div></td><td><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${esc(entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div></td></tr>`;
+  return `<tr data-entry><td><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${richOrText(entry.yearHtml, entry.year || "")}</div></td><td><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${richOrText(entry.schoolHtml, entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div></td></tr>`;
 }
 
-function certRow(text, fresh) {
-  return `<div class="line-row" data-entry><div class="col-text" contenteditable="true" data-field="text" data-placeholder="Certificate"${fresh ? ' data-new="1"' : ""}>${esc(text || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove certificate">×</button></div>`;
+function profilePair(label, cls, slot, value, placeholder) {
+  return `<div class="pair"><div class="lbl">${esc(label)}</div>${field(cls, slot, value, placeholder)}</div>`;
+}
+
+const BOX_COLORS = ["#F4B183", "#8FD19E", "#7EB6E6", "#F2A2C0", "#C3A6E8", "#6FCFC4", "#F2C14E", "#E07A7A"];
+
+function boxColor(color, index) {
+  return /^#[0-9A-Fa-f]{6}$/.test(color || "") ? color : BOX_COLORS[index % BOX_COLORS.length];
+}
+
+function boxBlock(box, index) {
+  const fresh = box.fresh ? ' data-new="1"' : "";
+  const color = boxColor(box.color, index);
+  return `<table class="block" data-box data-entry><tr><td class="h extra" data-color="${color}" style="background:${color}"><div class="line-row"><div class="col-text b title-edit" contenteditable="true" data-field="title"${fresh}>${richOrText(box.titleHtml, box.title || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove section">×</button></div></td></tr><tr><td><div class="lines" contenteditable="true" data-field="text">${richOrText(box.textHtml, box.text || "")}</div></td></tr></table>`;
+}
+
+function certRow(text, fresh, html) {
+  return `<div class="line-row" data-entry><div class="col-text" contenteditable="true" data-field="text" data-placeholder="Certificate"${fresh ? ' data-new="1"' : ""}>${richOrText(html, text || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove certificate">×</button></div>`;
 }
 
 function jobBlock(job) {
   const duties = Array.isArray(job.duties) ? linesOf(job.duties).join("\n") : (job.duties || "");
   const fresh = job.fresh ? ' data-new="1"' : "";
-  return `<div class="job" data-entry><div class="line-row"><div class="col-text b" contenteditable="true" data-field="company" data-placeholder="Company"${fresh}>${esc(job.company || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove job">×</button></div><div class="col-text b" contenteditable="true" data-field="role" data-placeholder="Role">${esc(job.role || "")}</div><div class="col-text b" contenteditable="true" data-field="dates" data-placeholder="Dates">${esc(job.dates || "")}</div><div class="lbl">Responsibilities:</div><div class="col-text" contenteditable="true" data-field="duties" data-placeholder="Responsibility">${esc(duties)}</div></div>`;
+  return `<div class="job" data-entry><div class="line-row"><div class="col-text b" contenteditable="true" data-field="company" data-placeholder="Company"${fresh}>${richOrText(job.companyHtml, job.company || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove job">×</button></div><div class="col-text b" contenteditable="true" data-field="role" data-placeholder="Role">${richOrText(job.roleHtml, job.role || "")}</div><div class="col-text b" contenteditable="true" data-field="dates" data-placeholder="Dates">${richOrText(job.datesHtml, job.dates || "")}</div><div class="lbl">Responsibilities:</div><div class="col-text" contenteditable="true" data-field="duties" data-placeholder="Responsibility">${richOrText(job.dutiesHtml, duties)}</div></div>`;
 }
 
-function render(data) {
+function profileTable(data, skills) {
+  const rows = [
+    ["Languages", field("val", "languages", data.languages, "Languages", data.rich && data.rich.languages)],
+    ["Skills", field("lines", "skills", skills, "Skills", data.rich && data.rich.skills)],
+    ["Recent Salary", field("val", "recentSalary", data.recentSalary, "Recent salary", data.rich && data.rich.recentSalary)],
+    ["Expected Salary", field("val", "expectedSalary", data.expectedSalary, "Expected salary", data.rich && data.rich.expectedSalary)],
+    ["Notice Period", field("val", "notice", data.notice, "Notice period", data.rich && data.rich.notice)]
+  ];
+  const photo = data.photo
+    ? `<td class="photo-cell" rowspan="${rows.length}"><img class="photo" alt="Candidate photo"></td>`
+    : "";
+  const span = data.photo ? 3 : 2;
+  const body = rows.map((row, index) => `<tr><td class="k">${row[0]}</td><td>${row[1]}</td>${index === 0 ? photo : ""}</tr>`).join("");
+  return `<table class="grid" id="profile"><tr><td class="h profile" colspan="${span}">Profile</td></tr>${body}</table>`;
+}
+
+function sheetMarkup(data, live) {
   const more = entriesFrom(data);
   data.more = more;
   const skills = linesOf(data.skills).join("\n");
   const project = linesOf(data.project).join("\n");
-  document.getElementById("sheet-wrap").hidden = false;
-  document.getElementById("save-bar").hidden = false;
-  document.getElementById("sheet-wrap").innerHTML = `
-    <article class="sheet" id="sheet">
-      <img class="mark" src="cv/mark.png" alt="">
-      <div class="head">
-        <img src="cv/logo.png" alt="HR Plus">
-        <p class="co">HR Plus (Talent) Limited</p>
+  const head = `<div class="head"><img src="cv/logo.png" alt="HR Plus"><p class="co">HR Plus (Talent) Limited</p></div>`;
+  const foot = `<p class="foot">This resume contains information modified by HR Plus (Talent) Limited. Please refrain from duplicating and redistributing this document without permission.</p>`;
+  const id = (name) => live ? ` id="${name}"` : "";
+  return `
+    <article class="sheet cover">
+      <img class="mark centre-logo" src="cv/mark.png" alt="">
+      ${head}
+      <div class="cover-center">
+        <h2 class="title">Confidential Report</h2>
+        <div class="meta">
+          ${coverLine("Candidate:", "candidate", data.candidate, "Candidate name")}
+          ${coverLine("Recruiter:", "recruiter", data.recruiter, "Your name")}
+          ${coverLine("Date:", "date", data.date, "Date")}
+        </div>
       </div>
-      <h2 class="title">Confidential Report</h2>
-      <table class="meta">
-        <tr><td class="k">Candidate:</td><td>${field("val", "candidate", data.candidate, "Candidate name")}</td></tr>
-        <tr><td class="k">Recruiter:</td><td>${field("val", "recruiter", data.recruiter, "Your name")}</td></tr>
-        <tr><td class="k">Date:</td><td>${field("val", "date", data.date, "Date")}</td></tr>
-      </table>
-      <table class="grid">
-        <tr><td class="h profile" colspan="2">Profile</td></tr>
-        <tr><td class="k">Languages</td><td>${field("val", "languages", data.languages, "Languages")}</td></tr>
-        <tr><td class="k">Skills</td><td>${field("lines", "skills", skills, "Skills")}</td></tr>
-        <tr><td class="k">Recent Salary</td><td>${field("val", "recentSalary", data.recentSalary, "Recent salary")}</td></tr>
-        <tr><td class="k">Expected Salary</td><td>${field("val", "expectedSalary", data.expectedSalary, "Expected salary")}</td></tr>
-        <tr><td class="k">Notice Period</td><td>${field("val", "notice", data.notice, "Notice period")}</td></tr>
-      </table>
-      <table class="grid" id="edu">
+      ${foot}
+    </article>
+    <article class="sheet"${id("sheet")}>
+      <img class="mark" src="cv/mark.png" alt="">
+      ${head}
+      ${profileTable(data, skills)}
+      <table class="grid"${id("edu")}>
         <tr><td class="h edu" colspan="2">Education</td></tr>
         ${more.edu.map(eduRow).join("")}
         <tr><td colspan="2"><div class="add-row">${addBtn("edu", "+ Add education")}</div></td></tr>
       </table>
-      <table class="block" id="certs">
+      <table class="block"${id("certs")}>
         <tr><td class="h cert">Certifications</td></tr>
-        <tr><td>${more.certs.map((text, index) => certRow(text, more.certFresh && index === more.certs.length - 1)).join("")}<div class="add-row">${addBtn("cert", "+ Add certificate")}</div></td></tr>
+        <tr><td>${more.certs.map((text, index) => certRow(text, more.certFresh && index === more.certs.length - 1, data.rich && data.rich.certs && data.rich.certs[index])).join("")}<div class="add-row">${addBtn("cert", "+ Add certificate")}</div></td></tr>
       </table>
       <table class="block">
         <tr><td class="h project">Recent Project</td></tr>
-        <tr><td>${field("lines", "project", project, "Project")}</td></tr>
+        <tr><td>${field("lines", "project", project, "Project", data.rich && data.rich.project)}</td></tr>
       </table>
-      <table class="block" id="work">
+      <table class="block"${id("work")}>
         <tr><td class="h work">Work Experience</td></tr>
         <tr><td>${more.jobs.map(jobBlock).join("")}<div class="add-row">${addBtn("job", "+ Add job")}</div></td></tr>
       </table>
-      <p class="foot">This resume contains information modified by HR Plus (Talent) Limited. Please refrain from duplicating and redistributing this document without permission.</p>
+      <div class="extras"${id("extras")}>${(more.boxes || []).map(boxBlock).join("")}</div>
+      <div class="add-row section-add">${addBtn("box", "+ Add a box")}</div>
+      ${foot}
     </article>`;
-  document.querySelectorAll("[data-remove-entry]").forEach((button) => {
+}
+
+function renderInto(root, data, live) {
+  root.innerHTML = sheetMarkup(data, live);
+  const photoNode = root.querySelector(".photo");
+  if (photoNode && data.photo) photoNode.src = data.photo;
+  paginateSheets(root);
+  if (!live) return;
+  document.getElementById("sheet-wrap").hidden = false;
+  document.getElementById("save-bar").hidden = false;
+  const photoLabel = document.getElementById("photo-add-label");
+  const photoClear = document.getElementById("photo-clear");
+  if (photoLabel) photoLabel.textContent = data.photo ? "Change Photo" : "+ Candidate Photo";
+  if (photoClear) photoClear.hidden = !data.photo;
+  root.querySelectorAll("[data-remove-entry]").forEach((button) => {
     button.onclick = () => {
       const entry = button.closest("[data-entry]");
       if (entry) entry.remove();
+      sheetDirty = true;
       render(readSheet());
     };
   });
-  document.querySelectorAll("[data-add-act]").forEach((button) => {
+  root.querySelectorAll("[data-add-act]").forEach((button) => {
     button.onclick = () => runAdd(button.dataset.addAct);
   });
-  const fresh = document.querySelector("[data-new]");
+  const fresh = root.querySelector("[data-new]");
   if (fresh) fresh.focus();
+}
+
+function render(data) {
+  renderInto(document.getElementById("sheet-wrap"), data, true);
+}
+
+function sheetChromeHeight(sheet) {
+  const style = getComputedStyle(sheet);
+  const head = sheet.querySelector(".head");
+  return parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + (head ? head.offsetHeight : 0);
+}
+
+function blockHeight(el) {
+  const style = getComputedStyle(el);
+  return el.offsetHeight + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+}
+
+function continuationSheet(mark, head, foot) {
+  const page = document.createElement("article");
+  page.className = "sheet";
+  page.appendChild(mark.cloneNode(true));
+  page.appendChild(head.cloneNode(true));
+  page.appendChild(foot.cloneNode(true));
+  return page;
+}
+
+function paginateSheets(root) {
+  const sheet = root.querySelector(".sheet:not(.cover)");
+  if (!sheet) return;
+  const add = sheet.querySelector(".section-add");
+  const extras = sheet.querySelector(".extras");
+  const blocks = [];
+  [...sheet.children].forEach((el) => {
+    if (el.matches(".mark, .head, .foot") || el === add) return;
+    if (el === extras) {
+      [...el.children].forEach((box) => blocks.push(box));
+      return;
+    }
+    blocks.push(el);
+  });
+  const budget = 1123 - sheetChromeHeight(sheet) - (add ? blockHeight(add) : 0);
+  const groups = [];
+  let current = [];
+  let used = 0;
+  blocks.forEach((el) => {
+    const height = blockHeight(el);
+    if (current.length && used + height > budget) {
+      groups.push(current);
+      current = [];
+      used = 0;
+    }
+    current.push(el);
+    used += height;
+  });
+  if (current.length) groups.push(current);
+  if (groups.length < 2) return;
+  if (extras) extras.remove();
+  const wrap = root;
+  const mark = sheet.querySelector(".mark");
+  const head = sheet.querySelector(".head");
+  const foot = sheet.querySelector(".foot");
+  groups.forEach((group, index) => {
+    const page = index === 0 ? sheet : continuationSheet(mark, head, foot);
+    if (index > 0) wrap.appendChild(page);
+    const anchor = page.querySelector(".foot");
+    group.forEach((el) => page.insertBefore(el, anchor));
+  });
+  const last = wrap.querySelector("article.sheet:last-of-type");
+  if (add && last) last.insertBefore(add, last.querySelector(".foot"));
 }
 
 function columnText(node) {
@@ -1304,25 +2062,61 @@ function fieldText(row, name) {
   return columnText(row.querySelector('[data-field="' + name + '"]'));
 }
 
+function fieldHtml(row, name) {
+  const node = row.querySelector('[data-field="' + name + '"]');
+  return node ? sanitizeRich(node.innerHTML) : "";
+}
+
+function slotHtml(slot) {
+  const node = document.querySelector('#sheet [data-slot="' + slot + '"]');
+  return node ? sanitizeRich(node.innerHTML) : "";
+}
+
 function readSheet() {
   const data = blank();
   ["candidate", "recruiter", "date", "languages", "recentSalary", "expectedSalary", "notice"].forEach((key) => {
     data[key] = textOf(key);
   });
+  data.rich = {
+    languages: slotHtml("languages"),
+    skills: slotHtml("skills"),
+    recentSalary: slotHtml("recentSalary"),
+    expectedSalary: slotHtml("expectedSalary"),
+    notice: slotHtml("notice"),
+    project: slotHtml("project"),
+    certs: []
+  };
   data.skills = pad(textOf("skills").split(/\n/).map((line) => line.trim()).filter(Boolean), 7);
   data.project = pad(textOf("project").split(/\n/).map((line) => line.trim()).filter(Boolean), 5);
   const edu = Array.from(document.querySelectorAll("#edu [data-entry]")).map((row) => ({
     year: fieldText(row, "year"),
     school: fieldText(row, "school"),
+    yearHtml: fieldHtml(row, "year"),
+    schoolHtml: fieldHtml(row, "school")
   }));
   const certs = Array.from(document.querySelectorAll("#certs [data-entry]")).map((row) => fieldText(row, "text"));
+  data.rich.certs = Array.from(document.querySelectorAll("#certs [data-entry]")).map((row) => fieldHtml(row, "text"));
   const jobs = Array.from(document.querySelectorAll("#work [data-entry]")).map((row) => ({
     company: fieldText(row, "company"),
     role: fieldText(row, "role"),
     dates: fieldText(row, "dates"),
     duties: fieldText(row, "duties"),
+    companyHtml: fieldHtml(row, "company"),
+    roleHtml: fieldHtml(row, "role"),
+    datesHtml: fieldHtml(row, "dates"),
+    dutiesHtml: fieldHtml(row, "duties")
   }));
-  data.more = { edu: edu, certs: certs, jobs: jobs };
+  const boxes = Array.from(document.querySelectorAll("#sheet-wrap [data-box]")).map((row, index) => ({
+    title: fieldText(row, "title"),
+    text: fieldText(row, "text"),
+    titleHtml: fieldHtml(row, "title"),
+    textHtml: fieldHtml(row, "text"),
+    color: boxColor(row.querySelector("[data-color]") && row.querySelector("[data-color]").getAttribute("data-color"), index),
+  }));
+  data.more = { edu: edu, certs: certs, jobs: jobs, boxes: boxes };
+  const photoNode = document.querySelector("#sheet .photo");
+  data.photo = photoNode && photoNode.getAttribute("src") ? photoNode.getAttribute("src") : "";
+  data.sample = editingSample;
   data.eduLeft = edu[0] ? edu[0].year : "";
   data.edu = packLines(edu.flatMap((row, index) => {
     const schools = String(row.school || "").split(/\n/).map((line) => line.trim()).filter(Boolean);
@@ -1364,6 +2158,13 @@ function runAdd(act) {
   } else if (act === "job") {
     data.more.jobs.push({ company: "", role: "", dates: "", duties: "", fresh: true });
     document.getElementById("status").textContent = "Type the company.";
+  } else if (act === "box") {
+    data.more.boxes = data.more.boxes || [];
+    const previous = data.more.boxes.length ? data.more.boxes[data.more.boxes.length - 1].color : "";
+    let color = BOX_COLORS[data.more.boxes.length % BOX_COLORS.length];
+    if (color === previous) color = BOX_COLORS[(data.more.boxes.length + 1) % BOX_COLORS.length];
+    data.more.boxes.push({ title: "", text: "", color: color, fresh: true });
+    document.getElementById("status").textContent = "";
   } else return;
   render(data);
 }
@@ -1374,7 +2175,44 @@ function loadAll() {
 }
 
 function storeAll(rows) {
-  localStorage.setItem(KEY, JSON.stringify(rows));
+  try {
+    localStorage.setItem(KEY, JSON.stringify(rows));
+  } catch (error) {
+    window.alert("Local storage full. Please export or clear old CVs.");
+    throw error;
+  }
+}
+
+function pushCv(row) {
+  fetch("/api/cv-record", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(row)
+  }).catch(() => {});
+}
+
+async function pullCvs() {
+  try {
+    const response = await fetch("/api/cv-record", { credentials: "same-origin" });
+    if (!response.ok) return;
+    const payload = await response.json().catch(() => ({}));
+    const remote = Array.isArray(payload.cvs) ? payload.cvs : [];
+    const local = loadAll();
+    const byId = new Map();
+    remote.forEach((row) => { if (row && row.id) byId.set(row.id, row); });
+    const missing = [];
+    local.forEach((row) => {
+      if (row && row.id && !byId.has(row.id)) {
+        byId.set(row.id, row);
+        missing.push(row);
+      }
+    });
+    const merged = [...byId.values()];
+    try { localStorage.setItem(KEY, JSON.stringify(merged)); }
+    catch (error) { window.alert("Local storage full. Please export or clear old CVs."); }
+    missing.forEach(pushCv);
+  } catch (error) {}
 }
 
 function seed() {
@@ -1396,8 +2234,8 @@ function seed() {
   chan.date = "01/10/2026";
   lee.date = "15/09/2026";
   storeAll([
-    pack(chan, "HR Plus CV - Chan Tai Man"),
-    pack(lee, "HR Plus CV - Lee Mei Ling")
+    Object.assign(pack(chan, "HR Plus CV - Chan Tai Man"), { sample: true }),
+    Object.assign(pack(lee, "HR Plus CV - Lee Mei Ling"), { sample: true })
   ]);
 }
 
@@ -1418,18 +2256,27 @@ function pack(data, fileName, id) {
 }
 
 let editingId = null;
+let editingSample = false;
+let sheetDirty = false;
+
+function confirmReplace() {
+  if (!sheetDirty || !document.querySelector("#sheet-wrap .sheet")) return true;
+  return window.confirm("You have unsaved changes. Are you sure you want to replace the current sheet?");
+}
 
 function showTab(name) {
-  const make = name === "make";
-  document.getElementById("make").hidden = !make;
-  document.getElementById("find").hidden = make;
-  document.getElementById("tab-make").classList.toggle("on", make);
-  document.getElementById("tab-find").classList.toggle("on", !make);
-  if (!make) drawList();
+  ["make", "find", "mail"].forEach((tab) => {
+    document.getElementById(tab).hidden = name !== tab;
+    document.getElementById("tab-" + tab).classList.toggle("on", name === tab);
+  });
+  if (name === "find") pullCvs().finally(drawList);
+  if (name === "mail") drawDrafts();
 }
 
 function openSaved(row) {
   editingId = row.id;
+  editingSample = !!row.sample;
+  sheetDirty = false;
   render(row);
   document.getElementById("file-name").value = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
   document.getElementById("status").textContent = "";
@@ -1445,17 +2292,595 @@ function show(text) {
     return;
   }
   editingId = null;
+  editingSample = false;
+  sheetDirty = false;
   render(data);
   document.getElementById("file-name").value = data.candidate ? "HR Plus CV - " + data.candidate : "HR Plus CV";
-  const found = [data.candidate, data.eduLeft, data.edu[0], data.job1[0], data.job1[2], data.skills[0], data.languages].filter(Boolean).length;
-  document.getElementById("status").textContent = found
-    ? "Filled."
-    : "Some rows were empty. Type them in.";
+  const found = sectionFill(data);
+  document.getElementById("status").textContent = "CV Uploaded Successfully • " + found.filled + " section" + (found.filled === 1 ? "" : "s") + " auto-filled, " + found.empty + " section" + (found.empty === 1 ? "" : "s") + " empty";
 }
+
+function sectionFill(data) {
+  const sections = [
+    !!(data.languages || linesOf(data.skills).length || data.recentSalary || data.expectedSalary || data.notice),
+    !!(data.eduLeft || (data.edu || []).some(Boolean)),
+    (data.certs || []).some((item) => String(item || "").trim()),
+    linesOf(data.project).length > 0,
+    !!((data.job1 || []).some(Boolean) || (data.duty1 || []).some(Boolean))
+  ];
+  const filled = sections.filter(Boolean).length;
+  return { filled: filled, empty: sections.length - filled };
+}
+
+let mailLocked = false;
+let draftView = "DRAFT";
+let mailPicked = [];
+let mailTouched = false;
+
+function mailPool() {
+  const rows = loadAll().map((row) => Object.assign({}, row));
+  if (document.querySelector("#sheet-wrap .sheet")) {
+    const open = readSheet();
+    open.id = editingId || "open-sheet";
+    open.fileName = chosenFileName(open);
+    const index = rows.findIndex((row) => row.id === open.id);
+    if (index >= 0) rows[index] = Object.assign({}, rows[index], open);
+    else rows.unshift(open);
+  }
+  mailPicked.forEach((item) => {
+    if (item.cv && !rows.some((row) => row.id === item.id)) rows.push(item.cv);
+  });
+  return rows;
+}
+
+function rowSearchText(row) {
+  const jobs = (row.more && row.more.jobs) || [];
+  const titles = jobs.map((job) => [job.role, job.company, job.dates].filter(Boolean).join(" ")).join(" ");
+  return [row.candidate, row.fileName, row.date, row.languages, linesOf(row.skills).join(" "), titles, (row.job1 || []).join(" "), linesOf(row.project).join(" ")].join(" ").toLowerCase();
+}
+
+function experienceYears(dates) {
+  const text = String(dates || "");
+  const years = text.match(/\d{4}/g);
+  if (!years || !years.length) return "";
+  const start = Number(years[0]);
+  const ongoing = /present|current|now|to date/i.test(text);
+  const end = ongoing || years.length === 1 ? new Date().getFullYear() : Number(years[years.length - 1]);
+  const span = end - start;
+  return span > 0 ? String(span) : "";
+}
+
+function currentRole(row) {
+  const jobs = (row.more && row.more.jobs) || [];
+  const first = jobs[0] || {};
+  const role = first.role || (row.job1 && row.job1[1]) || "";
+  const company = first.company || (row.job1 && row.job1[0]) || "";
+  const dates = first.dates || (row.job1 && row.job1[2]) || "";
+  const years = experienceYears(dates);
+  const place = [role || "Not stated", company ? "at " + company : ""].filter(Boolean).join(" ");
+  return place + (years ? " (" + years + " years)" : "");
+}
+
+function keyStrengths(row) {
+  const skills = linesOf(row.skills).slice(0, 4).join(", ");
+  const project = linesOf(row.project).find(Boolean);
+  const certs = (row.more && row.more.certs) || row.certs || [];
+  const cert = certs.map((item) => String(item || "").trim()).find(Boolean);
+  return [skills || row.languages, project || cert].filter(Boolean).join(". ") || "Not stated";
+}
+
+function attachmentName(item) {
+  const cv = item.cv || {};
+  const base = cleanFileName(cv.fileName, cv.candidate ? "HR Plus CV - " + cv.candidate : "HR Plus CV");
+  return base + (item.format === "docx" ? ".docx" : ".pdf");
+}
+
+function mailSubject() {
+  const names = mailPicked.map((item) => (item.cv && item.cv.candidate) || "").map((name) => name.trim()).filter(Boolean);
+  const company = document.getElementById("mail-company").value.trim();
+  const who = names.join(", ");
+  const tail = [who, company].filter(Boolean).join(" — ");
+  return "[HR Plus] Candidate Recommendation" + (tail ? ": " + tail : "");
+}
+
+function mailHtml() {
+  const company = document.getElementById("mail-company").value.trim() || "your company";
+  const position = document.getElementById("mail-position").value.trim();
+  const rolePhrase = position
+    ? "the <strong>" + esc(position) + "</strong> role"
+    : "your open role";
+  const blocks = mailPicked.map((item, index) => {
+    const cv = item.cv || {};
+    const name = esc(cv.candidate || "Candidate");
+    const notice = esc(cv.notice || "Not stated");
+    const salary = esc(cv.expectedSalary || "Not stated");
+    return "<p><strong>Candidate " + (index + 1) + ": " + name + "</strong></p><ul>"
+      + "<li><strong>Current Role:</strong> " + esc(currentRole(cv)) + "</li>"
+      + "<li><strong>Key Strengths &amp; Achievements:</strong> " + esc(keyStrengths(cv)) + "</li>"
+      + "<li><strong>Notice Period &amp; Expected Salary:</strong> " + notice + " | " + salary + "</li>"
+      + "<li><strong>Attachment:</strong> " + esc(attachmentName(item)) + "</li>"
+      + "</ul>";
+  }).join("");
+  return "<p>Dear Hiring Manager,</p>"
+    + "<p>I hope you are well. HR Plus (Talent) Limited would like to recommend the following candidate"
+    + (mailPicked.length === 1 ? "" : "s")
+    + " for " + rolePhrase + " at <strong>" + esc(company) + "</strong>.</p>"
+    + blocks
+    + "<p>Please tell us a convenient time for an interview, and we will coordinate it with the candidate.</p>"
+    + "<p>Kind regards,</p>";
+}
+
+function fillMailLetter() {
+  document.getElementById("mail-subject").value = mailSubject();
+  document.getElementById("mail-body").innerHTML = mailHtml();
+  mailTouched = false;
+}
+
+const MAIL_PAGE = 15;
+let mailShown = MAIL_PAGE;
+
+function drawMailResults() {
+  const query = document.getElementById("mail-search").value.trim().toLowerCase();
+  const box = document.getElementById("mail-results");
+  const rows = mailPool().filter((row) => !query || rowSearchText(row).includes(query));
+  const scrollTop = box.scrollTop;
+  if (!rows.length) {
+    box.innerHTML = "<p class=\"hint\">No matching CV. Save one first, then search by name, skill, or position.</p>";
+    return;
+  }
+  const shown = rows.slice(0, mailShown);
+  const more = rows.length - shown.length;
+  box.innerHTML = shown.map((row) => {
+    const chosen = mailPicked.some((item) => item.id === row.id);
+    const title = (row.more && row.more.jobs && row.more.jobs[0] && row.more.jobs[0].role) || (row.job1 && row.job1[1]) || "";
+    return "<button type=\"button\" class=\"mail-hit\" data-pick=\"" + esc(row.id) + "\"><span><strong>" + esc(row.candidate || row.fileName || "Untitled") + "</strong>"
+      + (isSample(row) ? " <span class=\"sample-tag\">Sample</span>" : "")
+      + (title ? " · " + esc(title) : "") + "</span><span>" + (chosen ? "Selected" : "Add") + "</span></button>";
+  }).join("") + (more > 0 ? "<button type=\"button\" class=\"mail-more\" id=\"mail-more\">Show more (" + more + ")</button>" : "");
+  box.querySelectorAll("[data-pick]").forEach((button) => {
+    button.onclick = () => toggleMailPick(button.getAttribute("data-pick"));
+  });
+  const moreButton = document.getElementById("mail-more");
+  if (moreButton) moreButton.onclick = () => { mailShown += MAIL_PAGE; drawMailResults(); };
+  box.scrollTop = scrollTop;
+}
+
+function drawMailPicks() {
+  const box = document.getElementById("mail-picks");
+  if (!mailPicked.length) {
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = mailPicked.map((item) => {
+    const name = esc((item.cv && item.cv.candidate) || "Candidate");
+    return "<span class=\"mail-badge\"><span class=\"name\">" + name + "</span><span class=\"format-toggle\">"
+      + "<button type=\"button\" data-format=\"pdf\" data-id=\"" + esc(item.id) + "\"" + (item.format === "pdf" ? " class=\"on\"" : "") + ">PDF</button>"
+      + "<button type=\"button\" data-format=\"docx\" data-id=\"" + esc(item.id) + "\"" + (item.format === "docx" ? " class=\"on\"" : "") + ">Word</button>"
+      + "</span><button type=\"button\" class=\"btn secondary\" data-rename=\"" + esc(item.id) + "\" style=\"padding:2px 8px;font-size:11px\">Rename</button><button type=\"button\" class=\"col-x\" data-drop=\"" + esc(item.id) + "\" aria-label=\"Remove\">×</button></span>";
+  }).join("");
+  box.querySelectorAll("[data-format]").forEach((button) => {
+    button.onclick = () => {
+      const item = mailPicked.find((row) => row.id === button.getAttribute("data-id"));
+      if (item) item.format = button.getAttribute("data-format");
+      drawMailPicks();
+      if (!mailTouched) fillMailLetter();
+    };
+  });
+  box.querySelectorAll("[data-drop]").forEach((button) => {
+    button.onclick = () => toggleMailPick(button.getAttribute("data-drop"));
+  });
+  box.querySelectorAll("[data-rename]").forEach((button) => {
+    button.onclick = async () => {
+      const item = mailPicked.find((row) => row.id === button.getAttribute("data-rename"));
+      if (!item || !item.cv) return;
+      const current = cleanFileName(item.cv.fileName, item.cv.candidate ? "HR Plus CV - " + item.cv.candidate : "HR Plus CV");
+      const next = await askText("Rename file", current);
+      if (!next) return;
+      const stored = loadAll().find((row) => row.id === item.id);
+      if (stored) await renameRecord(stored, next);
+      else item.cv.fileName = cleanFileName(next, current);
+      drawMailPicks();
+      if (!mailTouched) fillMailLetter();
+    };
+  });
+}
+
+function toggleMailPick(id) {
+  const existing = mailPicked.findIndex((item) => item.id === id);
+  if (existing >= 0) mailPicked.splice(existing, 1);
+  else {
+    if (mailPicked.length >= 8) {
+      document.getElementById("mail-status").textContent = "You can attach up to 8 CVs.";
+      return;
+    }
+    const cv = mailPool().find((row) => row.id === id);
+    if (cv) mailPicked.push({ id: cv.id, format: "pdf", cv: cv });
+  }
+  drawMailResults();
+  drawMailPicks();
+  if (!mailTouched) fillMailLetter();
+}
+
+function openMail(draft) {
+  mailLocked = !!(draft && draft.status === "SENT");
+  document.getElementById("mail-send").hidden = mailLocked;
+  document.getElementById("mail-draft").hidden = mailLocked;
+  mailDraftId = draft && draft.id ? draft.id : "";
+  mailPicked = draft && Array.isArray(draft.candidates)
+    ? draft.candidates.map((item) => ({ id: item.id || (item.cv && item.cv.id) || "", format: item.format === "docx" ? "docx" : "pdf", cv: item.cv || item })).filter((item) => item.id)
+    : [];
+  document.getElementById("mail-to").value = draft && draft.to ? draft.to : "";
+  document.getElementById("mail-company").value = draft && draft.company ? draft.company : "";
+  document.getElementById("mail-position").value = draft && draft.position ? draft.position : "";
+  document.getElementById("mail-search").value = "";
+  mailShown = MAIL_PAGE;
+  document.getElementById("mail-status").textContent = "";
+  document.getElementById("mail-modal").hidden = false;
+  drawMailResults();
+  drawMailPicks();
+  if (draft && draft.bodyHtml) {
+    document.getElementById("mail-subject").value = draft.subject || "";
+    document.getElementById("mail-body").innerHTML = draft.bodyHtml;
+    mailTouched = true;
+  } else {
+    fillMailLetter();
+  }
+}
+
+function closeMail() {
+  document.getElementById("mail-modal").hidden = true;
+}
+
+function mailPayload() {
+  return {
+    id: mailDraftId,
+    to: document.getElementById("mail-to").value.trim(),
+    company: document.getElementById("mail-company").value.trim(),
+    position: document.getElementById("mail-position").value.trim(),
+    subject: document.getElementById("mail-subject").value.trim(),
+    bodyHtml: document.getElementById("mail-body").innerHTML,
+    candidates: mailPicked.map((item) => ({ id: item.id, format: item.format, cv: item.cv }))
+  };
+}
+
+function mailPlain(html) {
+  const box = document.createElement("div");
+  box.innerHTML = html;
+  box.querySelectorAll("li").forEach((item) => { item.prepend("• "); });
+  return box.innerText.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function bytesToDataUrl(bytes, mime) {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return "data:" + mime + ";base64," + btoa(binary);
+}
+
+async function filesForPicks() {
+  const fresh = mailPool();
+  mailPicked.forEach((item) => {
+    const latest = fresh.find((row) => row.id === item.id);
+    if (latest) item.cv = latest;
+  });
+  const root = document.getElementById("export-root");
+  const files = [];
+  try {
+    for (const item of mailPicked) {
+      renderInto(root, item.cv, false);
+      const pages = await captureSheets(root);
+      const pdf = item.format !== "docx";
+      const bytes = pdf ? pdfFromPages(pages) : docxFromPages(pages);
+      const base = cleanFileName(item.cv.fileName, item.cv.candidate ? "HR Plus CV - " + item.cv.candidate : "HR Plus CV");
+      files.push({
+        filename: base + (pdf ? ".pdf" : ".docx"),
+        data: bytesToDataUrl(bytes, pdf ? "application/pdf" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+      });
+    }
+  } finally {
+    root.innerHTML = "";
+  }
+  return files;
+}
+
+async function drawDrafts() {
+  const list = document.getElementById("draft-list");
+  const status = document.getElementById("draft-status");
+  document.getElementById("draft-tab-draft").classList.toggle("on", draftView === "DRAFT");
+  document.getElementById("draft-tab-sent").classList.toggle("on", draftView === "SENT");
+  list.innerHTML = "";
+  try {
+    const response = await fetch("/api/cv-email", { credentials: "same-origin" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Could not load drafts.");
+    const drafts = (payload.drafts || []).filter((draft) => (draft.status === "SENT") === (draftView === "SENT"));
+    if (!drafts.length) {
+      status.textContent = draftView === "SENT" ? "No sent emails yet." : "No saved emails yet.";
+      return;
+    }
+    status.textContent = "";
+    list.innerHTML = drafts.map((draft) => "<div class=\"draft-row\"><span><strong>" + esc(draft.subject || "Untitled email") + "</strong><br><span class=\"hint\">"
+      + esc(draft.to || "") + "</span></span><span class=\"row-actions\">"
+      + "<button type=\"button\" class=\"btn secondary\" data-draft=\"" + esc(draft.id) + "\">Open</button>"
+      + "<button type=\"button\" class=\"btn secondary\" data-rename-draft=\"" + esc(draft.id) + "\">Rename</button>"
+      + (draftView === "DRAFT" ? "<button type=\"button\" class=\"btn danger\" data-delete-draft=\"" + esc(draft.id) + "\">Delete Draft</button>" : "")
+      + "</span></div>").join("");
+    list.querySelectorAll("[data-draft]").forEach((button) => {
+      button.onclick = () => openDraft(button.getAttribute("data-draft"));
+    });
+    list.querySelectorAll("[data-rename-draft]").forEach((button) => {
+      button.onclick = () => renameDraft(button.getAttribute("data-rename-draft"));
+    });
+    list.querySelectorAll("[data-delete-draft]").forEach((button) => {
+      button.onclick = async () => {
+        await fetch("/api/cv-email/" + encodeURIComponent(button.getAttribute("data-delete-draft")), { method: "DELETE", credentials: "same-origin" });
+        drawDrafts();
+      };
+    });
+  } catch (error) {
+    status.textContent = "Drafts are available when this page is opened inside HR Plus.";
+  }
+}
+
+async function renameDraft(id) {
+  const response = await fetch("/api/cv-email/" + encodeURIComponent(id), { credentials: "same-origin" });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.draft) {
+    document.getElementById("draft-status").textContent = (payload && payload.error) || "Could not open that draft.";
+    return;
+  }
+  const draft = payload.draft;
+  const next = await askText("Rename file", draft.subject || "");
+  if (!next || next === draft.subject) return;
+  const saved = await fetch("/api/cv-email", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      id: draft.id,
+      to: draft.to,
+      company: draft.company,
+      position: draft.position,
+      subject: next,
+      bodyHtml: draft.bodyHtml,
+      candidates: draft.candidates || []
+    })
+  });
+  if (!saved.ok) {
+    const err = await saved.json().catch(() => ({}));
+    document.getElementById("draft-status").textContent = err.error || "Could not rename that draft.";
+    return;
+  }
+  drawDrafts();
+}
+
+async function openDraft(id) {
+  const response = await fetch("/api/cv-email/" + encodeURIComponent(id));
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    document.getElementById("draft-status").textContent = payload.error || "Could not open that draft.";
+    return;
+  }
+  showTab("make");
+  openMail(payload.draft);
+}
+
+document.getElementById("mail-search").oninput = () => { mailShown = MAIL_PAGE; drawMailResults(); };
+document.getElementById("mail-results").onscroll = () => {
+  const box = document.getElementById("mail-results");
+  if (box.scrollTop + box.clientHeight < box.scrollHeight - 24) return;
+  if (!document.getElementById("mail-more")) return;
+  mailShown += MAIL_PAGE;
+  drawMailResults();
+};
+document.getElementById("mail-company").oninput = () => { if (!mailTouched) fillMailLetter(); };
+document.getElementById("mail-position").oninput = () => { if (!mailTouched) fillMailLetter(); };
+document.getElementById("mail-body").oninput = () => { mailTouched = true; };
+document.getElementById("mail-close").onclick = () => closeMail();
+document.getElementById("mail-refresh").onclick = () => {
+  if (mailTouched && !window.confirm("Refreshing highlights will overwrite your manual edits in the email body. Continue?")) return;
+  fillMailLetter();
+};
+document.querySelectorAll(".mail-tools [data-cmd]").forEach((button) => {
+  button.onmousedown = (event) => event.preventDefault();
+  button.onclick = () => document.execCommand(button.getAttribute("data-cmd"), false, null);
+});
+document.getElementById("mail-draft").onclick = async () => {
+  const status = document.getElementById("mail-status");
+  status.textContent = "Saving the draft…";
+  try {
+    const response = await fetch("/api/cv-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(mailPayload())
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Could not save the draft.");
+    mailDraftId = payload.draft.id;
+    status.textContent = "Draft saved. Open Email drafts to come back to it.";
+  } catch (error) {
+    status.textContent = error.message || "Could not save the draft.";
+  }
+};
+document.getElementById("mail-send").onclick = async () => {
+  const status = document.getElementById("mail-status");
+  const button = document.getElementById("mail-send");
+  const to = document.getElementById("mail-to").value.trim();
+  const subject = document.getElementById("mail-subject").value.trim();
+  const bodyHtml = document.getElementById("mail-body").innerHTML;
+  const text = mailPlain(bodyHtml);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+    status.textContent = "Please enter a valid recipient email address.";
+    return;
+  }
+  if (!mailPicked.length) {
+    status.textContent = "Select at least one candidate.";
+    return;
+  }
+  if (!subject || !text) {
+    status.textContent = "Email subject and body are required.";
+    return;
+  }
+  if (mailLocked) return;
+  const sendOk = await askModal("Are you sure you want to send this email to " + to + "?", [
+    { label: "Send", value: "send", primary: true },
+    { label: "Cancel", value: "cancel" }
+  ]);
+  if (sendOk !== "send") return;
+  button.disabled = true;
+  status.textContent = "Preparing the CV files…";
+  try {
+    const attachments = await filesForPicks();
+    status.textContent = "Sending…";
+    const response = await fetch("/api/cv-email/send", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: mailDraftId,
+        to,
+        company: document.getElementById("mail-company").value.trim(),
+        position: document.getElementById("mail-position").value.trim(),
+        subject,
+        body: text,
+        bodyHtml,
+        candidates: mailPicked.map((item) => ({
+          id: item.id,
+          format: item.format,
+          name: (item.cv && item.cv.candidate) || ""
+        })),
+        attachments
+      })
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error((payload && payload.error) || "Open Online CV inside HR Plus to send. It uses the same mail server as invoices.");
+    }
+    status.textContent = "Email sent. The CV was sent to " + ((payload && payload.to) || to) + ".";
+  } catch (error) {
+    const message = error && error.message ? error.message : "";
+    status.textContent = message && message !== "Failed to fetch"
+      ? message
+      : "Open Online CV inside HR Plus to send. It uses the same mail server as invoices.";
+  } finally {
+    button.disabled = false;
+  }
+};
 
 document.getElementById("tab-make").onclick = () => showTab("make");
 document.getElementById("tab-find").onclick = () => showTab("find");
-document.getElementById("sample").onclick = () => show(SAMPLE);
+document.getElementById("tab-mail").onclick = () => showTab("mail");
+document.getElementById("sample").onclick = () => {
+  if (!confirmReplace()) return;
+  show(SAMPLE);
+};
+const fmtBar = document.getElementById("fmt-bar");
+function fmtHostFrom(node) {
+  if (!node || !node.closest) return null;
+  const host = node.nodeType === 1 ? node : node.parentElement;
+  return host && host.closest("#sheet [contenteditable='true']");
+}
+function placeFmtBar() {
+  const sel = document.getSelection();
+  const host = fmtHostFrom(sel && sel.anchorNode) || fmtHostFrom(document.activeElement);
+  if (!host || host.closest(".sheet.cover")) {
+    fmtBar.classList.remove("on");
+    return;
+  }
+  const rect = host.getBoundingClientRect();
+  let top = rect.top - 42;
+  if (top < 8) top = rect.bottom + 6;
+  fmtBar.style.top = top + "px";
+  fmtBar.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 220)) + "px";
+  fmtBar.classList.add("on");
+}
+document.addEventListener("selectionchange", placeFmtBar);
+document.addEventListener("focusin", (event) => {
+  const host = editableHost(event.target);
+  if (host && !fieldHistory.has(host)) historyOf(host);
+  placeFmtBar();
+});
+document.addEventListener("scroll", () => { if (fmtBar.classList.contains("on")) placeFmtBar(); }, true);
+function isSample(row) {
+  if (!row) return false;
+  if (row.sample) return true;
+  const name = cleanFileName(row.fileName, "");
+  return name === "HR Plus CV - Chan Tai Man" || name === "HR Plus CV - Lee Mei Ling";
+}
+const fieldHistory = new WeakMap();
+function historyOf(el) {
+  let stack = fieldHistory.get(el);
+  if (!stack) {
+    stack = { past: [], future: [], last: el.innerHTML };
+    fieldHistory.set(el, stack);
+  }
+  return stack;
+}
+function rememberField(el) {
+  if (!el) return;
+  const stack = historyOf(el);
+  if (stack.last === el.innerHTML) return;
+  stack.past.push(stack.last);
+  if (stack.past.length > 80) stack.past.shift();
+  stack.future = [];
+  stack.last = el.innerHTML;
+}
+function undoField(el) {
+  const stack = historyOf(el);
+  if (!stack.past.length) return;
+  stack.future.push(el.innerHTML);
+  const prev = stack.past.pop();
+  el.innerHTML = prev;
+  stack.last = prev;
+}
+function redoField(el) {
+  const stack = historyOf(el);
+  if (!stack.future.length) return;
+  stack.past.push(el.innerHTML);
+  const next = stack.future.pop();
+  el.innerHTML = next;
+  stack.last = next;
+}
+function editableHost(node) {
+  const start = node && node.nodeType === 1 ? node : node && node.parentElement;
+  if (!start || !start.closest) return null;
+  return start.closest("#sheet-wrap [contenteditable='true'], #mail-body");
+}
+document.addEventListener("input", (event) => {
+  const host = editableHost(event.target);
+  if (!host) return;
+  if (host.closest("#sheet-wrap")) sheetDirty = true;
+  rememberField(host);
+});
+document.addEventListener("keydown", (event) => {
+  const host = editableHost(event.target);
+  if (!host || !(event.metaKey || event.ctrlKey)) return;
+  const key = event.key.toLowerCase();
+  if (key === "z" && !event.shiftKey) {
+    event.preventDefault();
+    undoField(host);
+  } else if (key === "y" || (key === "z" && event.shiftKey)) {
+    event.preventDefault();
+    redoField(host);
+  }
+});
+fmtBar.querySelectorAll("button").forEach((button) => {
+  button.onmousedown = (event) => event.preventDefault();
+  button.onclick = () => {
+    const sel = document.getSelection();
+    const host = fmtHostFrom(sel && sel.anchorNode) || fmtHostFrom(document.activeElement);
+    if (!host) return;
+    host.focus();
+    const cmd = button.getAttribute("data-cmd");
+    if (cmd === "undo") { undoField(host); return; }
+    if (cmd === "redo") { redoField(host); return; }
+    document.execCommand(cmd, false, null);
+    rememberField(host);
+    sheetDirty = true;
+  };
+});
+document.getElementById("send-cv").onclick = () => openMail();
 function joinParts(parts) {
   const sorted = parts.slice().sort((a, b) => a.x - b.x);
   let line = "";
@@ -1610,6 +3035,10 @@ async function pdfToText(bytes) {
 document.getElementById("file").onchange = async (event) => {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
+  if (!confirmReplace()) {
+    event.target.value = "";
+    return;
+  }
   const status = document.getElementById("status");
   const isPdf = /\.pdf$/i.test(file.name) || file.type === "application/pdf";
   const isDocx = /\.docx$/i.test(file.name);
@@ -1629,25 +3058,182 @@ document.getElementById("file").onchange = async (event) => {
     status.textContent = "That file could not be read. Use a PDF, Word, or text CV.";
   }
 };
-document.getElementById("download").onclick = async () => {
-  const data = readSheet();
-  const bytes = await toDocx(data);
-  saveFile(bytes, chosenFileName(data) + ".docx");
+document.getElementById("download").onclick = () => downloadPages("docx");
+document.getElementById("download-pdf").onclick = () => downloadPages("pdf");
+document.getElementById("photo-file").onchange = async (event) => {
+  const file = event.target.files && event.target.files[0];
+  event.target.value = "";
+  if (!file) return;
+  try {
+    const data = readSheet();
+    data.photo = await squarePhoto(file);
+    render(data);
+    document.getElementById("status").textContent = "Photo added.";
+  } catch (error) {
+    document.getElementById("status").textContent = "That picture could not be used.";
+  }
 };
-document.getElementById("keep").onclick = () => {
+document.getElementById("photo-clear").onclick = () => {
+  const data = readSheet();
+  data.photo = "";
+  render(data);
+  document.getElementById("status").textContent = "Photo removed.";
+};
+
+function squarePhoto(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const width = 180;
+      const height = 220;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const scale = Math.max(width / image.width, height / image.height);
+      const drawnWidth = image.width * scale;
+      const drawnHeight = image.height * scale;
+      canvas.getContext("2d").drawImage(image, (width - drawnWidth) / 2, (height - drawnHeight) / 2, drawnWidth, drawnHeight);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("photo"));
+    };
+    image.src = url;
+  });
+}
+document.getElementById("keep").onclick = async () => {
   const data = readSheet();
   const fileName = chosenFileName(data);
   document.getElementById("file-name").value = fileName;
-  const rows = loadAll().filter((row) => {
-    if (editingId && row.id === editingId) return false;
-    return cleanFileName(row.fileName, row.candidate).toLowerCase() !== fileName.toLowerCase();
-  });
-  const saved = pack(data, fileName, editingId);
+  const rows = loadAll();
+  const sameName = rows.find((row) => cleanFileName(row.fileName, row.candidate).toLowerCase() === fileName.toLowerCase() && row.id !== editingId);
+  let nextId = editingId;
+  let sample = editingSample;
+  if (sameName) {
+    const choice = await askModal("A CV with this file name already exists. Overwrite or Save as New?", [
+      { label: "Overwrite", value: "overwrite", primary: true },
+      { label: "Save as New", value: "new" },
+      { label: "Cancel", value: "cancel" }
+    ]);
+    if (choice === "cancel") return;
+    if (choice === "overwrite") {
+      nextId = sameName.id;
+      sample = !!sameName.sample;
+    } else {
+      nextId = null;
+      sample = false;
+    }
+  }
+  data.sample = !!sample;
+  let saved;
+  try {
+    saved = pack(data, fileName, nextId);
+    const next = rows.filter((row) => row.id !== saved.id);
+    next.unshift(saved);
+    storeAll(next);
+  } catch (error) {
+    return;
+  }
   editingId = saved.id;
-  rows.unshift(saved);
-  storeAll(rows);
+  editingSample = !!saved.sample;
+  sheetDirty = false;
+  pushCv(saved);
   document.getElementById("status").textContent = "Saved as " + fileName + ". Open Search CV to find it.";
 };
+
+document.getElementById("rename-file").onclick = async () => {
+  const current = document.getElementById("file-name").value.trim();
+  const next = await askText("Rename file", current);
+  if (!next) return;
+  document.getElementById("file-name").value = cleanFileName(next, current);
+  if (!editingId) {
+    document.getElementById("status").textContent = "Name updated. Save CV to keep it.";
+    return;
+  }
+  const row = loadAll().find((item) => item.id === editingId);
+  if (!row) return;
+  const ok = await renameRecord(row, next);
+  if (ok) document.getElementById("status").textContent = "Renamed to " + document.getElementById("file-name").value + ".";
+};
+
+function askModal(message, buttons) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("ask-modal");
+    const input = document.getElementById("ask-input");
+    input.hidden = true;
+    document.getElementById("ask-text").textContent = message;
+    const actions = document.getElementById("ask-actions");
+    actions.innerHTML = "";
+    buttons.forEach((button) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "btn " + (button.primary ? "primary" : "secondary");
+      el.textContent = button.label;
+      el.onclick = () => {
+        modal.hidden = true;
+        resolve(button.value);
+      };
+      actions.appendChild(el);
+    });
+    modal.hidden = false;
+  });
+}
+
+function askText(message, value) {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("ask-modal");
+    const input = document.getElementById("ask-input");
+    document.getElementById("ask-text").textContent = message;
+    input.hidden = false;
+    input.value = value || "";
+    const actions = document.getElementById("ask-actions");
+    actions.innerHTML = "";
+    const finish = (ok) => {
+      const next = input.value.trim();
+      modal.hidden = true;
+      input.hidden = true;
+      resolve(ok ? next : "");
+    };
+    [["Rename", true, true], ["Cancel", false, false]].forEach((spec) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "btn " + (spec[1] ? "primary" : "secondary");
+      el.textContent = spec[0];
+      el.onclick = () => finish(spec[2]);
+      actions.appendChild(el);
+    });
+    modal.hidden = false;
+    input.focus();
+  });
+}
+
+async function renameRecord(row, nextName) {
+  const next = cleanFileName(nextName, "");
+  if (!next || !row) return false;
+  const clash = loadAll().find((item) => item.id !== row.id && cleanFileName(item.fileName, item.candidate).toLowerCase() === next.toLowerCase());
+  if (clash) {
+    const choice = await askModal("A CV with this file name already exists. Overwrite or keep the current name?", [
+      { label: "Overwrite", value: "overwrite", primary: true },
+      { label: "Cancel", value: "cancel" }
+    ]);
+    if (choice !== "overwrite") return false;
+    storeAll(loadAll().filter((item) => item.id !== clash.id));
+    fetch("/api/cv-record/" + encodeURIComponent(clash.id), { method: "DELETE", credentials: "same-origin" }).catch(() => {});
+  }
+  const saved = Object.assign({}, loadAll().find((item) => item.id === row.id) || row, { fileName: next });
+  const rows = loadAll().filter((item) => item.id !== saved.id);
+  rows.unshift(saved);
+  try { storeAll(rows); } catch (error) { return false; }
+  pushCv(saved);
+  if (editingId === saved.id) document.getElementById("file-name").value = next;
+  mailPicked.forEach((item) => {
+    if (item.id === saved.id && item.cv) item.cv.fileName = next;
+  });
+  return true;
+}
 
 function parseCvDate(value) {
   const text = String(value || "").trim();
@@ -1677,12 +3263,13 @@ function drawList() {
   const rows = loadAll().filter((row) => {
     const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
     if (fileQuery && !norm(fileName).includes(fileQuery)) return false;
-    if (nameQuery && !norm(row.candidate || "").includes(nameQuery)) return false;
+    if (nameQuery && !rowSearchText(row).includes(nameQuery)) return false;
     if (from || to) {
       const when = parseCvDate(row.date);
-      if (!when) return false;
-      if (from && when < from && !sameDay(when, from)) return false;
-      if (to && when > to && !sameDay(when, to)) return false;
+      if (when) {
+        if (from && when < from && !sameDay(when, from)) return false;
+        if (to && when > to && !sameDay(when, to)) return false;
+      }
     }
     return true;
   });
@@ -1697,10 +3284,12 @@ function drawList() {
     return `
     <article class="row">
       <div>
-        <button type="button" class="file-name" data-act="edit" data-id="${row.id}">${esc(fileName)}</button>
+        <button type="button" class="file-name" data-act="edit" data-id="${row.id}">${esc(fileName)}</button>${isSample(row) ? '<span class="sample-tag">Sample</span>' : ''}
         <p>${esc(detail)}</p>
       </div>
       <div class="row-actions">
+        <button type="button" class="btn secondary" data-act="rename" data-id="${row.id}">Rename</button>
+        <button type="button" class="btn secondary" data-act="pdf" data-id="${row.id}">Download PDF</button>
         <button type="button" class="btn secondary" data-act="download" data-id="${row.id}">Download Word</button>
         <button type="button" class="btn danger" data-act="delete" data-id="${row.id}">Delete</button>
       </div>
@@ -1714,16 +3303,26 @@ function drawList() {
         openSaved(row);
         return;
       }
+      if (button.dataset.act === "rename") {
+        const next = await askText("Rename file", cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV"));
+        if (next) await renameRecord(row, next);
+        drawList();
+        return;
+      }
       if (button.dataset.act === "delete") {
         if (!window.confirm("Delete this saved CV?")) return;
         storeAll(loadAll().filter((item) => item.id !== row.id));
+        fetch("/api/cv-record/" + encodeURIComponent(row.id), { method: "DELETE", credentials: "same-origin" }).catch(() => {});
         if (editingId === row.id) editingId = null;
         drawList();
         return;
       }
-      const bytes = await toDocx(row);
-      const fileName = cleanFileName(row.fileName, row.candidate ? "HR Plus CV - " + row.candidate : "HR Plus CV");
-      saveFile(bytes, fileName + ".docx");
+      const status = document.getElementById("status");
+      try {
+        await exportData(row, button.dataset.act === "pdf" ? "pdf" : "docx");
+      } catch (error) {
+        if (status) status.textContent = "The file could not be prepared.";
+      }
     };
   });
 }
@@ -1736,7 +3335,9 @@ document.getElementById("clear-filters").onclick = () => {
   });
   drawList();
 };
-seed();
+pullCvs().finally(() => { if (!loadAll().length) seed(); });
+document.getElementById("draft-tab-draft").onclick = () => { draftView = "DRAFT"; drawDrafts(); };
+document.getElementById("draft-tab-sent").onclick = () => { draftView = "SENT"; drawDrafts(); };
 </script>
 </body>
 </html>

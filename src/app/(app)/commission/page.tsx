@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/calculations";
 import { commissionShareVisible, currentCommissionAccess } from "@/lib/documentAccess";
+import { commissionDateName, commissionDayReached, formatCommissionDay } from "@/lib/commission";
+import { loadCommissionMarks } from "@/lib/invoiceCommission";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
 import { colleagueLabel } from "@/lib/staffCode";
 import { loadColleagues } from "@/lib/quotationAuthor";
@@ -40,8 +42,15 @@ export default async function CommissionPage({
         }),
     loadColleagues(),
   ]);
+  const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";
 
-  const rows = kind || state ? [] : invoices.flatMap((invoice) => {
+  const rows = invoices.flatMap((invoice) => {
+    const mark = marks.get(invoice.id) || null;
+    if (wanted && mark?.workKind !== wanted) return [];
+    const done = mark ? commissionDayReached(mark.day) : false;
+    if (state === "pending" && (!mark || done)) return [];
+    if (state === "done" && !done) return [];
     const split = commissionSplitFromStored(invoice.quotation?.shareMode || "AMOUNT", invoice.quotation?.shares || [], invoice.total);
     return split.partners.flatMap((partner) => {
       if (!commissionShareVisible(partner.colleagueName, access)) return [];
@@ -55,6 +64,8 @@ export default async function CommissionPage({
           title: invoice.title,
           person: colleagueLabel(partner.colleagueName, colleagues),
           amount: (split.total * partner.percent) / 100,
+          mark,
+          done,
         },
       ];
     });
@@ -100,11 +111,22 @@ export default async function CommissionPage({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-sm font-medium">{row.number}</span>
+                  {row.mark ? (
+                    <span className="stamp border-line text-ink-muted">
+                      {t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}
+                    </span>
+                  ) : null}
+                  {row.mark ? (
+                    <span className={`stamp ${row.done ? "border-accent-500 text-accent-600" : "border-line text-ink-muted"}`}>
+                      {t(row.done ? "Done" : "Pending")}
+                    </span>
+                  ) : null}
                 </div>
                 <p className="text-xs text-ink-muted mt-1 truncate">
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                   {access.mode === "all" ? ` · ${row.person}` : ""}
+                  {row.mark ? ` · ${t(commissionDateName(row.mark.workKind))} ${formatCommissionDay(row.mark.day)}` : ""}
                 </p>
               </div>
               <div className="text-right shrink-0">

@@ -4,6 +4,7 @@ import { nextDocumentNumber } from "@/lib/numbering";
 import { withParsedItems, computeDueDate } from "@/lib/document-helpers";
 import { logActivity } from "@/lib/activity";
 import { invoiceVisible } from "@/lib/documentAccess";
+import { loadCommissionMark, saveCommissionMark } from "@/lib/invoiceCommission";
 
 /**
  * Duplicate an invoice: same customer info and line items, a fresh document
@@ -84,6 +85,8 @@ export async function POST(_request: NextRequest, { params }: { params: { id: st
     type: "CREATED",
     description: `Duplicated from invoice ${original.number}`,
   });
+  const mark = await loadCommissionMark(original.id);
+  if (mark) await saveCommissionMark(duplicate.id, mark.workKind, mark.day);
 
   return NextResponse.json(withParsedItems(duplicate), { status: 201 });
 }

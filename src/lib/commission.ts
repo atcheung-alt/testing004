@@ -18,6 +18,29 @@ export function commissionDateName(workKind: string): string {
   return workKind === "RECRUITMENT" ? "Target onboarding day" : "Recognise invoice day";
 }
 
+export function commissionMarkDescription(workKind: string, day: string): string {
+  return `${workKind} ${day}`;
+}
+
+export function parseCommissionMark(
+  description: string | null | undefined
+): { workKind: "EVENT" | "RECRUITMENT"; day: string } | null {
+  const match = /^(EVENT|RECRUITMENT) (\d{4}-\d{2}-\d{2})$/.exec(String(description || "").trim());
+  if (!match) return null;
+  return { workKind: match[1] as "EVENT" | "RECRUITMENT", day: match[2] };
+}
+
+/** Pending until this calendar day. That day, and after, is done. */
+export function commissionDayReached(day: string, now = new Date()): boolean {
+  return day <= hongKongDay(now);
+}
+
+export function formatCommissionDay(day: string): string {
+  const [year, month, date] = day.split("-");
+  if (!year || !month || !date) return day;
+  return `${date}/${month}/${year}`;
+}
+
 export function commissionFieldsFrom(
   body: { workKind?: unknown; commissionOn?: unknown },
   required: boolean

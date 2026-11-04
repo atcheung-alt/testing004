@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logActivity } from "@/lib/activity";
+import { commissionMarkDescription, parseCommissionMark } from "@/lib/commission";
 import { bindShareColleagueNames, loadCreatorNickname } from "@/lib/quotationAuthor";
 import {
   COMMISSION_TOTAL_NAME,
@@ -131,4 +132,52 @@ async function ensureShareHolder(invoice: {
     }));
   await prisma.invoice.update({ where: { id: invoice.id }, data: { quotationId: quotation.id } });
   return quotation.id;
+}
+
+export type CommissionMark = { workKind: "EVENT" | "RECRUITMENT"; day: string };
+
+/** Keep the type and date on an activity row the invoice timeline already uses.
+ *  The type stays once it is set. The date can change. No invoice column is added. */
+export async function saveCommissionMark(invoiceId: string, workKind: string, day: string): Promise<void> {
+  const existing = await prisma.activityEvent.findFirst({
+    where: { documentType: "invoice", documentId: invoiceId, type: "COMMISSION" },
+    orderBy: { createdAt: "desc" },
+  });
+  const locked = existing ? parseCommissionMark(existing.description) : null;
+  const description = commissionMarkDescription(locked?.workKind || workKind, day);
+  if (existing) {
+    if (existing.description !== description) {
+      await prisma.activityEvent.update({ where: { id: existing.id }, data: { description } });
+    }
+    return;
+  }
+  await prisma.activityEvent.create({
+    data: {
+      documentType: "invoice",
+      documentId: invoiceId,
+      type: "COMMISSION",
+      actor: "SYSTEM",
+      description,
+    },
+  });
+}
+
+export async function loadCommissionMarks(invoiceIds: string[]): Promise<Map<string, CommissionMark>> {
+  const marks = new Map<string, CommissionMark>();
+  if (!invoiceIds.length) return marks;
+  const rows = await prisma.activityEvent.findMany({
+    where: { documentType: "invoice", documentId: { in: invoiceIds }, type: "COMMISSION" },
+    select: { documentId: true, description: true },
+    orderBy: { createdAt: "asc" },
+  });
+  rows.forEach((row) => {
+    const parsed = parseCommissionMark(row.description);
+    if (parsed) marks.set(row.documentId, parsed);
+  });
+  return marks;
+}
+
+export async function loadCommissionMark(invoiceId: string): Promise<CommissionMark | null> {
+  const marks = await loadCommissionMarks([invoiceId]);
+  return marks.get(invoiceId) || null;
 }

@@ -13,6 +13,8 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
+import { formatCommissionDay } from "@/lib/commission";
+import { loadCommissionMarks } from "@/lib/invoiceCommission";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +27,16 @@ async function InvoiceList({
   status,
   from,
   to,
+  kind,
 }: {
   q?: string;
   status?: string;
   from?: string;
   to?: string;
+  kind?: string;
 }) {
   const t = getT();
+  const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";
   const invoices = await prisma.invoice.findMany({
     where: andFilters(
       {
@@ -56,8 +61,10 @@ async function InvoiceList({
       items: { select: { name: true }, orderBy: { sortOrder: "asc" }, take: 5 },
     },
   });
+  const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  const visible = wanted ? invoices.filter((invoice) => marks.get(invoice.id)?.workKind === wanted) : invoices;
 
-  if (invoices.length === 0) {
+  if (visible.length === 0) {
     return (
       <EmptyState
         icon={ReceiptText}
@@ -71,10 +78,11 @@ async function InvoiceList({
 
   return (
     <div className="card divide-y divide-line">
-      {invoices.map((inv) => {
+      {visible.map((inv) => {
         const revenue = inv.total;
         const expenses = inv.expenses.reduce((sum, e) => sum + e.amount, 0);
         const profit = revenue - expenses;
+        const mark = marks.get(inv.id);
         return (
           <Link
             key={inv.id}
@@ -84,11 +92,17 @@ async function InvoiceList({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm font-medium">{inv.number}</span>
+                {mark ? (
+                  <span className="stamp border-line text-ink-muted">
+                    {t(mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}
+                  </span>
+                ) : null}
                 <InvoiceStatusToggle id={inv.id} displayStatus={getInvoiceDisplayStatus(inv)} />
               </div>
               <p className="text-xs text-ink-muted truncate mt-0.5">
                 {inv.customerName} · {t("Issued {date}", { date: formatDate(inv.issueDate) })}
                 {inv.dueDate ? ` · ${t("Due {date}", { date: formatDate(inv.dueDate) })}` : ""}
+                {mark ? ` · ${t(mark.workKind === "RECRUITMENT" ? "Target onboarding day" : "Recognise invoice day")} ${formatCommissionDay(mark.day)}` : ""}
               </p>
               {/* Always rendered (even blank) so every row reserves the same
                   vertical space regardless of item count — what keeps every
@@ -223,6 +237,7 @@ export default function InvoicesPage({
           status={searchParams.status}
           from={searchParams.from}
           to={searchParams.to}
+          kind={searchParams.kind}
         />
       </Suspense>
     </div>

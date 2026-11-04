@@ -194,6 +194,8 @@ export type SendArgs = {
   /** Additional files beyond `attachment` — e.g. a client-uploaded signed
    *  document alongside the regenerated quotation PDF. */
   extraAttachments?: { filename: string; content: Buffer; contentType?: string }[];
+  /** Sanitized HTML body. When set, it is sent instead of plain text converted with bodyToHtml. */
+  htmlBody?: string;
   /** When set, a prominent call-to-action button/link is added to the email. */
   signingUrl?: string;
   /** Label for the CTA button — defaults to "Review & Sign Online". */
@@ -247,6 +249,7 @@ export async function sendDocumentEmail({
   body,
   attachment,
   extraAttachments,
+  htmlBody,
   signingUrl,
   ctaLabel = "Review & Sign Online",
   secondaryCtaUrl,
@@ -278,7 +281,7 @@ export async function sendDocumentEmail({
   const logoAsset = company.logoData ? parseDataUrl(company.logoData) : null;
   const logoCid = logoAsset ? "company-logo" : null;
 
-  const innerHtml = `${bodyToHtml(body)}${
+  const innerHtml = `${htmlBody || bodyToHtml(body)}${
     signingUrl ? signingCtaHtml(signingUrl, ctaLabel) : ""
   }${secondaryCtaUrl ? signingCtaHtml(secondaryCtaUrl, secondaryCtaLabel) : ""}${emailSignatureHtml(company)}`;
 

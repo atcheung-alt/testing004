@@ -11,13 +11,14 @@ import { invoiceCanModify } from "@/lib/documentAccess";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
+import { loadCommissionMark } from "@/lib/invoiceCommission";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditInvoicePage({ params }: { params: { id: string } }) {
   const t = getT();
   if (!(await invoiceCanModify(params.id))) notFound();
-  const [record, colleagues, invoiceCreator] = await Promise.all([
+  const [record, colleagues, invoiceCreator, mark] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -35,6 +36,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
     }),
     loadColleagues(),
     loadCreatorNickname("invoice", params.id),
+    loadCommissionMark(params.id),
   ]);
 
   if (!record) notFound();
@@ -60,6 +62,8 @@ export default async function EditInvoicePage({ params }: { params: { id: string
         invoice={
           {
             ...invoice,
+            workKind: mark?.workKind,
+            commissionOn: mark?.day || null,
             items: withParsedFeesList(withParsedMultipliersList(invoice.items)),
             issueDate: invoice.issueDate.toISOString(),
             dueDate: invoice.dueDate?.toISOString() || null,

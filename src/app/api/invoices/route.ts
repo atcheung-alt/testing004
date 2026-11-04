@@ -6,7 +6,7 @@ import { customerFieldsFrom, itemCreateFrom, documentDefaultsFrom, eventFieldsFr
 import { logActivity } from "@/lib/activity";
 import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
-import { commissionSplitError, commissionSplitRequested, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
+import { commissionSplitError, commissionSplitRequested, saveCommissionMark, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
 import { commissionFieldsFrom } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
@@ -110,6 +110,9 @@ export async function POST(request: NextRequest) {
     type: "CREATED",
     description: `Invoice ${invoice.number} created`,
   });
+  if (commission.workKind && commission.commissionOn && typeof body.commissionOn === "string") {
+    await saveCommissionMark(invoice.id, commission.workKind, body.commissionOn.trim());
+  }
   if (commissionSplitRequested(body)) {
     await saveInvoiceCommissionSplit({ ...invoice, quotationId: null, quotation: null }, body);
   }

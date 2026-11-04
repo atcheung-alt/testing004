@@ -32,6 +32,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
+import { commissionDateName, formatCommissionDay } from "@/lib/commission";
+import { loadCommissionMark } from "@/lib/invoiceCommission";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +43,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   if (!(await invoiceVisible(params.id))) notFound();
   const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
-  const [raw, categories, colleagues, invoiceCreator, session] = await Promise.all([
+  const [raw, categories, colleagues, invoiceCreator, session, mark] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -73,6 +75,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     loadColleagues(),
     loadCreatorNickname("invoice", params.id),
     getCurrentUser(),
+    loadCommissionMark(params.id),
   ]);
 
   if (!raw) notFound();
@@ -165,6 +168,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
               · {t("Issued {date}", { date: formatDate(invoice.issueDate) })}
               {invoice.dueDate ? ` · ${t("Due {date}", { date: formatDate(invoice.dueDate) })}` : ""}
               {invoice.poNumber ? ` · ${t("PO {number}", { number: invoice.poNumber })}` : ""}
+              {mark ? ` · ${t(mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event")} · ${t(commissionDateName(mark.workKind))} ${formatCommissionDay(mark.day)}` : ""}
             </p>
             {invoice.quotation && (
               <p className="text-sm text-accent-600 mt-1">
