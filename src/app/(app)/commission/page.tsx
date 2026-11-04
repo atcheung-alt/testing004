@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/calculations";
 import { commissionShareVisible, currentCommissionAccess } from "@/lib/documentAccess";
 import { commissionDateName, commissionDayReached, formatCommissionDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
+import { loadClientSources } from "@/lib/clientSource";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
 import { colleagueLabel } from "@/lib/staffCode";
 import { loadColleagues } from "@/lib/quotationAuthor";
@@ -15,12 +16,13 @@ export const dynamic = "force-dynamic";
 export default async function CommissionPage({
   searchParams,
 }: {
-  searchParams: { kind?: string; state?: string };
+  searchParams: { kind?: string; state?: string; source?: string };
 }) {
   const t = getT();
   const access = await currentCommissionAccess();
   const kind = searchParams.kind === "event" || searchParams.kind === "recruitment" ? searchParams.kind : "";
   const state = searchParams.state === "pending" || searchParams.state === "done" ? searchParams.state : "";
+  const source = searchParams.source || "";
   const [invoices, colleagues] = await Promise.all([
     access.mode === "none"
       ? Promise.resolve([])
@@ -43,11 +45,13 @@ export default async function CommissionPage({
     loadColleagues(),
   ]);
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  const sources = await loadClientSources(invoices.map((invoice) => invoice.id));
   const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";
 
   const rows = invoices.flatMap((invoice) => {
     const mark = marks.get(invoice.id) || null;
     if (wanted && mark?.workKind !== wanted) return [];
+    if (source && (sources.get(invoice.id) || "") !== source) return [];
     const done = mark ? commissionDayReached(mark.day) : false;
     if (state === "pending" && (!mark || done)) return [];
     if (state === "done" && !done) return [];
@@ -66,17 +70,20 @@ export default async function CommissionPage({
           amount: (split.total * partner.percent) / 100,
           mark,
           done,
+          source: sources.get(invoice.id) || "",
         },
       ];
     });
   });
 
-  function href(next: { kind?: string; state?: string }) {
+  function href(next: { kind?: string; state?: string; source?: string }) {
     const params = new URLSearchParams();
     const nextKind = next.kind === undefined ? kind : next.kind;
     const nextState = next.state === undefined ? state : next.state;
+    const nextSource = next.source === undefined ? source : next.source;
     if (nextKind) params.set("kind", nextKind);
     if (nextState) params.set("state", nextState);
+    if (nextSource) params.set("source", nextSource);
     const query = params.toString();
     return `/commission${query ? `?${query}` : ""}`;
   }
@@ -97,6 +104,12 @@ export default async function CommissionPage({
         <Link href={href({ state: "" })} className={stamp(!state)}>{t("All")}</Link>
         <Link href={href({ state: "pending" })} className={stamp(state === "pending")}>{t("Pending")}</Link>
         <Link href={href({ state: "done" })} className={stamp(state === "done")}>{t("Done")}</Link>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Link href={href({ source: "" })} className={stamp(!source)}>{t("All sources")}</Link>
+        {Array.from(new Set([...sources.values()].filter(Boolean))).map((name) => (
+          <Link key={name} href={href({ source: name })} className={stamp(source === name)}>{name}</Link>
+        ))}
       </div>
       {rows.length === 0 ? (
         <div className="card px-5 py-8 text-sm text-ink-muted">{t("Nothing matches.")}</div>
@@ -127,6 +140,7 @@ export default async function CommissionPage({
                   {row.title ? ` · ${row.title}` : ""}
                   {access.mode === "all" ? ` · ${row.person}` : ""}
                   {row.mark ? ` · ${t(commissionDateName(row.mark.workKind))} ${formatCommissionDay(row.mark.day)}` : ""}
+                  {row.source ? ` · ${row.source}` : ""}
                 </p>
               </div>
               <div className="text-right shrink-0">

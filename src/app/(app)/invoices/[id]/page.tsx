@@ -34,6 +34,7 @@ import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
 import { commissionDateName, formatCommissionDay } from "@/lib/commission";
 import { loadCommissionMark } from "@/lib/invoiceCommission";
+import { loadClientSource } from "@/lib/clientSource";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +44,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   if (!(await invoiceVisible(params.id))) notFound();
   const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
-  const [raw, categories, colleagues, invoiceCreator, session, mark] = await Promise.all([
+  const [raw, categories, colleagues, invoiceCreator, session, mark, clientSource] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -76,6 +77,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     loadCreatorNickname("invoice", params.id),
     getCurrentUser(),
     loadCommissionMark(params.id),
+    loadClientSource(params.id),
   ]);
 
   if (!raw) notFound();
@@ -251,6 +253,9 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
               {line}
             </p>
           ))}
+        {clientSource ? (
+          <p className="text-sm text-ink-muted mt-2">{t("Client source")}: {clientSource}</p>
+        ) : null}
       </div>
 
       <div className="card p-5">

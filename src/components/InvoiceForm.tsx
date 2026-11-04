@@ -17,6 +17,7 @@ import {
 } from "@/lib/settings";
 import type { Invoice, LineItem, CustomerDetails } from "@/types";
 import type { StaffColleague } from "@/lib/staffCode";
+import { CLIENT_SOURCES } from "@/lib/clientSource";
 import { useT } from "@/lib/i18n/client";
 
 function toDateInput(value?: string | null) {
@@ -45,12 +46,14 @@ export default function InvoiceForm({
   calendarEventName: initialCalendarName,
   colleagues = [],
   creatorName = "",
+  clientSource = "",
 }: {
   invoice?: Invoice;
   customer?: CustomerDetails;
   calendarEventName?: string | null;
   colleagues?: StaffColleague[];
   creatorName?: string;
+  clientSource?: string;
 }) {
   const router = useRouter();
   const t = useT();
@@ -76,6 +79,9 @@ export default function InvoiceForm({
     invoice?.commissionOn ? String(invoice.commissionOn).slice(0, 10) : ""
   );
   const typeLocked = invoice?.workKind === "EVENT" || invoice?.workKind === "RECRUITMENT";
+  const knownSource = CLIENT_SOURCES.includes(clientSource as (typeof CLIENT_SOURCES)[number]);
+  const [source, setSource] = useState(clientSource ? (knownSource ? clientSource : "Other (Custom)") : CLIENT_SOURCES[0]);
+  const [sourceOther, setSourceOther] = useState(clientSource && !knownSource ? clientSource : "");
   const [title, setTitle] = useState(invoice?.title || "");
   const [poNumber, setPoNumber] = useState(invoice?.poNumber || "");
   const [issueDate, setIssueDate] = useState(
@@ -179,6 +185,8 @@ export default function InvoiceForm({
         workKind,
         commissionOn,
         poNumber: poNumber.trim() || null,
+        clientSource: source,
+        clientSourceOther: sourceOther,
         ...customer,
         issueDate,
         eventStartDate: eventStartDate || null,
@@ -322,6 +330,22 @@ export default function InvoiceForm({
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("Customer")}</h2>
         <CustomerFields value={customer} onChange={setCustomer} />
+        <div className="mt-4">
+          <label className="label">{t("Client source")}</label>
+          <select className="input" value={source} onChange={(e) => setSource(e.target.value)}>
+            {CLIENT_SOURCES.map((option) => (
+              <option key={option} value={option}>{t(option)}</option>
+            ))}
+          </select>
+          {source === "Other (Custom)" ? (
+            <input
+              className="input mt-2"
+              value={sourceOther}
+              onChange={(e) => setSourceOther(e.target.value)}
+              placeholder={t("Specify client source...")}
+            />
+          ) : null}
+        </div>
       </div>
 
       <div className="card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">

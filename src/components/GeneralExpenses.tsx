@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
@@ -30,6 +31,7 @@ export type HistoryRow = {
   date: string;
   vendor: string;
   link: string;
+  invoiceId: string;
   receiptHref: string;
 };
 
@@ -230,7 +232,13 @@ export default function GeneralExpenses({
                   <td className="py-2 pr-3">{row.category}</td>
                   <td className="py-2 pr-3">{row.vendor ? row.vendor : t("N/A")}</td>
                   <td className="py-2 pr-3">{formatCurrency(row.amount)}</td>
-                  <td className="py-2 pr-3">{row.link === "General" ? t("General") : row.link}</td>
+                  <td className="py-2 pr-3">
+                    {row.invoiceId ? (
+                      <Link href={`/invoices/${row.invoiceId}`} className="font-medium text-brand-600 hover:underline">{row.link}</Link>
+                    ) : (
+                      t("General")
+                    )}
+                  </td>
                   <td className="py-2">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref}>{t("View receipt")}</a> : "—"}</td>
                 </tr>
               ))}

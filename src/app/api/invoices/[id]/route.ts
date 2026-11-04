@@ -8,6 +8,7 @@ import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 import { commissionFieldsFrom } from "@/lib/commission";
 import { saveCommissionMark } from "@/lib/invoiceCommission";
+import { clientSourceFrom, saveClientSource } from "@/lib/clientSource";
 
 export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await invoiceVisible(params.id))) {
@@ -223,6 +224,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (commission.workKind && commission.commissionOn && typeof body.commissionOn === "string") {
     await saveCommissionMark(invoice.id, commission.workKind, body.commissionOn.trim());
   }
+  await saveClientSource(invoice.id, clientSourceFrom(body));
 
   if (typeof body.markOnCalendar === "boolean") {
     const calendarError = await syncInvoiceCalendarEvent({

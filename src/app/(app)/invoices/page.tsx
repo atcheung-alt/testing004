@@ -15,6 +15,7 @@ import { getT } from "@/lib/i18n/server";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 import { formatCommissionDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
+import { loadClientSources } from "@/lib/clientSource";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,7 @@ async function InvoiceList({
     },
   });
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  const sources = await loadClientSources(invoices.map((invoice) => invoice.id));
   const visible = wanted ? invoices.filter((invoice) => marks.get(invoice.id)?.workKind === wanted) : invoices;
 
   if (visible.length === 0) {
@@ -103,6 +105,7 @@ async function InvoiceList({
                 {inv.customerName} · {t("Issued {date}", { date: formatDate(inv.issueDate) })}
                 {inv.dueDate ? ` · ${t("Due {date}", { date: formatDate(inv.dueDate) })}` : ""}
                 {mark ? ` · ${t(mark.workKind === "RECRUITMENT" ? "Target onboarding day" : "Recognise invoice day")} ${formatCommissionDay(mark.day)}` : ""}
+                {sources.get(inv.id) ? ` · ${sources.get(inv.id)}` : ""}
               </p>
               {/* Always rendered (even blank) so every row reserves the same
                   vertical space regardless of item count — what keeps every

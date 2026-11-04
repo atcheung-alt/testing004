@@ -12,13 +12,14 @@ import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
 import { loadCommissionMark } from "@/lib/invoiceCommission";
+import { loadClientSource } from "@/lib/clientSource";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditInvoicePage({ params }: { params: { id: string } }) {
   const t = getT();
   if (!(await invoiceCanModify(params.id))) notFound();
-  const [record, colleagues, invoiceCreator, mark] = await Promise.all([
+  const [record, colleagues, invoiceCreator, mark, clientSource] = await Promise.all([
     prisma.invoice.findUnique({
       where: { id: params.id },
       include: {
@@ -37,6 +38,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
     loadColleagues(),
     loadCreatorNickname("invoice", params.id),
     loadCommissionMark(params.id),
+    loadClientSource(params.id),
   ]);
 
   if (!record) notFound();
@@ -72,6 +74,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
           } as Invoice
         }
         calendarEventName={calendarEvent?.name || null}
+        clientSource={clientSource}
       />
       <QuotationShareEditor
         invoiceId={invoice.id}

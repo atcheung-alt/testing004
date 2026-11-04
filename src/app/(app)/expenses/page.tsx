@@ -1,42 +1,28 @@
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/lib/calculations";
-import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
-import ExpenseWorkspace from "@/components/ExpenseWorkspace";
 import GeneralExpenses from "@/components/GeneralExpenses";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
-import { ensureDefaultExpenseCategories } from "@/lib/ensureExpenseCategories";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
 import { listGeneralExpenses } from "@/lib/generalExpense";
 
 export const dynamic = "force-dynamic";
 
-export default async function ExpensesPage({
-  searchParams,
-}: {
-  searchParams: { invoice?: string };
-}) {
+export default async function ExpensesPage() {
   const t = getT();
-  await ensureDefaultExpenseCategories();
   const invoiceFilter = await currentInvoiceFilter();
-  const [invoices, categories, expenses, general] = await Promise.all([
+  const [invoices, expenses, general] = await Promise.all([
     prisma.invoice.findMany({
       where: invoiceFilter || undefined,
       select: {
         id: true,
         number: true,
         customerName: true,
-        title: true,
         total: true,
-        issueDate: true,
-        dueDate: true,
         status: true,
-        poNumber: true,
       },
       orderBy: { issueDate: "desc" },
       take: 400,
     }),
-    prisma.expenseCategory.findMany({ orderBy: { sortOrder: "asc" }, select: { name: true } }),
     prisma.invoiceExpense.findMany({
       where: invoiceFilter ? { invoice: invoiceFilter } : undefined,
       orderBy: { createdAt: "desc" },
@@ -61,6 +47,7 @@ export default async function ExpensesPage({
       date: expense.spentAt.toISOString().slice(0, 10),
       vendor: expense.vendor,
       link: expense.invoiceNumber || "General",
+      invoiceId: invoices.find((invoice) => invoice.number === expense.invoiceNumber)?.id || "",
       receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
     })),
     ...expenses.map((expense) => ({
@@ -72,6 +59,7 @@ export default async function ExpensesPage({
       date: expense.createdAt.toISOString().slice(0, 10),
       vendor: expense.invoice.customerName,
       link: expense.invoice.number,
+      invoiceId: expense.invoice.id,
       receiptHref: expense.documents[0]
         ? `/api/invoices/${expense.invoice.id}/expenses/${expense.id}/documents/${expense.documents[0].id}`
         : "",
@@ -89,29 +77,6 @@ export default async function ExpensesPage({
           total: invoice.total,
         }))}
         history={history}
-      />
-      <ExpenseWorkspace
-        invoices={invoices.map((invoice) => ({
-          id: invoice.id,
-          number: invoice.number,
-          customerName: invoice.customerName,
-          title: invoice.title,
-          total: invoice.total,
-          issueLabel: formatDate(invoice.issueDate),
-          poNumber: invoice.poNumber,
-          displayStatus: getInvoiceDisplayStatus(invoice),
-        }))}
-        categories={categories.map((category) => category.name)}
-        initialInvoiceId={searchParams.invoice}
-        expenses={expenses.map((expense) => ({
-          id: expense.id,
-          category: expense.category,
-          label: expense.label,
-          amount: expense.amount,
-          createdLabel: formatDate(expense.createdAt),
-          invoice: expense.invoice,
-          documents: expense.documents,
-        }))}
       />
     </div>
   );

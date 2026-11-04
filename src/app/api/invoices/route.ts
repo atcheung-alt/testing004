@@ -8,6 +8,7 @@ import { syncInvoiceCalendarEvent } from "@/lib/events";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 import { commissionSplitError, commissionSplitRequested, saveCommissionMark, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
 import { commissionFieldsFrom } from "@/lib/commission";
+import { clientSourceFrom, saveClientSource } from "@/lib/clientSource";
 
 export const dynamic = "force-dynamic";
 
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
   if (commissionSplitRequested(body)) {
     await saveInvoiceCommissionSplit({ ...invoice, quotationId: null, quotation: null }, body);
   }
+  await saveClientSource(invoice.id, clientSourceFrom(body));
 
   if (typeof body.markOnCalendar === "boolean") {
     const calendarError = await syncInvoiceCalendarEvent({
