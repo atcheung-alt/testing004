@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
   const template = await saveRecruitmentTemplate({
     id,
     name,
-    role: String(body.role || "").trim(),
+    companyName: String(body.companyName || "").trim(),
+    companyEmail: String(body.companyEmail || "").trim(),
+    role: String(body.role || body.companyName || "").trim(),
     requirements: String(body.requirements || "").trim(),
     paymentDueDays: Number(body.paymentDueDays) || 14,
     language: String(body.language || "EN"),

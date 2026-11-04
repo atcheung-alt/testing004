@@ -121,23 +121,28 @@ function InlineFeeScaleTable({
 export default function RecruitmentAgreementForm({
   agreement,
   preset,
+  saveAsTemplate = false,
 }: {
   agreement?: RecruitmentAgreementFormData;
   preset?: {
     name: string;
     role: string;
     requirements: string;
+    companyName: string;
+    companyEmail: string;
     paymentDueDays: number;
     language: RecruitmentLanguage;
     terms: string;
     feeScalePermanent: FeeScaleRowFields[];
     feeScaleContract: FeeScaleRowFields[];
   };
+  saveAsTemplate?: boolean;
 }) {
   const t = useT();
   const router = useRouter();
-  const [companyName, setCompanyName] = useState(agreement?.companyName || "");
-  const [companyEmail, setCompanyEmail] = useState(agreement?.companyEmail || "");
+  const [companyName, setCompanyName] = useState(agreement?.companyName || preset?.companyName || "");
+  const [companyEmail, setCompanyEmail] = useState(agreement?.companyEmail || preset?.companyEmail || "");
+  const [templateName, setTemplateName] = useState(preset?.name || "");
   const [agreementDate, setAgreementDate] = useState(toDateInput(agreement?.createdAt));
   const [paymentDueDays, setPaymentDueDays] = useState(
     agreement?.paymentDueDays ?? preset?.paymentDueDays ?? DEFAULT_RECRUITMENT_PAYMENT_DUE_DAYS
@@ -314,6 +319,28 @@ export default function RecruitmentAgreementForm({
     setSaving(true);
     setError(null);
     try {
+      if (saveAsTemplate) {
+        const response = await fetch("/api/recruitment-templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: templateName.trim() || companyName.trim(),
+            companyName,
+            companyEmail,
+            role: companyName,
+            paymentDueDays,
+            terms,
+            feeScalePermanent: permanentRows,
+            feeScaleContract: contractRows,
+            language,
+          }),
+        });
+        const saved = await response.json();
+        if (!response.ok) throw new Error(saved.error || "Could not save the template.");
+        router.push("/quotations/templates");
+        router.refresh();
+        return;
+      }
       const url = agreement ? `/api/recruitment/${agreement.id}` : "/api/recruitment";
       const res = await fetch(url, {
         method: agreement ? "PATCH" : "POST",
@@ -350,6 +377,12 @@ export default function RecruitmentAgreementForm({
 
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("Client Details")}</h2>
+        {saveAsTemplate ? (
+          <div className="mb-4">
+            <label className="label">{t("Template name")}</label>
+            <input className="input" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder={t("e.g. Standard recruitment terms")} required />
+          </div>
+        ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="label">{t("Company name *")}</label>
@@ -488,8 +521,9 @@ export default function RecruitmentAgreementForm({
       <div className="flex flex-wrap items-start gap-3">
         <button type="submit" disabled={saving} className="btn-primary">
           {saving && <Loader2 size={15} className="animate-spin" />}
-          {saving ? t("Saving…") : agreement ? t("Save changes") : t("Create agreement")}
+          {saving ? t("Saving…") : agreement ? t("Save changes") : saveAsTemplate ? t("Save template") : t("Create agreement")}
         </button>
+        {saveAsTemplate ? null : (
         <SaveRecruitmentTemplateButton
           suggestedName={preset?.name || companyName}
           role={preset?.role || companyName}
@@ -500,6 +534,7 @@ export default function RecruitmentAgreementForm({
           feeScalePermanent={permanentRows}
           feeScaleContract={contractRows}
         />
+        )}
         <button type="button" onClick={() => router.back()} className="btn-secondary">
           {t("Cancel")}
         </button>

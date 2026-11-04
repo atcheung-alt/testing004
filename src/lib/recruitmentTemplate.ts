@@ -5,6 +5,8 @@ const DOCUMENT_TYPE = "recruitment-template";
 export type RecruitmentTemplate = {
   id: string;
   name: string;
+  companyName: string;
+  companyEmail: string;
   role: string;
   requirements: string;
   paymentDueDays: number;

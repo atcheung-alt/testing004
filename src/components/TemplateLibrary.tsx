@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import DeleteButton from "@/components/DeleteButton";
 import { useT } from "@/lib/i18n/client";
 
@@ -16,16 +15,10 @@ export type TemplateRow = {
 
 export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
   const t = useT();
-  const router = useRouter();
   const [tab, setTab] = useState<"all" | "quotation" | "recruitment">("all");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<"quotation" | "recruitment">("quotation");
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [requirements, setRequirements] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -35,30 +28,6 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
       return `${row.name} ${row.detail} ${row.kind}`.toLowerCase().includes(q);
     });
   }, [rows, tab, query]);
-
-  async function createRecruitment(event: React.FormEvent) {
-    event.preventDefault();
-    setSaving(true);
-    setError("");
-    try {
-      const response = await fetch("/api/recruitment-templates", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, role, requirements }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || t("Could not save the template."));
-      setOpen(false);
-      setName("");
-      setRole("");
-      setRequirements("");
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  }
 
   const tabs = [
     ["all", "All Templates"],
@@ -141,34 +110,22 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
 
       {open ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-ink/30 p-4" onClick={() => setOpen(false)}>
-          <form className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} onSubmit={kind === "recruitment" ? createRecruitment : (e) => e.preventDefault()}>
+          <form className="card w-full max-w-md p-5" onClick={(e) => e.stopPropagation()} onSubmit={(e) => e.preventDefault()}>
             <h2 className="font-display text-lg font-semibold">{t("New Template")}</h2>
             <label className="label mt-3">{t("Type")}</label>
             <select className="input" value={kind} onChange={(e) => setKind(e.target.value as "quotation" | "recruitment")}>
               <option value="quotation">{t("Quotation")}</option>
               <option value="recruitment">{t("Recruitment")}</option>
             </select>
-            {kind === "quotation" ? (
-              <p className="mt-3 text-sm text-ink-muted">{t("Quotation templates still use the existing form, with activity name and line items.")}</p>
-            ) : (
-              <>
-                <label className="label mt-3">{t("Template name")}</label>
-                <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
-                <label className="label mt-3">{t("Job role")}</label>
-                <input className="input" value={role} onChange={(e) => setRole(e.target.value)} />
-                <label className="label mt-3">{t("Requirements")}</label>
-                <textarea className="input min-h-[88px]" value={requirements} onChange={(e) => setRequirements(e.target.value)} />
-              </>
-            )}
-            {error ? <p className="mt-2 text-xs text-danger-500">{error}</p> : null}
+            <p className="mt-3 text-sm text-ink-muted">
+              {kind === "quotation"
+                ? t("Quotation templates still use the existing form, with activity name and line items.")
+                : t("Recruitment templates use the same agreement form as the Recruitment page.")}
+            </p>
             <div className="mt-4 flex gap-2">
-              {kind === "quotation" ? (
-                <Link href="/quotations/templates/new" className="btn-primary">{t("Continue")}</Link>
-              ) : (
-                <button className="btn-primary" disabled={saving} type="submit">
-                  {saving ? <Loader2 size={15} className="animate-spin" /> : t("Save")}
-                </button>
-              )}
+              <Link href={kind === "quotation" ? "/quotations/templates/new" : "/recruitment/new?as=template"} className="btn-primary">
+                {t("Continue")}
+              </Link>
               <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>{t("Cancel")}</button>
             </div>
           </form>

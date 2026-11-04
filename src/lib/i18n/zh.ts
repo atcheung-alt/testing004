@@ -251,6 +251,12 @@ export const ZH: Record<string, string> = {
   Quotation: "報價",
   "Job role": "職位",
   Requirements: "要求",
+  "Recruitment templates use the same agreement form as the Recruitment page.":
+    "招聘範本使用與招聘頁相同的協議表格。",
+  "New recruitment template": "新增招聘範本",
+  "Fill in the same agreement details you use on the Recruitment page. This saves a template, not an agreement.":
+    "填寫與招聘頁相同的協議資料。這會儲存範本，不會建立協議。",
+  "e.g. Standard recruitment terms": "例如：標準招聘條款",
   "Quotation templates still use the existing form, with activity name and line items.":
     "報價範本仍使用原有表格，包括活動名稱和項目。",
   Continue: "繼續",

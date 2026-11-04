@@ -29,7 +29,7 @@ export default async function QuotationTemplatesPage() {
       id: template.id,
       kind: "recruitment" as const,
       name: template.name,
-      detail: [template.role, template.requirements].filter(Boolean).join(" · "),
+      detail: [template.companyName || template.role, template.requirements].filter(Boolean).join(" · "),
     })),
   ];
 
