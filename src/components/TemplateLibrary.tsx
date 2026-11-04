@@ -56,7 +56,7 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
             </button>
           ))}
         </div>
-        <button type="button" className="btn-primary sm:ml-auto shrink-0" onClick={() => { setKind("quotation"); setOpen(true); setError(""); }}>
+        <button type="button" className="btn-primary sm:ml-auto shrink-0" onClick={() => { setKind("quotation"); setOpen(true); }}>
           <Plus size={15} /> {t("New Template")}
         </button>
       </div>
