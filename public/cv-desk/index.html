@@ -4061,6 +4061,8 @@ document.getElementById("clear-filters").onclick = () => {
   drawList();
 };
 pullCvs().finally(() => { if (!loadAll().length) seed(); });
+render(Object.assign(blank(), { date: "" }));
+document.getElementById("file-name").value = "";
 document.getElementById("draft-q").oninput = () => { if (draftReady) paintDrafts(); };
 document.getElementById("draft-tab-draft").onclick = () => { draftView = "DRAFT"; drawDrafts(); };
 document.getElementById("draft-tab-sent").onclick = () => { draftView = "SENT"; drawDrafts(); };
