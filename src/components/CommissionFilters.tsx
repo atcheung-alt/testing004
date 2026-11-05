@@ -33,8 +33,6 @@ export default function CommissionFilters({
   to,
   paid,
   who,
-  months,
-  year,
   people,
   rows,
   marked,
@@ -47,8 +45,6 @@ export default function CommissionFilters({
   to: string;
   paid: string;
   who: string;
-  months: string[];
-  year: string;
   people: { code: string; nickname: string; name: string }[];
   rows: BillingRow[];
   marked: number;
@@ -156,7 +152,8 @@ export default function CommissionFilters({
         method="get"
         className="flex flex-wrap items-center gap-2"
         onChange={(event) => {
-          if ((event.target as HTMLElement).tagName === "SELECT") event.currentTarget.requestSubmit();
+          const field = event.target as HTMLInputElement;
+          if (field.tagName === "SELECT" || field.type === "month") event.currentTarget.requestSubmit();
         }}
       >
         <label className="relative min-w-[12rem] flex-1">
@@ -219,22 +216,8 @@ export default function CommissionFilters({
           </select>
         ) : null}
         <div className="ml-auto flex gap-2">
-          <select name="from" defaultValue={from} aria-label={labels.from} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-            <option value="">{labels.from}: {labels.allTime}</option>
-            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
-              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
-              .map((month) => (
-                <option key={month} value={month}>{labels.from}: {month}</option>
-              ))}
-          </select>
-          <select name="to" defaultValue={to} aria-label={labels.to} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-            <option value="">{labels.to}: {labels.allTime}</option>
-            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
-              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
-              .map((month) => (
-                <option key={month} value={month}>{labels.to}: {month}</option>
-              ))}
-          </select>
+          <input type="month" name="from" defaultValue={from} min="2020-01" max="2030-12" aria-label={labels.from} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" />
+          <input type="month" name="to" defaultValue={to} min="2020-01" max="2030-12" aria-label={labels.to} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" />
         </div>
       </form>
       {shown.length === 0 ? (

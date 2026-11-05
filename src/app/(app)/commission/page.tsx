@@ -106,11 +106,6 @@ export default async function CommissionPage({
     });
   });
 
-  const months = Array.from(new Set([
-    today.slice(0, 7),
-    ...Array.from(marks.values()).map((mark) => mark.day.slice(0, 7)),
-  ])).filter((month) => /^\d{4}-\d{2}$/.test(month)).sort().reverse();
-
   const marked = invoices.filter((invoice) => {
     const mark = marks.get(invoice.id);
     return Boolean(mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day));
@@ -125,8 +120,6 @@ export default async function CommissionPage({
         to={rangeEnd || pickedTo}
         paid={paid}
         who={access.mode === "all" ? who : ""}
-        months={months}
-        year={today.slice(0, 4)}
         people={access.mode === "all" ? colleagues.map((person) => ({ code: person.code, nickname: person.nickname || "", name: person.name || "" })) : []}
         marked={marked}
         canPay={access.mode === "all"}
