@@ -234,6 +234,8 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   "Default color theme": "預設色彩主題",
   "Used on the sign-in page and for any staff member who hasn't set their own theme below. \"Automatic\" follows the visitor's own device setting.":
     "用於登入頁，以及尚未在下方自訂主題的員工。「自動」會跟隨訪客裝置的設定。",
+  "Used on the sign-in page and for any staff member whose own theme is Company default. \"Automatic\" follows the visitor's own device setting.":
+    "用於登入頁，以及個人主題選擇「公司預設」的員工。「自動」會跟隨訪客裝置的設定。",
   "Your theme": "你的主題",
   "Just for your account — overrides the default above whenever you're signed in, on any device.":
     "只適用於你的帳戶。登入後會在任何裝置覆蓋上方的預設。",

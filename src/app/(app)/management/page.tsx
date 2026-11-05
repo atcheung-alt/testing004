@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/accessControl";
 import ManagementWorkspace from "@/components/ManagementWorkspace";
+import SettingsForm from "@/components/SettingsForm";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 
@@ -18,6 +19,9 @@ export default async function ManagementPage() {
         title={t("Management")}
         note={t("Three areas. The line under each name says what it is for.")}
       />
+      <div className="mb-4">
+        <SettingsForm part="defaults" />
+      </div>
       <ManagementWorkspace />
     </div>
   );

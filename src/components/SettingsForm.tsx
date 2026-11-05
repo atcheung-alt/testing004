@@ -93,7 +93,7 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (value: boo
   );
 }
 
-export default function SettingsForm({ part = "appearance", admin = false }: { part?: "appearance" | "company"; admin?: boolean }) {
+export default function SettingsForm({ part = "appearance" }: { part?: "appearance" | "company" | "defaults" }) {
   const t = useT();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings>(emptySettings);
@@ -101,6 +101,18 @@ export default function SettingsForm({ part = "appearance", admin = false }: { p
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
+  // null = this account follows the company default. A personal Light/Dark/Auto
+  // choice must not be overwritten when an admin edits the company theme.
+  const [personalTheme, setPersonalTheme] = useState<ThemeMode | null>(null);
+
+  useEffect(() => {
+    fetch("/api/account/theme")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setPersonalTheme(data.themeMode ?? null);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -135,7 +147,7 @@ export default function SettingsForm({ part = "appearance", admin = false }: { p
     // Same live-preview trick for the color theme — the CSS that resolves
     // light/dark/auto (see globals.css) keys entirely off this attribute,
     // so flipping it here previews the change instantly, before Save.
-    if (key === "themeMode" && typeof document !== "undefined") {
+    if (key === "themeMode" && personalTheme === null && typeof document !== "undefined") {
       document.documentElement.dataset.theme = (value as string).toLowerCase();
     }
   }
@@ -145,10 +157,16 @@ export default function SettingsForm({ part = "appearance", admin = false }: { p
     setErrors([]);
     setSaved(false);
     try {
+      const payload =
+        part === "appearance"
+          ? { animationsEnabled: settings.animationsEnabled }
+          : part === "defaults"
+            ? { themeMode: settings.themeMode, mpfNotificationsEnabled: settings.mpfNotificationsEnabled }
+            : settings;
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -204,34 +222,32 @@ export default function SettingsForm({ part = "appearance", admin = false }: { p
           />
         </label>
 
-        {admin ? (
-          <div className="pt-3 border-t border-line flex flex-col gap-2">
-            <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
-              <span className="inline-flex items-center">
-                {t("MPF notifications")}
-                <Hint text={t("When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner.")} />
-              </span>
-              <Switch
-                checked={settings.mpfNotificationsEnabled}
-                onChange={(v) => update("mpfNotificationsEnabled", v)}
-              />
-            </label>
-          </div>
-        ) : null}
-
-        {admin ? (
-          <div className="pt-1">
-            <p className="mb-2 inline-flex items-center text-sm font-medium">
-              {t("Default color theme")}
-              <Hint text={t("Used on the sign-in page and for any staff member who hasn't set their own theme below. \"Automatic\" follows the visitor's own device setting.")} />
-            </p>
-            <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
-          </div>
-        ) : null}
-
         <div className="pt-3 border-t border-line">
           <p className="text-sm font-medium mb-2">{t("Your theme")}</p>
           <ThemeModeControl />
+        </div>
+      </div>
+      )}
+
+      {part === "defaults" && (
+      <div className="card p-5 flex flex-col gap-4 max-w-2xl">
+        <h2 className="font-display text-lg font-semibold">{t("System / Admin Settings")}</h2>
+        <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
+          <span className="inline-flex items-center">
+            {t("MPF notifications")}
+            <Hint text={t("When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner.")} />
+          </span>
+          <Switch
+            checked={settings.mpfNotificationsEnabled}
+            onChange={(v) => update("mpfNotificationsEnabled", v)}
+          />
+        </label>
+        <div>
+          <p className="mb-2 inline-flex items-center text-sm font-medium">
+            {t("Default color theme")}
+            <Hint text={t("Used on the sign-in page and for any staff member whose own theme is Company default. \"Automatic\" follows the visitor's own device setting.")} />
+          </p>
+          <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
         </div>
       </div>
       )}
