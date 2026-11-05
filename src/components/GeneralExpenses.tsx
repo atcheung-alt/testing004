@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 
@@ -149,6 +149,19 @@ export default function GeneralExpenses({
     }
   }
 
+  function exportCsv(list: HistoryRow[]) {
+    const header = ["Date", "Expense", "Category", "Vendor", "Amount", "Link", "Receipt"];
+    const body = list.map((row) => [row.date, row.name, row.category, row.vendor, String(row.amount), row.link, row.receiptHref]);
+    const csv = [header, ...body].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "expenses.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -156,12 +169,17 @@ export default function GeneralExpenses({
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Expenses")}</h1>
           <p className="lead">{t("Record a cost on an invoice, or a general expense that is not tied to one.")}</p>
         </div>
-        <button type="button" className="btn-primary shrink-0" onClick={() => setOpen(true)}>
-          <Plus size={15} /> {t("New Expense")}
-        </button>
+        <div className="flex gap-2 shrink-0">
+          <button type="button" className="btn-secondary" onClick={() => exportCsv(rows)}>
+            <Download size={15} /> {t("Export CSV")}
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setOpen(true)}>
+            <Plus size={15} /> {t("New Expense")}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
         <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search vendor or expense")} />
         <select className="input" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="">{t("All categories")}</option>
@@ -252,38 +270,38 @@ export default function GeneralExpenses({
       </div>
       ) : null}
 
-      <div className="card overflow-x-auto">
+      <div className="card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-ink-500">
-                <th className="py-2 pr-3">{t("Date")}</th>
-                <th className="py-2 pr-3">{t("Expense")}</th>
-                <th className="py-2 pr-3">{t("Category")}</th>
-                <th className="py-2 pr-3">{t("Vendor")}</th>
-                <th className="py-2 pr-3">{t("Amount")}</th>
-                <th className="py-2 pr-3">{t("Link")}</th>
-                <th className="py-2 pr-3">{t("Receipt")}</th>
-                <th className="py-2"></th>
+              <tr className="text-left text-ink-muted border-b border-line">
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Date")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Expense")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Category")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Vendor")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Amount")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Link")}</th>
+                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Receipt")}</th>
+                <th className="px-4 sm:px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={`${row.source}-${row.id}`} className="border-t border-ink-100">
-                  <td className="py-2 pr-3">{row.date}</td>
-                  <td className="py-2 pr-3">{row.name}</td>
-                  <td className="py-2 pr-3">{row.category}</td>
-                  <td className="py-2 pr-3">{row.vendor ? row.vendor : t("N/A")}</td>
-                  <td className="py-2 pr-3">{formatCurrency(row.amount)}</td>
-                  <td className="py-2 pr-3">
+                <tr key={`${row.source}-${row.id}`} className="border-t border-line hover:bg-paper">
+                  <td className="px-4 sm:px-5 py-5">{row.date}</td>
+                  <td className="px-4 sm:px-5 py-5 font-medium">{row.name}</td>
+                  <td className="px-4 sm:px-5 py-5 text-ink-muted">{row.category}</td>
+                  <td className="px-4 sm:px-5 py-5 text-ink-muted">{row.vendor ? row.vendor : t("N/A")}</td>
+                  <td className="px-4 sm:px-5 py-5 font-mono">{formatCurrency(row.amount)}</td>
+                  <td className="px-4 sm:px-5 py-5">
                     {row.invoiceId ? (
                       <Link href={`/invoices/${row.invoiceId}`} className="font-medium text-brand-600 hover:underline">{row.link}</Link>
                     ) : (
                       t("General")
                     )}
                   </td>
-                  <td className="py-2 pr-3">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
-                  <td className="py-2">
+                  <td className="px-4 sm:px-5 py-5">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
+                  <td className="px-4 sm:px-5 py-5">
                     {row.canDelete && askId === row.id ? (
                       <span className="inline-flex flex-wrap items-center gap-1 text-xs text-ink">
                         <span>{t("Delete this expense?")}</span>
@@ -302,7 +320,7 @@ export default function GeneralExpenses({
                   </td>
                 </tr>
               ))}
-              {!rows.length ? <tr><td className="py-3 text-ink-500" colSpan={8}>{t("No matching expense.")}</td></tr> : null}
+              {!rows.length ? <tr><td className="px-4 sm:px-5 py-5 text-ink-muted" colSpan={8}>{t("No matching expense.")}</td></tr> : null}
             </tbody>
           </table>
         </div>
