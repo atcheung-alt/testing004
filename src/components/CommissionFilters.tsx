@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Download, Search } from "lucide-react";
@@ -25,6 +25,63 @@ export type BillingRow = {
   done: boolean;
   paidDay: string;
 };
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function MonthField({ name, value, label, allTime }: { name: string; value: string; label: string; allTime: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const now = new Date().getFullYear();
+  const [open, setOpen] = useState(false);
+  const [year, setYear] = useState(value ? Number(value.slice(0, 4)) : now);
+  const min = now - 5;
+  const max = now + 5;
+
+  useEffect(() => {
+    if (!open) return;
+    function close(event: MouseEvent) {
+      if (!boxRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+
+  function choose(next: string) {
+    if (inputRef.current) inputRef.current.value = next;
+    setOpen(false);
+    inputRef.current?.form?.requestSubmit();
+  }
+
+  return (
+    <div ref={boxRef} className="relative flex items-center gap-2 text-sm text-ink-muted">
+      <span>{label}:</span>
+      <input ref={inputRef} type="hidden" name={name} defaultValue={value} />
+      <button type="button" className="h-9 w-40 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" onClick={() => setOpen((current) => !current)}>
+        {value || allTime}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-11 z-30 w-56 rounded-xl border border-line bg-surface p-2.5 shadow-card">
+          <button type="button" className={`mb-2 w-full rounded-lg px-2 py-1.5 text-sm ${value ? "bg-paper text-ink" : "bg-brand-50 text-brand-600"}`} onClick={() => choose("")}>{allTime}</button>
+          <div className="mb-2 flex items-center justify-between">
+            <button type="button" className="h-7 w-7 rounded-lg border border-line" disabled={year <= min} onClick={() => setYear((current) => current - 1)}>‹</button>
+            <span className="text-sm text-ink">{year}</span>
+            <button type="button" className="h-7 w-7 rounded-lg border border-line" disabled={year >= max} onClick={() => setYear((current) => current + 1)}>›</button>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {MONTHS.map((month, index) => {
+              const next = `${year}-${String(index + 1).padStart(2, "0")}`;
+              return (
+                <button key={month} type="button" className={`rounded-lg px-2 py-1.5 text-sm ${value === next ? "bg-brand-50 text-brand-600" : "bg-paper text-ink"}`} onClick={() => choose(next)}>
+                  {month}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export default function CommissionFilters({
   kind,
@@ -151,9 +208,8 @@ export default function CommissionFilters({
         action="/commission"
         method="get"
         className="flex flex-wrap items-center gap-2"
-        onChange={(event) => {
-          const field = event.target as HTMLInputElement;
-          if (field.tagName === "SELECT" || field.type === "month") event.currentTarget.requestSubmit();
+        onChange={(event: FormEvent<HTMLFormElement>) => {
+          if ((event.target as HTMLElement).tagName === "SELECT") event.currentTarget.requestSubmit();
         }}
       >
         <label className="relative min-w-[12rem] flex-1">
@@ -215,9 +271,9 @@ export default function CommissionFilters({
             ))}
           </select>
         ) : null}
-        <div className="ml-auto flex gap-2">
-          <input type="month" name="from" defaultValue={from} min="2020-01" max="2030-12" aria-label={labels.from} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" />
-          <input type="month" name="to" defaultValue={to} min="2020-01" max="2030-12" aria-label={labels.to} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" />
+        <div className="ml-auto flex flex-wrap gap-2">
+          <MonthField name="from" value={from} label={labels.from} allTime={labels.allTime} />
+          <MonthField name="to" value={to} label={labels.to} allTime={labels.allTime} />
         </div>
       </form>
       {shown.length === 0 ? (
