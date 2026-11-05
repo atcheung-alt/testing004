@@ -365,7 +365,10 @@
   }
   .sheet:not(.cover) [data-field="duties"] ul,
   .sheet:not(.cover) .lines[data-field="text"] ul,
-  .sheet:not(.cover) [data-slot="project"] ul {
+  .sheet:not(.cover) [data-slot="project"] ul,
+  .sheet:not(.cover) [data-field="duties"] ol,
+  .sheet:not(.cover) .lines[data-field="text"] ol,
+  .sheet:not(.cover) [data-slot="project"] ol {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -374,12 +377,33 @@
   .sheet:not(.cover) [data-field="duties"] li,
   .sheet:not(.cover) .lines[data-field="text"] li,
   .sheet:not(.cover) [data-slot="project"] li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     margin: 0;
     padding: 0;
+    list-style: none;
     font-size: 12pt;
     font-weight: 400;
     line-height: 1.6;
     text-align: left;
+  }
+  .sheet:not(.cover) ul > li::before {
+    content: "\2022";
+    flex: none;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+  .sheet:not(.cover) ol { counter-reset: duty; }
+  .sheet:not(.cover) ol > li { counter-increment: duty; }
+  .sheet:not(.cover) ol > li::before {
+    content: counter(duty) ".";
+    flex: none;
+    min-width: 1.2em;
+    font-family: Arial, "Segoe UI", sans-serif;
+    font-size: 12pt;
+    line-height: 1.6;
   }
   .sheet:not(.cover) .line-row + .line-row { margin-top: 8px; }
   .head { text-align: right; }
@@ -481,11 +505,7 @@
   .job + .job { border-top: 1px solid #e3e8f3; margin-top: 8px; padding-top: 8px; }
   .entry + .entry { margin-top: 8px; }
   .plain { min-height: 28px; }
-  .sheet:not(.cover) [contenteditable="true"] ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
+  .sheet:not(.cover) [contenteditable="true"] ul,
   .sheet:not(.cover) [contenteditable="true"] ol {
     margin: 0;
     padding: 0;
@@ -850,14 +870,6 @@
     <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">↺</button>
     <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">↻</button>
   </div>
-    <button type="button" data-cmd="bold" title="Bold" aria-label="Bold">B</button>
-    <button type="button" data-cmd="italic" title="Italic" aria-label="Italic"><span style="font-style:italic">I</span></button>
-    <button type="button" data-cmd="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">•</button>
-    <button type="button" data-cmd="insertOrderedList" title="Numbered list" aria-label="Numbered list">1.</button>
-    <button type="button" data-cmd="undo" title="Undo" aria-label="Undo">↺</button>
-    <button type="button" data-cmd="redo" title="Redo" aria-label="Redo">↻</button>
-  </div>
-
 <script>
 const SLOTS = {
   candidate: "533E4C9B",
@@ -1729,7 +1741,7 @@ function sanitizeRich(html) {
 function bulletHtml(html, plain) {
   const clean = sanitizeRich(html);
   if (/<li\b/i.test(clean)) return clean;
-  const lines = String(plain || "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022]+/, "").trim()).filter(Boolean);
+  const lines = String(plain || "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022\u25A0\u25A1\uFFFD\u00B7]+/, "").trim()).filter(Boolean);
   const items = lines.length ? lines : [""];
   return "<ul>" + items.map((line) => "<li>" + (line ? esc(line) : "<br>") + "</li>").join("") + "</ul>";
 }
@@ -1748,9 +1760,9 @@ function placeCaret(node) {
   sel.addRange(range);
 }
 function ensureDutyList(host) {
-  let list = host.querySelector("ul");
+  let list = host.querySelector(":scope > ul, :scope > ol");
   if (list) return list;
-  const lines = host.innerText.replace(/\u200b/g, "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022]+/, "").trim()).filter(Boolean);
+  const lines = host.innerText.replace(/\u200b/g, "").split(/\n/).map((line) => line.replace(/^[\s•\-\u2022\u25A0\u25A1\uFFFD\u00B7]+/, "").replace(/^\d+[.)]\s*/, "").trim()).filter(Boolean);
   host.innerHTML = bulletHtml("", lines.join("\n"));
   return host.querySelector("ul");
 }
@@ -2056,7 +2068,7 @@ function entriesFrom(data) {
 
 function eduRow(entry) {
   const fresh = entry.fresh ? ' data-new="1"' : "";
-  return `<tr data-entry><td colspan="2"><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${richOrText(entry.schoolHtml, entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${richOrText(entry.yearHtml, entry.year || "")}</div></td></tr>`;
+  return `<tr data-entry><td colspan="2"><div class="col-text" contenteditable="true" data-field="year" data-placeholder="Year"${fresh}>${richOrText(entry.yearHtml, entry.year || "")}</div><div class="line-row"><div class="col-text" contenteditable="true" data-field="school" data-placeholder="School">${richOrText(entry.schoolHtml, entry.school || "")}</div><button type="button" class="col-x" data-remove-entry aria-label="Remove education">×</button></div></td></tr>`;
 }
 
 function profilePair(label, cls, slot, value, placeholder) {
@@ -3451,6 +3463,23 @@ document.addEventListener("keydown", (event) => {
     redoField(host);
   }
 });
+function listLines(host) {
+  const items = [...host.querySelectorAll(":scope > ul > li, :scope > ol > li")];
+  const source = items.length ? items.map((item) => item.textContent) : host.innerText.split(/\n/);
+  const lines = source.map((line) => String(line || "").replace(/^[\s•\-\u2022\u25A0\u25A1\uFFFD\u00B7]+/, "").replace(/^\d+[.)]\s*/, "").trim());
+  return lines.length ? lines : [""];
+}
+function applyList(host, ordered) {
+  const current = host.querySelector(":scope > ul, :scope > ol");
+  const want = ordered ? "OL" : "UL";
+  const lines = listLines(host);
+  if (current && current.tagName === want) {
+    host.textContent = lines.filter(Boolean).join("\n");
+    return;
+  }
+  const tag = ordered ? "ol" : "ul";
+  host.innerHTML = "<" + tag + ">" + lines.map((line) => "<li>" + (line ? esc(line) : "<br>") + "</li>").join("") + "</" + tag + ">";
+}
 fmtBar.querySelectorAll("button").forEach((button) => {
   button.onmousedown = (event) => event.preventDefault();
   button.onclick = () => {
@@ -3461,6 +3490,12 @@ fmtBar.querySelectorAll("button").forEach((button) => {
     const cmd = button.getAttribute("data-cmd");
     if (cmd === "undo") { undoField(host); return; }
     if (cmd === "redo") { redoField(host); return; }
+    if (cmd === "insertUnorderedList" || cmd === "insertOrderedList") {
+      applyList(host, cmd === "insertOrderedList");
+      rememberField(host);
+      sheetDirty = true;
+      return;
+    }
     document.execCommand(cmd, false, null);
     rememberField(host);
     sheetDirty = true;
