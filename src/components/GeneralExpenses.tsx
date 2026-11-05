@@ -270,60 +270,49 @@ export default function GeneralExpenses({
       </div>
       ) : null}
 
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left border-b border-line">
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Date")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Expense")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Category")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Vendor")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Amount")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Link")}</th>
-                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Receipt")}</th>
-                <th className="px-4 py-3.5"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.source}-${row.id}`} className="border-b border-line last:border-b-0 hover:bg-paper/50">
-                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.date}</td>
-                  <td className="px-4 py-3.5 text-sm font-semibold text-ink">{row.name}</td>
-                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.category}</td>
-                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.vendor ? row.vendor : t("N/A")}</td>
-                  <td className="px-4 py-3.5 text-sm font-medium font-mono text-ink">{formatCurrency(row.amount)}</td>
-                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">
-                    {row.invoiceId ? (
-                      <Link href={`/invoices/${row.invoiceId}`} className="font-medium text-brand-600 hover:underline">{row.link}</Link>
-                    ) : (
-                      t("General")
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5 text-xs font-medium">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
-                  <td className="px-4 py-3.5 text-xs font-medium">
-                    {row.canDelete && askId === row.id ? (
-                      <span className="inline-flex flex-wrap items-center gap-1 text-xs text-ink">
-                        <span>{t("Delete this expense?")}</span>
-                        <button type="button" className="rounded-full border border-danger-500 px-2 py-0.5 text-danger-600" disabled={removingId === row.id} onClick={() => remove(row)}>
-                          {t("Confirm")}
-                        </button>
-                        <button type="button" className="rounded-full border border-line px-2 py-0.5 text-ink-muted" disabled={removingId === row.id} onClick={() => setAskId("")}>
-                          {t("Cancel")}
-                        </button>
-                      </span>
-                    ) : row.canDelete ? (
-                      <button type="button" className="text-xs text-ink-muted underline underline-offset-2" onClick={() => setAskId(row.id)}>
-                        {t("Delete")}
-                      </button>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-              {!rows.length ? <tr><td className="px-4 sm:px-5 py-5 text-ink-muted" colSpan={8}>{t("No matching expense.")}</td></tr> : null}
-            </tbody>
-          </table>
-        </div>
+      <div className="card divide-y divide-line">
+        {rows.length === 0 ? (
+          <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">{t("No matching expense.")}</p>
+        ) : rows.map((row) => (
+          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-5 hover:bg-paper">
+            <div className="min-w-0">
+              <span className="font-mono text-sm font-medium text-ink">{row.name}</span>
+              <p className="text-xs text-ink-muted truncate mt-0.5">
+                {row.date}
+                {" · "}
+                {row.category}
+                {" · "}
+                {row.vendor ? row.vendor : t("N/A")}
+                {" · "}
+                {row.invoiceId ? (
+                  <Link href={`/invoices/${row.invoiceId}`} className="text-brand-600 hover:underline">{row.link}</Link>
+                ) : (
+                  t("General")
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</span>
+              {row.receiptHref ? (
+                <a className="text-sm text-brand-600 hover:underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a>
+              ) : null}
+              {row.canDelete && askId === row.id ? (
+                <span className="inline-flex items-center gap-2">
+                  <button type="button" className="btn-danger" disabled={removingId === row.id} onClick={() => remove(row)}>
+                    {t("Confirm")}
+                  </button>
+                  <button type="button" className="btn-secondary" disabled={removingId === row.id} onClick={() => setAskId("")}>
+                    {t("Cancel")}
+                  </button>
+                </span>
+              ) : row.canDelete ? (
+                <button type="button" className="btn-danger" onClick={() => setAskId(row.id)}>
+                  {t("Delete")}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

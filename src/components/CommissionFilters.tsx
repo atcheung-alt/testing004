@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import CommissionPaidToggle from "@/components/CommissionPaidToggle";
 import { hongKongDay } from "@/lib/commission";
 
@@ -154,106 +154,88 @@ export default function CommissionFilters({
         id="billing-filters"
         action="/commission"
         method="get"
-        className="card relative z-20 grid gap-3 overflow-visible p-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="flex flex-wrap items-center gap-2"
         onChange={(event) => {
           if ((event.target as HTMLElement).tagName === "SELECT") event.currentTarget.requestSubmit();
         }}
       >
-        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
-          {labels.type}
-          <select name="kind" defaultValue={kind} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <option value="">{labels.all}</option>
-            <option value="event">{labels.event}</option>
-            <option value="recruitment">{labels.recruitment}</option>
-          </select>
+        <label className="relative min-w-[12rem] flex-1">
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+          <input
+            ref={searchRef}
+            type="search"
+            value={query}
+            placeholder={labels.search}
+            aria-label={labels.search}
+            autoComplete="off"
+            className="h-9 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {needle && menuBox && typeof document !== "undefined"
+            ? createPortal(
+              <div className="fixed z-[9999] rounded-xl border border-line bg-surface p-1.5 shadow-card" style={{ top: menuBox.top, left: menuBox.left, width: menuBox.width }}>
+                {suggestions.length ? suggestions.map((person) => (
+                  <button
+                    key={person.code}
+                    type="submit"
+                    form="billing-filters"
+                    name="who"
+                    value={person.code}
+                    className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-paper"
+                    onClick={() => setQuery("")}
+                  >
+                    {person.nickname || person.name}
+                    {person.name && person.name !== person.nickname ? <span className="text-ink-muted"> · {person.name}</span> : null}
+                  </button>
+                )) : <p className="px-2 py-2 text-sm text-ink-muted">{labels.empty}</p>}
+              </div>,
+              document.body
+            )
+            : null}
         </label>
-        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
-          {labels.status}
-          <select name="state" defaultValue={state} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <option value="">{labels.all}</option>
-            <option value="pending">{labels.pending}</option>
-            <option value="done">{labels.done}</option>
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
-          {labels.from}
-          <select name="from" defaultValue={from} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <option value="">{labels.allTime}</option>
-            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
-              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
-              .map((month) => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
-          {labels.to}
-          <select name="to" defaultValue={to} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <option value="">{labels.allTime}</option>
-            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
-              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
-              .map((month) => (
-                <option key={month} value={month}>{month}</option>
-              ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-xs text-ink-muted">
-          {labels.payment}
-          <select name="paid" defaultValue={paid} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <option value="">{labels.all}</option>
-            <option value="unpaid">{labels.unpaid}</option>
-            <option value="paid">{labels.paid}</option>
-          </select>
-        </label>
+        <select name="kind" defaultValue={kind} aria-label={labels.type} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+          <option value="">{labels.type}: {labels.all}</option>
+          <option value="event">{labels.type}: {labels.event}</option>
+          <option value="recruitment">{labels.type}: {labels.recruitment}</option>
+        </select>
+        <select name="state" defaultValue={state} aria-label={labels.status} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+          <option value="">{labels.status}: {labels.all}</option>
+          <option value="pending">{labels.status}: {labels.pending}</option>
+          <option value="done">{labels.status}: {labels.done}</option>
+        </select>
+        <select name="paid" defaultValue={paid} aria-label={labels.payment} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+          <option value="">{labels.payment}: {labels.all}</option>
+          <option value="unpaid">{labels.payment}: {labels.unpaid}</option>
+          <option value="paid">{labels.payment}: {labels.paid}</option>
+        </select>
         {people.length ? (
-          <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row xl:col-span-4">
-            <label className="relative flex min-w-0 flex-1 flex-col gap-1.5 text-xs text-ink-muted">
-              {labels.search}
-              <input
-                ref={searchRef}
-                type="search"
-                value={query}
-                placeholder={labels.search}
-                aria-label={labels.search}
-                autoComplete="off"
-                className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink"
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              {needle && menuBox && typeof document !== "undefined"
-                ? createPortal(
-                  <div className="fixed z-[9999] rounded-xl border border-line bg-surface p-1.5 shadow-card" style={{ top: menuBox.top, left: menuBox.left, width: menuBox.width }}>
-                    {suggestions.length ? suggestions.map((person) => (
-                      <button
-                        key={person.code}
-                        type="submit"
-                        form="billing-filters"
-                        name="who"
-                        value={person.code}
-                        className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-paper"
-                        onClick={() => setQuery("")}
-                      >
-                        {person.nickname || person.name}
-                        {person.name && person.name !== person.nickname ? <span className="text-ink-muted"> · {person.name}</span> : null}
-                      </button>
-                    )) : <p className="px-2 py-2 text-sm text-ink-muted">{labels.empty}</p>}
-                  </div>,
-                  document.body
-                )
-                : null}
-            </label>
-            <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs text-ink-muted">
-              {labels.allStaff}
-              <select name="who" defaultValue={who} className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink">
-                <option value="">{labels.allStaff}</option>
-                {people.map((person) => (
-                  <option key={person.code} value={person.code}>
-                    {(person.nickname || person.name || person.code)}{person.name && person.name !== person.nickname ? ` · ${person.name}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <select name="who" defaultValue={who} aria-label={labels.allStaff} className="h-9 max-w-[14rem] rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+            <option value="">{labels.allStaff}</option>
+            {people.map((person) => (
+              <option key={person.code} value={person.code}>
+                {(person.nickname || person.name || person.code)}{person.name && person.name !== person.nickname ? ` · ${person.name}` : ""}
+              </option>
+            ))}
+          </select>
         ) : null}
+        <div className="ml-auto flex gap-2">
+          <select name="from" defaultValue={from} aria-label={labels.from} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+            <option value="">{labels.from}: {labels.allTime}</option>
+            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
+              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
+              .map((month) => (
+                <option key={month} value={month}>{labels.from}: {month}</option>
+              ))}
+          </select>
+          <select name="to" defaultValue={to} aria-label={labels.to} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+            <option value="">{labels.to}: {labels.allTime}</option>
+            {Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, "0")}`)
+              .concat(months.filter((month) => !month.startsWith(`${year}-`)))
+              .map((month) => (
+                <option key={month} value={month}>{labels.to}: {month}</option>
+              ))}
+          </select>
+        </div>
       </form>
       {shown.length === 0 ? (
         <div className="card relative z-0 px-5 py-8 text-sm text-ink-muted">

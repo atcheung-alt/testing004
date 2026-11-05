@@ -194,15 +194,15 @@ async function MoneyList({
   const summary = (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div className="card px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{t("Receipts")}</p>
+        <p className="text-sm font-medium text-emerald-600">{t("Receipts")}</p>
         <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal)}</p>
       </div>
       <div className="card px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">{t("Expenses")}</p>
+        <p className="text-sm font-medium text-rose-600">{t("Expenses")}</p>
         <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(expenseTotal)}</p>
       </div>
       <div className="card px-4 py-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Net")}</p>
+        <p className="text-sm font-medium text-ink-muted">{t("Net")}</p>
         <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal - expenseTotal)}</p>
       </div>
     </div>
@@ -232,14 +232,10 @@ async function MoneyList({
       <div className="card overflow-x-auto">
         <div className="min-w-[46rem] divide-y divide-line">
         {rows.map((row) => (
-          <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-4 gap-6">
+          <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-5 gap-6 hover:bg-paper">
             <Link href={row.href} className="min-w-[18rem] hover:opacity-80">
               <div className="flex items-center gap-2">
-                <span
-                  className={`text-[11px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded shrink-0 ${
-                    row.kind === "receipt" ? "bg-accent-100 text-accent-600" : "bg-danger-50 text-danger-500"
-                  }`}
-                >
+                <span className="stamp border-line text-ink-muted">
                   {row.kind === "receipt" ? t("Receipt") : t("Expense")}
                 </span>
                 <span className="font-mono text-sm font-medium whitespace-nowrap">{row.title}</span>
@@ -337,7 +333,7 @@ export default function ReceiptsPage({
           <Link
             key={item.id}
             href={viewHref(item.id)}
-            className={item.id === view ? "btn-primary" : "btn-secondary"}
+            className={`stamp ${item.id === view ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
           >
             {item.label}
           </Link>

@@ -23,7 +23,7 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
   }, [events, query]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <label className="sr-only" htmlFor="massage-event-search">
         {t("Search by event, client, invoice, or date")}
       </label>
@@ -35,26 +35,28 @@ export default function MassageEventSearch({ events }: { events: MassageEventCho
         placeholder={t("Search by event, client, invoice, or date")}
         onChange={(event) => setQuery(event.target.value)}
       />
-      {shown.length === 0 ? (
-        <p className="px-1 py-4 text-sm text-ink-muted">{t("No matching events.")}</p>
-      ) : (
-        shown.map((event) => (
-          <Link
-            key={event.id}
-            href={`/massage/${event.id}`}
-            className="card flex items-center gap-3 px-4 py-3 no-underline hover:bg-paper"
-          >
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-sans text-sm font-semibold text-ink">{event.name}</span>
-              {event.detail ? <span className="mt-0.5 block truncate text-sm text-ink-muted">{event.detail}</span> : null}
-            </span>
-            <span className="shrink-0 text-right">
-              <span className="block font-mono text-sm font-semibold text-ink">{event.score}</span>
-              <span className="block text-xs text-ink-muted">{t("{count} Surveys", { count: event.surveyCount })}</span>
-            </span>
-          </Link>
-        ))
-      )}
+      <div className="card divide-y divide-line">
+        {shown.length === 0 ? (
+          <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">{t("No matching events.")}</p>
+        ) : (
+          shown.map((event) => (
+            <Link
+              key={event.id}
+              href={`/massage/${event.id}`}
+              className="flex items-center gap-3 px-4 sm:px-5 py-5 no-underline hover:bg-paper"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-mono text-sm font-medium text-ink">{event.name}</span>
+                {event.detail ? <span className="mt-0.5 block truncate text-xs text-ink-muted">{event.detail}</span> : null}
+              </span>
+              <span className="shrink-0 text-right">
+                <span className="block font-mono text-sm font-medium text-ink">{event.score}</span>
+                <span className="block text-xs text-ink-muted">{t("{count} Surveys", { count: event.surveyCount })}</span>
+              </span>
+            </Link>
+          ))
+        )}
+      </div>
     </div>
   );
 }
