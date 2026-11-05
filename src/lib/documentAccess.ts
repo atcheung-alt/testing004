@@ -43,6 +43,15 @@ export async function currentCommissionAccess(): Promise<AccessMode> {
   return currentAccess();
 }
 
+export async function commissionOwnedInvoiceIds(access: AccessMode): Promise<Set<string> | null> {
+  if (access.mode !== "self") return null;
+  const created = await prisma.activityEvent.findMany({
+    where: { documentType: "invoice", type: "CREATED" },
+    select: { documentId: true, actorName: true },
+  });
+  return new Set(created.filter((event) => actorOwns(event.actorName, access.person)).map((event) => event.documentId));
+}
+
 /** Admin sees every colleague. Anyone else sees only a share that names them. */
 export function commissionShareVisible(colleagueName: string, access: AccessMode): boolean {
   const named = colleagueName.trim();

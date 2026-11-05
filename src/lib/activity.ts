@@ -120,7 +120,7 @@ export async function logClientView(
 
 export async function getActivityTimeline(documentType: ActivityDocumentType, documentId: string) {
   return prisma.activityEvent.findMany({
-    where: { documentType, documentId, type: { notIn: ["COMMISSION", "CLIENT_SOURCE"] } },
+    where: { documentType, documentId, type: { notIn: ["COMMISSION", "COMMISSION_PAID", "CLIENT_SOURCE"] } },
     orderBy: { createdAt: "asc" },
   });
 }

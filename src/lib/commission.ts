@@ -30,8 +30,9 @@ export function parseCommissionMark(
   return { workKind: match[1] as "EVENT" | "RECRUITMENT", day: match[2] };
 }
 
-/** Pending until this calendar day. That day, and after, is done. */
+/** Pending until this calendar day. That day, and after, is done. A missing date stays pending. */
 export function commissionDayReached(day: string, now = new Date()): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "")) return false;
   return day <= hongKongDay(now);
 }
 

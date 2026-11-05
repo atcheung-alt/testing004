@@ -61,7 +61,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
         { href: "/invoices", label: t("Invoices"), icon: ReceiptText },
         { href: "/receipts", label: t("Receipts"), icon: ReceiptIcon },
         { href: "/expenses", label: t("Expenses"), icon: Wallet },
-        { href: "/commission", label: t("Commission"), icon: HandCoins },
+        { href: "/commission", label: t("Billing"), icon: HandCoins },
       ],
     },
     {
