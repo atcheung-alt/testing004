@@ -1,6 +1,6 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Fraunces, Inter, IBM_Plex_Mono, Allura, Lora, Syne } from "next/font/google";
 import { getEffectiveAnimationsEnabled, getEffectiveThemeModeFor } from "@/lib/appSettings";
 import { getCurrentUser } from "@/lib/auth";
 import { LanguageProvider } from "@/lib/i18n/client";
@@ -9,49 +9,17 @@ import { getAppLanguage } from "@/lib/i18n/server";
 import PublicLanguageSwitch from "@/components/PublicLanguageSwitch";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
+const FONT_STYLESHEET =
+  "https://fonts.googleapis.com/css2?family=Allura&family=Fraunces:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter&family=Lora:wght@500;600&family=Syne:wght@600;700&display=swap";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
-  weight: ["500", "600"],
-  display: "swap",
-});
-
-const syne = Syne({
-  subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["600", "700"],
-  display: "swap",
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
-
-// Handwriting font used for typed e-signatures — an elegant, flowing script
-// (rather than a casual handwriting style) so typed signatures read as
-// genuine signatures.
-const allura = Allura({
-  subsets: ["latin"],
-  variable: "--font-signature",
-  weight: ["400"],
-  display: "swap",
-});
+const fontVariables = {
+  "--font-fraunces": '"Fraunces", serif',
+  "--font-inter": '"Inter", sans-serif',
+  "--font-lora": '"Lora", serif',
+  "--font-syne": '"Syne", sans-serif',
+  "--font-mono": '"IBM Plex Mono", monospace',
+  "--font-signature": '"Allura", cursive',
+} as CSSProperties;
 
 export const metadata: Metadata = {
   title: "Resource Management System - HR Plus",
@@ -91,8 +59,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={htmlLang(language)}
       data-animations={animationsEnabled ? "on" : "off"}
       data-theme={themeMode.toLowerCase()}
-      className={`${fraunces.variable} ${inter.variable} ${lora.variable} ${syne.variable} ${plexMono.variable} ${allura.variable}`}
+      style={fontVariables}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="stylesheet" href={FONT_STYLESHEET} />
+      </head>
       <body>
         <LanguageProvider language={language}>
           <PublicLanguageSwitch />
