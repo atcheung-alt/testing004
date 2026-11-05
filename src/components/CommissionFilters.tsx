@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import CommissionPaidToggle from "@/components/CommissionPaidToggle";
+import { hongKongDay } from "@/lib/commission";
 
 export type BillingRow = {
   id: string;
@@ -17,6 +19,9 @@ export type BillingRow = {
   legalName: string;
   detail: string;
   amount: string;
+  amountValue: number;
+  kind: "" | "EVENT" | "RECRUITMENT";
+  day: string;
   done: boolean;
   paidDay: string;
 };
@@ -77,6 +82,9 @@ export default function CommissionFilters({
     undoQuestion: string;
     confirm: string;
     cancel: string;
+    pageTitle: string;
+    pageNote: string;
+    exportCsv: string;
   };
 }) {
   const [query, setQuery] = useState("");
@@ -109,8 +117,39 @@ export default function CommissionFilters({
     };
   }, [needle, suggestions.length]);
 
+  function exportCsv() {
+    const header = ["Invoice Number", "Type", "Date", "Assigned Colleague", "Billing Amount (HK$)", "Status", "Payment Status"];
+    const lines = [header.join(",")].concat(shown.map((row) => [
+      row.number,
+      row.kind === "RECRUITMENT" ? labels.recruitment : row.kind === "EVENT" ? labels.event : "",
+      row.day,
+      row.person,
+      row.amountValue,
+      row.done ? labels.done : labels.pending,
+      row.paidDay ? "PAID" : "UNPAID",
+    ].map((value) => {
+      const text = String(value ?? "");
+      return /[",\n]/.test(text) ? `"${text.replace(/"/g, "\"\"")}"` : text;
+    }).join(",")));
+    const file = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(file);
+    link.download = `my_billing_export_${hongKongDay(new Date())}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
   return (
     <>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-semibold text-ink">{labels.pageTitle}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-ink-muted">{labels.pageNote}</p>
+        </div>
+        <button type="button" className="btn-secondary shrink-0" onClick={exportCsv}>
+          <Download size={15} /> {labels.exportCsv}
+        </button>
+      </div>
       <form
         id="billing-filters"
         action="/commission"

@@ -29,7 +29,6 @@ import {
 import clsx from "clsx";
 import CompanyLogo from "@/components/CompanyLogo";
 import SwitchSystemLink from "@/components/SwitchSystemLink";
-import LanguageSwitch from "@/components/LanguageSwitch";
 import { useT } from "@/lib/i18n/client";
 
 const COLLAPSED_STORAGE_KEY = "hrplus-sidebar-collapsed";
@@ -61,7 +60,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
         { href: "/invoices", label: t("Invoices"), icon: ReceiptText },
         { href: "/receipts", label: t("Receipts"), icon: ReceiptIcon },
         { href: "/expenses", label: t("Expenses"), icon: Wallet },
-        { href: "/commission", label: t("Billing"), icon: HandCoins },
+        { href: "/commission", label: t("My Billing"), icon: HandCoins },
       ],
     },
     {
@@ -274,7 +273,6 @@ function BottomLinks({
         )}
         <span className={clsx(collapsed && "lg:hidden")}>{t("Log Out")}</span>
       </button>
-      <LanguageSwitch collapsed={collapsed} className="mt-1" />
     </div>
   );
 }

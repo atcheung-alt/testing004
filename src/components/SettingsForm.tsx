@@ -28,6 +28,26 @@ const THEME_OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "AUTO", label: "Automatic", icon: Monitor },
 ];
 
+function Hint({ text }: { text: string }) {
+  return (
+    <span className="group relative ml-1 inline-flex align-middle">
+      <button
+        type="button"
+        aria-label={text}
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-line text-[10px] leading-none text-ink-muted"
+      >
+        ?
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden w-64 rounded-lg border border-line bg-white p-2 text-left text-xs font-normal normal-case tracking-normal text-ink shadow-card group-hover:block"
+      >
+        {text}
+      </span>
+    </span>
+  );
+}
+
 function ThemeModeToggle({ value, onChange }: { value: ThemeMode; onChange: (v: ThemeMode) => void }) {
   const t = useT();
   return (
@@ -73,7 +93,7 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (value: boo
   );
 }
 
-export default function SettingsForm({ part = "appearance" }: { part?: "appearance" | "company" }) {
+export default function SettingsForm({ part = "appearance", admin = false }: { part?: "appearance" | "company"; admin?: boolean }) {
   const t = useT();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings>(emptySettings);
@@ -175,14 +195,7 @@ export default function SettingsForm({ part = "appearance" }: { part?: "appearan
 
       {part === "appearance" && (
       <div className="card p-5 flex flex-col gap-3">
-        <div>
-          <h2 className="font-display text-lg font-semibold">{t("Appearance")}</h2>
-          <p className="text-sm text-ink-muted mt-0.5">
-            {t(
-              "Hover effects, page transitions, and other motion across the whole app. Turn off for a fully static, instant-feeling interface."
-            )}
-          </p>
-        </div>
+        <h2 className="font-display text-lg font-semibold">{t("Appearance")}</h2>
         <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
           <span>{t("Enable animations")}</span>
           <Switch
@@ -191,39 +204,34 @@ export default function SettingsForm({ part = "appearance" }: { part?: "appearan
           />
         </label>
 
-        <div className="pt-3 border-t border-line flex flex-col gap-2">
-          <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
-            <span>{t("MPF notifications")}</span>
-            <Switch
-              checked={settings.mpfNotificationsEnabled}
-              onChange={(v) => update("mpfNotificationsEnabled", v)}
-            />
-          </label>
-          <p className="text-xs text-ink-faint max-w-lg">
-            {t(
-              "When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner."
-            )}
-          </p>
-        </div>
+        {admin ? (
+          <div className="pt-3 border-t border-line flex flex-col gap-2">
+            <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
+              <span className="inline-flex items-center">
+                {t("MPF notifications")}
+                <Hint text={t("When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner.")} />
+              </span>
+              <Switch
+                checked={settings.mpfNotificationsEnabled}
+                onChange={(v) => update("mpfNotificationsEnabled", v)}
+              />
+            </label>
+          </div>
+        ) : null}
 
-        <div className="pt-1">
-          <p className="text-sm font-medium mb-2">{t("Default color theme")}</p>
-          <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
-          <p className="mt-1.5 text-xs text-ink-faint">
-            {t(
-              "Used on the sign-in page and for any staff member who hasn't set their own theme below. \"Automatic\" follows the visitor's own device setting."
-            )}
-          </p>
-        </div>
+        {admin ? (
+          <div className="pt-1">
+            <p className="mb-2 inline-flex items-center text-sm font-medium">
+              {t("Default color theme")}
+              <Hint text={t("Used on the sign-in page and for any staff member who hasn't set their own theme below. \"Automatic\" follows the visitor's own device setting.")} />
+            </p>
+            <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
+          </div>
+        ) : null}
 
         <div className="pt-3 border-t border-line">
           <p className="text-sm font-medium mb-2">{t("Your theme")}</p>
           <ThemeModeControl />
-          <p className="mt-1.5 text-xs text-ink-faint">
-            {t(
-              "Just for your account — overrides the default above whenever you're signed in, on any device."
-            )}
-          </p>
         </div>
       </div>
       )}

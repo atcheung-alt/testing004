@@ -7,7 +7,6 @@ import { loadCommissionPaid } from "@/lib/commissionPaid";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
 import { colleagueLabel } from "@/lib/staffCode";
 import { loadColleagues } from "@/lib/quotationAuthor";
-import PageBar from "@/components/PageBar";
 import CommissionFilters from "@/components/CommissionFilters";
 import { getT } from "@/lib/i18n/server";
 
@@ -119,7 +118,6 @@ export default async function CommissionPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageBar title={t("My Commission")} note={t("Pending until the date. Done once that day has arrived.")} />
       <CommissionFilters
         kind={kind}
         state={state}
@@ -150,6 +148,9 @@ export default async function CommissionPage({
               : t("No date"),
           ].filter(Boolean).join(" · "),
           amount: formatCurrency(row.amount),
+          amountValue: row.amount,
+          kind: row.mark?.workKind || "",
+          day: row.mark && /^\d{4}-\d{2}-\d{2}$/.test(row.mark.day) ? row.mark.day : "",
           done: row.done,
           paidDay: row.paidDay,
         }))}
@@ -182,6 +183,9 @@ export default async function CommissionPage({
           undoQuestion: t("Change this commission back to unpaid?"),
           confirm: t("Confirm"),
           cancel: t("Cancel"),
+          pageTitle: t("Commission"),
+          pageNote: t("Pending until the date. Done once that day has arrived."),
+          exportCsv: t("Export CSV"),
         }}
       />
     </div>

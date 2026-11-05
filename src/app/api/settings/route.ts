@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSettings, updateSettings, validateSettings, type AppSettings, type ThemeMode } from "@/lib/appSettings";
+import { getCurrentUser } from "@/lib/auth";
+import { isSuperAdmin } from "@/lib/accessControl";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +21,8 @@ export async function PUT(request: NextRequest) {
   // request is changing) rather than just the raw request body, so a
   // partial save can't accidentally leave a required field blank just
   // because this particular request didn't happen to include it.
+  const session = await getCurrentUser();
+  const admin = Boolean(session && (session.isAdmin || isSuperAdmin(session)));
   const current = await getSettings();
   const merged: AppSettings = {
     driveFolderId: typeof body.driveFolderId === "string" ? body.driveFolderId : current.driveFolderId,
@@ -30,9 +34,9 @@ export async function PUT(request: NextRequest) {
     ccEmails: typeof body.ccEmails === "string" ? body.ccEmails : current.ccEmails,
     animationsEnabled:
       typeof body.animationsEnabled === "boolean" ? body.animationsEnabled : current.animationsEnabled,
-    themeMode: typeof body.themeMode === "string" ? (body.themeMode as ThemeMode) : current.themeMode,
+    themeMode: admin && typeof body.themeMode === "string" ? (body.themeMode as ThemeMode) : current.themeMode,
     mpfNotificationsEnabled:
-      typeof body.mpfNotificationsEnabled === "boolean"
+      admin && typeof body.mpfNotificationsEnabled === "boolean"
         ? body.mpfNotificationsEnabled
         : current.mpfNotificationsEnabled,
   };

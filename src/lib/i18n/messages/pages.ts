@@ -6,6 +6,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
   to: "至",
   Commission: "佣金",
   Billing: "賬單",
+  "My Billing": "我的賬單",
   "My Commission": "我的佣金",
   Pending: "待處理",
   Done: "已完成",
