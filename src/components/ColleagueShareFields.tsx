@@ -2,6 +2,7 @@
 
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 import type { StaffColleague } from "@/lib/staffCode";
@@ -52,6 +53,8 @@ function ColleaguePicker({
   labelFor: (code: string) => string;
 }) {
   const t = useT();
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [menuBox, setMenuBox] = useState<{ top: number; left: number; width: number } | null>(null);
   const needle = query.trim().toLowerCase();
   const options = colleagues.filter((person) => colleagueMatches(person, needle));
   const storedOutsideList =
@@ -59,9 +62,67 @@ function ColleaguePicker({
   const showStored = Boolean(storedOutsideList) && (!needle || storedOutsideList.toLowerCase().includes(needle));
   const chosen = share.colleagueName ? labelFor(share.colleagueName) : "";
 
+  useEffect(() => {
+    if (!open) return;
+    function place() {
+      const rect = anchorRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setMenuBox({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
+
+  const menu = open && menuBox ? (
+    <div
+      className="fixed z-[9999] rounded-xl border border-line bg-surface p-1.5 shadow-card"
+      style={{ top: menuBox.top, left: menuBox.left, width: menuBox.width }}
+    >
+      <input
+        className="input py-1.5"
+        type="search"
+        autoFocus
+        placeholder={t("Search colleague")}
+        aria-label={t("Search colleague")}
+        value={query}
+        onChange={(event) => onQueryChange(event.target.value)}
+      />
+      <div className="mt-1 max-h-56 overflow-auto">
+        {showStored ? (
+          <button
+            type="button"
+            className="block w-full rounded-lg bg-paper px-2 py-1.5 text-left text-sm text-ink"
+            onClick={() => onChoose(storedOutsideList)}
+          >
+            {storedOutsideList}
+          </button>
+        ) : null}
+        {options.map((person) => (
+          <button
+            key={person.code}
+            type="button"
+            className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-paper ${person.code === share.colleagueName ? "bg-paper" : ""}`}
+            onClick={() => onChoose(person.code)}
+          >
+            {labelFor(person.code)}
+          </button>
+        ))}
+        {options.length === 0 && !showStored ? (
+          <p className="px-2 py-2 text-sm text-ink-muted">{t("No matching colleague")}</p>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <div className="relative min-w-[9rem] flex-1" ref={pickerRef}>
+    <div className="relative z-20 min-w-[9rem] flex-1 overflow-visible" ref={pickerRef}>
       <button
+        ref={anchorRef}
         type="button"
         className="input flex w-full items-center justify-between gap-2 py-1.5 text-left"
         aria-label={t("Colleague")}
@@ -71,43 +132,7 @@ function ColleaguePicker({
         <span className={chosen ? "truncate" : "truncate text-ink-faint"}>{chosen || t("Choose a colleague")}</span>
         <ChevronDown size={14} className="shrink-0 text-ink-muted" />
       </button>
-      {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+4px)] z-20 min-w-[220px] rounded-xl border border-line bg-surface p-1.5 shadow-card">
-          <input
-            className="input py-1.5"
-            type="search"
-            autoFocus
-            placeholder={t("Search colleague")}
-            aria-label={t("Search colleague")}
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-          />
-          <div className="mt-1 max-h-56 overflow-auto">
-            {showStored ? (
-              <button
-                type="button"
-                className="block w-full rounded-lg bg-paper px-2 py-1.5 text-left text-sm text-ink"
-                onClick={() => onChoose(storedOutsideList)}
-              >
-                {storedOutsideList}
-              </button>
-            ) : null}
-            {options.map((person) => (
-              <button
-                key={person.code}
-                type="button"
-                className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-paper ${person.code === share.colleagueName ? "bg-paper" : ""}`}
-                onClick={() => onChoose(person.code)}
-              >
-                {labelFor(person.code)}
-              </button>
-            ))}
-            {options.length === 0 && !showStored ? (
-              <p className="px-2 py-2 text-sm text-ink-muted">{t("No matching colleague")}</p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      {menu && typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </div>
   );
 }

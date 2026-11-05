@@ -388,6 +388,7 @@ model InvoiceExpense {
   // Receipts, supplier invoices, and other supporting files kept with this
   // expense. Internal record-keeping only — never shown on a client PDF.
   documents ExpenseDocument[]
+  createdBy String   @default("")
   createdAt DateTime @default(now())
 }
 
@@ -418,6 +419,7 @@ model GeneralExpense {
   invoiceId String?
   invoiceNumber String @default("")
   expenseType String @default("GENERAL")
+  createdBy   String @default("")
   fileName  String   @default("")
   mimeType  String   @default("")
   fileData  String   @default("")

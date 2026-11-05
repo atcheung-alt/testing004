@@ -222,8 +222,8 @@ export const ZH: Record<string, string> = {
   Net: "淨額",
   Expense: "開支",
   Receipt: "收據",
-  "Look at receipts, expenses, or the consolidated record for the dates you choose.":
-    "按你選擇的日期查看收據、開支，或綜合記錄。",
+  "Look at receipts, expenses, or all records for the dates you choose.":
+    "按你選擇的日期查看收據、開支，或全部記錄。",
   "No expenses found": "找不到開支",
   "Try another date range, or record an expense from the Expenses page.":
     "試試其他日期，或到開支頁記錄一筆。",

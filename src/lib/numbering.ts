@@ -8,7 +8,7 @@ export async function nextDocumentNumber(
   kind: "quotation" | "invoice" | "receipt" | "recruitment"
 ): Promise<string> {
   const prefix =
-    kind === "quotation" ? "QT" : kind === "invoice" ? "INV" : kind === "receipt" ? "RCT" : "RA";
+    kind === "quotation" ? "QT" : kind === "invoice" ? "INV" : kind === "receipt" ? "RE" : "RA";
   const year = new Date().getFullYear();
   const pattern = `${prefix}-${year}-`;
 

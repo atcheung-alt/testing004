@@ -3,12 +3,17 @@ import GeneralExpenses from "@/components/GeneralExpenses";
 import PageBar from "@/components/PageBar";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
-import { listGeneralExpenses } from "@/lib/generalExpense";
+import { ensureGeneralExpenseTable, ensureInvoiceExpenseOwnerColumn, listGeneralExpenses } from "@/lib/generalExpense";
+import { getCurrentUser } from "@/lib/auth";
+import { isSuperAdmin } from "@/lib/accessControl";
 
 export const dynamic = "force-dynamic";
 
 export default async function ExpensesPage() {
   const t = getT();
+  const session = await getCurrentUser();
+  const admin = Boolean(session && (session.isAdmin || isSuperAdmin(session)));
+  await Promise.all([ensureGeneralExpenseTable().catch(() => undefined), ensureInvoiceExpenseOwnerColumn().catch(() => undefined)]);
   const invoiceFilter = await currentInvoiceFilter();
   const [invoices, expenses, general] = await Promise.all([
     prisma.invoice.findMany({
@@ -49,6 +54,7 @@ export default async function ExpensesPage() {
       link: expense.invoiceNumber || "General",
       invoiceId: invoices.find((invoice) => invoice.number === expense.invoiceNumber)?.id || "",
       receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
+      canDelete: admin || Boolean(session && expense.createdBy === session.userId),
     })),
     ...expenses.map((expense) => ({
       id: expense.id,
@@ -63,6 +69,7 @@ export default async function ExpensesPage() {
       receiptHref: expense.documents[0]
         ? `/api/invoices/${expense.invoice.id}/expenses/${expense.id}/documents/${expense.documents[0].id}`
         : "",
+      canDelete: admin || Boolean(session && expense.createdBy === session.userId),
     })),
   ].sort((a, b) => (a.date < b.date ? 1 : -1));
 

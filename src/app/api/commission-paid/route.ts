@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
   const invoiceId = String(body.invoiceId || "").trim();
   const colleagueName = String(body.colleagueName || "").trim();
-  if (!invoiceId || !colleagueName) {
+  if (!invoiceId) {
     return NextResponse.json({ error: "Choose a commission row." }, { status: 400 });
   }
   const paidOn = await setCommissionPaid(invoiceId, colleagueName, Boolean(body.paid));

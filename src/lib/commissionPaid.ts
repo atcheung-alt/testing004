@@ -16,7 +16,7 @@ export async function loadCommissionPaid(invoiceIds: string[]): Promise<Map<stri
   });
   rows.forEach((row) => {
     const [name, day] = String(row.description || "").split("\n");
-    if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(day || "")) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "")) return;
     paid.set(`${row.documentId}\n${name.trim()}`, day);
   });
   return paid;

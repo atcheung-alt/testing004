@@ -6,6 +6,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
   to: "至",
   Commission: "佣金",
   Billing: "賬單",
+  "My Commission": "我的佣金",
   Pending: "待處理",
   Done: "已完成",
   "Recognise invoice day": "確認發票日",
@@ -21,6 +22,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "這個日期決定佣金。日期之前是待處理，日期到了就是已完成。",
   "No date": "沒有日期",
   "Save Expense": "儲存開支",
+  "Delete this expense?": "刪除這筆開支？",
   "Nothing matches.": "沒有符合的項目。",
   "No records found for this colleague": "找不到這位同事的紀錄",
   "No invoice has Event or Recruitment with a date saved yet. Booking dates on an invoice are not used here.":

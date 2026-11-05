@@ -53,10 +53,7 @@ async function MoneyList({
       ? { AND: [...(customerFilter ? [customerFilter] : []), ...(visibility ? [visibility] : [])] }
       : undefined;
 
-  const receipts =
-    view === "expenses"
-      ? []
-      : await prisma.receipt.findMany({
+  const receipts = await prisma.receipt.findMany({
           where: {
             issueDate: range,
             invoice: invoiceWhere,
@@ -67,10 +64,7 @@ async function MoneyList({
           orderBy: { issueDate: "desc" },
         });
 
-  const expenses =
-    view === "receipts"
-      ? []
-      : await prisma.invoiceExpense.findMany({
+  const expenses = await prisma.invoiceExpense.findMany({
           where: {
             createdAt: range,
             invoice: invoiceWhere,
@@ -104,7 +98,7 @@ async function MoneyList({
   };
 
   const rows: Row[] = [
-    ...receipts.map((receipt) => ({
+    ...(view === "expenses" ? [] : receipts).map((receipt) => ({
       key: `receipt-${receipt.id}`,
       when: receipt.issueDate,
       kind: "receipt" as const,
@@ -135,7 +129,7 @@ async function MoneyList({
           }).body
         : "",
     })),
-    ...expenses.map((expense) => ({
+    ...(view === "receipts" ? [] : expenses).map((expense) => ({
       key: `expense-${expense.id}`,
       when: expense.createdAt,
       kind: "expense" as const,
@@ -152,42 +146,43 @@ async function MoneyList({
     })),
   ].sort((a, b) => b.when.getTime() - a.when.getTime());
 
+  const summary = (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="card px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{t("Receipts")}</p>
+        <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal)}</p>
+      </div>
+      <div className="card px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">{t("Expenses")}</p>
+        <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(expenseTotal)}</p>
+      </div>
+      <div className="card px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Net")}</p>
+        <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal - expenseTotal)}</p>
+      </div>
+    </div>
+  );
+
   if (rows.length === 0) {
     return (
-      <EmptyState
-        icon={ReceiptIcon}
-        title={view === "expenses" ? t("No expenses found") : t("No receipts found")}
-        description={
-          view === "expenses"
-            ? t("Try another date range, or record an expense from the Expenses page.")
-            : t("Try adjusting your filters. Receipts are generated automatically once an invoice is verified as Paid.")
-        }
-      />
+      <div className="flex flex-col gap-4">
+        {summary}
+        <EmptyState
+          icon={ReceiptIcon}
+          title={view === "expenses" ? t("No expenses found") : t("No receipts found")}
+          description={
+            view === "expenses"
+              ? t("Try another date range, or record an expense from the Expenses page.")
+              : t("Try adjusting your filters. Receipts are generated automatically once an invoice is verified as Paid.")
+          }
+        />
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {view !== "expenses" && (
-          <div className="card px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Receipts")}</p>
-            <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal)}</p>
-          </div>
-        )}
-        {view !== "receipts" && (
-          <div className="card px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Expenses")}</p>
-            <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(expenseTotal)}</p>
-          </div>
-        )}
-        {view === "all" && (
-          <div className="card px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Net")}</p>
-            <p className="font-mono text-lg font-semibold mt-1">{formatCurrency(receiptTotal - expenseTotal)}</p>
-          </div>
-        )}
-      </div>
+      {summary}
 
       <div className="card overflow-x-auto">
         <div className="min-w-[46rem] divide-y divide-line">
@@ -275,7 +270,7 @@ export default function ReceiptsPage({
   const views: { id: View; label: string }[] = [
     { id: "receipts", label: t("Receipts") },
     { id: "expenses", label: t("Expense") },
-    { id: "all", label: t("Consolidated") },
+    { id: "all", label: t("All") },
   ];
 
   return (
@@ -285,7 +280,7 @@ export default function ReceiptsPage({
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Receipts")}</h1>
           <p className="lead">
-            {t("Look at receipts, expenses, or the consolidated record for the dates you choose.")}
+            {t("Look at receipts, expenses, or all records for the dates you choose.")}
           </p>
         </div>
         <a href={exportHref} className="btn-secondary shrink-0">

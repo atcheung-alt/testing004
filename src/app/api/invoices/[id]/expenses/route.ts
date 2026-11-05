@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { expenseFilesFrom } from "@/lib/expenseFiles";
 import { invoiceCanModify } from "@/lib/documentAccess";
+import { getCurrentUser } from "@/lib/auth";
+import { ensureInvoiceExpenseOwnerColumn } from "@/lib/generalExpense";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await invoiceCanModify(params.id))) {
@@ -34,6 +36,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
+  const session = await getCurrentUser();
+  await ensureInvoiceExpenseOwnerColumn();
   const count = await prisma.invoiceExpense.count({ where: { invoiceId: params.id } });
 
   const expense = await prisma.invoiceExpense.create({
@@ -43,6 +47,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       label: category === "Others" ? label : "",
       amount,
       sortOrder: count,
+      createdBy: session?.userId || "",
       documents: documents.length
         ? { create: documents.map((file) => ({ fileName: file.fileName, mimeType: file.mimeType, data: file.data })) }
         : undefined,

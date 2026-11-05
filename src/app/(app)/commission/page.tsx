@@ -119,7 +119,7 @@ export default async function CommissionPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageBar title={t("Billing")} note={t("Pending until the date. Done once that day has arrived.")} />
+      <PageBar title={t("My Commission")} note={t("Pending until the date. Done once that day has arrived.")} />
       <CommissionFilters
         kind={kind}
         state={state}

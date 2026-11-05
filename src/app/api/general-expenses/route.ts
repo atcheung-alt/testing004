@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDataUrl } from "@/lib/mailer";
 import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
+import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -38,6 +39,8 @@ export async function POST(request: NextRequest) {
     fileData = body.fileData;
   }
 
+  const session = await getCurrentUser();
+  if (!session) return NextResponse.json({ error: "Sign in to save an expense." }, { status: 401 });
   const invoiceId = String(body.invoiceId || "").trim();
   const expenseType = invoiceId ? "INVOICE" : "GENERAL";
 
@@ -53,6 +56,7 @@ export async function POST(request: NextRequest) {
         invoiceId: invoiceId || null,
         invoiceNumber: invoiceId ? String(body.invoiceNumber || "").trim() : "",
         expenseType,
+        createdBy: session.userId,
         fileName,
         mimeType,
         fileData,

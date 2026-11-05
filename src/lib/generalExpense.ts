@@ -12,6 +12,7 @@ export type GeneralExpenseRow = {
   invoiceNumber: string;
   fileName: string;
   mimeType: string;
+  createdBy: string;
 };
 
 /** Create the general-expense table when this database does not have it yet. Existing rows are left in place. */
@@ -31,12 +32,18 @@ export async function ensureGeneralExpenseTable(): Promise<void> {
       "mimeType" TEXT NOT NULL DEFAULT '',
       "fileData" TEXT NOT NULL DEFAULT '',
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      "expenseType" TEXT NOT NULL DEFAULT 'GENERAL'
+      "expenseType" TEXT NOT NULL DEFAULT 'GENERAL',
+      "createdBy" TEXT NOT NULL DEFAULT ''
     )
   `);
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "GeneralExpense_spentAt_idx" ON "GeneralExpense"("spentAt")`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ALTER COLUMN "invoiceId" DROP NOT NULL`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ADD COLUMN IF NOT EXISTS "expenseType" TEXT NOT NULL DEFAULT 'GENERAL'`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ADD COLUMN IF NOT EXISTS "createdBy" TEXT NOT NULL DEFAULT ''`);
+}
+
+export async function ensureInvoiceExpenseOwnerColumn(): Promise<void> {
+  await prisma.$executeRawUnsafe(`ALTER TABLE "InvoiceExpense" ADD COLUMN IF NOT EXISTS "createdBy" TEXT NOT NULL DEFAULT ''`);
 }
 
 const lightSelect = {
@@ -51,6 +58,7 @@ const lightSelect = {
   invoiceNumber: true,
   fileName: true,
   mimeType: true,
+  createdBy: true,
 } as const;
 
 export async function listGeneralExpenses(): Promise<GeneralExpenseRow[]> {

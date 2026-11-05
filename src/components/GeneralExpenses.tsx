@@ -33,6 +33,7 @@ export type HistoryRow = {
   link: string;
   invoiceId: string;
   receiptHref: string;
+  canDelete: boolean;
 };
 
 export default function GeneralExpenses({
@@ -59,6 +60,8 @@ export default function GeneralExpenses({
   const [fileData, setFileData] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [removingId, setRemovingId] = useState("");
+  const [askId, setAskId] = useState("");
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [from, setFrom] = useState("");
@@ -120,6 +123,26 @@ export default function GeneralExpenses({
       setError(err instanceof Error ? err.message : "Could not save the expense.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function remove(row: HistoryRow) {
+    if (!row.canDelete || removingId) return;
+    setRemovingId(row.id);
+    setError("");
+    try {
+      const url = row.source === "invoice"
+        ? `/api/invoices/${row.invoiceId}/expenses/${row.id}`
+        : `/api/general-expenses/${row.id}`;
+      const response = await fetch(url, { method: "DELETE" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Could not delete that expense.");
+      setAskId("");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete that expense.");
+    } finally {
+      setRemovingId("");
     }
   }
 
@@ -222,7 +245,8 @@ export default function GeneralExpenses({
                 <th className="py-2 pr-3">{t("Vendor")}</th>
                 <th className="py-2 pr-3">{t("Amount")}</th>
                 <th className="py-2 pr-3">{t("Link")}</th>
-                <th className="py-2">{t("Receipt")}</th>
+                <th className="py-2 pr-3">{t("Receipt")}</th>
+                <th className="py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -240,10 +264,27 @@ export default function GeneralExpenses({
                       t("General")
                     )}
                   </td>
-                  <td className="py-2">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref}>{t("View receipt")}</a> : "—"}</td>
+                  <td className="py-2 pr-3">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
+                  <td className="py-2">
+                    {row.canDelete && askId === row.id ? (
+                      <span className="inline-flex flex-wrap items-center gap-1 text-xs text-ink">
+                        <span>{t("Delete this expense?")}</span>
+                        <button type="button" className="rounded-full border border-danger-500 px-2 py-0.5 text-danger-600" disabled={removingId === row.id} onClick={() => remove(row)}>
+                          {t("Confirm")}
+                        </button>
+                        <button type="button" className="rounded-full border border-line px-2 py-0.5 text-ink-muted" disabled={removingId === row.id} onClick={() => setAskId("")}>
+                          {t("Cancel")}
+                        </button>
+                      </span>
+                    ) : row.canDelete ? (
+                      <button type="button" className="text-xs text-ink-muted underline underline-offset-2" onClick={() => setAskId(row.id)}>
+                        {t("Delete")}
+                      </button>
+                    ) : null}
+                  </td>
                 </tr>
               ))}
-              {!rows.length ? <tr><td className="py-3 text-ink-500" colSpan={7}>{t("No matching expense.")}</td></tr> : null}
+              {!rows.length ? <tr><td className="py-3 text-ink-500" colSpan={8}>{t("No matching expense.")}</td></tr> : null}
             </tbody>
           </table>
         </div>
