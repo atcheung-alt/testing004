@@ -63,7 +63,7 @@ async function QuotationList({
   }
 
   return (
-    <div className="card divide-y divide-line">
+    <div className="divide-y divide-line">
       {quotations.map((q) => (
         <Link
           key={q.id}

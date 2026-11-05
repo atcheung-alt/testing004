@@ -429,7 +429,6 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "{company} 鈞鑒：\n\n現附上招聘服務協議（{number}），敬請審閱。\n\n如需網上審閱及簽署，請使用下方「網上審閱及簽署」連結，無需登入。\n\n此致\n{sender}",
 
   Management: "管理",
-  "System / Admin Settings": "系統／管理員設定",
   "Choose which pages each group can open. People who are not in a group keep full access.":
     "設定每個組別可以開啟的頁面。未加入任何組別的人保持全部權限。",
   "Open a row to use it. Each closed row says what it does.":

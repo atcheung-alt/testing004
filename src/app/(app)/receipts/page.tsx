@@ -184,7 +184,7 @@ async function MoneyList({
     <div className="flex flex-col gap-4">
       {summary}
 
-      <div className="card overflow-x-auto">
+      <div className="overflow-x-auto">
         <div className="min-w-[46rem] divide-y divide-line">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-4 gap-6">

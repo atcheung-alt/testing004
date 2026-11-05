@@ -79,7 +79,7 @@ async function InvoiceList({
   }
 
   return (
-    <div className="card divide-y divide-line">
+    <div className="divide-y divide-line">
       {visible.map((inv) => {
         const revenue = inv.total;
         const expenses = inv.expenses.reduce((sum, e) => sum + e.amount, 0);

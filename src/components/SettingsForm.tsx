@@ -93,7 +93,7 @@ function Switch({ checked, onChange }: { checked: boolean; onChange: (value: boo
   );
 }
 
-export default function SettingsForm({ part = "appearance" }: { part?: "appearance" | "company" | "defaults" }) {
+export default function SettingsForm({ part = "appearance" }: { part?: "appearance" | "company" }) {
   const t = useT();
   const router = useRouter();
   const [settings, setSettings] = useState<AppSettings>(emptySettings);
@@ -160,9 +160,17 @@ export default function SettingsForm({ part = "appearance" }: { part?: "appearan
       const payload =
         part === "appearance"
           ? { animationsEnabled: settings.animationsEnabled }
-          : part === "defaults"
-            ? { themeMode: settings.themeMode, mpfNotificationsEnabled: settings.mpfNotificationsEnabled }
-            : settings;
+          : {
+              driveFolderId: settings.driveFolderId,
+              companyName: settings.companyName,
+              companyLogo: settings.companyLogo,
+              companyLogoDark: settings.companyLogoDark,
+              companyWebsite: settings.companyWebsite,
+              ccEnabled: settings.ccEnabled,
+              ccEmails: settings.ccEmails,
+              themeMode: settings.themeMode,
+              mpfNotificationsEnabled: settings.mpfNotificationsEnabled,
+            };
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -225,29 +233,6 @@ export default function SettingsForm({ part = "appearance" }: { part?: "appearan
         <div className="pt-3 border-t border-line">
           <p className="text-sm font-medium mb-2">{t("Your theme")}</p>
           <ThemeModeControl />
-        </div>
-      </div>
-      )}
-
-      {part === "defaults" && (
-      <div className="card p-5 flex flex-col gap-4 max-w-2xl">
-        <h2 className="font-display text-lg font-semibold">{t("System / Admin Settings")}</h2>
-        <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
-          <span className="inline-flex items-center">
-            {t("MPF notifications")}
-            <Hint text={t("When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner.")} />
-          </span>
-          <Switch
-            checked={settings.mpfNotificationsEnabled}
-            onChange={(v) => update("mpfNotificationsEnabled", v)}
-          />
-        </label>
-        <div>
-          <p className="mb-2 inline-flex items-center text-sm font-medium">
-            {t("Default color theme")}
-            <Hint text={t("Used on the sign-in page and for any staff member whose own theme is Company default. \"Automatic\" follows the visitor's own device setting.")} />
-          </p>
-          <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
         </div>
       </div>
       )}
@@ -373,6 +358,26 @@ export default function SettingsForm({ part = "appearance" }: { part?: "appearan
           <p className="mt-1 text-xs text-ink-faint">
             {t("Separate multiple addresses with commas or new lines.")}
           </p>
+        </div>
+      </div>
+
+      <div className="card p-5 flex flex-col gap-4">
+        <label className="flex items-center justify-between gap-3 text-sm font-medium max-w-sm">
+          <span className="inline-flex items-center">
+            {t("MPF notifications")}
+            <Hint text={t("When this is on, opening HR pops up a reminder for every full-time employee whose MPF enrollment deadline is 10 days away or sooner.")} />
+          </span>
+          <Switch
+            checked={settings.mpfNotificationsEnabled}
+            onChange={(v) => update("mpfNotificationsEnabled", v)}
+          />
+        </label>
+        <div>
+          <p className="mb-2 inline-flex items-center text-sm font-medium">
+            {t("Default color theme")}
+            <Hint text={t("Used on the sign-in page and for any staff member whose own theme is Company default. \"Automatic\" follows the visitor's own device setting.")} />
+          </p>
+          <ThemeModeToggle value={settings.themeMode} onChange={(v) => update("themeMode", v)} />
         </div>
       </div>
       </>
