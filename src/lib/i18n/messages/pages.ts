@@ -20,6 +20,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "This date decides Commission. Pending before the day. Done once the day has arrived.":
     "這個日期決定佣金。日期之前是待處理，日期到了就是已完成。",
   "Nothing matches.": "沒有符合的項目。",
+  "No invoice has Event or Recruitment with a date saved yet. Booking dates on an invoice are not used here.":
+    "還沒有發票同時儲存了活動或招聘，以及日期。發票上的活動日期不會用在這裡。",
   "All time": "全部時間",
   "All staff": "全部同事",
   Type: "類型",

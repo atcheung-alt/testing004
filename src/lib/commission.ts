@@ -25,7 +25,7 @@ export function commissionMarkDescription(workKind: string, day: string): string
 export function parseCommissionMark(
   description: string | null | undefined
 ): { workKind: "EVENT" | "RECRUITMENT"; day: string } | null {
-  const match = /^(EVENT|RECRUITMENT) (\d{4}-\d{2}-\d{2})$/.exec(String(description || "").trim());
+  const match = /^(EVENT|RECRUITMENT)\s+(\d{4}-\d{2}-\d{2})/.exec(String(description || "").trim());
   if (!match) return null;
   return { workKind: match[1] as "EVENT" | "RECRUITMENT", day: match[2] };
 }

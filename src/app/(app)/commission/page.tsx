@@ -105,6 +105,11 @@ export default async function CommissionPage({
     ...Array.from(marks.values()).map((mark) => mark.day.slice(0, 7)),
   ])).filter((month) => /^\d{4}-\d{2}$/.test(month)).sort().reverse();
 
+  const marked = invoices.filter((invoice) => {
+    const mark = marks.get(invoice.id);
+    return Boolean(mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day));
+  }).length;
+
   return (
     <div className="flex flex-col gap-4">
       <PageBar title={t("Billing")} note={t("Pending until the date. Done once that day has arrived.")} />
@@ -136,7 +141,11 @@ export default async function CommissionPage({
         }}
       />
       {rows.length === 0 ? (
-        <div className="card px-5 py-8 text-sm text-ink-muted">{t("Nothing matches.")}</div>
+        <div className="card px-5 py-8 text-sm text-ink-muted">
+          {marked === 0
+            ? t("No invoice has Event or Recruitment with a date saved yet. Booking dates on an invoice are not used here.")
+            : t("Nothing matches.")}
+        </div>
       ) : (
         <div className="card divide-y divide-line">
           {rows.map((row) => (
