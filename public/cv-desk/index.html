@@ -336,8 +336,7 @@
   .sheet:not(.cover) .job-head { display: flex; align-items: baseline; gap: 12px; }
   .sheet:not(.cover) .job-head [data-field="role"] { flex: 1; font-size: 14pt; font-weight: 700; line-height: 1.6; text-align: left; }
   .sheet:not(.cover) .job [data-field="company"] { display: block; width: 100%; font-size: 13pt; font-weight: 600; line-height: 1.6; color: #3d4a63; margin: 0; text-align: left; }
-  .sheet:not(.cover) .job [data-field="dates"],
-  .sheet:not(.cover) #edu [data-field="year"] {
+  .sheet:not(.cover) .job [data-field="dates"] {
     display: block;
     width: 100%;
     margin: 0;
@@ -349,9 +348,21 @@
     line-height: 1.6;
     white-space: normal;
   }
+  .sheet:not(.cover) #edu [data-field="year"] {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-size: 12pt;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1.6;
+    white-space: normal;
+  }
   .sheet:not(.cover) .job { margin: 0 0 18px; padding: 0; border: 0; }
   .sheet:not(.cover) .job + .job { margin-top: 0; padding-top: 0; border-top: 0; }
-  .sheet:not(.cover) #edu [data-field="school"] { display: block; width: 100%; text-align: left; font-size: 13pt; font-weight: 600; line-height: 1.6; }
+  .sheet:not(.cover) #edu [data-field="school"] { display: block; width: 100%; text-align: left; font-size: 13pt; font-weight: 400; line-height: 1.6; }
   .sheet:not(.cover) [data-field="duties"],
   .sheet:not(.cover) .lines[data-field="text"],
   .sheet:not(.cover) [data-slot="project"] {
@@ -812,7 +823,16 @@
             </div>
             <div>
               <label class="mail-label" for="mail-company">Client / Company Name</label>
-              <input class="input" id="mail-company" type="text" placeholder="Company name">
+              <input class="input" id="mail-company" type="text" list="mail-client-list" placeholder="Company name" autocomplete="off">
+              <datalist id="mail-client-list"></datalist>
+            </div>
+            <div>
+              <label class="mail-label" for="mail-greet">上款 Recipient name</label>
+              <input class="input" id="mail-greet" type="text" placeholder="Dear Hiring Manager,">
+            </div>
+            <div>
+              <label class="mail-label" for="mail-sign">下款 Sender signature</label>
+              <textarea class="input" id="mail-sign" rows="3" placeholder="Kind regards,&#10;Your name"></textarea>
             </div>
             <div>
               <label class="mail-label" for="mail-position">Job Position</label>
@@ -2895,6 +2915,16 @@ function mailSubject() {
   return "[HR Plus] Candidate Recommendation" + (tail ? ": " + tail : "");
 }
 
+function greetingLine() {
+  const typed = document.getElementById("mail-greet").value.trim();
+  return typed || "Dear Hiring Manager,";
+}
+
+function signatureLine() {
+  const typed = document.getElementById("mail-sign").value.trim();
+  return typed || "Kind regards,";
+}
+
 function mailHtml() {
   const company = document.getElementById("mail-company").value.trim() || "your company";
   const position = document.getElementById("mail-position").value.trim();
@@ -2913,13 +2943,26 @@ function mailHtml() {
       + "<li><strong>Attachment:</strong> " + esc(attachmentName(item)) + "</li>"
       + "</ul>";
   }).join("");
-  return "<p>Dear Hiring Manager,</p>"
+  const sign = esc(signatureLine()).replace(/\n/g, "<br>");
+  return "<p data-mail=\"greet\">" + esc(greetingLine()) + "</p>"
     + "<p>I hope you are well. HR Plus (Talent) Limited would like to recommend the following candidate"
     + (mailPicked.length === 1 ? "" : "s")
-    + " for " + rolePhrase + " at <strong>" + esc(company) + "</strong>.</p>"
-    + blocks
-    + "<p>Please tell us a convenient time for an interview, and we will coordinate it with the candidate.</p>"
-    + "<p>Kind regards,</p>";
+    + " for " + rolePhrase + " at <strong>" + esc(company) + "</strong>:</p>"
+    + (blocks || "<p></p>")
+    + "<p>Please let us know a convenient time for an interview, and we will coordinate with the candidate.</p>"
+    + "<p data-mail=\"sign\">" + sign + "</p>";
+}
+
+function syncMailEnds() {
+  const body = document.getElementById("mail-body");
+  const greet = body.querySelector("[data-mail='greet']");
+  const sign = body.querySelector("[data-mail='sign']");
+  if (!greet || !sign) {
+    if (!mailTouched) fillMailLetter();
+    return;
+  }
+  greet.textContent = greetingLine();
+  sign.innerHTML = esc(signatureLine()).replace(/\n/g, "<br>");
 }
 
 function fillMailLetter() {
@@ -3013,6 +3056,51 @@ function toggleMailPick(id) {
   if (!mailTouched) fillMailLetter();
 }
 
+let mailClients = [];
+let mailRecruiter = "";
+
+function paintMailClients() {
+  const list = document.getElementById("mail-client-list");
+  list.innerHTML = mailClients.map((client) => "<option value=\"" + esc(client.name) + "\"></option>").join("");
+}
+
+function defaultSignature() {
+  return mailRecruiter
+    ? "Kind regards,\n" + mailRecruiter
+    : "";
+}
+
+function applyMailClient() {
+  const name = document.getElementById("mail-company").value.trim().toLowerCase();
+  const client = mailClients.find((item) => item.name.trim().toLowerCase() === name);
+  if (!client) return;
+  if (client.contact) {
+    const greet = document.getElementById("mail-greet");
+    const current = greet.value.trim();
+    if (!current || current === "Dear Hiring Manager,") greet.value = "Dear " + client.contact.replace(/,$/, "") + ",";
+  }
+  const email = document.getElementById("mail-to");
+  if (client.email && !email.value.trim()) email.value = client.email;
+  syncMailEnds();
+}
+
+async function loadMailContext() {
+  try {
+    const response = await fetch("/api/cv-email/context");
+    if (!response.ok) throw new Error("no context");
+    const payload = await response.json();
+    mailRecruiter = String(payload.recruiter || "").trim();
+    mailClients = Array.isArray(payload.clients) ? payload.clients.filter((item) => item && item.name) : [];
+    paintMailClients();
+  } catch (error) {
+    mailClients = [
+      { name: "ABC Fashion Limited", contact: "Mr. Smith", email: "" },
+      { name: "Hays", contact: "Alex", email: "" }
+    ];
+    paintMailClients();
+  }
+}
+
 function openMail(draft) {
   mailLocked = !!(draft && draft.status === "SENT");
   document.getElementById("mail-send").hidden = mailLocked;
@@ -3025,6 +3113,8 @@ function openMail(draft) {
   document.getElementById("mail-to").value = draft && draft.to ? draft.to : "";
   document.getElementById("mail-company").value = draft && draft.company ? draft.company : "";
   document.getElementById("mail-position").value = draft && draft.position ? draft.position : "";
+  document.getElementById("mail-greet").value = "";
+  document.getElementById("mail-sign").value = defaultSignature();
   document.getElementById("mail-search").value = "";
   mailShown = MAIL_PAGE;
   document.getElementById("mail-status").textContent = "";
@@ -3034,6 +3124,10 @@ function openMail(draft) {
   if (draft && draft.bodyHtml) {
     document.getElementById("mail-subject").value = draft.subject || "";
     document.getElementById("mail-body").innerHTML = draft.bodyHtml;
+    const greet = document.querySelector("#mail-body [data-mail='greet']");
+    const sign = document.querySelector("#mail-body [data-mail='sign']");
+    if (greet) document.getElementById("mail-greet").value = greet.textContent.trim();
+    if (sign) document.getElementById("mail-sign").value = sign.innerText.trim();
     mailTouched = true;
   } else {
     fillMailLetter();
@@ -3219,10 +3313,13 @@ document.getElementById("mail-results").onscroll = () => {
   mailShown += MAIL_PAGE;
   drawMailResults();
 };
-document.getElementById("mail-company").oninput = () => { if (!mailTouched) fillMailLetter(); };
+document.getElementById("mail-company").oninput = () => { applyMailClient(); if (!mailTouched) fillMailLetter(); else syncMailEnds(); };
 document.getElementById("mail-position").oninput = () => { if (!mailTouched) fillMailLetter(); };
+document.getElementById("mail-greet").oninput = () => syncMailEnds();
+document.getElementById("mail-sign").oninput = () => syncMailEnds();
 document.getElementById("mail-body").oninput = () => { mailTouched = true; };
 document.getElementById("mail-close").onclick = () => closeMail();
+loadMailContext();
 document.getElementById("mail-refresh").onclick = () => {
   if (mailTouched && !window.confirm("Refreshing highlights will overwrite your manual edits in the email body. Continue?")) return;
   fillMailLetter();
