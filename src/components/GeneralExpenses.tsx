@@ -274,34 +274,34 @@ export default function GeneralExpenses({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-ink-muted border-b border-line">
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Date")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Expense")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Category")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Vendor")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Amount")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Link")}</th>
-                <th className="px-4 sm:px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wide">{t("Receipt")}</th>
-                <th className="px-4 sm:px-5 py-3"></th>
+              <tr className="text-left border-b border-line">
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Date")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Expense")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Category")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Vendor")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Amount")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Link")}</th>
+                <th className="px-4 py-3.5 text-xs font-normal text-ink-muted">{t("Receipt")}</th>
+                <th className="px-4 py-3.5"></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={`${row.source}-${row.id}`} className="border-t border-line hover:bg-paper">
-                  <td className="px-4 sm:px-5 py-5">{row.date}</td>
-                  <td className="px-4 sm:px-5 py-5 font-medium">{row.name}</td>
-                  <td className="px-4 sm:px-5 py-5 text-ink-muted">{row.category}</td>
-                  <td className="px-4 sm:px-5 py-5 text-ink-muted">{row.vendor ? row.vendor : t("N/A")}</td>
-                  <td className="px-4 sm:px-5 py-5 font-mono">{formatCurrency(row.amount)}</td>
-                  <td className="px-4 sm:px-5 py-5">
+                <tr key={`${row.source}-${row.id}`} className="border-b border-line last:border-b-0 hover:bg-paper/50">
+                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.date}</td>
+                  <td className="px-4 py-3.5 text-sm font-semibold text-ink">{row.name}</td>
+                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.category}</td>
+                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">{row.vendor ? row.vendor : t("N/A")}</td>
+                  <td className="px-4 py-3.5 text-sm font-medium font-mono text-ink">{formatCurrency(row.amount)}</td>
+                  <td className="px-4 py-3.5 text-xs font-normal text-ink-muted">
                     {row.invoiceId ? (
                       <Link href={`/invoices/${row.invoiceId}`} className="font-medium text-brand-600 hover:underline">{row.link}</Link>
                     ) : (
                       t("General")
                     )}
                   </td>
-                  <td className="px-4 sm:px-5 py-5">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
-                  <td className="px-4 sm:px-5 py-5">
+                  <td className="px-4 py-3.5 text-xs font-medium">{row.receiptHref ? <a className="text-brand-600 underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a> : "—"}</td>
+                  <td className="px-4 py-3.5 text-xs font-medium">
                     {row.canDelete && askId === row.id ? (
                       <span className="inline-flex flex-wrap items-center gap-1 text-xs text-ink">
                         <span>{t("Delete this expense?")}</span>
