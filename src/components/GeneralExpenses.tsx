@@ -98,8 +98,9 @@ export default function GeneralExpenses({
           notes,
           fileName,
           fileData,
-          invoiceId,
-          invoiceNumber,
+          invoiceId: invoiceId || null,
+          invoiceNumber: invoiceId ? invoiceNumber : "",
+          expenseType: invoiceId ? "INVOICE" : "GENERAL",
         }),
       });
       const payload = await response.json().catch(() => ({}));

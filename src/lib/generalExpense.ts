@@ -14,6 +14,31 @@ export type GeneralExpenseRow = {
   mimeType: string;
 };
 
+/** Create the general-expense table when this database does not have it yet. Existing rows are left in place. */
+export async function ensureGeneralExpenseTable(): Promise<void> {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "GeneralExpense" (
+      "id" TEXT PRIMARY KEY,
+      "name" TEXT NOT NULL,
+      "category" TEXT NOT NULL DEFAULT 'Others',
+      "amount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+      "spentAt" TIMESTAMP(3) NOT NULL,
+      "vendor" TEXT NOT NULL DEFAULT '',
+      "notes" TEXT NOT NULL DEFAULT '',
+      "invoiceId" TEXT,
+      "invoiceNumber" TEXT NOT NULL DEFAULT '',
+      "fileName" TEXT NOT NULL DEFAULT '',
+      "mimeType" TEXT NOT NULL DEFAULT '',
+      "fileData" TEXT NOT NULL DEFAULT '',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "expenseType" TEXT NOT NULL DEFAULT 'GENERAL'
+    )
+  `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "GeneralExpense_spentAt_idx" ON "GeneralExpense"("spentAt")`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ALTER COLUMN "invoiceId" DROP NOT NULL`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ADD COLUMN IF NOT EXISTS "expenseType" TEXT NOT NULL DEFAULT 'GENERAL'`);
+}
+
 const lightSelect = {
   id: true,
   name: true,
@@ -30,11 +55,12 @@ const lightSelect = {
 
 export async function listGeneralExpenses(): Promise<GeneralExpenseRow[]> {
   try {
-    return await prisma.generalExpense.findMany({
+    const rows = await prisma.generalExpense.findMany({
       orderBy: { spentAt: "desc" },
       take: 300,
       select: lightSelect,
     });
+    return rows.map((row) => ({ ...row, invoiceId: row.invoiceId || "" }));
   } catch {
     return [];
   }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDataUrl } from "@/lib/mailer";
+import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
 
 export const runtime = "nodejs";
 
@@ -37,8 +38,11 @@ export async function POST(request: NextRequest) {
     fileData = body.fileData;
   }
 
-  try {
-    const row = await prisma.generalExpense.create({
+  const invoiceId = String(body.invoiceId || "").trim();
+  const expenseType = invoiceId ? "INVOICE" : "GENERAL";
+
+  async function createRow() {
+    return prisma.generalExpense.create({
       data: {
         name,
         category,
@@ -46,16 +50,27 @@ export async function POST(request: NextRequest) {
         spentAt,
         vendor: String(body.vendor || "").trim(),
         notes: String(body.notes || "").trim(),
-        invoiceId: String(body.invoiceId || "").trim(),
-        invoiceNumber: String(body.invoiceNumber || "").trim(),
+        invoiceId: invoiceId || null,
+        invoiceNumber: invoiceId ? String(body.invoiceNumber || "").trim() : "",
+        expenseType,
         fileName,
         mimeType,
         fileData,
       },
       select: { id: true },
     });
-    return NextResponse.json({ id: row.id });
+  }
+
+  try {
+    const row = await createRow();
+    return NextResponse.json({ id: row.id, expenseType }, { status: 201 });
   } catch {
-    return NextResponse.json({ error: "General expenses are not ready on this database yet." }, { status: 500 });
+    try {
+      await ensureGeneralExpenseTable();
+      const row = await createRow();
+      return NextResponse.json({ id: row.id, expenseType }, { status: 201 });
+    } catch {
+      return NextResponse.json({ error: "Could not save the expense." }, { status: 500 });
+    }
   }
 }

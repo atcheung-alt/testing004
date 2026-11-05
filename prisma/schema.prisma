@@ -414,8 +414,10 @@ model GeneralExpense {
   spentAt   DateTime
   vendor    String   @default("")
   notes     String   @default("")
-  invoiceId String @default("")
+  // Empty when the expense is not tied to an invoice. Not a foreign key.
+  invoiceId String?
   invoiceNumber String @default("")
+  expenseType String @default("GENERAL")
   fileName  String   @default("")
   mimeType  String   @default("")
   fileData  String   @default("")
