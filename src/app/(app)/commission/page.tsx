@@ -73,12 +73,12 @@ export default async function CommissionPage({
     if (state === "done" && !done) return [];
     const createdByMe = owned ? owned.has(invoice.id) : false;
     const split = commissionSplitFromStored(invoice.quotation?.shareMode || "AMOUNT", invoice.quotation?.shares || [], invoice.total);
-    return split.partners.flatMap((partner) => {
+    const partners = split.partners.length ? split.partners : [{ colleagueName: "", percent: 100 }];
+    return partners.flatMap((partner) => {
       const shared = commissionShareVisible(partner.colleagueName, access);
       if (access.mode === "self" && !createdByMe && !shared) return [];
       if (access.mode !== "all" && access.mode !== "self") return [];
       if (who && partner.colleagueName !== who) return [];
-      if (!(split.total > 0) && !(partner.percent > 0)) return [];
       const paidDay = paidOn.get(`${invoice.id}\n${partner.colleagueName.trim()}`) || "";
       if (paid === "paid" && !paidDay) return [];
       if (paid === "unpaid" && paidDay) return [];
@@ -151,9 +151,11 @@ export default async function CommissionPage({
                   {row.title ? ` · ${row.title}` : ""}
                 </p>
                 <p className="mt-0.5 text-xs text-ink-muted">
-                  {row.person}
-                  {` · ${t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event")}`}
-                  {` · ${t(row.mark.workKind === "RECRUITMENT" ? "Onboarding" : "Recognise Date")} ${row.mark.day}`}
+                  {[
+                    row.person,
+                    t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event"),
+                    `${t(row.mark.workKind === "RECRUITMENT" ? "Onboarding" : "Recognise Date")} ${row.mark.day}`,
+                  ].filter(Boolean).join(" · ")}
                 </p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                   <span className={row.done ? "text-emerald-700" : "text-amber-700"}>{t(row.done ? "Done" : "Pending")}</span>
