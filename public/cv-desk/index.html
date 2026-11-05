@@ -41,6 +41,12 @@
   }
   .note { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
   .stamps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .nav-tabs { display: inline-flex; gap: 4px; margin: 8px 0 24px; padding: 4px; border-radius: 999px; background: #eef1f6; }
+  .nav-tabs .stamp { background: transparent; border-color: transparent; color: #66708a; padding: 8px 16px; }
+  .nav-tabs .stamp.on { background: #fff; border-color: transparent; color: var(--ink); box-shadow: 0 1px 2px rgba(27, 36, 54, 0.08); }
+  .action-bar { margin-bottom: 8px; }
+  .doc-tools { margin-top: 16px; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .btn.quiet { background: #eef1f6; color: #3d465c; border-color: transparent; }
   .stamp {
     border: 1px solid var(--line);
     background: #fff;
@@ -569,27 +575,18 @@
   .sheet.exporting .cover-drag { outline: none; }
   .sheet.exporting [contenteditable="true"]:empty:before { content: none; }
   .mail-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px 16px;
-    background: rgba(27, 36, 54, 0.35);
-    overflow: hidden;
+    display: block;
+    margin-top: 8px;
   }
   .mail-panel {
-    width: min(1080px, 100%);
-    max-height: calc(100vh - 48px);
+    width: 100%;
     display: flex;
     flex-direction: column;
     margin: 0;
     background: #fff;
     border-radius: 16px;
     border: 1px solid var(--line);
-    box-shadow: 0 16px 40px rgba(27, 36, 54, 0.12);
-    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(41, 58, 110, 0.04), 0 8px 24px rgba(41, 58, 110, 0.07);
   }
   .mail-head, .mail-foot { flex: none; padding: 16px 20px; }
   .mail-head { padding-bottom: 8px; }
@@ -602,7 +599,7 @@
     grid-template-columns: minmax(280px, 0.9fr) minmax(340px, 1.1fr);
     gap: 16px;
     padding: 0 20px 12px;
-    overflow: hidden;
+    overflow: visible;
   }
   .mail-side, .mail-preview {
     min-height: 0;
@@ -740,7 +737,7 @@
       <h1>Online CV</h1>
       <p class="note">Upload a CV to format it.</p>
     </div>
-    <div class="stamps">
+    <div class="stamps nav-tabs">
       <button type="button" id="tab-make" class="stamp on">Make a CV</button>
       <button type="button" id="tab-find" class="stamp">Search CV</button>
       <button type="button" id="tab-mail" class="stamp">Email drafts</button>
@@ -748,19 +745,19 @@
 
     <section class="panel" id="make">
       <div>
-        <div class="drop">
+        <div class="drop action-bar">
           <label class="file btn primary">Upload CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
-          <button type="button" class="btn secondary" id="sample">Try a sample</button>
-          <button type="button" class="btn primary" id="send-cv">Send CV</button>
+          <button type="button" class="btn quiet" id="sample">Try a sample</button>
+          <button type="button" class="btn quiet" id="send-cv">Send CV</button>
         </div>
-        <div id="save-bar" hidden>
+        <div id="save-bar" class="doc-tools" hidden>
           <label class="label" for="file-name">File name</label>
           <div class="save-row">
             <input class="input" id="file-name" type="text" placeholder="HR Plus CV - Chan Tai Man">
             <button type="button" class="btn secondary" id="rename-file">Rename</button>
             <button type="button" class="btn secondary" id="keep">Save CV</button>
-            <button type="button" class="btn primary" id="download-pdf">Download PDF</button>
-            <button type="button" class="btn primary" id="download">Download Word</button>
+            <button type="button" class="btn secondary" id="download-pdf">Download PDF</button>
+            <button type="button" class="btn secondary" id="download">Download Word</button>
             <label class="file btn secondary" id="photo-add"><span id="photo-add-label">+ Candidate Photo</span><input id="photo-file" type="file" accept="image/*"></label>
             <button type="button" class="btn secondary" id="photo-clear" hidden>Remove Photo</button>
           </div>
@@ -807,11 +804,11 @@
         <div class="card draft-list" id="draft-list"></div>
       </div>
     </section>
-  </div>
 
-  <div class="mail-modal" id="mail-modal" hidden>
-    <div class="mail-panel" role="dialog" aria-labelledby="mail-title">
+    <section class="mail-modal" id="mail-modal" hidden>
+    <div class="mail-panel">
       <div class="mail-head">
+        <button type="button" class="btn secondary" id="mail-back">Back to Online CV</button>
         <h2 id="mail-title">Send CV</h2>
       </div>
       <div class="mail-columns">
@@ -868,10 +865,11 @@
         <div class="mail-actions">
           <button type="button" class="btn secondary" id="mail-draft">Save as Draft</button>
           <button type="button" class="btn primary" id="mail-send">Send email</button>
-          <button type="button" class="btn secondary" id="mail-close">Close</button>
+          <button type="button" class="btn secondary" id="mail-close">Back to Online CV</button>
         </div>
       </div>
     </div>
+    </section>
   </div>
 
   <div class="ask-modal" id="ask-modal" hidden>
@@ -2689,7 +2687,10 @@ function confirmReplace() {
   return window.confirm("You have unsaved changes. Are you sure you want to replace the current sheet?");
 }
 
+let mailReturn = "make";
+
 function showTab(name) {
+  document.getElementById("mail-modal").hidden = true;
   ["make", "find", "mail"].forEach((tab) => {
     document.getElementById(tab).hidden = name !== tab;
     document.getElementById("tab-" + tab).classList.toggle("on", name === tab);
@@ -3101,7 +3102,8 @@ async function loadMailContext() {
   }
 }
 
-function openMail(draft) {
+function openMail(draft, backTo) {
+  mailReturn = backTo || (document.getElementById("mail").hidden ? "make" : "mail");
   mailLocked = !!(draft && draft.status === "SENT");
   document.getElementById("mail-send").hidden = mailLocked;
   document.getElementById("mail-draft").hidden = mailLocked;
@@ -3118,7 +3120,12 @@ function openMail(draft) {
   document.getElementById("mail-search").value = "";
   mailShown = MAIL_PAGE;
   document.getElementById("mail-status").textContent = "";
+  ["make", "find", "mail"].forEach((tab) => {
+    document.getElementById(tab).hidden = true;
+    document.getElementById("tab-" + tab).classList.remove("on");
+  });
   document.getElementById("mail-modal").hidden = false;
+  document.getElementById("mail-modal").scrollIntoView({ block: "start" });
   drawMailResults();
   drawMailPicks();
   if (draft && draft.bodyHtml) {
@@ -3135,7 +3142,7 @@ function openMail(draft) {
 }
 
 function closeMail() {
-  document.getElementById("mail-modal").hidden = true;
+  showTab(mailReturn);
 }
 
 function mailPayload() {
@@ -3301,8 +3308,7 @@ async function openDraft(id) {
     document.getElementById("draft-status").textContent = payload.error || "Could not open that draft.";
     return;
   }
-  showTab("make");
-  openMail(payload.draft);
+  openMail(payload.draft, "mail");
 }
 
 document.getElementById("mail-search").oninput = () => { mailShown = MAIL_PAGE; drawMailResults(); };
@@ -3319,6 +3325,7 @@ document.getElementById("mail-greet").oninput = () => syncMailEnds();
 document.getElementById("mail-sign").oninput = () => syncMailEnds();
 document.getElementById("mail-body").oninput = () => { mailTouched = true; };
 document.getElementById("mail-close").onclick = () => closeMail();
+document.getElementById("mail-back").onclick = () => closeMail();
 loadMailContext();
 document.getElementById("mail-refresh").onclick = () => {
   if (mailTouched && !window.confirm("Refreshing highlights will overwrite your manual edits in the email body. Continue?")) return;
