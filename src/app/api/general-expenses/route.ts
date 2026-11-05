@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
 
   const session = await getCurrentUser();
   if (!session) return NextResponse.json({ error: "Sign in to save an expense." }, { status: 401 });
+  const createdBy = session.userId;
   const invoiceId = String(body.invoiceId || "").trim();
   const expenseType = invoiceId ? "INVOICE" : "GENERAL";
 
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         invoiceId: invoiceId || null,
         invoiceNumber: invoiceId ? String(body.invoiceNumber || "").trim() : "",
         expenseType,
-        createdBy: session.userId,
+        createdBy,
         fileName,
         mimeType,
         fileData,
