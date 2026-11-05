@@ -10,7 +10,6 @@ import ScrollRestorer from "@/components/ScrollRestorer";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
-import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 import { formatCommissionDay } from "@/lib/commission";
@@ -79,7 +78,7 @@ async function InvoiceList({
   }
 
   return (
-    <div className="divide-y divide-line">
+    <div className="card divide-y divide-line">
       {visible.map((inv) => {
         const revenue = inv.total;
         const expenses = inv.expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -171,9 +170,8 @@ export default function InvoicesPage({
   const restoreKey = listHref({});
 
   return (
-    <div>
+    <div className="flex flex-col gap-4">
       <ScrollRestorer restoreKey={restoreKey} />
-      <StickyListHeader>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Invoices")}</h1>
@@ -232,7 +230,6 @@ export default function InvoicesPage({
           </Link>
         </div>
       </div>
-      </StickyListHeader>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
         <InvoiceList

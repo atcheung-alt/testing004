@@ -24,7 +24,7 @@
   body {
     min-height: 100vh;
     color: var(--ink);
-    background: #fff;
+    background: var(--paper);
     font-family: Inter, "PingFang HK", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
   }
   button, input { font: inherit; color: inherit; }
@@ -54,13 +54,6 @@
   }
   .stamp.on { border-color: var(--brand); color: var(--brand); }
   .panel { display: flex; flex-direction: column; gap: 16px; }
-  .panel > .card {
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
-  }
   .card {
     background: #fff;
     border: 1px solid var(--line);
@@ -754,7 +747,7 @@
     </div>
 
     <section class="panel" id="make">
-      <div class="card">
+      <div>
         <div class="drop">
           <label class="file btn primary">Upload CV<input id="file" type="file" accept=".pdf,.txt,.docx,application/pdf,text/plain"></label>
           <button type="button" class="btn secondary" id="sample">Try a sample</button>
@@ -778,7 +771,7 @@
     </section>
 
     <section class="panel" id="find" hidden>
-      <div class="card">
+      <div>
         <div class="filters">
           <div>
             <label class="label" for="q-file">File name</label>
@@ -803,7 +796,7 @@
     </section>
 
     <section class="panel" id="mail" hidden>
-      <div class="card">
+      <div>
         <div class="stamps" style="margin-bottom:12px">
           <button type="button" id="draft-tab-draft" class="stamp on">Drafts</button>
           <button type="button" id="draft-tab-sent" class="stamp">Sent Mail</button>
@@ -811,7 +804,7 @@
         <label class="label" for="draft-q">Search drafts</label>
         <input class="input" id="draft-q" type="search" placeholder="File ID, candidate, or company" style="margin-bottom:12px">
         <p class="hint" id="draft-status">Saved emails stay here until you send them.</p>
-        <div class="draft-list" id="draft-list"></div>
+        <div class="card draft-list" id="draft-list"></div>
       </div>
     </section>
   </div>

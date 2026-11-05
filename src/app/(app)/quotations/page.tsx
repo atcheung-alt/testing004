@@ -8,7 +8,6 @@ import StatusBadge from "@/components/StatusBadge";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
-import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentQuotationFilter } from "@/lib/documentAccess";
 
@@ -63,7 +62,7 @@ async function QuotationList({
   }
 
   return (
-    <div className="divide-y divide-line">
+    <div className="card divide-y divide-line">
       {quotations.map((q) => (
         <Link
           key={q.id}
@@ -118,8 +117,7 @@ export default function QuotationsPage({
   }
 
   return (
-    <div>
-      <StickyListHeader>
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Quotations")}</h1>
@@ -161,7 +159,6 @@ export default function QuotationsPage({
           ))}
         </div>
       </div>
-      </StickyListHeader>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
         <QuotationList

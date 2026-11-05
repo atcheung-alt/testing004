@@ -10,11 +10,11 @@ import DateRangeFilter from "@/components/DateRangeFilter";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import SendEmailButton from "@/components/SendEmailButton";
 import DeleteButton from "@/components/DeleteButton";
-import StickyListHeader from "@/components/StickyListHeader";
 import { getT } from "@/lib/i18n/server";
 import { isValidEmail, receiptEmailContent } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
+import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +47,7 @@ async function MoneyList({
         ],
       }
     : undefined;
+  await ensureGeneralExpenseTable().catch(() => undefined);
   const visibility = await currentInvoiceFilter();
   const invoiceWhere =
     customerFilter || visibility
@@ -64,10 +65,10 @@ async function MoneyList({
           orderBy: { issueDate: "desc" },
         });
 
-  const expenses = await prisma.invoiceExpense.findMany({
+  const invoiceExpenses = await prisma.invoiceExpense.findMany({
           where: {
             createdAt: range,
-            invoice: invoiceWhere,
+            invoice: visibility || undefined,
           },
           include: {
             invoice: { select: { id: true, number: true, title: true, customerName: true, customerEmail: true } },
@@ -76,8 +77,37 @@ async function MoneyList({
           orderBy: { createdAt: "desc" },
         });
 
+  const generalExpenses = await prisma.generalExpense.findMany({
+          where: range ? { spentAt: range } : undefined,
+          orderBy: { spentAt: "desc" },
+          select: {
+            id: true,
+            name: true,
+            amount: true,
+            spentAt: true,
+            vendor: true,
+            invoiceId: true,
+            invoiceNumber: true,
+          },
+        }).catch(() => []);
+
+  const needle = q?.trim().toLowerCase();
+  const expenses = invoiceExpenses.filter((expense) => {
+    if (!needle) return true;
+    return [expense.invoice.customerName, expense.invoice.customerEmail, expense.invoice.number, expense.label, expense.category]
+      .join(" ")
+      .toLowerCase()
+      .includes(needle);
+  });
+  const generals = generalExpenses.filter((expense) => {
+    if (!needle) return true;
+    return [expense.name, expense.vendor, expense.invoiceNumber].join(" ").toLowerCase().includes(needle);
+  });
+
   const receiptTotal = receipts.reduce((sum, receipt) => sum + (receipt.invoice?.total || 0), 0);
-  const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const expenseTotal =
+    invoiceExpenses.reduce((sum, expense) => sum + expense.amount, 0) +
+    generalExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   type Row = {
     key: string;
@@ -144,6 +174,21 @@ async function MoneyList({
       emailSubject: `Expense for ${expense.invoice.number}`,
       emailBody: `Dear ${expense.invoice.customerName || "Customer"},\n\nPlease find the expense record for invoice ${expense.invoice.number} attached.\n`,
     })),
+    ...(view === "receipts" ? [] : generals).map((expense) => {
+      const linked = Boolean(expense.invoiceNumber);
+      const when = formatDate(expense.spentAt);
+      return {
+        key: `general-${expense.id}`,
+        when: expense.spentAt,
+        kind: "expense" as const,
+        href: expense.invoiceId ? `/invoices/${expense.invoiceId}` : "/expenses",
+        title: expense.name || t("General"),
+        subtitle: linked
+          ? `${expense.invoiceNumber} · ${expense.vendor || "—"} · ${when}`
+          : [when, expense.vendor].filter(Boolean).join(" · "),
+        amount: expense.amount,
+      };
+    }),
   ].sort((a, b) => b.when.getTime() - a.when.getTime());
 
   const summary = (
@@ -184,7 +229,7 @@ async function MoneyList({
     <div className="flex flex-col gap-4">
       {summary}
 
-      <div className="overflow-x-auto">
+      <div className="card overflow-x-auto">
         <div className="min-w-[46rem] divide-y divide-line">
         {rows.map((row) => (
           <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-4 gap-6">
@@ -274,8 +319,7 @@ export default function ReceiptsPage({
   ];
 
   return (
-    <div>
-      <StickyListHeader>
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Receipts")}</h1>
@@ -304,7 +348,6 @@ export default function ReceiptsPage({
         <SearchBox placeholder="Search by customer…" />
         <DateRangeFilter />
       </div>
-      </StickyListHeader>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>
         <MoneyList view={view} q={searchParams.q} from={searchParams.from} to={searchParams.to} />

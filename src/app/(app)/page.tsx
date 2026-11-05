@@ -14,7 +14,6 @@ import DashboardTrend from "@/components/DashboardTrend";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 import { sumGeneralExpenses } from "@/lib/generalExpense";
-import { loadClientSources } from "@/lib/clientSource";
 import { hongKongDay } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +56,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, trendMonths, expenseTotal, recentExpenses, generalExpenseSum] =
     await Promise.all([
       prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
-      prisma.invoice.findMany({ where: invoiceWhere, select: { id: true, status: true, total: true, dueDate: true } }),
+      prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
       prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
       getMonthDashboard(chosen.year, chosen.month, invoiceFilter || undefined),
@@ -71,14 +70,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       }),
       sumGeneralExpenses(),
     ]);
-  const clientSources = await loadClientSources(invoices.map((invoice) => invoice.id));
-  const sourceTotals = new Map<string, number>();
-  for (const invoice of invoices) {
-    if (invoice.status === "CANCELLED") continue;
-    const name = clientSources.get(invoice.id);
-    if (!name) continue;
-    sourceTotals.set(name, (sourceTotals.get(name) || 0) + invoice.total);
-  }
 
   const invoiced = invoices
     .filter((i) => i.status !== "CANCELLED")
@@ -192,20 +183,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
             : t("Revenue uses the recognise or onboarding date in {month}. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
         </p>
       </div>
-
-      {sourceTotals.size > 0 ? (
-        <div className="card p-5">
-          <h2 className="font-display text-lg font-semibold mb-4">{t("Client source")}</h2>
-          <div className="flex flex-col gap-3">
-            {Array.from(sourceTotals.entries()).map(([name, amount]) => (
-              <div key={name} className="flex items-center justify-between gap-3">
-                <p className="text-sm text-ink-muted">{name}</p>
-                <p className="font-mono text-sm text-ink">{formatCurrency(amount)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       <DashboardTrend months={trendMonths} year={chosen.year} month={chosen.month} />
 
