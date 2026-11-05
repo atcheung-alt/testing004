@@ -19,7 +19,7 @@ export default async function NewRecruitmentAgreementPage({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">
-          {saveAsTemplate ? t("New recruitment template") : t("New Recruitment Agreement")}
+          {saveAsTemplate ? (saved ? t("Edit recruitment template") : t("New recruitment template")) : t("New Recruitment Agreement")}
         </h1>
         <p className="text-sm text-ink-muted">
           {saveAsTemplate
@@ -45,6 +45,7 @@ export default async function NewRecruitmentAgreementPage({
           feeScaleContract: saved.feeScaleContract || [],
         } : undefined}
         saveAsTemplate={saveAsTemplate}
+        templateId={saveAsTemplate && saved ? saved.id : ""}
       />
     </div>
   );

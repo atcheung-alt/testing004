@@ -122,6 +122,7 @@ export default function RecruitmentAgreementForm({
   agreement,
   preset,
   saveAsTemplate = false,
+  templateId = "",
 }: {
   agreement?: RecruitmentAgreementFormData;
   preset?: {
@@ -137,6 +138,7 @@ export default function RecruitmentAgreementForm({
     feeScaleContract: FeeScaleRowFields[];
   };
   saveAsTemplate?: boolean;
+  templateId?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -324,6 +326,7 @@ export default function RecruitmentAgreementForm({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            id: templateId || undefined,
             name: templateName.trim() || companyName.trim(),
             companyName,
             companyEmail,

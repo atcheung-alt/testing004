@@ -91,9 +91,12 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
                     >
                       {t("Use template")}
                     </Link>
-                    {row.kind === "quotation" ? (
-                      <Link href={`/quotations/templates/${row.id}/edit`} className="btn-secondary">{t("Edit")}</Link>
-                    ) : null}
+                    <Link
+                      href={row.kind === "quotation" ? `/quotations/templates/${row.id}/edit` : `/recruitment/new?template=${row.id}&as=template`}
+                      className="btn-secondary"
+                    >
+                      {t("Edit")}
+                    </Link>
                     <DeleteButton
                       url={row.kind === "quotation" ? `/api/quotation-templates/${row.id}` : `/api/recruitment-templates/${row.id}`}
                       confirmNumber={row.name}
