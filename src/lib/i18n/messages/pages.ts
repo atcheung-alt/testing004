@@ -34,7 +34,6 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Change this commission back to unpaid?": "把這筆佣金改回未發放？",
   Confirm: "確定",
   Cancel: "取消",
-  Onboarding: "入職",
   "Recognise Date": "確認發票日",
   "No invoices of this type.": "沒有這個類型的發票。",
   "Full analysis": "完整分析",
