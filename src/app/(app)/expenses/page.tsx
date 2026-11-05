@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import GeneralExpenses from "@/components/GeneralExpenses";
-import PageBar from "@/components/PageBar";
-import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
 import { ensureGeneralExpenseTable, ensureInvoiceExpenseOwnerColumn, listGeneralExpenses } from "@/lib/generalExpense";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,7 +8,6 @@ import { isSuperAdmin } from "@/lib/accessControl";
 export const dynamic = "force-dynamic";
 
 export default async function ExpensesPage() {
-  const t = getT();
   const session = await getCurrentUser();
   const admin = Boolean(session && (session.isAdmin || isSuperAdmin(session)));
   await Promise.all([ensureGeneralExpenseTable().catch(() => undefined), ensureInvoiceExpenseOwnerColumn().catch(() => undefined)]);
@@ -74,9 +71,7 @@ export default async function ExpensesPage() {
   ].sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return (
-    <div>
-      <PageBar title={t("Expenses")} note={t("Record a cost on an invoice, or a general expense that is not tied to one.")} />
-      <GeneralExpenses
+    <GeneralExpenses
         invoices={invoices.filter((invoice) => invoice.status !== "CANCELLED").map((invoice) => ({
           id: invoice.id,
           number: invoice.number,
@@ -84,7 +79,6 @@ export default async function ExpensesPage() {
           total: invoice.total,
         }))}
         history={history}
-      />
-    </div>
+    />
   );
 }

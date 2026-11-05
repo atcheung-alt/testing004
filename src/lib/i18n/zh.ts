@@ -36,6 +36,7 @@ export const ZH: Record<string, string> = {
   "Export CSV": "匯出 CSV",
   "New Quotation": "新增報價單",
   "New Invoice": "新增發票",
+  "New Expense": "新增支出",
   "New employee": "新增員工",
   Search: "搜尋",
   "Search…": "搜尋…",

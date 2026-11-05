@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 
@@ -62,6 +63,7 @@ export default function GeneralExpenses({
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState("");
   const [askId, setAskId] = useState("");
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [from, setFrom] = useState("");
@@ -118,6 +120,7 @@ export default function GeneralExpenses({
       setNotes("");
       setFileName("");
       setFileData("");
+      setOpen(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save the expense.");
@@ -147,8 +150,30 @@ export default function GeneralExpenses({
   }
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
-      <form onSubmit={save} className="card p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Expenses")}</h1>
+          <p className="lead">{t("Record a cost on an invoice, or a general expense that is not tied to one.")}</p>
+        </div>
+        <button type="button" className="btn-primary shrink-0" onClick={() => setOpen(true)}>
+          <Plus size={15} /> {t("New Expense")}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search vendor or expense")} />
+        <select className="input" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+          <option value="">{t("All categories")}</option>
+          {filterOptions.map((option) => <option key={option}>{option}</option>)}
+        </select>
+        <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+      </div>
+
+      {open ? (
+      <div className="fixed inset-0 z-50 grid place-items-center bg-ink/30 p-4" onClick={() => setOpen(false)}>
+      <form onSubmit={save} className="card p-4 grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-3xl max-h-[90vh] overflow-auto" onClick={(event) => event.stopPropagation()}>
         <div>
           <label className="label">{t("Expense name")}</label>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("Office supplies")} />
@@ -220,21 +245,14 @@ export default function GeneralExpenses({
         </div>
         <div className="md:col-span-2 flex items-center gap-3">
           <button className="btn-primary" type="submit" disabled={saving}>{saving ? t("Saving…") : t("Save Expense")}</button>
+          <button className="btn-secondary" type="button" onClick={() => setOpen(false)}>{t("Cancel")}</button>
           {error ? <p className="text-sm text-danger-500">{error}</p> : null}
         </div>
       </form>
+      </div>
+      ) : null}
 
-      <div className="card p-4">
-        <h2 className="font-display text-lg font-semibold mb-3">{t("Expense history")}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-          <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search vendor or expense")} />
-          <select className="input" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="">{t("All categories")}</option>
-            {filterOptions.map((option) => <option key={option}>{option}</option>)}
-          </select>
-          <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-        </div>
+      <div className="card overflow-x-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
