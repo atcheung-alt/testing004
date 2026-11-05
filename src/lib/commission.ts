@@ -36,6 +36,25 @@ export function commissionDayReached(day: string, now = new Date()): boolean {
   return day <= hongKongDay(now);
 }
 
+/** Last calendar day of YYYY-MM, as YYYY-MM-DD. */
+export function monthLastDay(yearMonth: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(yearMonth);
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return `${yearMonth}-${String(last).padStart(2, "0")}`;
+}
+
+/** A single month (YYYY-MM) or a month span (YYYY-MM..YYYY-MM). Empty means every day. */
+export function commissionDayInWhen(day: string, when: string): boolean {
+  if (!when) return true;
+  if (/^\d{4}-\d{2}$/.test(when)) return day >= `${when}-01` && day <= monthLastDay(when);
+  const range = /^(\d{4}-\d{2})\.\.(\d{4}-\d{2})$/.exec(when);
+  if (!range) return true;
+  return day >= `${range[1]}-01` && day <= monthLastDay(range[2]);
+}
+
 export function formatCommissionDay(day: string): string {
   const [year, month, date] = day.split("-");
   if (!year || !month || !date) return day;

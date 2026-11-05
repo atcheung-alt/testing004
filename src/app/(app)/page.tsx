@@ -15,6 +15,7 @@ import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 import { sumGeneralExpenses } from "@/lib/generalExpense";
 import { loadClientSources } from "@/lib/clientSource";
+import { hongKongDay } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
 
@@ -34,21 +35,21 @@ const MONTH_NAMES = [
 ];
 
 function chosenMonth(value: string | undefined) {
-  const now = new Date();
-  const current = { year: now.getFullYear(), month: now.getMonth() };
+  const today = hongKongDay(new Date());
+  const current = { year: Number(today.slice(0, 4)), month: Number(today.slice(5, 7)) - 1 };
   if (!value || !/^\d{4}-\d{2}$/.test(value)) return current;
   const year = Number(value.slice(0, 4));
   const month = Number(value.slice(5, 7)) - 1;
   if (month < 0 || month > 11) return current;
-  if (year < now.getFullYear() - 5 || year > now.getFullYear()) return current;
+  if (year < current.year - 5 || year > current.year) return current;
   return { year, month };
 }
 
 export default async function DashboardPage({ searchParams }: { searchParams: { month?: string } }) {
   const t = getT();
   const chosen = chosenMonth(searchParams.month);
-  const now = new Date();
-  const viewingCurrent = chosen.year === now.getFullYear() && chosen.month === now.getMonth();
+  const today = hongKongDay(new Date());
+  const viewingCurrent = chosen.year === Number(today.slice(0, 4)) && chosen.month === Number(today.slice(5, 7)) - 1;
   const [quotationFilter, invoiceFilter] = await Promise.all([currentQuotationFilter(), currentInvoiceFilter()]);
   const quotationWhere = quotationFilter || undefined;
   const invoiceWhere = invoiceFilter || undefined;
@@ -119,9 +120,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label={t("Invoices")}
-          value={formatCurrency(invoiced)}
-          amount={invoiced}
-          detail={t("{count} Invoices", { count: invoices.length })}
+          value={formatCurrency(monthFinance.revenue)}
+          amount={monthFinance.revenue}
+          detail={t("{count} Invoices", { count: monthFinance.invoiceCount })}
           icon={ReceiptText}
         />
         <StatCard
@@ -187,8 +188,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         </div>
         <p className="text-xs text-ink-faint mt-4">
           {viewingCurrent
-            ? t("Revenue is invoices paid this calendar month. The expenses bar is the total recorded on the Expenses page this month.")
-            : t("Revenue is invoices paid in {month}. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
+            ? t("Revenue uses the recognise or onboarding date in this month. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page this month.")
+            : t("Revenue uses the recognise or onboarding date in {month}. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
         </p>
       </div>
 

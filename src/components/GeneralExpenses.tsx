@@ -195,7 +195,7 @@ export default function GeneralExpenses({
           <input className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         <div className="md:col-span-2 flex items-center gap-3">
-          <button className="btn-primary" type="submit" disabled={saving}>{saving ? t("Saving…") : t("Save general expense")}</button>
+          <button className="btn-primary" type="submit" disabled={saving}>{saving ? t("Saving…") : t("Save Expense")}</button>
           {error ? <p className="text-sm text-danger-500">{error}</p> : null}
         </div>
       </form>

@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/calculations";
 import { commissionShareVisible, commissionOwnedInvoiceIds, currentCommissionAccess } from "@/lib/documentAccess";
-import { commissionDayReached, hongKongDay } from "@/lib/commission";
+import { commissionDayReached, commissionDayInWhen, hongKongDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
 import { loadCommissionPaid } from "@/lib/commissionPaid";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
@@ -10,7 +9,6 @@ import { colleagueLabel } from "@/lib/staffCode";
 import { loadColleagues } from "@/lib/quotationAuthor";
 import PageBar from "@/components/PageBar";
 import CommissionFilters from "@/components/CommissionFilters";
-import CommissionPaidToggle from "@/components/CommissionPaidToggle";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function CommissionPage({
   searchParams,
 }: {
-  searchParams: { kind?: string; state?: string; when?: string; paid?: string; who?: string };
+  searchParams: { kind?: string; state?: string; from?: string; to?: string; paid?: string; who?: string };
 }) {
   const t = getT();
   const access = await currentCommissionAccess();
@@ -26,7 +24,12 @@ export default async function CommissionPage({
   const state = searchParams.state === "pending" || searchParams.state === "done" ? searchParams.state : "";
   const paid = searchParams.paid === "unpaid" || searchParams.paid === "paid" ? searchParams.paid : "";
   const who = access.mode === "all" ? searchParams.who || "" : "";
-  const when = /^\d{4}-\d{2}$/.test(searchParams.when || "") || /^\d{4}-Q[1-4]$/.test(searchParams.when || "") ? searchParams.when || "" : "";
+  const month = (value?: string) => (/^\d{4}-\d{2}$/.test(value || "") ? value || "" : "");
+  const pickedFrom = month(searchParams.from);
+  const pickedTo = month(searchParams.to);
+  const rangeStart = pickedFrom && pickedTo && pickedFrom > pickedTo ? pickedTo : pickedFrom;
+  const rangeEnd = pickedFrom && pickedTo && pickedFrom > pickedTo ? pickedFrom : pickedTo;
+  const when = rangeStart && rangeEnd ? `${rangeStart}..${rangeEnd}` : rangeStart || rangeEnd;
   const [invoices, colleagues] = await Promise.all([
     access.mode === "none"
       ? Promise.resolve([])
@@ -38,6 +41,7 @@ export default async function CommissionPage({
             customerName: true,
             title: true,
             total: true,
+            status: true,
             quotation: {
               select: {
                 shareMode: true,
@@ -55,20 +59,21 @@ export default async function CommissionPage({
   const today = hongKongDay(new Date());
 
   function inPeriod(day: string) {
-    if (!when) return true;
-    if (/^\d{4}-\d{2}$/.test(when)) return day.startsWith(when);
-    const quarter = /^(\d{4})-Q([1-4])$/.exec(when);
-    if (!quarter) return true;
-    const month = Number(day.slice(5, 7));
-    return day.startsWith(quarter[1]) && Math.ceil(month / 3) === Number(quarter[2]);
+    return commissionDayInWhen(day, when);
   }
 
   const rows = invoices.flatMap((invoice) => {
+    if (invoice.status === "CANCELLED" || invoice.status === "DRAFT") return [];
     const mark = marks.get(invoice.id) || null;
-    if (!mark || !/^\d{4}-\d{2}-\d{2}$/.test(mark.day)) return [];
-    if (wanted && mark.workKind !== wanted) return [];
-    if (!inPeriod(mark.day)) return [];
-    const done = commissionDayReached(mark.day);
+    const dated = Boolean(mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day));
+    if (!dated) {
+      if (wanted) return [];
+      if (!commissionDayInWhen(today, when)) return [];
+    } else {
+      if (wanted && mark!.workKind !== wanted) return [];
+      if (!inPeriod(mark!.day)) return [];
+    }
+    const done = dated ? commissionDayReached(mark!.day) : true;
     if (state === "pending" && done) return [];
     if (state === "done" && !done) return [];
     const createdByMe = owned ? owned.has(invoice.id) : false;
@@ -91,6 +96,8 @@ export default async function CommissionPage({
           title: invoice.title,
           colleagueName: partner.colleagueName,
           person: colleagueLabel(partner.colleagueName, colleagues),
+          nickname: colleagues.find((person) => person.code === partner.colleagueName)?.nickname || "",
+          legalName: colleagues.find((person) => person.code === partner.colleagueName)?.name || "",
           amount: (split.total * partner.percent) / 100,
           mark,
           done,
@@ -116,16 +123,41 @@ export default async function CommissionPage({
       <CommissionFilters
         kind={kind}
         state={state}
-        when={when}
+        from={rangeStart || pickedFrom}
+        to={rangeEnd || pickedTo}
         paid={paid}
         who={access.mode === "all" ? who : ""}
         months={months}
         year={today.slice(0, 4)}
         people={access.mode === "all" ? colleagues.map((person) => ({ code: person.code, nickname: person.nickname || "", name: person.name || "" })) : []}
+        marked={marked}
+        canPay={access.mode === "all"}
+        rows={rows.map((row) => ({
+          id: row.id,
+          invoiceId: row.invoiceId,
+          number: row.number,
+          customerName: row.customerName,
+          title: row.title,
+          person: row.person,
+          colleagueName: row.colleagueName,
+          nickname: row.nickname,
+          legalName: row.legalName,
+          detail: [
+            row.person,
+            row.mark ? t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event") : "",
+            row.mark
+              ? `${t(row.mark.workKind === "RECRUITMENT" ? "Onboarding" : "Recognise Date")} ${row.mark.day}`
+              : t("No date"),
+          ].filter(Boolean).join(" · "),
+          amount: formatCurrency(row.amount),
+          done: row.done,
+          paidDay: row.paidDay,
+        }))}
         labels={{
           type: t("Type"),
           status: t("Status"),
-          when: t("When"),
+          from: t("From"),
+          to: t("to"),
           payment: t("Payment"),
           all: t("All"),
           event: t("Event"),
@@ -138,66 +170,20 @@ export default async function CommissionPage({
           allStaff: t("All staff"),
           search: t("Search colleague"),
           empty: t("No matching colleague"),
+          nothing: t("Nothing matches."),
+          noneSaved: t("No invoice has Event or Recruitment with a date saved yet. Booking dates on an invoice are not used here."),
+          noColleague: t("No records found for this colleague"),
+          billing: t("Billing"),
+          paidWord: t("Paid"),
+          unpaidWord: t("Unpaid"),
+          markPaid: t("Mark paid"),
+          markUnpaid: t("Mark unpaid"),
+          markQuestion: t("Mark this commission as paid?"),
+          undoQuestion: t("Change this commission back to unpaid?"),
+          confirm: t("Confirm"),
+          cancel: t("Cancel"),
         }}
       />
-      {rows.length === 0 ? (
-        <div className="card px-5 py-8 text-sm text-ink-muted">
-          {marked === 0
-            ? t("No invoice has Event or Recruitment with a date saved yet. Booking dates on an invoice are not used here.")
-            : t("Nothing matches.")}
-        </div>
-      ) : (
-        <div className="card divide-y divide-line">
-          {rows.map((row) => (
-            <div
-              key={row.id}
-              className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-4"
-            >
-              <div className="min-w-0">
-                <Link href={`/invoices/${row.invoiceId}`} className="font-mono text-sm font-medium hover:text-brand-600">{row.number}</Link>
-                <p className="mt-0.5 text-sm text-ink">
-                  {row.customerName}
-                  {row.title ? ` · ${row.title}` : ""}
-                </p>
-                <p className="mt-0.5 text-xs text-ink-muted">
-                  {[
-                    row.person,
-                    t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event"),
-                    `${t(row.mark.workKind === "RECRUITMENT" ? "Onboarding" : "Recognise Date")} ${row.mark.day}`,
-                  ].filter(Boolean).join(" · ")}
-                </p>
-                <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                  <span className={row.done ? "text-emerald-700" : "text-amber-700"}>{t(row.done ? "Done" : "Pending")}</span>
-                  <span className="text-ink-faint">·</span>
-                  {access.mode === "all" ? (
-                    <CommissionPaidToggle
-                      invoiceId={row.invoiceId}
-                      colleagueName={row.colleagueName}
-                      paid={Boolean(row.paidDay)}
-                      paidLabel={row.paidDay ? `${t("Paid")} ${row.paidDay}` : t("Unpaid")}
-                      unpaidLabel={t("Unpaid")}
-                      markLabel={t("Mark paid")}
-                      undoLabel={t("Mark unpaid")}
-                      markQuestion={t("Mark this commission as paid?")}
-                      undoQuestion={t("Change this commission back to unpaid?")}
-                      confirmLabel={t("Confirm")}
-                      cancelLabel={t("Cancel")}
-                    />
-                  ) : (
-                    <span className={row.paidDay ? "text-emerald-700" : "text-ink-muted"}>
-                      {row.paidDay ? `${t("Paid")} ${row.paidDay}` : t("Unpaid")}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Billing")}</p>
-                <p className="font-mono text-sm text-ink">{formatCurrency(row.amount)}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

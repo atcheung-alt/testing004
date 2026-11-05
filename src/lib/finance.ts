@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { generalExpensesBetween } from "@/lib/generalExpense";
+import { hongKongDay } from "@/lib/commission";
+import { loadCommissionMarks } from "@/lib/invoiceCommission";
 
 export type MonthlyFinance = {
   month: string; // "2026-07", sortable
@@ -11,6 +13,27 @@ export type MonthlyFinance = {
 
 function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+type ServiceInvoice = { total: number; month: string | null; day: string };
+
+/** Non-cancelled invoices, placed by recognise or onboarding date. No date counts only in the current month. */
+async function serviceInvoices(invoiceWhere?: Record<string, unknown>): Promise<ServiceInvoice[]> {
+  const invoices = await prisma.invoice.findMany({
+    where: { status: { notIn: ["CANCELLED", "DRAFT"] }, ...(invoiceWhere || {}) },
+    select: { id: true, total: true },
+  });
+  const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  return invoices.map((invoice) => {
+    const mark = marks.get(invoice.id);
+    const day = mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day) ? mark.day : "";
+    return { total: Number(invoice.total) || 0, month: day ? day.slice(0, 7) : null, day };
+  });
+}
+
+function inServiceMonth(invoice: ServiceInvoice, month: string, currentMonth: string): boolean {
+  if (invoice.month) return invoice.month === month;
+  return month === currentMonth;
 }
 
 function monthLabel(date: Date, locale = "en-US"): string {
@@ -375,15 +398,16 @@ export async function getCurrentMonthFinance(invoiceWhere?: Record<string, unkno
 export type MonthDay = { day: number; revenue: number; expenses: number };
 
 /**
- * Dashboard "This Month" for one calendar month.
- * Revenue is invoices marked paid on that day. Expenses are costs recorded
- * on the Expenses page that day. The two are not tied to the same invoice.
+ * Dashboard month figures.
+ * Revenue is invoice totals whose recognise or onboarding date falls in the month.
+ * An invoice with no such date counts only in the current month.
+ * Cancelled and draft invoices are excluded. Expenses stay the amounts recorded that month.
  */
 export async function getMonthDashboard(
   year: number,
   month: number,
   invoiceWhere?: Record<string, unknown>
-): Promise<{ revenue: number; expenses: number; profit: number; days: MonthDay[] }> {
+): Promise<{ revenue: number; expenses: number; profit: number; invoiceCount: number; days: MonthDay[] }> {
   const start = new Date(year, month, 1);
   start.setHours(0, 0, 0, 0);
   const end = new Date(year, month + 1, 1);
@@ -393,12 +417,11 @@ export async function getMonthDashboard(
     revenue: 0,
     expenses: 0,
   }));
+  const selected = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const current = hongKongDay(new Date()).slice(0, 7);
 
-  const [invoices, expenses, general] = await Promise.all([
-    prisma.invoice.findMany({
-      where: { status: "PAID", paidAt: { gte: start, lt: end }, ...(invoiceWhere || {}) },
-      select: { total: true, paidAt: true },
-    }),
+  const [service, expenses, general] = await Promise.all([
+    serviceInvoices(invoiceWhere),
     prisma.invoiceExpense.findMany({
       where: {
         createdAt: { gte: start, lt: end },
@@ -409,23 +432,26 @@ export async function getMonthDashboard(
     generalExpensesBetween(start, end),
   ]);
 
-  for (const invoice of invoices) {
-    if (!invoice.paidAt) continue;
-    const bucket = days[invoice.paidAt.getDate() - 1];
+  let invoiceCount = 0;
+  for (const invoice of service) {
+    if (!inServiceMonth(invoice, selected, current)) continue;
+    invoiceCount += 1;
+    const dayNumber = invoice.day ? Number(invoice.day.slice(8, 10)) : Number(hongKongDay(new Date()).slice(8, 10));
+    const bucket = days[dayNumber - 1];
     if (bucket) bucket.revenue += invoice.total;
   }
   for (const expense of expenses) {
     const bucket = days[expense.createdAt.getDate() - 1];
-    if (bucket) bucket.expenses += expense.amount;
+    if (bucket) bucket.expenses += Number(expense.amount) || 0;
   }
   for (const expense of general) {
     const bucket = days[expense.spentAt.getDate() - 1];
-    if (bucket) bucket.expenses += expense.amount;
+    if (bucket) bucket.expenses += Number(expense.amount) || 0;
   }
 
   const revenue = days.reduce((sum, day) => sum + day.revenue, 0);
   const expenseTotal = days.reduce((sum, day) => sum + day.expenses, 0);
-  return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, days };
+  return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, invoiceCount, days };
 }
 
 export type TrendMonth = {
@@ -439,12 +465,12 @@ export type TrendMonth = {
 /** One point per month from the first recorded amount through the current month. */
 export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Promise<TrendMonth[]> {
   const now = new Date();
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const [invoices, expenses, general] = await Promise.all([
-    prisma.invoice.findMany({
-      where: { status: "PAID", paidAt: { not: null, lt: end }, ...(invoiceWhere || {}) },
-      select: { total: true, paidAt: true },
-    }),
+  const current = hongKongDay(now).slice(0, 7);
+  const currentYear = Number(current.slice(0, 4));
+  const currentMonthIndex = Number(current.slice(5, 7)) - 1;
+  const end = new Date(currentYear, currentMonthIndex + 1, 1);
+  const [service, expenses, general] = await Promise.all([
+    serviceInvoices(invoiceWhere),
     prisma.invoiceExpense.findMany({
       where: {
         createdAt: { lt: end },
@@ -455,13 +481,17 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
     generalExpensesBetween(new Date(2000, 0, 1), end),
   ]);
 
-  const nowKey = now.getFullYear() * 12 + now.getMonth();
+  const nowKey = currentYear * 12 + currentMonthIndex;
   let startKey = nowKey;
   const earlier = (date: Date) => {
     const key = date.getFullYear() * 12 + date.getMonth();
     if (key < startKey) startKey = key;
   };
-  for (const invoice of invoices) if (invoice.paidAt) earlier(invoice.paidAt);
+  for (const invoice of service) {
+    if (!invoice.month) continue;
+    const [year, month] = invoice.month.split("-").map(Number);
+    earlier(new Date(year, month - 1, 1));
+  }
   for (const expense of expenses) earlier(expense.createdAt);
   for (const expense of general) earlier(expense.spentAt);
 
@@ -476,9 +506,11 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
     });
   }
   const index = new Map(months.map((row, i) => [row.year * 12 + row.month, i]));
-  for (const invoice of invoices) {
-    if (!invoice.paidAt) continue;
-    const at = index.get(invoice.paidAt.getFullYear() * 12 + invoice.paidAt.getMonth());
+  for (const invoice of service) {
+    const key = invoice.month || (current ? current : "");
+    if (!invoice.month && key !== current) continue;
+    const [year, month] = (invoice.month || current).split("-").map(Number);
+    const at = index.get(year * 12 + (month - 1));
     if (at === undefined) continue;
     months[at].revenue += invoice.total;
   }
