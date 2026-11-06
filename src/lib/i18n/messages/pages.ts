@@ -6,6 +6,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "收入、開支、已收和未收都是全部歷史。淨利是總收入減總開支。",
   Trend: "走勢",
   From: "由",
+  "Whole period": "全部時期",
   to: "至",
   Commission: "賬單",
   Billing: "賬單",
