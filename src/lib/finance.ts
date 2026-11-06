@@ -536,7 +536,7 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
       },
       select: { amount: true, createdAt: true },
     }),
-    generalExpensesBetween(new Date(2000, 0, 1), end),
+    generalExpensesBetween(new Date(2000, 0, 1), new Date(2100, 0, 1)),
   ]);
 
   const nowKey = currentYear * 12 + currentMonthIndex;
