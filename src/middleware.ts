@@ -109,6 +109,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  const onlineCvOnly = pathname === "/recruitment/online-cv" || pathname.startsWith("/recruitment/online-cv/") || pathname === "/cv-desk" || pathname.startsWith("/cv-desk/");
+  if (onlineCvOnly && session.email.trim().toLowerCase() !== "atcheung@hrplus.info") {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not found." }, { status: 404 });
+    }
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
   return NextResponse.next({ request: { headers: requestHeaders } });

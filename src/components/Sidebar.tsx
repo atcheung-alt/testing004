@@ -283,6 +283,7 @@ export default function Sidebar({
   companyName,
   allowedPages = "all",
   canManage = false,
+  showOnlineCv = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
@@ -290,6 +291,7 @@ export default function Sidebar({
   isAdmin?: boolean;
   allowedPages?: "all" | string[];
   canManage?: boolean;
+  showOnlineCv?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
@@ -302,15 +304,17 @@ export default function Sidebar({
       ...group,
       items:
         allowedPages === "all"
-          ? group.items
+          ? group.items.filter((item) => item.href !== "/recruitment/online-cv" || showOnlineCv)
           : group.items.filter((item) => {
+              if (item.href === "/recruitment/online-cv" && !showOnlineCv) return false;
               if (item.href === "/") return allowedPages.includes("dashboard");
               if (item.href === "/quotations/templates") return allowedPages.includes("templates");
               if (item.href === "/quotations") return allowedPages.includes("quotations");
               if (item.href === "/invoices") return allowedPages.includes("invoices");
               if (item.href === "/receipts") return allowedPages.includes("receipts");
               if (item.href === "/expenses" || item.href === "/commission") return allowedPages.includes("expenses");
-              if (item.href === "/recruitment" || item.href === "/recruitment/online-cv") return allowedPages.includes("recruitment");
+              if (item.href === "/recruitment/online-cv") return showOnlineCv && allowedPages.includes("recruitment");
+              if (item.href === "/recruitment") return allowedPages.includes("recruitment");
               if (item.href === "/clients") return allowedPages.includes("clients");
               if (item.href === "/items") return allowedPages.includes("items");
               if (item.href === "/bookings") return allowedPages.includes("bookings");

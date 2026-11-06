@@ -51,6 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         isAdmin={isAdmin}
         allowedPages={pages}
         canManage={superAdmin}
+        showOnlineCv={user.email.trim().toLowerCase() === "atcheung@hrplus.info"}
       />
       <div className="flex min-w-0 w-full flex-1 flex-col">
         <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8">
