@@ -316,6 +316,7 @@ export default function ReceiptsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Receipts")}</h1>
@@ -328,7 +329,7 @@ export default function ReceiptsPage({
         </a>
       </div>
 
-      <div className="sticky-filters flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
         {views.map((item) => (
           <Link
@@ -344,6 +345,7 @@ export default function ReceiptsPage({
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
         <SearchBox placeholder="Search by customer…" />
         <DateRangeFilter />
+      </div>
       </div>
       </div>
 

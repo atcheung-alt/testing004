@@ -95,6 +95,7 @@ export default function RecruitmentPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="sticky-filters flex flex-col gap-4">
       <PageBar
         title={t("Recruitment Agreements")}
         note={t("Recruitment services terms — a separate system from quotations/invoices/receipts.")}
@@ -111,7 +112,7 @@ export default function RecruitmentPage({
         }
       />
 
-      <div className="sticky-filters flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <SearchBox placeholder="Search by company…" />
           <DateRangeFilter />
@@ -133,6 +134,7 @@ export default function RecruitmentPage({
             </Link>
           ))}
         </div>
+      </div>
       </div>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>

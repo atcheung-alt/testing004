@@ -172,6 +172,7 @@ export default function InvoicesPage({
   return (
     <div className="flex flex-col gap-4">
       <ScrollRestorer restoreKey={restoreKey} />
+      <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Invoices")}</h1>
@@ -187,7 +188,7 @@ export default function InvoicesPage({
         </div>
       </div>
 
-      <div className="sticky-filters flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <SearchBox placeholder="Search by customer…" />
           <DateRangeFilter />
@@ -229,6 +230,7 @@ export default function InvoicesPage({
             {t("Recruitment")}
           </Link>
         </div>
+      </div>
       </div>
 
       <Suspense fallback={<div className="text-sm text-ink-muted">{t("Loading…")}</div>}>

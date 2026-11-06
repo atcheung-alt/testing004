@@ -188,6 +188,7 @@ export default function GeneralExpenses({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("Expenses")}</h1>
@@ -203,7 +204,7 @@ export default function GeneralExpenses({
         </div>
       </div>
 
-      <div className="sticky-filters flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center max-w-xl">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
@@ -228,6 +229,7 @@ export default function GeneralExpenses({
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       {open ? (

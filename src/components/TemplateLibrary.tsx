@@ -38,6 +38,7 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
 
   return (
     <div className="flex flex-col gap-6 font-sans">
+      <div className="sticky-filters flex flex-col gap-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{title}</h1>
@@ -47,7 +48,7 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
           <Plus size={14} /> {t("New Template")}
         </button>
       </div>
-      <div className="sticky-filters flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <label className="relative min-w-[12rem] flex-1 max-w-sm">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
@@ -70,6 +71,7 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
             </button>
           ))}
         </div>
+      </div>
       </div>
 
       <div className="card overflow-x-auto">

@@ -194,6 +194,7 @@ export default function CommissionFilters({
 
   return (
     <>
+      <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold text-ink">{labels.pageTitle}</h1>
@@ -203,7 +204,7 @@ export default function CommissionFilters({
           <Download size={15} /> {labels.exportCsv}
         </button>
       </div>
-      <div className="sticky-filters flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
       <form
         id="billing-filters"
         action="/commission"
@@ -296,6 +297,7 @@ export default function CommissionFilters({
             </Link>
           );
         })}
+      </div>
       </div>
       </div>
       {shown.length === 0 ? (
