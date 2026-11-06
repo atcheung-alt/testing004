@@ -4,7 +4,7 @@ export default function OnlineCvPage() {
       title="Online CV"
       src="/cv-desk/index.html?v=97"
       className="block w-full border-0 bg-transparent"
-      style={{ height: "calc(100vh - 4.5rem)", minHeight: "720px" }}
+      style={{ height: "calc(100dvh - 4.5rem)", minHeight: "70vh" }}
     />
   );
 }

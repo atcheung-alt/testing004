@@ -288,7 +288,7 @@ export default function HrSidebar({
     <>
       <aside
         className={clsx(
-          "shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-l border-line bg-surface/90 backdrop-blur-sm py-6 transition-[width] duration-200 w-64 max-lg:max-w-[72vw]",
+          "shrink-0 flex-col sticky top-0 h-dvh min-h-screen overflow-y-auto border-l border-line bg-surface/90 backdrop-blur-sm py-6 transition-[width] duration-200 w-64 max-lg:max-w-[72vw]",
           collapsed && "lg:w-20",
           narrowOpen ? "flex" : "hidden lg:flex"
         )}

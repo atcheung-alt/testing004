@@ -222,10 +222,16 @@ html[data-theme="dark"] .theme-logo-dark {
 
 @layer base {
   html {
-    @apply bg-paper;
+    @apply bg-paper min-h-screen w-full;
+    max-width: 100%;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased bg-app-gradient bg-fixed;
+    @apply bg-paper text-ink font-sans antialiased bg-app-gradient min-h-screen w-full;
+    max-width: 100%;
+  }
+  img,
+  video {
+    max-width: 100%;
   }
   ::selection {
     @apply bg-brand-100;

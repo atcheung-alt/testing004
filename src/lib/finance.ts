@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { generalExpensesBetween } from "@/lib/generalExpense";
+import { generalExpensesBetween, sumGeneralExpenses } from "@/lib/generalExpense";
 import { hongKongDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
 
@@ -15,19 +15,31 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-type ServiceInvoice = { total: number; month: string | null; day: string };
+type ServiceInvoice = { total: number; month: string | null; day: string; status: string };
+
+const OPEN_INVOICE = new Set(["UNPAID", "OVERDUE", "PENDING_VERIFICATION"]);
+
+function settlement(invoices: ServiceInvoice[]) {
+  let paid = 0;
+  let outstanding = 0;
+  for (const invoice of invoices) {
+    if (invoice.status === "PAID") paid += invoice.total;
+    else if (OPEN_INVOICE.has(invoice.status)) outstanding += invoice.total;
+  }
+  return { paid, outstanding };
+}
 
 /** Non-cancelled invoices, placed by recognise or onboarding date. No date counts only in the current month. */
 async function serviceInvoices(invoiceWhere?: Record<string, unknown>): Promise<ServiceInvoice[]> {
   const invoices = await prisma.invoice.findMany({
     where: { status: { notIn: ["CANCELLED", "DRAFT"] }, ...(invoiceWhere || {}) },
-    select: { id: true, total: true },
+    select: { id: true, total: true, status: true },
   });
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
   return invoices.map((invoice) => {
     const mark = marks.get(invoice.id);
     const day = mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day) ? mark.day : "";
-    return { total: Number(invoice.total) || 0, month: day ? day.slice(0, 7) : null, day };
+    return { total: Number(invoice.total) || 0, month: day ? day.slice(0, 7) : null, day, status: invoice.status };
   });
 }
 
@@ -407,7 +419,7 @@ export async function getMonthDashboard(
   year: number,
   month: number,
   invoiceWhere?: Record<string, unknown>
-): Promise<{ revenue: number; expenses: number; profit: number; invoiceCount: number; days: MonthDay[] }> {
+): Promise<{ revenue: number; expenses: number; profit: number; invoiceCount: number; paid: number; outstanding: number; days: MonthDay[] }> {
   const start = new Date(year, month, 1);
   start.setHours(0, 0, 0, 0);
   const end = new Date(year, month + 1, 1);
@@ -451,7 +463,39 @@ export async function getMonthDashboard(
 
   const revenue = days.reduce((sum, day) => sum + day.revenue, 0);
   const expenseTotal = days.reduce((sum, day) => sum + day.expenses, 0);
-  return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, invoiceCount, days };
+  const placed = service.filter((invoice) => inServiceMonth(invoice, selected, current));
+  const { paid, outstanding } = settlement(placed);
+  return { revenue, expenses: expenseTotal, profit: revenue - expenseTotal, invoiceCount, paid, outstanding, days };
+}
+
+/** Same revenue rules as one month, added across every month, plus every recorded expense. */
+export async function getAllTimeDashboard(invoiceWhere?: Record<string, unknown>): Promise<{
+  revenue: number;
+  expenses: number;
+  profit: number;
+  invoiceCount: number;
+  paid: number;
+  outstanding: number;
+}> {
+  const [service, expenseTotal, general] = await Promise.all([
+    serviceInvoices(invoiceWhere),
+    prisma.invoiceExpense.aggregate({
+      _sum: { amount: true },
+      where: invoiceWhere ? { invoice: invoiceWhere } : undefined,
+    }),
+    sumGeneralExpenses(),
+  ]);
+  const { paid, outstanding } = settlement(service);
+  const revenue = service.reduce((sum, invoice) => sum + invoice.total, 0);
+  const expenses = (expenseTotal._sum.amount || 0) + general;
+  return {
+    revenue,
+    expenses,
+    profit: revenue - expenses,
+    invoiceCount: service.length,
+    paid,
+    outstanding,
+  };
 }
 
 export type TrendMonth = {

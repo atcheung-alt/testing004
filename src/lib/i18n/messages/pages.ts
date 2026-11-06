@@ -1,6 +1,9 @@
 export const PAGE_MESSAGES: Record<string, string> = {
   "A quick look at your pipeline of quotations and invoices.": "快速查看報價單及發票的進度。",
   "This Month": "本月",
+  Total: "總計",
+  "Revenue, expenses, paid, and outstanding are the full history. Net profit is total revenue minus total expenses.":
+    "收入、開支、已收和未收都是全部歷史。淨利是總收入減總開支。",
   Trend: "走勢",
   From: "由",
   to: "至",

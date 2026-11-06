@@ -43,7 +43,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const t = getT();
 
   return (
-    <div className="min-h-screen flex">
+    <div className="flex min-h-screen w-full">
       <Sidebar
         logoData={company.logoData}
         logoDataDark={settings.companyLogoDark}
@@ -52,8 +52,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         allowedPages={pages}
         canManage={superAdmin}
       />
-      <div className="flex-1 flex flex-col min-w-0">
-        <main className="flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8 max-w-[1400px] w-full mx-auto">
+      <div className="flex min-w-0 w-full flex-1 flex-col">
+        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 px-4 sm:px-6 lg:px-10 pt-8 pb-6 lg:pb-8">
           {allowed ? (
             <PageTransition>{children}</PageTransition>
           ) : (

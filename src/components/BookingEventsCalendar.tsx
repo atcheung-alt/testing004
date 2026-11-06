@@ -8,10 +8,12 @@ import Portal from "@/components/Portal";
 import { formatDateLabel } from "@/lib/bookingFormat";
 import { useT } from "@/lib/i18n/client";
 
-// A read-only month calendar of every booking event. Each day lists the
-// names in dark type, with a color mark for a booking or an invoice job.
-// A busy day keeps two names and opens the rest. Alongside the event list
-// on the same page.
+// A read-only month calendar of every booking event, laid out as multi-day
+// bars — so staff can see at a glance which events are running (or upcoming)
+// on any given day, alongside the plain table list on the same page. Adapted
+// from AttendanceCalendar.tsx's month-grid/lane-stacking approach for
+// multi-day leave spans; here each bar is a BookingEvent's own
+// [startDate, endDate] range rather than one employee's leave.
 export type BookingEventCalendarItem = {
   id: string;
   name: string;
@@ -32,12 +34,16 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const VISIBLE_PER_DAY = 2;
+const MAX_LANES = 3;
+const BAR_HEIGHT = 22;
+const BAR_GAP = 4;
+const HEADER_HEIGHT = 30;
+const MORE_ROW_HEIGHT = 18;
 
-// A mark on the left of each name, chosen from the event id so overlapping
-// events stay distinct. The name itself stays dark. Not stored, and not user-editable.
-const EVENT_COLORS = ["#2457c5", "#0b7a6e", "#5b3fd4", "#157a40", "#b45309", "#be3454"];
-const JOB_COLOR = "#3e4a63";
+// A restrained palette, chosen from the event id so overlapping events stay
+// distinct. Not stored, and not user-editable.
+const EVENT_COLORS = ["#3B6FE0", "#0E9F8E", "#7A5AF0", "#1F9D55", "#E07A2F", "#E15B73"];
+const JOB_COLOR = "#8B93A7";
 
 export function eventBarColor(id: string): string {
   let hash = 0;
@@ -61,6 +67,10 @@ function addDays(d: Date, n: number) {
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
+function daysBetween(a: Date, b: Date) {
+  return Math.round((startOfDay(b).getTime() - startOfDay(a).getTime()) / 86400000);
+}
+
 function normalizeEvents(events: BookingEventCalendarItem[]): NormEvent[] {
   return events.map((e) => {
     const start = startOfDay(new Date(e.startDate));
@@ -87,15 +97,48 @@ function getMonthGrid(monthDate: Date): Date[][] {
   return weeks;
 }
 
-function eventsOnDay(events: NormEvent[], day: Date): NormEvent[] {
-  return events
-    .filter((ev) => ev.start <= day && ev.end >= day)
-    .sort((a, b) => a.start.getTime() - b.start.getTime() || a.name.localeCompare(b.name));
+// Classic greedy interval-scheduling "lane" assignment so a multi-day event
+// bar keeps the same row as it stretches across the grid, the way Google
+// Calendar's month view stacks overlapping events.
+function assignLanes(events: NormEvent[]): Map<string, number> {
+  const sorted = [...events].sort((a, b) => {
+    const byStart = a.start.getTime() - b.start.getTime();
+    if (byStart !== 0) return byStart;
+    return b.end.getTime() - b.start.getTime() - (a.end.getTime() - a.start.getTime());
+  });
+  const laneEnds: number[] = [];
+  const laneOf = new Map<string, number>();
+  for (const ev of sorted) {
+    let placed = false;
+    for (let i = 0; i < laneEnds.length; i++) {
+      if (laneEnds[i] < ev.start.getTime()) {
+        laneEnds[i] = ev.end.getTime();
+        laneOf.set(ev.id, i);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      laneEnds.push(ev.end.getTime());
+      laneOf.set(ev.id, laneEnds.length - 1);
+    }
+  }
+  return laneOf;
 }
+
+type Segment = {
+  ev: NormEvent;
+  startCol: number;
+  span: number;
+  lane: number;
+  continuesLeft: boolean;
+  continuesRight: boolean;
+};
 
 function WeekRow({
   week,
   events,
+  laneOf,
   today,
   monthDate,
   onEventClick,
@@ -103,73 +146,91 @@ function WeekRow({
 }: {
   week: Date[];
   events: NormEvent[];
+  laneOf: Map<string, number>;
   today: Date;
   monthDate: Date;
   onEventClick: (ev: NormEvent) => void;
   onMoreClick: (day: Date, events: NormEvent[]) => void;
 }) {
   const t = useT();
+  const weekStart = week[0];
+  const weekEnd = week[6];
+
+  const segments: Segment[] = events
+    .filter((ev) => ev.end >= weekStart && ev.start <= weekEnd)
+    .map((ev) => {
+      const segStart = ev.start < weekStart ? weekStart : ev.start;
+      const segEnd = ev.end > weekEnd ? weekEnd : ev.end;
+      return {
+        ev,
+        startCol: daysBetween(weekStart, segStart),
+        span: daysBetween(segStart, segEnd) + 1,
+        lane: laneOf.get(ev.id) ?? 0,
+        continuesLeft: ev.start < weekStart,
+        continuesRight: ev.end > weekEnd,
+      };
+    });
+
+  const visible = segments.filter((s) => s.lane < MAX_LANES);
+  const hidden = segments.filter((s) => s.lane >= MAX_LANES);
+  const hiddenByDay = week.map((_, i) => hidden.filter((s) => i >= s.startCol && i < s.startCol + s.span));
+
+  const maxLaneUsed = visible.reduce((m, s) => Math.max(m, s.lane), -1);
+  const hasMoreRow = hiddenByDay.some((h) => h.length > 0);
+  const rowHeight =
+    HEADER_HEIGHT + (maxLaneUsed + 1) * (BAR_HEIGHT + BAR_GAP) + (hasMoreRow ? MORE_ROW_HEIGHT : 6);
 
   return (
-    <div className="grid grid-cols-7 border-t border-line">
+    <div className="grid grid-cols-7 divide-x divide-slate-200 border-t border-slate-200 bg-white text-xs" style={{ minHeight: Math.max(rowHeight, 90) }}>
       {week.map((d, i) => {
         const inMonth = d.getMonth() === monthDate.getMonth();
         const today_ = isSameDay(d, today);
-        const here = eventsOnDay(events, d);
-        const shown = here.slice(0, VISIBLE_PER_DAY);
-        const extra = here.length - shown.length;
-        const dayNumber = (
-          <span
-            className={clsx(
-              "inline-flex h-7 w-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
-              today_ ? "bg-brand-500 text-white" : inMonth ? "text-ink" : "text-ink-muted"
-            )}
-          >
-            {d.getDate()}
-          </span>
-        );
+        const onDay = segments
+          .filter((s) => i >= s.startCol && i < s.startCol + s.span)
+          .sort((a, b) => a.lane - b.lane);
+        const shown = onDay.filter((s) => s.lane < MAX_LANES);
+        const extra = hiddenByDay[i];
         return (
-          <div
-            key={i}
-            className={clsx(
-              "min-h-[118px] border-r border-line px-1.5 py-1.5 last:border-r-0",
-              !inMonth && "bg-paper",
-              today_ && inMonth && "bg-brand-50/50"
-            )}
-          >
-            {here.length > 0 ? (
-              <button type="button" className="rounded-full" onClick={() => onMoreClick(d, here)} aria-label={formatDateLabel(d)}>
-                {dayNumber}
-              </button>
-            ) : (
-              dayNumber
-            )}
-            <div className="mt-1 flex flex-col gap-1">
-              {shown.map((ev) => {
-                const inactive = ev.kind !== "job" && !ev.active;
+          <div key={i} className={clsx("flex min-h-[90px] flex-col p-2", !inMonth && "bg-slate-50")}>
+            <span
+              className={clsx(
+                "mb-1 inline-flex font-semibold",
+                today_
+                  ? "h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[11px] text-white"
+                  : inMonth
+                    ? "text-slate-800"
+                    : "text-slate-400"
+              )}
+            >
+              {d.getDate()}
+            </span>
+            <div className="mt-1 space-y-1">
+              {shown.map((s) => {
+                const job = s.ev.kind === "job";
                 return (
                   <button
-                    key={ev.id}
+                    key={`${s.ev.id}-${i}`}
                     type="button"
-                    onClick={() => onEventClick(ev)}
-                    title={ev.name}
+                    onClick={() => onEventClick(s.ev)}
+                    title={s.ev.name}
                     className={clsx(
-                      "block w-full truncate rounded-md border border-[#d5dbe6] bg-white px-1.5 py-1 text-left font-sans text-[13px] font-semibold leading-tight text-ink",
-                      inactive && "border-dashed"
+                      "flex w-full items-center gap-1 truncate rounded border px-1.5 py-0.5 text-left text-[10px] font-medium",
+                      job ? "border-amber-200 bg-amber-50/30 text-amber-950" : "border-indigo-200 bg-indigo-50/30 text-indigo-950",
+                      !job && !s.ev.active && "border-dashed"
                     )}
-                    style={{ borderLeftWidth: 4, borderLeftStyle: "solid", borderLeftColor: colorFor(ev) }}
                   >
-                    {ev.name}
+                    <span className={clsx("h-3 w-0.5 shrink-0 rounded-full", job ? "bg-amber-700" : "bg-indigo-600")} />
+                    <span className="truncate">{s.ev.name}</span>
                   </button>
                 );
               })}
-              {extra > 0 ? (
+              {extra.length > 0 ? (
                 <button
                   type="button"
-                  onClick={() => onMoreClick(d, here)}
-                  className="px-0.5 text-left text-[13px] font-semibold text-ink hover:text-brand-600"
+                  onClick={() => onMoreClick(d, [...shown.map((s) => s.ev), ...extra.map((s) => s.ev)])}
+                  className="px-1 text-left text-[11px] font-medium text-slate-500 hover:text-slate-800"
                 >
-                  {t("+{count} more", { count: extra })}
+                  {t("+{count} more", { count: extra.length })}
                 </button>
               ) : null}
             </div>
@@ -243,6 +304,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
     () => normalized.filter((ev) => ev.end >= gridStart && ev.start <= gridEnd),
     [normalized, gridStart, gridEnd]
   );
+  const laneOf = useMemo(() => assignLanes(visibleEvents), [visibleEvents]);
 
   function goPrevMonth() {
     setMonthDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
@@ -260,66 +322,66 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
   });
 
   return (
-    <div className="card p-4 sm:p-5">
-      <button
-        type="button"
-        onClick={() => setCollapsed((v) => !v)}
-        className="flex flex-wrap items-center justify-between gap-3 w-full text-left"
-        aria-expanded={!collapsed}
-      >
-        <span className="flex items-center gap-1.5">
-          {collapsed ? <ChevronDown size={16} className="text-ink-faint" /> : <ChevronUp size={16} className="text-ink-faint" />}
-          <h2 className="font-sans text-xl font-bold tracking-tight text-ink">{monthLabel}</h2>
-        </span>
-        {!collapsed && (
-          <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-            <button type="button" onClick={goToday} className="btn-secondary">
-              {t("Today")}
-            </button>
-            <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="btn-secondary px-2.5">
-              <ChevronLeft size={16} />
-            </button>
-            <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="btn-secondary px-2.5">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        )}
-      </button>
-
-      {!collapsed && (
-          <div className="mt-4 animate-fade-in" key={monthLabel}>
-          <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-semibold text-ink">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: EVENT_COLORS[0] }} aria-hidden="true" />
+    <div className="w-full space-y-6 rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-6">
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className="inline-flex items-center gap-1.5 text-left"
+            aria-expanded={!collapsed}
+          >
+            {collapsed ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronUp size={16} className="text-slate-400" />}
+            <h2 className="text-lg font-bold text-slate-900">{monthLabel}</h2>
+          </button>
+          <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-indigo-600" aria-hidden="true" />
               {t("Booking")}
             </span>
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: JOB_COLOR }} aria-hidden="true" />
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-700" aria-hidden="true" />
               {t("Invoice job")}
             </span>
           </div>
-          <div className="overflow-x-auto">
-            <div className="mb-1 grid min-w-[756px] grid-cols-7 border-b border-line pb-2">
-              {WEEKDAY_LABELS.map((label) => (
-                <div key={label} className="text-center text-[13px] font-semibold text-ink">
-                  {t(label)}
-                </div>
-              ))}
+        </div>
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={goToday} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+              {t("Today")}
+            </button>
+            <div className="flex items-center overflow-hidden rounded-md border border-slate-200">
+              <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="border-r border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50">
+                <ChevronLeft size={16} />
+              </button>
+              <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="p-1.5 text-slate-600 hover:bg-slate-50">
+                <ChevronRight size={16} />
+              </button>
             </div>
+          </div>
+        )}
+      </div>
 
-            <div className="min-w-[756px] overflow-hidden rounded-lg border border-line">
-              {weeks.map((week, i) => (
-                <WeekRow
-                  key={i}
-                  week={week}
-                  events={visibleEvents}
-                  today={today}
-                  monthDate={monthDate}
-                  onEventClick={(ev) => setModal({ mode: "event", event: ev })}
-                  onMoreClick={(date, dayEvents) => setModal({ mode: "day", date, events: dayEvents })}
-                />
-              ))}
-            </div>
+      {!collapsed && (
+          <div key={monthLabel}>
+          <div className="overflow-hidden rounded-lg border border-slate-200">
+          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/50 py-2.5 text-center text-xs font-semibold text-slate-600">
+            {WEEKDAY_LABELS.map((label) => (
+              <div key={label}>{t(label)}</div>
+            ))}
+          </div>
+            {weeks.map((week, i) => (
+              <WeekRow
+                key={i}
+                week={week}
+                events={visibleEvents}
+                laneOf={laneOf}
+                today={today}
+                monthDate={monthDate}
+                onEventClick={(ev) => setModal({ mode: "event", event: ev })}
+                onMoreClick={(date, dayEvents) => setModal({ mode: "day", date, events: dayEvents })}
+              />
+            ))}
           </div>
 
           {normalized.length === 0 && (

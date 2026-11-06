@@ -18,7 +18,7 @@ const MONTHS = [
   "December",
 ];
 
-export default function DashboardMonthSelect({ year, month }: { year: number; month: number }) {
+export default function DashboardMonthSelect({ year, month, total = false }: { year: number; month: number; total?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useT();
@@ -26,24 +26,23 @@ export default function DashboardMonthSelect({ year, month }: { year: number; mo
   const years = Array.from({ length: 6 }, (_, index) => currentYear - index);
 
   function go(nextYear: number, nextMonth: number) {
-    const now = new Date();
-    if (nextYear === now.getFullYear() && nextMonth === now.getMonth()) {
-      router.push(pathname);
-      return;
-    }
     const params = new URLSearchParams();
     params.set("month", `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}`);
     router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <select
         className="input !w-auto"
         aria-label={t("Month")}
-        value={month}
-        onChange={(event) => go(year, Number(event.target.value))}
+        value={total ? "" : month}
+        onChange={(event) => {
+          if (event.target.value === "") return;
+          go(year, Number(event.target.value));
+        }}
       >
+        {total ? <option value="">{t("Month")}</option> : null}
         {MONTHS.map((name, index) => (
           <option key={name} value={index}>
             {t(name)}
@@ -53,15 +52,29 @@ export default function DashboardMonthSelect({ year, month }: { year: number; mo
       <select
         className="input !w-auto"
         aria-label={t("Year")}
-        value={year}
-        onChange={(event) => go(Number(event.target.value), month)}
+        value={total ? "" : year}
+        onChange={(event) => {
+          if (event.target.value === "") return;
+          go(Number(event.target.value), month);
+        }}
       >
+        {total ? <option value="">{t("Year")}</option> : null}
         {years.map((value) => (
           <option key={value} value={value}>
             {value}
           </option>
         ))}
       </select>
+      <button
+        type="button"
+        aria-pressed={total}
+        onClick={() => router.push(`${pathname}?month=total`)}
+        className={`inline-flex items-center rounded-xl border px-3 py-2 text-sm font-semibold ${
+          total ? "border-brand-500 bg-brand-500 text-white" : "border-line bg-surface text-ink"
+        }`}
+      >
+        {t("Total")}
+      </button>
     </div>
   );
 }

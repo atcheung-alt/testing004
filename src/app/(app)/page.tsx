@@ -3,7 +3,7 @@ import { FileText, ReceiptText, Wallet, AlertTriangle, ArrowRight, TrendingUp } 
 import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
-import { getMonthDashboard, getTrendMonths } from "@/lib/finance";
+import { getAllTimeDashboard, getMonthDashboard, getTrendMonths } from "@/lib/finance";
 import StatCard from "@/components/StatCard";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import StatusBadge from "@/components/StatusBadge";
@@ -13,7 +13,6 @@ import DashboardMonthSelect from "@/components/DashboardMonthSelect";
 import DashboardTrend from "@/components/DashboardTrend";
 import { getT } from "@/lib/i18n/server";
 import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
-import { sumGeneralExpenses } from "@/lib/generalExpense";
 import { hongKongDay } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
@@ -46,44 +45,41 @@ function chosenMonth(value: string | undefined) {
 
 export default async function DashboardPage({ searchParams }: { searchParams: { month?: string } }) {
   const t = getT();
-  const chosen = chosenMonth(searchParams.month);
+  const showTotal = searchParams.month === "total";
+  const chosen = chosenMonth(showTotal ? undefined : searchParams.month);
   const today = hongKongDay(new Date());
   const viewingCurrent = chosen.year === Number(today.slice(0, 4)) && chosen.month === Number(today.slice(5, 7)) - 1;
   const [quotationFilter, invoiceFilter] = await Promise.all([currentQuotationFilter(), currentInvoiceFilter()]);
   const quotationWhere = quotationFilter || undefined;
   const invoiceWhere = invoiceFilter || undefined;
   const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
-  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, trendMonths, expenseTotal, recentExpenses, generalExpenseSum] =
+  const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, allTime, trendMonths, recentExpenses] =
     await Promise.all([
       prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
       prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
       prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
       prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
       getMonthDashboard(chosen.year, chosen.month, invoiceFilter || undefined),
+      getAllTimeDashboard(invoiceFilter || undefined),
       getTrendMonths(invoiceFilter || undefined),
-      prisma.invoiceExpense.aggregate({ _sum: { amount: true }, where: expenseWhere }),
       prisma.invoiceExpense.findMany({
         where: expenseWhere,
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { invoice: { select: { id: true, number: true, customerName: true } } },
       }),
-      sumGeneralExpenses(),
     ]);
 
-  const invoiced = invoices
-    .filter((i) => i.status !== "CANCELLED")
-    .reduce((sum, i) => sum + i.total, 0);
-  const paid = invoices.filter((i) => i.status === "PAID").reduce((sum, i) => sum + i.total, 0);
-  const expenseSum = (expenseTotal._sum.amount || 0) + generalExpenseSum;
-  const monthProfit = monthFinance.profit;
-
-  const outstanding = invoices
-    .filter(
-      (i) =>
-        i.status === "UNPAID" || i.status === "OVERDUE" || i.status === "PENDING_VERIFICATION"
-    )
-    .reduce((sum, i) => sum + i.total, 0);
+  const scope = showTotal
+    ? allTime
+    : {
+        revenue: monthFinance.revenue,
+        expenses: monthFinance.expenses,
+        profit: monthFinance.profit,
+        invoiceCount: monthFinance.invoiceCount,
+        paid: monthFinance.paid,
+        outstanding: monthFinance.outstanding,
+      };
   const quotedValue = quotations
     .filter((q) => q.status === "SENT" || q.status === "DRAFT")
     .reduce((sum, q) => sum + q.total, 0);
@@ -91,15 +87,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const overdueInvoices = invoices.filter(isOverdueInvoice);
   const overdueCount = overdueInvoices.length;
   const overdueAmount = overdueInvoices.reduce((sum, i) => sum + i.total, 0);
-  const collected = invoiced > 0 ? Math.round((paid / invoiced) * 100) : 0;
-  const monthMax = Math.max(monthFinance.revenue, monthFinance.expenses, Math.abs(monthProfit), 1);
+  const collected = scope.revenue > 0 ? Math.round((scope.paid / scope.revenue) * 100) : 0;
+  const monthMax = Math.max(scope.revenue, scope.expenses, Math.abs(scope.profit), 1);
   const monthRows = [
-    { label: t("Revenue"), amount: monthFinance.revenue, color: "bg-brand-500" },
-    { label: t("Expenses"), amount: monthFinance.expenses, color: "bg-danger-500" },
+    { label: t("Revenue"), amount: scope.revenue, color: "bg-brand-500" },
+    { label: t("Expenses"), amount: scope.expenses, color: "bg-danger-500" },
     {
       label: t("Net Profit"),
-      amount: monthProfit,
-      color: monthProfit < 0 ? "bg-danger-500" : "bg-accent-500",
+      amount: scope.profit,
+      color: scope.profit < 0 ? "bg-danger-500" : "bg-accent-500",
     },
   ];
   const monthName = `${t(MONTH_NAMES[chosen.month])} ${chosen.year}`;
@@ -111,30 +107,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           label={t("Invoices")}
-          value={formatCurrency(monthFinance.revenue)}
-          amount={monthFinance.revenue}
-          detail={t("{count} Invoices", { count: monthFinance.invoiceCount })}
+          value={formatCurrency(scope.revenue)}
+          amount={scope.revenue}
+          detail={t("{count} Invoices", { count: scope.invoiceCount })}
           icon={ReceiptText}
         />
         <StatCard
           label={t("Paid")}
-          value={formatCurrency(paid)}
-          amount={paid}
+          value={formatCurrency(scope.paid)}
+          amount={scope.paid}
           icon={TrendingUp}
           accent="accent"
         />
         <StatCard
           label={t("Expenses")}
-          value={formatCurrency(expenseSum)}
-          amount={expenseSum}
+          value={formatCurrency(scope.expenses)}
+          amount={scope.expenses}
           detail={t("Logged against invoices")}
           icon={Wallet}
           accent="danger"
         />
         <StatCard
           label={t("Outstanding")}
-          value={formatCurrency(outstanding)}
-          amount={outstanding}
+          value={formatCurrency(scope.outstanding)}
+          amount={scope.outstanding}
           icon={AlertTriangle}
           accent="accent"
         />
@@ -155,8 +151,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
       <div className="card p-5">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="font-display text-lg font-semibold">{viewingCurrent ? t("This Month") : monthName}</h2>
-          <DashboardMonthSelect year={chosen.year} month={chosen.month} />
+          <h2 className="font-display text-lg font-semibold">{showTotal ? t("Total") : viewingCurrent ? t("This Month") : monthName}</h2>
+          <DashboardMonthSelect year={chosen.year} month={chosen.month} total={showTotal} />
         </div>
         <div className="flex flex-col gap-4">
           {monthRows.map((row) => {
@@ -178,7 +174,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           })}
         </div>
         <p className="text-xs text-ink-faint mt-4">
-          {viewingCurrent
+          {showTotal
+            ? t("Revenue, expenses, paid, and outstanding are the full history. Net profit is total revenue minus total expenses.")
+            : viewingCurrent
             ? t("Revenue uses the recognise or onboarding date in this month. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page this month.")
             : t("Revenue uses the recognise or onboarding date in {month}. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
         </p>

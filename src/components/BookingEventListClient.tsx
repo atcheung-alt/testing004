@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import clsx from "clsx";
 import { useT } from "@/lib/i18n/client";
 import { formatDateLabel } from "@/lib/bookingFormat";
@@ -41,44 +42,48 @@ export default function BookingEventListClient({ events }: { events: BookingEven
 
   return (
     <section className="booking-events">
-      <div className="card overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-line px-4 py-4 sm:px-5">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-sans text-lg font-semibold text-ink">{t("Events")}</h2>
-            <p className="text-sm text-ink-muted">
-              {query.trim() ? t("{count} Matching", { count: shown.length }) : t("{count} Events", { count: events.length })}
-            </p>
-          </div>
-          <label className="sr-only" htmlFor="booking-event-search">
-            {t("Search by event name or date")}
-          </label>
+      <div className="w-full space-y-4 rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-slate-900">{t("Events")}</h2>
+          <p className="text-xs font-medium text-slate-400">
+            {query.trim() ? t("{count} Matching", { count: shown.length }) : t("{count} Events", { count: events.length })}
+          </p>
+        </div>
+        <label className="relative block max-w-sm" htmlFor="booking-event-search">
+          <span className="sr-only">{t("Search by event name or date")}</span>
+          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             id="booking-event-search"
             type="search"
-            className="input"
             value={query}
             placeholder={t("Search by event name or date")}
             onChange={(event) => setQuery(event.target.value)}
+            className="w-full rounded-lg border border-slate-200 py-1.5 pl-9 pr-4 text-xs outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
           />
-        </div>
-        <div className="booking-events-scroll">
+        </label>
+        <div className="booking-events-scroll divide-y divide-slate-100">
           {shown.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-ink-muted sm:px-5">{t("No matching events.")}</p>
+            <p className="py-6 text-sm text-slate-400">{t("No matching events.")}</p>
           ) : (
             shown.map((event) => (
               <Link
                 key={event.id}
                 href={`/bookings/${event.id}`}
-                className="event-ticket flex items-center gap-3 border-b border-line px-4 py-3 no-underline last:border-b-0 hover:bg-paper sm:px-5"
+                className="flex items-center justify-between gap-3 py-3.5 no-underline"
               >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-sans text-base font-semibold text-ink">{event.name}</span>
-                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-ink">
-                    <span>{dateRangeLabel(event.startDate, event.endDate)}</span>
-                    {event.description ? <span className="truncate">{event.description}</span> : null}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-bold text-slate-800">{event.name}</span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-400">
+                    {dateRangeLabel(event.startDate, event.endDate)}
+                    {event.description ? ` ${event.description}` : ""}
                   </span>
                 </span>
-                <span className={clsx("stamp shrink-0", event.active ? "border-brand-500 text-brand-600" : "border-line bg-paper text-ink")}>
+                <span
+                  className={clsx(
+                    "shrink-0 rounded-full border px-2.5 py-0.5 text-[10px] font-bold tracking-wider",
+                    event.active ? "border-indigo-200 bg-indigo-50/50 text-indigo-600" : "border-slate-200 bg-slate-50 text-slate-400"
+                  )}
+                >
                   {event.active ? t("Active") : t("Inactive")}
                 </span>
               </Link>

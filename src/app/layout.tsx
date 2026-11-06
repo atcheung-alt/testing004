@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { getEffectiveAnimationsEnabled, getEffectiveThemeModeFor } from "@/lib/appSettings";
 import { getCurrentUser } from "@/lib/auth";
@@ -20,6 +20,11 @@ const fontVariables = {
   "--font-mono": '"IBM Plex Mono", monospace',
   "--font-signature": '"Allura", cursive',
 } as CSSProperties;
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: "Resource Management System - HR Plus",

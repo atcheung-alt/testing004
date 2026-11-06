@@ -51,8 +51,8 @@ export default async function BookingsPage() {
         title={t("Bookings")}
         note={t("Review bookings and invoice jobs for the month.")}
         actions={
-          <Link href="/bookings/new" className="btn-primary shrink-0">
-            <Plus size={15} /> {t("Create event")}
+          <Link href="/bookings/new" className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-700">
+            <Plus size={16} /> {t("Create event")}
           </Link>
         }
       />
