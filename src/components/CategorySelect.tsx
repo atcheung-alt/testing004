@@ -38,7 +38,7 @@ export default function CategorySelect({
         <ChevronDown size={16} className="shrink-0 text-ink-muted" />
       </button>
       {open ? (
-        <div className="absolute z-50 mt-1 w-full min-w-[12rem] max-h-80 overflow-auto rounded-xl border border-line bg-surface py-1 shadow-card">
+        <div className="absolute top-full left-0 z-50 mt-1 w-full max-h-80 overflow-auto border border-slate-200 bg-white py-1 shadow-lg rounded-lg">
           {options.map((name) => (
             <button
               key={name}
