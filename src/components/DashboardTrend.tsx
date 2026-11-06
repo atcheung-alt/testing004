@@ -150,7 +150,7 @@ export default function DashboardTrend({
         </button>
       </div>
       <div className="relative">
-        <svg viewBox={`0 0 ${width} ${height}`} className="block w-full h-72" role="img" onMouseMove={move} onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="block w-full h-72" role="img" onMouseMove={move} onMouseLeave={() => setHover(null)}>
           {ticks.map((value) => {
             const y = yOf(value);
             return (
