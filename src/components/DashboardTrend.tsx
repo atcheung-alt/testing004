@@ -32,12 +32,10 @@ function axisAmount(value: number) {
 
 export default function DashboardTrend({
   months,
-  year,
-  month,
 }: {
   months: TrendMonth[];
-  year: number;
-  month: number;
+  year?: number;
+  month?: number;
 }) {
   const t = useT();
   const [from, setFrom] = useState(0);
@@ -59,8 +57,6 @@ export default function DashboardTrend({
   const innerH = height - top - bottom;
   const xOf = (index: number) => left + (rows.length <= 1 ? innerW / 2 : (index / (rows.length - 1)) * innerW);
   const yOf = (value: number) => top + ((max - value) / span) * innerH;
-  const chosen = rows.findIndex((row) => row.year === year && row.month === month);
-
   function label(row: TrendMonth) {
     const name = t(MONTHS[row.month]);
     const short = name.length > 3 ? name.slice(0, 3) : name;
@@ -143,13 +139,13 @@ export default function DashboardTrend({
               </g>
             );
           })}
-          {chosen >= 0 ? (
+          {hover !== null ? (
             <line
-              x1={xOf(chosen)}
+              x1={xOf(hover)}
               y1={top}
-              x2={xOf(chosen)}
+              x2={xOf(hover)}
               y2={height - bottom}
-              stroke="#d5dbe8"
+              stroke="#94a3b8"
               strokeDasharray="3 3"
             />
           ) : null}
@@ -159,17 +155,21 @@ export default function DashboardTrend({
               .join(" ");
             return (
               <g key={series.key}>
-                <path d={d} fill="none" stroke={series.stroke} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                <path d={d} fill="none" stroke={series.stroke} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" opacity={hover === null ? 1 : 0.35} />
                 {rows.map((row, index) => (
-                  <circle
-                    key={`${series.key}-${row.year}-${row.month}`}
-                    cx={xOf(index)}
-                    cy={yOf(row[series.key])}
-                    r={index === hover || index === chosen ? 4.5 : 2.5}
-                    fill={series.stroke}
-                    stroke={index === hover || index === chosen ? "#fff" : "none"}
-                    strokeWidth={index === hover || index === chosen ? 2 : 0}
-                  />
+                  <g key={`${series.key}-${row.year}-${row.month}`} opacity={hover === null || index === hover ? 1 : 0.25}>
+                    {index === hover ? (
+                      <circle cx={xOf(index)} cy={yOf(row[series.key])} r="8" fill="#fff" stroke={series.stroke} strokeWidth="3" />
+                    ) : null}
+                    <circle
+                      cx={xOf(index)}
+                      cy={yOf(row[series.key])}
+                      r={index === hover ? 4 : 3}
+                      fill={series.stroke}
+                      stroke="#fff"
+                      strokeWidth="1.5"
+                    />
+                  </g>
                 ))}
               </g>
             );
@@ -192,7 +192,10 @@ export default function DashboardTrend({
             </p>
             {SERIES.map((series) => (
               <p key={series.key} className="flex justify-between gap-3 text-ink-muted">
-                <span>{t(series.label)}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: series.stroke }} />
+                  {t(series.label)}
+                </span>
                 <span>{formatCurrency(pointed[series.key])}</span>
               </p>
             ))}
