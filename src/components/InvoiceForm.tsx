@@ -298,7 +298,7 @@ export default function InvoiceForm({
             />
             <p className="mt-1.5 text-xs text-ink-faint">
               {invoice
-                ? t("This date decides Commission. Pending before the day. Done once the day has arrived.")
+                ? t("This date decides Billing. Pending before the day. Done once the day has arrived.")
                 : t("You can change this date later.")}
             </p>
           </div>

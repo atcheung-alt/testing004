@@ -50,8 +50,8 @@ export default function InvoiceExpensesCard({
   embedded?: boolean;
 }) {
   const router = useRouter();
-  const options = [...categories, "Others"];
-  const [category, setCategory] = useState(options[0] || "Others");
+  const options = ["Materials", "Meals", "Equipment", "Transport", "Venue", "Staffing", "Software & Subscriptions", "Other"];
+  const [category, setCategory] = useState("Materials");
   const [label, setLabel] = useState("");
   const [amount, setAmount] = useState("");
   const [files, setFiles] = useState<PickedFile[]>([]);
@@ -66,7 +66,8 @@ export default function InvoiceExpensesCard({
 
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
   const net = invoiceTotal - total;
-  const isOthers = category === "Others";
+  const isOthers = category === "Other";
+  const knownCustom = Array.from(new Set([...categories, ...expenses.map((expense) => expense.category)].filter((name) => name && name !== "Others" && !options.includes(name))));
 
   async function pickFiles(fileList: FileList | null, existing: number): Promise<PickedFile[] | null> {
     if (!fileList || fileList.length === 0) return [];
@@ -106,8 +107,8 @@ export default function InvoiceExpensesCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          category,
-          label: label.trim(),
+          category: isOthers ? label.trim() : category,
+          label: "",
           amount: parsedAmount,
           documents: files,
         }),
@@ -182,7 +183,7 @@ export default function InvoiceExpensesCard({
   }
 
   return (
-    <div className={embedded ? "p-5 flex flex-col gap-4" : "card p-5 flex flex-col gap-4"}>
+    <div className={embedded ? "p-5 flex flex-col gap-4" : "card p-5 flex flex-col gap-4 !overflow-visible"}>
       <div className="flex items-center gap-2">
         <Wallet size={17} className="text-brand-600" />
         <h2 className="font-display text-lg font-semibold">{t("Event Expenses")}</h2>
@@ -309,14 +310,18 @@ export default function InvoiceExpensesCard({
           </div>
           {isOthers && (
             <div className="flex-1">
-              <label className="label">{t("Describe it")}</label>
+              <label className="label">{t("Custom category")}</label>
               <input
                 type="text"
                 className="input"
-                placeholder={t("e.g. Parking, last-minute supplies")}
+                list="invoice-expense-categories"
+                placeholder={t("Type a category, e.g. Parking")}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
               />
+              <datalist id="invoice-expense-categories">
+                {knownCustom.map((name) => <option key={name} value={name} />)}
+              </datalist>
             </div>
           )}
           <div className="w-full sm:w-36">

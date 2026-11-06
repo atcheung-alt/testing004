@@ -32,13 +32,13 @@ export default function CategorySelect({
   }
 
   return (
-    <div ref={root} className="relative">
+    <div ref={root} className="relative z-50">
       <button type="button" className="input flex items-center justify-between gap-2 text-left" onClick={() => setOpen((current) => !current)}>
         <span>{text(value)}</span>
         <ChevronDown size={16} className="shrink-0 text-ink-muted" />
       </button>
       {open ? (
-        <div className="absolute z-20 mt-1 w-full min-w-[12rem] card max-h-64 overflow-auto py-1">
+        <div className="absolute z-50 mt-1 w-full min-w-[12rem] max-h-80 overflow-auto rounded-xl border border-line bg-surface py-1 shadow-card">
           {options.map((name) => (
             <button
               key={name}

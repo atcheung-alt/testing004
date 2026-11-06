@@ -208,7 +208,7 @@ export default function ColleagueShareFields({
   return (
     <details className="card group overflow-visible" open>
       <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
-        <span className="text-[15px] font-semibold text-ink">{t("Commission")}</span>
+        <span className="text-[15px] font-semibold text-ink">{t("Billing")}</span>
         <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(commissionTotal)}</span>
         <ChevronDown size={16} className="text-ink-muted transition-transform group-open:rotate-180" />
       </summary>
@@ -223,7 +223,7 @@ export default function ColleagueShareFields({
             min={0}
             step="0.01"
             inputMode="decimal"
-            aria-label={t("Total commission")}
+            aria-label={t("Total billing")}
             value={Number.isFinite(commissionTotal) ? commissionTotal : 0}
             onChange={(e) => onCommissionTotalChange(Number(e.target.value))}
           />
@@ -232,7 +232,7 @@ export default function ColleagueShareFields({
         <div
           className={`flex h-2 overflow-hidden rounded-full bg-line ${over ? "ring-1 ring-danger-500" : ""}`}
           role="img"
-          aria-label={t("Commission")}
+          aria-label={t("Billing")}
         >
           {slices.map((slice, index) => (
             <span key={`${slice.name}-${index}`} style={{ width: `${(slice.percent / scale) * 100}%`, background: slice.color }} />
@@ -304,7 +304,7 @@ export default function ColleagueShareFields({
                   max={100}
                   step="0.1"
                   inputMode="decimal"
-                  aria-label={t("Percent of commission")}
+                  aria-label={t("Percent of billing")}
                   value={Number.isFinite(share.value) ? share.value : 0}
                   onChange={(e) => updateShare(index, { value: Number(e.target.value) })}
                 />

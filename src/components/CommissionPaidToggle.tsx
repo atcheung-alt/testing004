@@ -52,14 +52,14 @@ export default function CommissionPaidToggle({
         body: JSON.stringify({ invoiceId, colleagueName, paid: !isPaid }),
       });
       const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || "Could not update this commission.");
+      if (!response.ok) throw new Error(payload.error || "Could not update this billing.");
       setIsPaid(Boolean(payload.paid));
       setPaidOn(typeof payload.paidOn === "string" ? payload.paidOn : "");
       setAsk(false);
       router.refresh();
     } catch (err) {
       setAsk(false);
-      setError(err instanceof Error ? err.message : "Could not update this commission.");
+      setError(err instanceof Error ? err.message : "Could not update this billing.");
     } finally {
       setBusy(false);
     }

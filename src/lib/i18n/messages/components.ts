@@ -664,8 +664,9 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "繁體中文 (Traditional Chinese)": "繁體中文",
   "简体中文 (Simplified Chinese)": "簡體中文",
   "Made by & colleague sharing": "編製人及同事分成",
-  "Split commission": "同事分成",
-  Commission: "佣金",
+  "Split billing": "同事分成",
+  Commission: "賬單",
+  Billing: "賬單",
   "Save split": "儲存分成",
   "Saving split…": "正在儲存分成…",
   "Split saved": "分成已儲存",
@@ -677,17 +678,17 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
     "「編製人」仍用你的暱稱。選擇同事的暱稱分成後，對方就能看到這張報價單和轉出的發票。客戶看不到這部分。",
   "Made by stays your nickname. Pick a colleague by nickname to split this invoice. They can then see the invoice. Clients never see this.":
     "「編製人」仍用你的暱稱。選擇同事的暱稱，分成這張發票。對方就能看到這張發票。客戶看不到這部分。",
-  "Made by is the account that created this invoice. Enter the commission total, then each partner's percentage of it. They can see this invoice. Clients never see this.":
-    "「編製人」是建立這張發票的帳號。輸入佣金總額，再填每位夥伴佔該佣金的百分比。對方就能看到這張發票。客戶看不到這部分。",
-  "Enter the commission total, then each partner's percentage. The rest stays with the person who created the invoice. If you add no one, the whole amount is theirs. A partner only sees their own amount.":
-    "輸入佣金總額，再填每位夥伴的百分比。餘下的百分比屬於建立這張發票的人。如果沒有加入其他人，整筆佣金都屬於這個人。被分成的人只會看到自己的金額。",
-  "{name} keeps the whole commission · {amount}": "{name} 獲得全部佣金 · {amount}",
+  "Made by is the account that created this invoice. Enter the billing total, then each partner's percentage of it. They can see this invoice. Clients never see this.":
+    "「編製人」是建立這張發票的帳號。輸入賬單總額，再填每位夥伴佔該賬單的百分比。對方就能看到這張發票。客戶看不到這部分。",
+  "Enter the billing total, then each partner's percentage. The rest stays with the person who created the invoice. If you add no one, the whole amount is theirs. A partner only sees their own amount.":
+    "輸入賬單總額，再填每位夥伴的百分比。餘下的百分比屬於建立這張發票的人。如果沒有加入其他人，整筆賬單都屬於這個人。被分成的人只會看到自己的金額。",
+  "{name} keeps the whole billing · {amount}": "{name} 獲得全部賬單 · {amount}",
   "{name} keeps {percent}% · {amount}": "{name} 獲得 {percent}% · {amount}",
-  "Your commission": "你的佣金",
+  "Your billing": "你的賬單",
   "Partner percentages can't add up to more than 100.": "夥伴百分比合計不能超過 100%。",
-  "Total commission": "佣金總額",
-  "Percent of commission": "佔佣金百分比",
-  "Enter the total commission.": "請輸入佣金總額。",
+  "Total billing": "賬單總額",
+  "Percent of billing": "佔賬單百分比",
+  "Enter the total billing.": "請輸入賬單總額。",
   "Choose a colleague": "選擇同事",
   "Search colleague": "搜尋同事",
   "No matching colleague": "沒有相符的同事",

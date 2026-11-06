@@ -8,13 +8,13 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest) {
   const session = await getCurrentUser();
   if (!session || (!session.isAdmin && !isSuperAdmin(session))) {
-    return NextResponse.json({ error: "Only an admin can mark commission paid." }, { status: 403 });
+    return NextResponse.json({ error: "Only an admin can mark billing paid." }, { status: 403 });
   }
   const body = await request.json().catch(() => ({}));
   const invoiceId = String(body.invoiceId || "").trim();
   const colleagueName = String(body.colleagueName || "").trim();
   if (!invoiceId) {
-    return NextResponse.json({ error: "Choose a commission row." }, { status: 400 });
+    return NextResponse.json({ error: "Choose a billing row." }, { status: 400 });
   }
   const paidOn = await setCommissionPaid(invoiceId, colleagueName, Boolean(body.paid));
   return NextResponse.json({ paid: Boolean(paidOn), paidOn });

@@ -45,7 +45,7 @@ export function commissionSplitRequested(body: SplitBody): boolean {
 
 export function commissionSplitError(body: SplitBody): string | null {
   const commissionTotal = Number(body.commissionTotal);
-  if (!Number.isFinite(commissionTotal) || commissionTotal < 0) return "Enter the total commission.";
+  if (!Number.isFinite(commissionTotal) || commissionTotal < 0) return "Enter the total billing.";
   const sharing = quotationShareFieldsFrom({ ...body, shareMode: "PERCENT" });
   if (sharing.error) return sharing.error;
   const assigned = sharing.shares.reduce((sum, share) => sum + share.value, 0);

@@ -42,12 +42,12 @@ export default function QuotationShareEditor({
     return (
       <details className="card group" open>
         <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3 [&::-webkit-details-marker]:hidden">
-          <span className="text-[15px] font-semibold text-ink">{t("Commission")}</span>
+          <span className="text-[15px] font-semibold text-ink">{t("Billing")}</span>
           <span className="ml-auto text-sm font-semibold tabular-nums text-ink">{formatCurrency(ownAmount)}</span>
           <ChevronDown size={16} className="text-ink-muted transition-transform group-open:rotate-180" />
         </summary>
         <p className="px-5 pb-4 text-sm text-ink">
-          {t("Your commission")} · {formatCurrency(ownAmount)}
+          {t("Your billing")} · {formatCurrency(ownAmount)}
         </p>
       </details>
     );
