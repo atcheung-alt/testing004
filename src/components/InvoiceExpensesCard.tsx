@@ -6,8 +6,6 @@ import { Wallet, Plus, Trash2, Loader2, AlertCircle, Paperclip, FileText, Chevro
 import { formatCurrency } from "@/lib/calculations";
 import { categoryLabel } from "@/lib/ensureExpenseCategories";
 import { useT } from "@/lib/i18n/client";
-import CategorySelect from "@/components/CategorySelect";
-
 export type ExpenseDocumentRef = {
   id: string;
   fileName: string;
@@ -306,7 +304,11 @@ export default function InvoiceExpensesCard({
         <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end">
           <div className="w-full sm:w-44">
             <label className="label">{t("Category")}</label>
-            <CategorySelect value={category} options={options} onChange={setCategory} />
+            <select className="input" value={category} onChange={(e) => setCategory(e.target.value)}>
+              {options.map((name) => (
+                <option key={name} value={name}>{t(name)}</option>
+              ))}
+            </select>
           </div>
           {isOthers && (
             <div className="flex-1">
@@ -315,7 +317,7 @@ export default function InvoiceExpensesCard({
                 type="text"
                 className="input"
                 list="invoice-expense-categories"
-                placeholder={t("Type a category, e.g. Parking")}
+                placeholder={t("e.g. Flight, Hotel")}
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
               />
