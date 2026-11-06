@@ -40,14 +40,14 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
     <div className="flex flex-col gap-6 font-sans">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="font-sans text-2xl font-bold text-ink">{title}</h1>
+          <h1 className="font-display text-2xl font-semibold text-ink mb-1">{title}</h1>
           <p className="mt-1 text-xs text-ink-faint">{note}</p>
         </div>
         <button type="button" className="btn-primary shrink-0" onClick={() => { setKind("quotation"); setOpen(true); }}>
           <Plus size={14} /> {t("New Template")}
         </button>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="sticky-filters flex flex-wrap items-center justify-between gap-4">
         <label className="relative min-w-[12rem] flex-1 max-w-sm">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
@@ -74,15 +74,6 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
 
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[48rem] text-left font-sans text-xs">
-          <thead>
-            <tr className="border-b border-line bg-paper/50">
-              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">ID</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Template name")}</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Type")}</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Details")}</th>
-              <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Actions")}</th>
-            </tr>
-          </thead>
           <tbody>
             {shown.length === 0 ? (
               <tr>

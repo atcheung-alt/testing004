@@ -203,7 +203,7 @@ export default function GeneralExpenses({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="sticky-filters flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center max-w-xl">
           <div className="relative flex-1">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />

@@ -111,7 +111,7 @@ export default function RecruitmentPage({
         }
       />
 
-      <div className="flex flex-col gap-3">
+      <div className="sticky-filters flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <SearchBox placeholder="Search by company…" />
           <DateRangeFilter />

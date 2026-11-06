@@ -203,6 +203,7 @@ export default function CommissionFilters({
           <Download size={15} /> {labels.exportCsv}
         </button>
       </div>
+      <div className="sticky-filters flex flex-col gap-3">
       <form
         id="billing-filters"
         action="/commission"
@@ -295,6 +296,7 @@ export default function CommissionFilters({
             </Link>
           );
         })}
+      </div>
       </div>
       {shown.length === 0 ? (
         <div className="card relative z-0 px-5 py-8 text-sm text-ink-muted">
