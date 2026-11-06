@@ -5,7 +5,6 @@ import { DocumentPdf, PdfDocData } from "@/lib/pdf/DocumentPdf";
 import { RecruitmentAgreementPdf, RecruitmentAgreementPdfData } from "@/lib/pdf/RecruitmentAgreementPdf";
 import { EmployeeContractPdf, EmployeeContractPdfData } from "@/lib/pdf/EmployeeContractPdf";
 import { PayslipPdf, PayslipPdfData } from "@/lib/pdf/PayslipPdf";
-import { getEmployeeDisplayName } from "@/lib/employeeName";
 import { SalaryReportPdf, SalaryReportPdfData } from "@/lib/pdf/SalaryReportPdf";
 import { fillIR56BTemplate, titleCheckboxesFor, parseHkid, ddmmyyyy } from "@/lib/pdf/ir56bFill";
 import { getEffectiveCompany } from "@/lib/appSettings";
@@ -425,12 +424,7 @@ export async function buildPayslipPdf(
   const company = await getEffectiveCompany();
   const period = periodLabel(entry.run.period, languageOverride);
   const data: PayslipPdfData = {
-    employeeName: getEmployeeDisplayName({
-      name: entry.employeeName,
-      preferredName: entry.employee.preferredName,
-      nickname: entry.employee.nickname,
-      nameChinese: entry.employee.nameChinese,
-    }),
+    employeeName: entry.employeeName,
     employeeTitle: entry.employeeTitle,
     employmentTypeLabel: EMPLOYMENT_TYPE_LABELS[entry.employmentType || ""] || "—",
     payBasisLabel: PAY_BASIS_LABELS[entry.payBasis] || entry.payBasis,

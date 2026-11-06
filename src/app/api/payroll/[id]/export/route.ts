@@ -5,8 +5,6 @@ import { buildCsv, csvResponseHeaders } from "@/lib/csv";
 import { appLanguageFromRequest } from "@/lib/i18n/downloadLanguage";
 import { translate } from "@/lib/i18n/translate";
 import { PAY_BASIS_LABELS } from "@/lib/payroll";
-import { getEmployeeDisplayName } from "@/lib/employeeName";
-
 export const dynamic = "force-dynamic";
 
 /** Name-by-name pay for one payroll run. `company` limits the file to that company. */
@@ -23,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     include: {
       entries: {
         orderBy: { employeeName: "asc" },
-        include: { employee: { select: { nickname: true, preferredName: true, nameChinese: true, company: { select: { id: true, name: true } } } } },
+        include: { employee: { select: { company: { select: { id: true, name: true } } } } },
       },
     },
   });
@@ -36,12 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   const rows = entries.map((entry) => [
     entry.employee.company?.name || "",
-    getEmployeeDisplayName({
-      name: entry.employeeName,
-      nickname: entry.employee.nickname,
-      preferredName: entry.employee.preferredName,
-      nameChinese: entry.employee.nameChinese,
-    }),
+    entry.employeeName,
     entry.employeeTitle || "",
     entry.employmentType ? t(entry.employmentType) : "",
     t(PAY_BASIS_LABELS[entry.payBasis] || entry.payBasis),
