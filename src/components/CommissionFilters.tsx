@@ -126,6 +126,9 @@ export default function CommissionFilters({
     nothing: string;
     noneSaved: string;
     noColleague: string;
+    noDate: string;
+    recognise: string;
+    onboarding: string;
     billing: string;
     paidWord: string;
     unpaidWord: string;
@@ -150,7 +153,7 @@ export default function CommissionFilters({
   );
   const shown = rows.filter((row) => {
     if (!needle) return true;
-    return [row.person, row.colleagueName, row.nickname, row.legalName].join(" ").toLowerCase().includes(needle);
+    return [row.person, row.colleagueName, row.nickname, row.legalName, row.number, row.customerName, row.title].join(" ").toLowerCase().includes(needle);
   });
   const colleagueFilter = Boolean(needle || who);
 
@@ -212,7 +215,9 @@ export default function CommissionFilters({
           if ((event.target as HTMLElement).tagName === "SELECT") event.currentTarget.requestSubmit();
         }}
       >
-        <label className="relative min-w-[12rem] flex-1">
+        <input type="hidden" name="state" value={state} />
+        <input type="hidden" name="paid" value={paid} />
+        <label className="relative min-w-[12rem] flex-1 max-w-sm">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
             ref={searchRef}
@@ -246,20 +251,11 @@ export default function CommissionFilters({
             )
             : null}
         </label>
+        <div className="flex flex-wrap items-center gap-2">
         <select name="kind" defaultValue={kind} aria-label={labels.type} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
           <option value="">{labels.type}: {labels.all}</option>
           <option value="event">{labels.type}: {labels.event}</option>
           <option value="recruitment">{labels.type}: {labels.recruitment}</option>
-        </select>
-        <select name="state" defaultValue={state} aria-label={labels.status} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-          <option value="">{labels.status}: {labels.all}</option>
-          <option value="pending">{labels.status}: {labels.pending}</option>
-          <option value="done">{labels.status}: {labels.done}</option>
-        </select>
-        <select name="paid" defaultValue={paid} aria-label={labels.payment} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-          <option value="">{labels.payment}: {labels.all}</option>
-          <option value="unpaid">{labels.payment}: {labels.unpaid}</option>
-          <option value="paid">{labels.payment}: {labels.paid}</option>
         </select>
         {people.length ? (
           <select name="who" defaultValue={who} aria-label={labels.allStaff} className="h-9 max-w-[14rem] rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
@@ -271,11 +267,38 @@ export default function CommissionFilters({
             ))}
           </select>
         ) : null}
-        <div className="ml-auto flex flex-wrap gap-2">
-          <MonthField name="from" value={from} label={labels.from} allTime={labels.allTime} />
-          <MonthField name="to" value={to} label={labels.to} allTime={labels.allTime} />
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1">
+            <span className="text-sm" aria-hidden="true">📅</span>
+            <MonthField name="from" value={from} label={labels.from} allTime={labels.allTime} />
+            <span className="text-ink-faint">-</span>
+            <MonthField name="to" value={to} label={labels.to} allTime={labels.allTime} />
+          </div>
         </div>
       </form>
+      <div className="flex flex-wrap gap-2">
+        {([
+          ["ALL", "", ""],
+          ["PENDING", "pending", ""],
+          ["DONE", "done", ""],
+          ["UNPAID", "", "unpaid"],
+          ["PAID", "", "paid"],
+        ] as const).map(([name, nextState, nextPaid]) => {
+          const active = paid ? paid === nextPaid && !nextState : state ? state === nextState && !nextPaid : name === "ALL";
+          const params = new URLSearchParams();
+          if (kind) params.set("kind", kind);
+          if (who) params.set("who", who);
+          if (from) params.set("from", from);
+          if (to) params.set("to", to);
+          if (nextState) params.set("state", nextState);
+          if (nextPaid) params.set("paid", nextPaid);
+          const href = params.toString() ? `/commission?${params}` : "/commission";
+          return (
+            <Link key={name} href={href} className={`stamp ${active ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}>
+              {name === "ALL" ? labels.all : name === "PENDING" ? labels.pending : name === "DONE" ? labels.done : name === "UNPAID" ? labels.unpaid : labels.paid}
+            </Link>
+          );
+        })}
+      </div>
       {shown.length === 0 ? (
         <div className="card relative z-0 px-5 py-8 text-sm text-ink-muted">
           {colleagueFilter
@@ -294,10 +317,13 @@ export default function CommissionFilters({
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                 </p>
-                <p className="mt-0.5 text-xs text-ink-muted">{row.detail}</p>
+                <p className="mt-0.5 text-[11px] text-ink-faint">
+                  {!row.day || !row.customerName.trim() || !row.title.trim()
+                    ? <>colleague · {labels.noDate}</>
+                    : <>{row.kind === "RECRUITMENT" ? labels.recruitment : labels.event} · {row.kind === "RECRUITMENT" ? labels.onboarding : labels.recognise} {row.day}</>}
+                </p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                  <span className={row.done ? "text-emerald-700" : "text-amber-700"}>{row.done ? labels.done : labels.pending}</span>
-                  <span className="text-ink-faint">·</span>
+                  <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${row.done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{row.done ? labels.done : labels.pending}</span>
                   {canPay ? (
                     <CommissionPaidToggle
                       invoiceId={row.invoiceId}

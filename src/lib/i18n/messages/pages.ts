@@ -26,6 +26,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "這個日期決定佣金。日期之前是待處理，日期到了就是已完成。",
   "No date": "沒有日期",
   "Save Expense": "儲存開支",
+  "Search colleague, invoice, or project...": "搜尋同事、發票或項目…",
   "Delete this expense?": "刪除這筆開支？",
   "Nothing matches.": "沒有符合的項目。",
   "No records found for this colleague": "找不到這位同事的紀錄",
