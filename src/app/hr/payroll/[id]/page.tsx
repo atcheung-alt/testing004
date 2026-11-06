@@ -4,7 +4,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { periodLabel } from "@/lib/payroll";
-import { getEmployeeDisplayName } from "@/lib/employeeName";
+import { employeeNameMatches, getEmployeeDisplayName } from "@/lib/employeeName";
 import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
 import PayrollRunEntries from "@/components/PayrollRunEntries";
@@ -102,11 +102,15 @@ export default async function PayrollRunPage({
   const q = (searchParams.q || "").trim().toLowerCase();
   const visibleEntries = q
     ? companyEntries.filter((entry) =>
-        [entry.employeeName, entry.employeeTitle, entry.employee.preferredName, entry.employee.nickname, entry.employee.nameChinese]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(q)
+        employeeNameMatches(
+          getEmployeeDisplayName({
+            name: entry.employeeName,
+            preferredName: entry.employee.preferredName,
+            nickname: entry.employee.nickname,
+            nameChinese: entry.employee.nameChinese,
+          }),
+          q
+        )
       )
     : companyEntries;
   const exportParams = new URLSearchParams();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, ExternalLink, UploadCloud } from "lucide-react";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
@@ -30,6 +30,9 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
   const language = useAppLanguage();
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
+  useEffect(() => {
+    setEntries(initialEntries);
+  }, [initialEntries]);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
