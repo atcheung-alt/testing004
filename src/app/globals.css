@@ -226,7 +226,7 @@ html[data-theme="dark"] .theme-logo-dark {
     max-width: 100%;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased bg-app-gradient min-h-screen w-full;
+    @apply bg-paper text-ink font-sans antialiased bg-app-gradient bg-fixed min-h-screen w-full;
     max-width: 100%;
   }
   img,
