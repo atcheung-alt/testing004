@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { periodLabel } from "@/lib/payroll";
+import { ensurePayrollRunName } from "@/lib/payrollSchema";
 import { submittedTimesheets, summarizeSlots } from "@/lib/timesheets";
 import NewPayrollRunButton from "@/components/NewPayrollRunButton";
 import PayrollTimesheetQueue from "@/components/PayrollTimesheetQueue";
@@ -14,6 +15,7 @@ export default async function PayrollListPage() {
   const t = getT();
   const periodLanguage = getAppLanguage() === "zh" ? "ZH_HANT" : undefined;
   await requireAdminPage();
+  await ensurePayrollRunName();
 
   const runs = await prisma.payrollRun.findMany({
     orderBy: { period: "desc" },
@@ -82,7 +84,8 @@ export default async function PayrollListPage() {
                     className="border-b border-line last:border-0 hover:bg-brand-50/40"
                   >
                     <td className="px-5 py-3">
-                      <span className="font-medium text-brand-600">{periodLabel(run.period, periodLanguage)}</span>
+                      <span className="font-medium text-brand-600">{run.name || periodLabel(run.period, periodLanguage)}</span>
+                      {run.name ? <span className="block text-xs text-ink-muted">{periodLabel(run.period, periodLanguage)}</span> : null}
                     </td>
                     <td className="px-5 py-3 text-ink-muted">{run.entries.length}</td>
                     <td className="px-5 py-3 font-mono">{formatCurrency(totalGross)}</td>

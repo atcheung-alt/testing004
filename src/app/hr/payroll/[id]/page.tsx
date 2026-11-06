@@ -4,6 +4,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { periodLabel } from "@/lib/payroll";
+import { getEmployeeDisplayName } from "@/lib/employeeName";
 import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
 import PayrollRunEntries from "@/components/PayrollRunEntries";
@@ -200,7 +201,12 @@ export default async function PayrollRunPage({
                       href={`/hr/payroll/${run.id}${selected ? `?company=${selected.id}` : ""}#payroll-${entry.id}`}
                       className="text-ink hover:text-brand-600"
                     >
-                      {entry.employee.preferredName || entry.employee.nickname || entry.employeeName}
+                      {getEmployeeDisplayName({
+                        name: entry.employeeName,
+                        preferredName: entry.employee.preferredName,
+                        nickname: entry.employee.nickname,
+                        nameChinese: entry.employee.nameChinese,
+                      })}
                     </a>
                   </span>
                 ))}

@@ -12,6 +12,7 @@ import {
   isUnpaidIntern,
 } from "@/lib/payroll";
 import { approvedUnitsFor } from "@/lib/timesheets";
+import { ensurePayrollRunName } from "@/lib/payrollSchema";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const denied = await requireAdminApi();
   if (denied) return denied;
+  await ensurePayrollRunName();
 
   const runs = await prisma.payrollRun.findMany({
     orderBy: { period: "desc" },
@@ -55,9 +57,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const denied = await requireAdminApi();
   if (denied) return denied;
+  await ensurePayrollRunName();
 
   const body = await request.json().catch(() => ({}));
   const period = body.period;
+  const name = typeof body.name === "string" ? body.name.trim() : "";
   if (!isValidPeriod(period)) {
     return NextResponse.json({ error: "A valid period (YYYY-MM) is required." }, { status: 400 });
   }
@@ -107,6 +111,7 @@ export async function POST(request: NextRequest) {
   const run = await prisma.payrollRun.create({
     data: {
       period,
+      name: name || null,
       entries: {
         create: entryRows,
       },

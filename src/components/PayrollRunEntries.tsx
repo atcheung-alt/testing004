@@ -9,6 +9,7 @@ import { formatCurrency, formatDate } from "@/lib/calculations";
 import { PAY_BASIS_LABELS, PAY_BASIS_UNIT_LABELS } from "@/lib/payroll";
 import { payslipEmailContent } from "@/lib/settings";
 import { useAppLanguage, useT } from "@/lib/i18n/client";
+import { getEmployeeDisplayName } from "@/lib/employeeName";
 import type { PayrollEntry } from "@/types";
 
 type Props = {
@@ -120,10 +121,12 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                 <tr id={`payroll-${entry.id}`} key={entry.id} className="border-b border-line last:border-0 align-top">
                   <td className="px-4 py-3">
                     <p className="font-medium text-ink">
-                      {entry.employeeName}
-                      {entry.preferredName ? ` (${entry.preferredName})` : ""}
-                      {entry.nameChinese ? ` ${entry.nameChinese}` : ""}
-                      {entry.nickname ? <span className="font-normal text-ink-muted"> · {entry.nickname}</span> : null}
+                      {getEmployeeDisplayName({
+                        name: entry.employeeName,
+                        preferredName: entry.preferredName,
+                        nickname: entry.nickname,
+                        nameChinese: entry.nameChinese,
+                      })}
                     </p>
                     <p className="text-xs text-ink-muted">{entry.employeeTitle}</p>
                   </td>

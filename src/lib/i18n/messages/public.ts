@@ -119,6 +119,8 @@ export const PUBLIC_MESSAGES: Record<string, string> = {
   // Payroll
   "New Payroll Run": "新增出糧",
   "Pay period": "出糧期間",
+  "Payroll run name": "出糧名稱",
+  "e.g. November 2026 Regular Salary": "例如：2026年11月 固定薪金",
   "Creates a draft with every currently active employee, pre-filled from their pay setup — nothing is final until you review and finalize it.":
     "會為所有現職員工建立草稿，並按其薪酬設定預填。在你檢視並確定前，不會正式出糧。",
   "Create run": "建立出糧",

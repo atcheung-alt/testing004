@@ -945,6 +945,8 @@ model PayrollRun {
   // "YYYY-MM" — a payroll run always covers a whole calendar month, never a
   // single day, so a plain string key is simpler than a Date here.
   period      String         @unique
+  // Optional label, such as "November 2026 - Executive Bonus Run". Empty keeps the period as the title.
+  name        String?
   status      String         @default("DRAFT") // DRAFT | FINALIZED
   entries     PayrollEntry[]
   finalizedAt DateTime?

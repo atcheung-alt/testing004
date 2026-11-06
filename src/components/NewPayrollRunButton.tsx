@@ -20,6 +20,7 @@ export default function NewPayrollRunButton() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [period, setPeriod] = useState(currentPeriod());
+  const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +31,7 @@ export default function NewPayrollRunButton() {
       const res = await fetch("/api/payroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ period }),
+        body: JSON.stringify({ period, name }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -86,6 +87,15 @@ export default function NewPayrollRunButton() {
                 className="input mb-2"
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
+              />
+              <label className="label" htmlFor="payroll-run-name">{t("Payroll run name")}</label>
+              <input
+                id="payroll-run-name"
+                type="text"
+                className="input mb-4"
+                value={name}
+                placeholder={t("e.g. November 2026 Regular Salary")}
+                onChange={(e) => setName(e.target.value)}
               />
               <p className="text-xs text-ink-faint mb-4">
                 {t(
