@@ -21,14 +21,9 @@ export function getEmployeeDisplayName(emp: {
   return `${legalName}${nickname ? ` (${nickname})` : ""}${chineseName ? ` ${chineseName}` : ""}`;
 }
 
-/** Match the name shown on screen. A short query such as "AT" matches that
- *  nickname on its own, and does not match a longer name that merely contains those letters. */
+/** True when the typed text appears in the employee name shown on the row. */
 export function employeeNameMatches(displayName: string, query: string): boolean {
-  const hay = displayName.trim().toLowerCase();
   const needle = query.trim().toLowerCase();
   if (!needle) return true;
-  if (needle.length <= 2) {
-    return hay.split(/[^\p{L}\p{N}]+/u).some((word) => word === needle);
-  }
-  return hay.includes(needle);
+  return displayName.toLowerCase().includes(needle);
 }

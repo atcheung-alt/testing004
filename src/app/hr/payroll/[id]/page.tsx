@@ -4,10 +4,10 @@ import { ArrowLeft, Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { periodLabel } from "@/lib/payroll";
-import { employeeNameMatches, getEmployeeDisplayName } from "@/lib/employeeName";
+import { getEmployeeDisplayName } from "@/lib/employeeName";
 import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
-import PayrollRunEntries from "@/components/PayrollRunEntries";
+import { PayrollRunSearch, PayrollRunSearchBox, PayrollRunTables } from "@/components/PayrollRunSearch";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { readStaffDirectory } from "@/lib/staffDirectory";
 import { normalizeEmail } from "@/lib/accessControl";
@@ -15,8 +15,6 @@ import { findClientBill, readClientTerms, serviceFeeFor, termFor } from "@/lib/c
 import { formatCurrency } from "@/lib/calculations";
 import ClientInvoiceButton from "@/components/ClientInvoiceButton";
 import PayrollCompanyFilter from "@/components/PayrollCompanyFilter";
-import SearchBox from "@/components/SearchBox";
-
 export const dynamic = "force-dynamic";
 
 export default async function PayrollRunPage({
@@ -24,7 +22,7 @@ export default async function PayrollRunPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { company?: string; q?: string };
+  searchParams: { company?: string };
 }) {
   const t = getT();
   await requireAdminPage();
@@ -99,20 +97,7 @@ export default async function PayrollRunPage({
     ? run.entries.filter((entry) => entry.employee.companyId === selected.id)
     : run.entries;
   const unpaid = companyEntries.filter((entry) => !entry.paidAt);
-  const q = (searchParams.q || "").trim().toLowerCase();
-  const visibleEntries = q
-    ? companyEntries.filter((entry) =>
-        employeeNameMatches(
-          getEmployeeDisplayName({
-            name: entry.employeeName,
-            preferredName: entry.employee.preferredName,
-            nickname: entry.employee.nickname,
-            nameChinese: entry.employee.nameChinese,
-          }),
-          q
-        )
-      )
-    : companyEntries;
+  const visibleEntries = companyEntries;
   const exportParams = new URLSearchParams();
   if (selected) exportParams.set("company", selected.id);
   const exportHref = `/api/payroll/${run.id}/export${exportParams.toString() ? `?${exportParams}` : ""}`;
@@ -167,7 +152,10 @@ export default async function PayrollRunPage({
     return "FULL_TIME";
   }
 
+  const grouped = serialized.map((entry) => ({ ...entry, group: bucket(entry) }));
+
   return (
+    <PayrollRunSearch>
     <div className="flex flex-col gap-6">
       <div>
         <Link href="/hr/payroll" className="text-sm text-ink-muted hover:text-ink flex items-center gap-1 mb-3">
@@ -219,14 +207,9 @@ export default async function PayrollRunPage({
           </p>
         ) : null}
         <div className="flex flex-wrap items-center gap-2 mt-3">
-          <SearchBox placeholder="Search by name or nickname" />
+          <PayrollRunSearchBox />
           {companies.length > 0 ? (
-            <PayrollCompanyFilter
-              runId={run.id}
-              companies={companies}
-              selected={selected?.id || ""}
-              query={searchParams.q || ""}
-            />
+            <PayrollCompanyFilter runId={run.id} companies={companies} selected={selected?.id || ""} />
           ) : null}
           <a href={exportHref} className="btn-secondary">
             <Download size={15} /> {t("Export CSV")}
@@ -270,29 +253,14 @@ export default async function PayrollRunPage({
         </section>
       )}
 
-      {q && visibleEntries.length === 0 ? (
-        <p className="text-sm text-ink-muted">{t("No matching people.")}</p>
-      ) : null}
-
-      {sections.map((section) => {
-        const entries = serialized.filter((entry) => bucket(entry) === section.key);
-        if (entries.length === 0) return null;
-        return (
-          <section key={section.key} className="flex flex-col gap-3">
-            <div>
-              <h2 className="font-display text-lg font-semibold text-ink">{t(section.title)}</h2>
-              <p className="text-sm text-ink-muted">{t(section.note)}</p>
-            </div>
-            <PayrollRunEntries
-              key={`${section.key}-${q}`}
-              runId={run.id}
-              entries={entries as any}
-              periodLabel={label}
-              companyName={COMPANY.shortName || COMPANY.name}
-            />
-          </section>
-        );
-      })}
+      <PayrollRunTables
+        entries={grouped as any}
+        groups={sections.map((section) => ({ key: section.key, title: t(section.title), note: t(section.note) }))}
+        runId={run.id}
+        periodLabel={label}
+        companyName={COMPANY.shortName || COMPANY.name}
+      />
     </div>
+    </PayrollRunSearch>
   );
 }
