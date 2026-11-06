@@ -15,7 +15,7 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-type ServiceInvoice = { total: number; month: string | null; day: string; status: string };
+type ServiceInvoice = { total: number; month: string; day: string; status: string };
 
 const OPEN_INVOICE = new Set(["UNPAID", "OVERDUE", "PENDING_VERIFICATION"]);
 
@@ -55,7 +55,7 @@ async function serviceInvoices(invoiceWhere?: Record<string, unknown>): Promise<
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
   return invoices.map((invoice) => {
     const day = revenueDay(marks.get(invoice.id), invoice.issueDate, invoice.createdAt);
-    return { total: Number(invoice.total) || 0, month: day ? day.slice(0, 7) : null, day, status: invoice.status };
+    return { total: Number(invoice.total) || 0, month: day.slice(0, 7), day, status: invoice.status };
   });
 }
 
