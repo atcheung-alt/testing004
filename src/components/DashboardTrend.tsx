@@ -26,23 +26,6 @@ const SERIES = [
   { key: "profit", stroke: "#9b6bea", label: "Net Profit" },
 ] as const;
 
-function smoothPath(points: { x: number; y: number }[]) {
-  if (!points.length) return "";
-  let path = `M${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const prev = points[i - 1] || points[i];
-    const current = points[i];
-    const next = points[i + 1];
-    const after = points[i + 2] || next;
-    const c1x = current.x + (next.x - prev.x) / 6;
-    const c1y = current.y + (next.y - prev.y) / 6;
-    const c2x = next.x - (after.x - current.x) / 6;
-    const c2y = next.y - (after.y - current.y) / 6;
-    path += ` C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${next.x.toFixed(1)} ${next.y.toFixed(1)}`;
-  }
-  return path;
-}
-
 function axisAmount(value: number) {
   const abs = Math.abs(value);
   if (abs >= 1000) return `${Math.round(value / 1000)}k`;
@@ -175,7 +158,9 @@ export default function DashboardTrend({
             );
           })}
           {SERIES.map((series) => {
-            const line = smoothPath(rows.map((row, index) => ({ x: xOf(index), y: yOf(row[series.key]) })));
+            const line = rows
+              .map((row, index) => `${index === 0 ? "M" : "L"}${xOf(index).toFixed(1)} ${yOf(row[series.key]).toFixed(1)}`)
+              .join(" ");
             const area =
               rows.length > 1
                 ? `${line} L${xOf(rows.length - 1).toFixed(1)} ${yOf(0)} L${xOf(0).toFixed(1)} ${yOf(0)} Z`
