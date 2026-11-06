@@ -65,10 +65,10 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Net Profit": "純利",
   "Based on invoices paid this calendar month, minus their logged expenses.":
     "按本曆月已付款發票計算，並扣除已記錄的支出。",
-  "Revenue uses the recognise or onboarding date in this month. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page this month.":
-    "收入按本月的確認發票日或入職日計算。沒有日期的發票只計入本月。開支長條是本月在開支頁記錄的總額。",
-  "Revenue uses the recognise or onboarding date in {month}. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page in {month}.":
-    "收入按{month}的確認發票日或入職日計算。沒有日期的發票只計入本月。開支長條是{month}在開支頁記錄的總額。",
+  "Revenue uses the onboarding date, then the recognise date, then the invoice date in this month. The expenses bar is the total recorded on the Expenses page this month.":
+    "收入先按入職日，再按確認發票日，最後按發票日期計入本月。開支長條是本月在開支頁記錄的總額。",
+  "Revenue uses the onboarding date, then the recognise date, then the invoice date in {month}. The expenses bar is the total recorded on the Expenses page in {month}.":
+    "收入先按入職日，再按確認發票日，最後按發票日期計入{month}。開支長條是{month}在開支頁記錄的總額。",
   Outstanding: "未收帳款",
   Overdue: "逾期",
   "Recent Quotations": "最近的報價單",

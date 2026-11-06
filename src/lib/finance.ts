@@ -29,16 +29,32 @@ function settlement(invoices: ServiceInvoice[]) {
   return { paid, outstanding };
 }
 
-/** Non-cancelled invoices, placed by recognise or onboarding date. No date counts only in the current month. */
+function validDay(value: string | null | undefined): string {
+  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : "";
+}
+
+/** Recruitment onboarding, then the event recognise day, then the invoice date. */
+function revenueDay(
+  mark: { workKind?: string; day?: string } | undefined,
+  issueDate: Date,
+  createdAt: Date
+): string {
+  const marked = validDay(mark?.day);
+  if (mark?.workKind === "RECRUITMENT" && marked) return marked;
+  if (mark?.workKind === "EVENT" && marked) return marked;
+  if (marked) return marked;
+  return validDay(hongKongDay(issueDate)) || validDay(hongKongDay(createdAt));
+}
+
+/** Non-cancelled invoices, placed by onboarding date, then recognise date, then issue date. */
 async function serviceInvoices(invoiceWhere?: Record<string, unknown>): Promise<ServiceInvoice[]> {
   const invoices = await prisma.invoice.findMany({
     where: { status: { notIn: ["CANCELLED", "DRAFT"] }, ...(invoiceWhere || {}) },
-    select: { id: true, total: true, status: true },
+    select: { id: true, total: true, status: true, issueDate: true, createdAt: true },
   });
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
   return invoices.map((invoice) => {
-    const mark = marks.get(invoice.id);
-    const day = mark && /^\d{4}-\d{2}-\d{2}$/.test(mark.day) ? mark.day : "";
+    const day = revenueDay(marks.get(invoice.id), invoice.issueDate, invoice.createdAt);
     return { total: Number(invoice.total) || 0, month: day ? day.slice(0, 7) : null, day, status: invoice.status };
   });
 }
@@ -411,8 +427,7 @@ export type MonthDay = { day: number; revenue: number; expenses: number };
 
 /**
  * Dashboard month figures.
- * Revenue is invoice totals whose recognise or onboarding date falls in the month.
- * An invoice with no such date counts only in the current month.
+ * Revenue is invoice totals whose onboarding date, then recognise date, then issue date falls in the month.
  * Cancelled and draft invoices are excluded. Expenses stay the amounts recorded that month.
  */
 export async function getMonthDashboard(
@@ -527,20 +542,22 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
 
   const nowKey = currentYear * 12 + currentMonthIndex;
   let startKey = nowKey;
-  const earlier = (date: Date) => {
-    const key = date.getFullYear() * 12 + date.getMonth();
+  let endKey = nowKey;
+  const noteKey = (key: number) => {
+    if (!Number.isFinite(key)) return;
     if (key < startKey) startKey = key;
+    if (key > endKey) endKey = key;
   };
-  for (const invoice of service) {
-    if (!invoice.month) continue;
-    const [year, month] = invoice.month.split("-").map(Number);
-    earlier(new Date(year, month - 1, 1));
-  }
-  for (const expense of expenses) earlier(expense.createdAt);
-  for (const expense of general) earlier(expense.spentAt);
+  const noteDay = (day: string) => {
+    if (!/^\d{4}-\d{2}/.test(day)) return;
+    noteKey(Number(day.slice(0, 4)) * 12 + (Number(day.slice(5, 7)) - 1));
+  };
+  for (const invoice of service) noteDay(invoice.month || "");
+  for (const expense of expenses) noteDay(hongKongDay(expense.createdAt));
+  for (const expense of general) noteDay(hongKongDay(expense.spentAt));
 
   const months: TrendMonth[] = [];
-  for (let key = startKey; key <= nowKey; key++) {
+  for (let key = startKey; key <= endKey; key++) {
     months.push({
       year: Math.floor(key / 12),
       month: key % 12,
@@ -559,12 +576,14 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
     months[at].revenue += invoice.total;
   }
   for (const expense of expenses) {
-    const at = index.get(expense.createdAt.getFullYear() * 12 + expense.createdAt.getMonth());
+    const day = hongKongDay(expense.createdAt);
+    const at = index.get(Number(day.slice(0, 4)) * 12 + (Number(day.slice(5, 7)) - 1));
     if (at === undefined) continue;
     months[at].expenses += expense.amount;
   }
   for (const expense of general) {
-    const at = index.get(expense.spentAt.getFullYear() * 12 + expense.spentAt.getMonth());
+    const day = hongKongDay(expense.spentAt);
+    const at = index.get(Number(day.slice(0, 4)) * 12 + (Number(day.slice(5, 7)) - 1));
     if (at === undefined) continue;
     months[at].expenses += expense.amount;
   }

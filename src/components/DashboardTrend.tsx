@@ -67,7 +67,7 @@ export default function DashboardTrend({
     return `${short} ${String(row.year).slice(2)}`;
   }
 
-  function move(event: MouseEvent<HTMLDivElement>) {
+  function move(event: MouseEvent<SVGSVGElement>) {
     const box = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - box.left) / box.width) * width;
     let nearest = 0;
@@ -130,8 +130,8 @@ export default function DashboardTrend({
           ))}
         </select>
       </div>
-      <div className="relative" onMouseMove={move} onMouseLeave={() => setHover(null)}>
-        <svg viewBox={`0 0 ${width} ${height}`} className="block w-full h-60" role="img">
+      <div className="relative">
+        <svg viewBox={`0 0 ${width} ${height}`} className="block w-full h-60" role="img" onMouseMove={move} onMouseLeave={() => setHover(null)}>
           {ticks.map((value) => {
             const y = yOf(value);
             return (
@@ -165,18 +165,16 @@ export default function DashboardTrend({
                     key={`${series.key}-${row.year}-${row.month}`}
                     cx={xOf(index)}
                     cy={yOf(row[series.key])}
-                    r={index === chosen ? 4.5 : 2.5}
+                    r={index === hover || index === chosen ? 4.5 : 2.5}
                     fill={series.stroke}
-                    stroke={index === chosen ? "#fff" : "none"}
-                    strokeWidth={index === chosen ? 2 : 0}
+                    stroke={index === hover || index === chosen ? "#fff" : "none"}
+                    strokeWidth={index === hover || index === chosen ? 2 : 0}
                   />
                 ))}
               </g>
             );
           })}
           {rows.map((row, index) => {
-            const show = rows.length <= 8 || index === 0 || index === rows.length - 1 || row.month === 0 || row.month === 6;
-            if (!show) return null;
             return (
               <text key={`${row.year}-${row.month}`} x={xOf(index)} y={height - 8} textAnchor="middle" fill="#9aa3b8" fontSize="11">
                 {label(row)}

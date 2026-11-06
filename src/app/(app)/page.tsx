@@ -177,8 +177,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           {showTotal
             ? t("Revenue, expenses, paid, and outstanding are the full history. Net profit is total revenue minus total expenses.")
             : viewingCurrent
-            ? t("Revenue uses the recognise or onboarding date in this month. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page this month.")
-            : t("Revenue uses the recognise or onboarding date in {month}. An invoice with no date counts in the current month only. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
+            ? t("Revenue uses the onboarding date, then the recognise date, then the invoice date in this month. The expenses bar is the total recorded on the Expenses page this month.")
+            : t("Revenue uses the onboarding date, then the recognise date, then the invoice date in {month}. The expenses bar is the total recorded on the Expenses page in {month}.", { month: monthName })}
         </p>
       </div>
 
