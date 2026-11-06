@@ -26,13 +26,16 @@ function read(description: string): RecruitmentTemplate | null {
   }
 }
 
-export async function listRecruitmentTemplates(): Promise<RecruitmentTemplate[]> {
+export async function listRecruitmentTemplates(): Promise<(RecruitmentTemplate & { createdAt: Date })[]> {
   const rows = await prisma.activityEvent.findMany({
     where: { documentType: DOCUMENT_TYPE, type: "SAVED" },
     orderBy: { createdAt: "desc" },
     take: 200,
   });
-  return rows.map((row) => read(row.description)).filter((row): row is RecruitmentTemplate => !!row);
+  return rows.flatMap((row) => {
+    const template = read(row.description);
+    return template ? [{ ...template, createdAt: row.createdAt }] : [];
+  });
 }
 
 export async function getRecruitmentTemplate(id: string): Promise<RecruitmentTemplate | null> {

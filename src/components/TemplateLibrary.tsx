@@ -2,18 +2,19 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import DeleteButton from "@/components/DeleteButton";
 import { useT } from "@/lib/i18n/client";
 
 export type TemplateRow = {
   id: string;
+  code: string;
   kind: "quotation" | "recruitment";
   name: string;
   detail: string;
 };
 
-export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
+export default function TemplateLibrary({ rows, title, note }: { rows: TemplateRow[]; title: string; note: string }) {
   const t = useT();
   const [tab, setTab] = useState<"all" | "quotation" | "recruitment">("all");
   const [query, setQuery] = useState("");
@@ -25,7 +26,7 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
     return rows.filter((row) => {
       if (tab !== "all" && row.kind !== tab) return false;
       if (!q) return true;
-      return `${row.name} ${row.detail} ${row.kind}`.toLowerCase().includes(q);
+      return `${row.code} ${row.name} ${row.detail} ${row.kind}`.toLowerCase().includes(q);
     });
   }, [rows, tab, query]);
 
@@ -36,64 +37,78 @@ export default function TemplateLibrary({ rows }: { rows: TemplateRow[] }) {
   ] as const;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          className="input sm:max-w-xs"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t("Search templates")}
-        />
+    <div className="flex flex-col gap-6 font-sans">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-sans text-2xl font-bold text-ink">{title}</h1>
+          <p className="mt-1 text-xs text-ink-faint">{note}</p>
+        </div>
+        <button type="button" className="btn-primary shrink-0" onClick={() => { setKind("quotation"); setOpen(true); }}>
+          <Plus size={14} /> {t("New Template")}
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <label className="relative min-w-[12rem] flex-1 max-w-sm">
+          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+          <input
+            className="input pl-9 text-xs"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t("Search templates...")}
+            aria-label={t("Search templates")}
+          />
+        </label>
         <div className="flex flex-wrap gap-2">
           {tabs.map(([id, label]) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`stamp ${tab === id ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
+              className={`stamp bg-surface ${tab === id ? "border-brand-500 bg-brand-50 font-semibold text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}
             >
               {t(label)}
             </button>
           ))}
         </div>
-        <button type="button" className="btn-primary sm:ml-auto shrink-0" onClick={() => { setKind("quotation"); setOpen(true); }}>
-          <Plus size={15} /> {t("New Template")}
-        </button>
       </div>
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[40rem] text-left text-sm">
+        <table className="w-full min-w-[48rem] text-left font-sans text-xs">
           <thead>
-            <tr className="border-b border-line">
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Template name")}</th>
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Type")}</th>
-              <th className="px-4 py-3 font-sans text-xs font-semibold uppercase tracking-wide text-ink-muted">{t("Details")}</th>
-              <th className="px-4 py-3" />
+            <tr className="border-b border-line bg-paper/50">
+              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">ID</th>
+              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Template name")}</th>
+              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Type")}</th>
+              <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Details")}</th>
+              <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-ink-faint">{t("Actions")}</th>
             </tr>
           </thead>
           <tbody>
             {shown.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-ink-muted">{t("No templates match.")}</td>
+                <td colSpan={5} className="px-4 py-12 text-center text-xs text-ink-faint">{t("No templates found matching your search.")}</td>
               </tr>
             ) : shown.map((row) => (
               <tr key={`${row.kind}-${row.id}`} className="border-b border-line last:border-0 hover:bg-paper">
-                <td className="px-4 py-3 font-medium text-ink">{row.name}</td>
-                <td className="px-4 py-3">
-                  <span className="stamp border-line text-ink-muted">{row.kind === "quotation" ? t("Quotation") : t("Recruitment")}</span>
+                <td className="whitespace-nowrap px-4 py-3.5 font-bold text-ink">{row.code}</td>
+                <td className="px-4 py-3.5 font-bold text-ink">{row.name}</td>
+                <td className="px-4 py-3.5">
+                  <span className={`stamp ${row.kind === "quotation" ? "border-brand-300 bg-brand-50/50 text-brand-600" : "border-accent-300 bg-accent-100/40 text-accent-600"}`}>
+                    {row.kind === "quotation" ? t("Quotation") : t("Recruitment")}
+                  </span>
                 </td>
-                <td className="px-4 py-3 text-ink-muted">{row.detail || "—"}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap justify-end gap-2">
+                <td className="px-4 py-3.5 font-medium text-ink-muted">{row.detail || "—"}</td>
+                <td className="px-4 py-3.5">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
                     <Link
                       href={row.kind === "quotation" ? `/quotations/new?template=${row.id}` : `/recruitment/new?template=${row.id}`}
-                      className="btn-primary"
+                      className="btn-primary px-3 py-1 text-[11px]"
                     >
                       {t("Use template")}
                     </Link>
                     <Link
                       href={row.kind === "quotation" ? `/quotations/templates/${row.id}/edit` : `/recruitment/new?template=${row.id}&as=template`}
-                      className="btn-secondary"
+                      className="text-xs font-medium text-ink-muted hover:text-brand-600"
                     >
                       {t("Edit")}
                     </Link>
