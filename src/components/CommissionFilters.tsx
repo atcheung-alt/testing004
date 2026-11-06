@@ -126,9 +126,6 @@ export default function CommissionFilters({
     nothing: string;
     noneSaved: string;
     noColleague: string;
-    noDate: string;
-    recognise: string;
-    onboarding: string;
     billing: string;
     paidWord: string;
     unpaidWord: string;
@@ -317,11 +314,7 @@ export default function CommissionFilters({
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                 </p>
-                <p className="mt-0.5 text-[11px] text-ink-faint">
-                  {!row.day || !row.customerName.trim() || !row.title.trim()
-                    ? <>colleague · {labels.noDate}</>
-                    : <>{row.kind === "RECRUITMENT" ? labels.recruitment : labels.event} · {row.kind === "RECRUITMENT" ? labels.onboarding : labels.recognise} {row.day}</>}
-                </p>
+                <p className="mt-0.5 text-xs text-ink-muted">{row.detail}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                   <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${row.done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{row.done ? labels.done : labels.pending}</span>
                   {canPay ? (
