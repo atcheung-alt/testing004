@@ -3,13 +3,37 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Search } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 
 function invoiceLabel(invoice?: { number: string; customerName: string; total: number }) {
   if (!invoice) return "";
   return `${invoice.number} — ${invoice.customerName} (${formatCurrency(invoice.total)})`;
+}
+
+function issuedDate(iso: string) {
+  const [year, month, day] = iso.split("-");
+  if (!year || !month || !day) return iso;
+  return `${day}/${month}/${year}`;
+}
+
+function expenseCodes(history: HistoryRow[]) {
+  const byYear = new Map<string, HistoryRow[]>();
+  for (const row of history) {
+    const year = row.date.slice(0, 4) || "0000";
+    const list = byYear.get(year) || [];
+    list.push(row);
+    byYear.set(year, list);
+  }
+  const codes = new Map<string, string>();
+  for (const [year, list] of byYear) {
+    const sorted = [...list].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id.localeCompare(b.id)));
+    sorted.forEach((row, index) => {
+      codes.set(`${row.source}-${row.id}`, `EX-${year}-${String(index + 1).padStart(4, "0")}`);
+    });
+  }
+  return codes;
 }
 
 const CATEGORIES = [
@@ -65,24 +89,24 @@ export default function GeneralExpenses({
   const [askId, setAskId] = useState("");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | "GENERAL" | "INVOICE">("ALL");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const filterOptions = useMemo(() => {
-    const extra = history.map((row) => row.category).filter((item) => item && !CATEGORIES.includes(item));
-    return [...CATEGORIES.filter((item) => item !== "Other (Custom)"), ...Array.from(new Set(extra))];
-  }, [history]);
+  const codes = useMemo(() => expenseCodes(history), [history]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return history.filter((row) => {
-      if (categoryFilter && row.category !== categoryFilter) return false;
+      const invoiceTied = row.source === "invoice" || Boolean(row.invoiceId);
+      if (typeFilter === "GENERAL" && invoiceTied) return false;
+      if (typeFilter === "INVOICE" && !invoiceTied) return false;
       if (from && row.date < from) return false;
       if (to && row.date > to) return false;
       if (!q) return true;
-      return `${row.name} ${row.vendor} ${row.category}`.toLowerCase().includes(q);
+      const code = codes.get(`${row.source}-${row.id}`) || "";
+      return `${row.name} ${row.vendor} ${row.category} ${code} ${row.link}`.toLowerCase().includes(q);
     });
-  }, [history, query, categoryFilter, from, to]);
+  }, [history, query, typeFilter, from, to, codes]);
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -150,8 +174,8 @@ export default function GeneralExpenses({
   }
 
   function exportCsv(list: HistoryRow[]) {
-    const header = ["Date", "Expense", "Category", "Vendor", "Amount", "Link", "Receipt"];
-    const body = list.map((row) => [row.date, row.name, row.category, row.vendor, String(row.amount), row.link, row.receiptHref]);
+    const header = ["Code", "Date", "Expense", "Category", "Vendor", "Amount", "Link", "Receipt"];
+    const body = list.map((row) => [codes.get(`${row.source}-${row.id}`) || "", row.date, row.name, row.category, row.vendor, String(row.amount), row.link, row.receiptHref]);
     const csv = [header, ...body].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -179,14 +203,31 @@ export default function GeneralExpenses({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search vendor or expense")} />
-        <select className="input" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-          <option value="">{t("All categories")}</option>
-          {filterOptions.map((option) => <option key={option}>{option}</option>)}
-        </select>
-        <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center max-w-xl">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+            <input className="input pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search by vendor, code, or expense...")} />
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2">
+            <span className="text-ink-faint text-sm" aria-hidden="true">📅</span>
+            <input className="w-28 bg-transparent text-center text-xs text-ink outline-none" type="date" aria-label={t("From date")} value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+            <span className="text-ink-faint text-xs">-</span>
+            <input className="w-28 bg-transparent text-center text-xs text-ink outline-none" type="date" aria-label={t("To date")} value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(["ALL", "GENERAL", "INVOICE"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setTypeFilter(type)}
+              className={`stamp ${typeFilter === type ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}
+            >
+              {type === "ALL" ? t("All") : type === "GENERAL" ? t("General Expense") : t("Invoice Expense")}
+            </button>
+          ))}
+        </div>
       </div>
 
       {open ? (
@@ -273,22 +314,28 @@ export default function GeneralExpenses({
       <div className="card divide-y divide-line">
         {rows.length === 0 ? (
           <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">{t("No matching expense.")}</p>
-        ) : rows.map((row) => (
-          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-5 hover:bg-paper">
-            <div className="min-w-0">
-              <span className="font-mono text-sm font-medium text-ink">{row.name}</span>
-              <p className="text-xs text-ink-muted truncate mt-0.5">
-                {row.date}
+        ) : rows.map((row) => {
+          const invoiceTied = row.source === "invoice" || Boolean(row.invoiceId);
+          const code = codes.get(`${row.source}-${row.id}`) || "";
+          return (
+          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 hover:bg-paper">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-ink">{code}</span>
+                {invoiceTied && row.invoiceId ? (
+                  <Link href={`/invoices/${row.invoiceId}`} className="stamp border-brand-300 bg-brand-50/50 text-brand-600">{row.link}</Link>
+                ) : (
+                  <span className="stamp border-line bg-paper text-ink-muted">{t("General")}</span>
+                )}
+              </div>
+              <p className="text-[11px] text-ink-faint truncate">
+                <span className="font-medium text-ink-muted">{row.name}</span>
+                {" · "}
+                {t("Issued")} {issuedDate(row.date)}
                 {" · "}
                 {row.category}
                 {" · "}
                 {row.vendor ? row.vendor : t("N/A")}
-                {" · "}
-                {row.invoiceId ? (
-                  <Link href={`/invoices/${row.invoiceId}`} className="text-brand-600 hover:underline">{row.link}</Link>
-                ) : (
-                  t("General")
-                )}
               </p>
             </div>
             <div className="flex items-center gap-3 shrink-0">
@@ -312,7 +359,8 @@ export default function GeneralExpenses({
               ) : null}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
