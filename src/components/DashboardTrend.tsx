@@ -43,10 +43,6 @@ function smoothPath(points: { x: number; y: number }[]) {
   return path;
 }
 
-function monthValue(row: TrendMonth) {
-  return `${row.year}-${String(row.month + 1).padStart(2, "0")}`;
-}
-
 function axisAmount(value: number) {
   const abs = Math.abs(value);
   if (abs >= 1000) return `${Math.round(value / 1000)}k`;
@@ -66,8 +62,6 @@ export default function DashboardTrend({
   const [to, setTo] = useState(last);
   const [hover, setHover] = useState<number | null>(null);
   const rows = useMemo(() => months.slice(from, to + 1), [months, from, to]);
-  const firstValue = months[0] ? monthValue(months[0]) : "";
-  const lastValue = months[last] ? monthValue(months[last]) : "";
 
   const width = 760;
   const height = 280;
@@ -107,9 +101,8 @@ export default function DashboardTrend({
     setHover(nearest);
   }
 
-  function pick(value: string, edge: "from" | "to") {
-    const index = months.findIndex((row) => monthValue(row) === value);
-    if (index < 0) return;
+  function pick(index: number, edge: "from" | "to") {
+    if (index < 0 || index > last) return;
     if (edge === "from") {
       setFrom(index);
       if (index > to) setTo(index);
@@ -118,6 +111,14 @@ export default function DashboardTrend({
       if (index < from) setFrom(index);
     }
     setHover(null);
+  }
+
+  const years = Array.from(new Set(months.map((row) => row.year)));
+  function indexFor(year: number, month: number, edge: "from" | "to") {
+    const exact = months.findIndex((row) => row.year === year && row.month === month);
+    if (exact >= 0) return exact;
+    const inYear = months.findIndex((row) => row.year === year);
+    return inYear >= 0 ? inYear : edge === "from" ? 0 : last;
   }
 
   return (
@@ -135,25 +136,19 @@ export default function DashboardTrend({
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted mb-2">
         <span>{t("From")}</span>
-        <input
-          type="month"
-          className="input !w-auto"
-          aria-label={t("From")}
-          min={firstValue}
-          max={lastValue}
-          value={months[from] ? monthValue(months[from]) : ""}
-          onChange={(event) => pick(event.target.value, "from")}
-        />
+        <select className="input !w-auto" aria-label={t("From")} value={months[from]?.year ?? ""} onChange={(event) => pick(indexFor(Number(event.target.value), months[from]?.month ?? 0, "from"), "from")}>
+          {years.map((year) => <option key={year} value={year}>{year}</option>)}
+        </select>
+        <select className="input !w-auto" aria-label={t("From")} value={months[from]?.month ?? 0} onChange={(event) => pick(indexFor(months[from]?.year ?? years[0], Number(event.target.value), "from"), "from")}>
+          {MONTHS.map((name, month) => <option key={name} value={month}>{t(name)}</option>)}
+        </select>
         <span>{t("to")}</span>
-        <input
-          type="month"
-          className="input !w-auto"
-          aria-label={t("to")}
-          min={firstValue}
-          max={lastValue}
-          value={months[to] ? monthValue(months[to]) : ""}
-          onChange={(event) => pick(event.target.value, "to")}
-        />
+        <select className="input !w-auto" aria-label={t("to")} value={months[to]?.year ?? ""} onChange={(event) => pick(indexFor(Number(event.target.value), months[to]?.month ?? 0, "to"), "to")}>
+          {years.map((year) => <option key={`to-${year}`} value={year}>{year}</option>)}
+        </select>
+        <select className="input !w-auto" aria-label={t("to")} value={months[to]?.month ?? 0} onChange={(event) => pick(indexFor(months[to]?.year ?? years[0], Number(event.target.value), "to"), "to")}>
+          {MONTHS.map((name, month) => <option key={`to-${name}`} value={month}>{t(name)}</option>)}
+        </select>
         <button
           type="button"
           className="text-xs font-semibold text-brand-600 px-1"
