@@ -527,12 +527,11 @@ export async function getTrendMonths(invoiceWhere?: Record<string, unknown>): Pr
   const current = hongKongDay(now).slice(0, 7);
   const currentYear = Number(current.slice(0, 4));
   const currentMonthIndex = Number(current.slice(5, 7)) - 1;
-  const end = new Date(currentYear, currentMonthIndex + 1, 1);
   const [service, expenses, general] = await Promise.all([
     serviceInvoices(invoiceWhere),
     prisma.invoiceExpense.findMany({
       where: {
-        createdAt: { lt: end },
+        createdAt: { lt: new Date(2100, 0, 1) },
         ...(invoiceWhere ? { invoice: invoiceWhere } : {}),
       },
       select: { amount: true, createdAt: true },
