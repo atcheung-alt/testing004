@@ -10,9 +10,10 @@ import { getEventForInvoice } from "@/lib/events";
 import { invoiceCanModify } from "@/lib/documentAccess";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
-import { billingDefaultAmount, billingFormula } from "@/lib/calculations";
+import { billingDefaultAmount, billingFormula, round2 } from "@/lib/calculations";
+import { generalExpensesForInvoice } from "@/lib/generalExpense";
+import { loadCommissionMark, refreshBillingAfterExpense } from "@/lib/invoiceCommission";
 import { commissionSplitFromStored, isShareHolderNumber, storedCommissionTotal } from "@/lib/quotationShares";
-import { loadCommissionMark } from "@/lib/invoiceCommission";
 import { loadClientSource } from "@/lib/clientSource";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +46,9 @@ export default async function EditInvoicePage({ params }: { params: { id: string
 
   if (!record) notFound();
   const { quotation, expenses, ...invoice } = record;
-  const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const linkedExpenses = await generalExpensesForInvoice(invoice.id);
+  const invoiceExpenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const expenseTotal = invoiceExpenseTotal + linkedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const [calendarEvent, quoteCreator] = await Promise.all([
     getEventForInvoice(invoice.id),
     quotation && !isShareHolderNumber(quotation.number)
@@ -54,6 +57,11 @@ export default async function EditInvoicePage({ params }: { params: { id: string
   ]);
   const creatorName = invoiceCreator || quoteCreator || quotation?.preparedBy || "";
   const split = commissionSplitFromStored(quotation?.shareMode || "AMOUNT", quotation?.shares || [], invoice.total);
+  const savedBilling = storedCommissionTotal(quotation?.shareMode || "AMOUNT", quotation?.shares || []);
+  const suggestedBilling = billingDefaultAmount(invoice.total, expenseTotal);
+  const stillDefault = savedBilling === null || round2(savedBilling) === billingDefaultAmount(invoice.total, invoiceExpenseTotal) || round2(savedBilling) === suggestedBilling;
+  const billingTotal = stillDefault ? suggestedBilling : savedBilling;
+  if (savedBilling !== null && round2(savedBilling) !== billingTotal) await refreshBillingAfterExpense(invoice.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,7 +91,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
         invoiceId={invoice.id}
         canEdit
         creatorName={creatorName}
-        commissionTotal={storedCommissionTotal(quotation?.shareMode || "AMOUNT", quotation?.shares || []) ?? billingDefaultAmount(invoice.total, expenseTotal)}
+        commissionTotal={billingTotal}
         formula={billingFormula(invoice.total, expenseTotal)}
         shares={split.partners.map((share) => ({
           colleagueName: colleagueCode(share.colleagueName, colleagues),

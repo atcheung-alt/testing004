@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { billingFormula, formatCurrency } from "@/lib/calculations";
+import { billingDefaultAmount, billingFormula, formatCurrency, round2 } from "@/lib/calculations";
 import { commissionShareVisible, commissionOwnedInvoiceIds, currentCommissionAccess } from "@/lib/documentAccess";
 import { commissionDayReached, commissionDayInWhen, hongKongDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
+import { generalExpenseSums } from "@/lib/generalExpense";
+import { storedCommissionTotal } from "@/lib/quotationShares";
 import { loadCommissionPaid } from "@/lib/commissionPaid";
 import { commissionSplitFromStored } from "@/lib/quotationShares";
 import { colleagueLabel } from "@/lib/staffCode";
@@ -53,6 +55,7 @@ export default async function CommissionPage({
     loadColleagues(),
   ]);
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
+  const linkedSums = await generalExpenseSums(invoices.map((invoice) => invoice.id));
   const paidOn = await loadCommissionPaid(invoices.map((invoice) => invoice.id));
   const owned = await commissionOwnedInvoiceIds(access);
   const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";
@@ -78,6 +81,12 @@ export default async function CommissionPage({
     if (state === "done" && !done) return [];
     const createdByMe = owned ? owned.has(invoice.id) : false;
     const split = commissionSplitFromStored(invoice.quotation?.shareMode || "AMOUNT", invoice.quotation?.shares || [], invoice.total);
+    const invoiceExpenseTotal = invoice.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const expenseTotal = invoiceExpenseTotal + (linkedSums.get(invoice.id) || 0);
+    const savedBilling = storedCommissionTotal(invoice.quotation?.shareMode || "AMOUNT", invoice.quotation?.shares || []);
+    const suggestedBilling = billingDefaultAmount(invoice.total, expenseTotal);
+    const stillDefault = savedBilling !== null && (round2(savedBilling) === billingDefaultAmount(invoice.total, invoiceExpenseTotal) || round2(savedBilling) === suggestedBilling);
+    const billingPool = savedBilling === null ? split.total : stillDefault ? suggestedBilling : savedBilling;
     const partners = split.partners.length ? split.partners : [{ colleagueName: "", percent: 100 }];
     return partners.flatMap((partner) => {
       const shared = commissionShareVisible(partner.colleagueName, access);
@@ -98,8 +107,8 @@ export default async function CommissionPage({
           person: colleagueLabel(partner.colleagueName, colleagues),
           nickname: colleagues.find((person) => person.code === partner.colleagueName)?.nickname || "",
           legalName: colleagues.find((person) => person.code === partner.colleagueName)?.name || "",
-          amount: (split.total * partner.percent) / 100,
-          formula: billingFormula(invoice.total, invoice.expenses.reduce((sum, expense) => sum + expense.amount, 0)),
+          amount: (billingPool * partner.percent) / 100,
+          formula: billingFormula(invoice.total, expenseTotal),
           mark,
           done,
           paidDay,

@@ -61,6 +61,36 @@ const lightSelect = {
   createdBy: true,
 } as const;
 
+export async function generalExpensesForInvoice(invoiceId: string): Promise<{ id: string; name: string; category: string; amount: number; fileName: string }[]> {
+  try {
+    return await prisma.generalExpense.findMany({
+      where: { invoiceId },
+      orderBy: { spentAt: "desc" },
+      select: { id: true, name: true, category: true, amount: true, fileName: true },
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function generalExpenseSums(invoiceIds: string[]): Promise<Map<string, number>> {
+  const sums = new Map<string, number>();
+  if (!invoiceIds.length) return sums;
+  try {
+    const rows = await prisma.generalExpense.findMany({
+      where: { invoiceId: { in: invoiceIds } },
+      select: { invoiceId: true, amount: true },
+    });
+    for (const row of rows) {
+      if (!row.invoiceId) continue;
+      sums.set(row.invoiceId, (sums.get(row.invoiceId) || 0) + row.amount);
+    }
+  } catch {
+    return sums;
+  }
+  return sums;
+}
+
 export async function listGeneralExpenses(): Promise<GeneralExpenseRow[]> {
   try {
     const rows = await prisma.generalExpense.findMany({

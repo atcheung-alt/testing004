@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/accessControl";
 import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
+import { refreshBillingAfterExpense } from "@/lib/invoiceCommission";
 
 export const runtime = "nodejs";
 
@@ -32,12 +33,13 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
   if (!session) return NextResponse.json({ error: "Sign in to delete an expense." }, { status: 401 });
   try {
     await ensureGeneralExpenseTable();
-    const row = await prisma.generalExpense.findUnique({ where: { id: params.id }, select: { createdBy: true } });
+    const row = await prisma.generalExpense.findUnique({ where: { id: params.id }, select: { createdBy: true, invoiceId: true, amount: true } });
     if (!row) return NextResponse.json({ error: "Expense not found." }, { status: 404 });
     if (!session.isAdmin && !isSuperAdmin(session) && row.createdBy !== session.userId) {
       return NextResponse.json({ error: "Only the person who saved this expense, or an admin, can delete it." }, { status: 403 });
     }
     await prisma.generalExpense.delete({ where: { id: params.id } });
+    if (row.invoiceId) await refreshBillingAfterExpense(row.invoiceId, -row.amount);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Could not delete that expense." }, { status: 500 });

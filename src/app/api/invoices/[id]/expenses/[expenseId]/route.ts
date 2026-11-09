@@ -4,6 +4,7 @@ import { invoiceCanModify } from "@/lib/documentAccess";
 import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/accessControl";
 import { ensureInvoiceExpenseOwnerColumn } from "@/lib/generalExpense";
+import { refreshBillingAfterExpense } from "@/lib/invoiceCommission";
 
 export async function DELETE(
   _request: NextRequest,
@@ -24,5 +25,6 @@ export async function DELETE(
   }
 
   await prisma.invoiceExpense.delete({ where: { id: params.expenseId } });
+  await refreshBillingAfterExpense(params.id, -expense.amount);
   return NextResponse.json({ success: true });
 }

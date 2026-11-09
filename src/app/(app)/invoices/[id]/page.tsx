@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { billingDefaultAmount, billingFormula, formatCurrency, formatDate } from "@/lib/calculations";
+import { billingDefaultAmount, billingFormula, formatCurrency, formatDate, round2 } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, normalizeInvoiceStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
 import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
@@ -33,7 +33,8 @@ import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
 import { commissionSplitFromStored, isShareHolderNumber, storedCommissionTotal } from "@/lib/quotationShares";
 import { commissionDateName, formatCommissionDay } from "@/lib/commission";
-import { loadCommissionMark } from "@/lib/invoiceCommission";
+import { loadCommissionMark, refreshBillingAfterExpense } from "@/lib/invoiceCommission";
+import { generalExpensesForInvoice } from "@/lib/generalExpense";
 import { loadClientSource } from "@/lib/clientSource";
 import QuotationShareEditor from "@/components/QuotationShareEditor";
 
@@ -91,10 +92,15 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     raw.quotation?.shares || [],
     raw.total
   );
-  const expenseTotal = raw.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const linkedExpenses = await generalExpensesForInvoice(raw.id);
+  const invoiceExpenseTotal = raw.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const expenseTotal = invoiceExpenseTotal + linkedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const savedBilling = storedCommissionTotal(raw.quotation?.shareMode || "AMOUNT", raw.quotation?.shares || []);
-  const billingTotal = savedBilling ?? billingDefaultAmount(raw.total, expenseTotal);
+  const suggestedBilling = billingDefaultAmount(raw.total, expenseTotal);
+  const stillDefault = savedBilling === null || round2(savedBilling) === billingDefaultAmount(raw.total, invoiceExpenseTotal) || round2(savedBilling) === suggestedBilling;
+  const billingTotal = stillDefault ? suggestedBilling : savedBilling;
   const billingSum = billingFormula(raw.total, expenseTotal);
+  if (savedBilling !== null && round2(savedBilling) !== billingTotal) await refreshBillingAfterExpense(raw.id);
   const viewerCode = session ? staffCodeFromId(session.userId) : "";
   const ownPercent = split.partners.reduce(
     (sum, share) => (colleagueCode(share.colleagueName, colleagues) === viewerCode ? sum + share.percent : sum),
@@ -327,13 +333,23 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         invoiceId={invoice.id}
         invoiceTotal={invoice.total}
         categories={categories.map((category) => category.name)}
-        expenses={invoice.expenses.map((expense) => ({
-          id: expense.id,
-          category: expense.category,
-          label: expense.label,
-          amount: expense.amount,
-          documents: expense.documents,
-        }))}
+        expenses={[
+          ...invoice.expenses.map((expense) => ({
+            id: expense.id,
+            category: expense.category,
+            label: expense.label,
+            amount: expense.amount,
+            documents: expense.documents,
+          })),
+          ...linkedExpenses.map((expense) => ({
+            id: expense.id,
+            category: expense.category,
+            label: expense.name,
+            amount: expense.amount,
+            source: "general" as const,
+            receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
+          })),
+        ]}
       />
 
       {invoice.notes && (

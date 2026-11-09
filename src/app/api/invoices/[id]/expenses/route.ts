@@ -4,6 +4,7 @@ import { expenseFilesFrom } from "@/lib/expenseFiles";
 import { invoiceCanModify } from "@/lib/documentAccess";
 import { getCurrentUser } from "@/lib/auth";
 import { ensureInvoiceExpenseOwnerColumn } from "@/lib/generalExpense";
+import { refreshBillingAfterExpense } from "@/lib/invoiceCommission";
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   if (!(await invoiceCanModify(params.id))) {
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     },
     include: { documents: { select: { id: true, fileName: true, mimeType: true, createdAt: true } } },
   });
+  await refreshBillingAfterExpense(params.id, amount);
 
   return NextResponse.json(expense, { status: 201 });
 }

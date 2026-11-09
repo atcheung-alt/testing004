@@ -17,6 +17,8 @@ export type InvoiceExpense = {
   category: string;
   label: string;
   amount: number;
+  source?: "invoice" | "general";
+  receiptHref?: string;
   documents?: ExpenseDocumentRef[];
 };
 
@@ -124,11 +126,14 @@ export default function InvoiceExpensesCard({
     }
   }
 
-  async function removeExpense(id: string) {
-    setDeletingId(id);
+  async function removeExpense(expense: InvoiceExpense) {
+    setDeletingId(expense.id);
     setError(null);
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/expenses/${id}`, { method: "DELETE" });
+      const url = expense.source === "general"
+        ? `/api/general-expenses/${expense.id}`
+        : `/api/invoices/${invoiceId}/expenses/${expense.id}`;
+      const res = await fetch(url, { method: "DELETE" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t("Could not remove the expense."));
       router.refresh();
@@ -210,6 +215,13 @@ export default function InvoiceExpensesCard({
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="font-mono text-sm text-ink-muted">{formatCurrency(e.amount)}</span>
+                    {e.source === "general" ? (
+                      e.receiptHref ? (
+                        <a href={e.receiptHref} target="_blank" rel="noopener noreferrer" aria-label={t("View receipt")} className="text-ink-faint hover:text-brand-600">
+                          <Paperclip size={15} />
+                        </a>
+                      ) : null
+                    ) : (
                     <button
                       type="button"
                       onClick={() => {
@@ -222,9 +234,10 @@ export default function InvoiceExpensesCard({
                     >
                       {uploadingId === e.id ? <Loader2 size={15} className="animate-spin" /> : <Paperclip size={15} />}
                     </button>
+                    )}
                     <button
                       type="button"
-                      onClick={() => removeExpense(e.id)}
+                      onClick={() => removeExpense(e)}
                       disabled={deletingId === e.id}
                       aria-label={t("Remove expense")}
                       className="text-ink-faint hover:text-danger-500 transition-colors"

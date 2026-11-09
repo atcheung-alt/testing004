@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { parseDataUrl } from "@/lib/mailer";
 import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
+import { refreshBillingAfterExpense } from "@/lib/invoiceCommission";
 import { getCurrentUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -68,11 +69,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const row = await createRow();
+    if (invoiceId) await refreshBillingAfterExpense(invoiceId, amount);
     return NextResponse.json({ id: row.id, expenseType }, { status: 201 });
   } catch {
     try {
       await ensureGeneralExpenseTable();
       const row = await createRow();
+      if (invoiceId) await refreshBillingAfterExpense(invoiceId, amount);
       return NextResponse.json({ id: row.id, expenseType }, { status: 201 });
     } catch {
       return NextResponse.json({ error: "Could not save the expense." }, { status: 500 });

@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { billingDefaultAmount, round2 } from "@/lib/calculations";
 import { logActivity } from "@/lib/activity";
 import { commissionMarkDescription, parseCommissionMark } from "@/lib/commission";
 import { bindShareColleagueNames, loadCreatorNickname } from "@/lib/quotationAuthor";
 import {
   COMMISSION_TOTAL_NAME,
   SHARE_HOLDER_PREFIX,
+  isCommissionTotalRow,
   isShareHolderNumber,
   quotationShareFieldsFrom,
 } from "@/lib/quotationShares";
@@ -51,6 +53,50 @@ export function commissionSplitError(body: SplitBody): string | null {
   const assigned = sharing.shares.reduce((sum, share) => sum + share.value, 0);
   if (assigned > 100) return "Partner percentages can't add up to more than 100.";
   return null;
+}
+
+/**
+ * When billing is still the default, an expense added later — on the invoice
+ * or linked from the Expenses page — moves the saved amount to items minus expenses.
+ * A billing amount the user typed themselves is left as it is.
+ */
+export async function refreshBillingAfterExpense(invoiceId: string, delta = 0): Promise<void> {
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: {
+      total: true,
+      expenses: { select: { amount: true } },
+      quotation: {
+        select: {
+          shareMode: true,
+          shares: { select: { id: true, colleagueName: true, value: true } },
+        },
+      },
+    },
+  });
+  if (!invoice?.quotation || invoice.quotation.shareMode !== "COMMISSION") return;
+  const pool = invoice.quotation.shares.find((share) => isCommissionTotalRow(share.colleagueName));
+  if (!pool) return;
+  let generalSum = 0;
+  try {
+    const rows = await prisma.generalExpense.findMany({
+      where: { invoiceId },
+      select: { amount: true },
+    });
+    generalSum = rows.reduce((sum, row) => sum + row.amount, 0);
+  } catch {
+    generalSum = 0;
+  }
+  const invoiceSum = invoice.expenses.reduce((sum, row) => sum + row.amount, 0);
+  const all = invoiceSum + generalSum;
+  const next = billingDefaultAmount(invoice.total, all);
+  const saved = round2(pool.value);
+  const baselines = [
+    billingDefaultAmount(invoice.total, all - delta),
+    billingDefaultAmount(invoice.total, invoiceSum),
+  ].map((value) => round2(value));
+  if (!baselines.includes(saved) || saved === next) return;
+  await prisma.quotationShare.update({ where: { id: pool.id }, data: { value: next } });
 }
 
 /** Write the commission split onto the invoice's hidden share holder. */
