@@ -788,6 +788,18 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Freelance accounts only see documents they created. Type their email here, separated by commas, to let them open this invoice and its files.":
     "自由工作帳號只能查看自己建立的文件。在這裡輸入其電郵（以逗號分隔），即可讓他們開啟這張發票及相關檔案。",
   "HR Plus staff payroll": "HR Plus 員工出糧",
+  "{paid} of {total} paid": "已支付 {paid} / {total}",
+  PAID: "已支付",
+  UNPAID: "未支付",
+  "Mark this person as paid?": "將這位標為已支付？",
+  "Change back to unpaid?": "改回未支付？",
+  "This records them as paid for {period}. You can undo it afterwards.":
+    "這會記錄他們在{period}已支付。之後仍可改回。",
+  "They will show as still to pay. You can mark them paid again later.":
+    "他們會顯示為尚未支付。之後仍可再標為已支付。",
+  "Not now": "暫時不要",
+  "Yes, mark paid": "是，標為已支付",
+  "Yes, mark unpaid": "是，標為未支付",
   "Full-time payroll": "全職出糧",
   "Part-time payroll": "兼職出糧",
   "Freelance payroll": "自由工作出糧",

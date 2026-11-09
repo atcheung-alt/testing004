@@ -36,6 +36,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
   const [savingId, setSavingId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmPaid, setConfirmPaid] = useState<{ id: string; name: string; paid: boolean } | null>(null);
 
   async function patchEntry(entryId: string, patch: Record<string, unknown>) {
     setSavingId(entryId);
@@ -240,13 +241,28 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(entry.paidAt)}
-                      onChange={(e) => patchEntry(entry.id, { paid: e.target.checked })}
-                      className="w-4 h-4"
-                      aria-label={t("Paid")}
-                    />
+                    <button
+                      type="button"
+                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                        entry.paidAt
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-rose-200 bg-rose-50 text-rose-700"
+                      }`}
+                      onClick={() =>
+                        setConfirmPaid({
+                          id: entry.id,
+                          name: getEmployeeDisplayName({
+                            name: entry.employeeName,
+                            preferredName: entry.preferredName,
+                            nickname: entry.nickname,
+                            nameChinese: entry.nameChinese,
+                          }),
+                          paid: !entry.paidAt,
+                        })
+                      }
+                    >
+                      {entry.paidAt ? t("PAID") : t("UNPAID")}
+                    </button>
                   </td>
                 </tr>
               );
@@ -289,6 +305,36 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
           )}
         </button>
       </div>
+      {confirmPaid && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+          <div className="card w-full max-w-sm p-5">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              {confirmPaid.paid ? t("Mark this person as paid?") : t("Change back to unpaid?")}
+            </h2>
+            <p className="mt-3 font-medium text-ink">{confirmPaid.name}</p>
+            <p className="mt-1 text-sm text-ink-muted">
+              {confirmPaid.paid
+                ? t("This records them as paid for {period}. You can undo it afterwards.", { period: periodLabel })
+                : t("They will show as still to pay. You can mark them paid again later.")}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn-secondary" onClick={() => setConfirmPaid(null)}>
+                {t("Not now")}
+              </button>
+              <button
+                type="button"
+                className={confirmPaid.paid ? "btn-primary" : "btn-secondary text-rose-700"}
+                onClick={() => {
+                  patchEntry(confirmPaid.id, { paid: confirmPaid.paid });
+                  setConfirmPaid(null);
+                }}
+              >
+                {confirmPaid.paid ? t("Yes, mark paid") : t("Yes, mark unpaid")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

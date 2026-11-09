@@ -178,6 +178,12 @@ export default async function PayrollRunPage({
           />
         </div>
         <p className="text-sm text-ink-muted mt-1">
+          {t("{paid} of {total} paid", {
+            paid: companyEntries.length - unpaid.length,
+            total: companyEntries.length,
+          })}
+        </p>
+        <p className="text-sm text-ink-muted mt-1">
           {visibleEntries.length === 1
             ? t("{count} Employee", { count: visibleEntries.length })
             : t("{count} Employees", { count: visibleEntries.length })}
