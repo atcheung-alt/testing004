@@ -91,16 +91,14 @@ function emailButton(url: string, label: string): string {
           </table>
         </td>
       </tr>
-    </table>
-    <p style="font-size:12px;color:#9AA3B8;text-align:center;margin:0 0 4px;">Or copy this link into your browser:</p>
-    <p style="font-size:12px;text-align:center;margin:0 0 8px;word-break:break-all;"><a href="${safeUrl}" style="color:#3D63E0;">${safeUrl}</a></p>`;
+    </table>`;
 }
 
 export function mpfEmailBody(name: string, doneUrl: string, uploadUrl: string): string {
   return [
     `Hello ${name},`,
     "",
-    "There are two methods. Please choose one.",
+    "Please register on the eMPF app, or complete the paper form.",
     "",
     "1. On the eMPF app",
     `1. Download 積金易 (eMPF), or use the website.`,
@@ -108,7 +106,7 @@ export function mpfEmailBody(name: string, doneUrl: string, uploadUrl: string): 
     `Android — Google Play: ${MPF_PLAY_STORE_URL}`,
     `Website: ${MPF_WEBSITE_URL}`,
     "2. Open the job notice from the eMPF app, SMS, or email.",
-    "3. Log in. Choose your fund. Sign.",
+    "3. Log in to your eMPF account, choose your fund, and sign.",
     "Note: You do not need to fill in the Payroll Group.",
     "",
     `I have finished eMPF registration: ${doneUrl}`,
@@ -124,12 +122,11 @@ export function mpfEmailBody(name: string, doneUrl: string, uploadUrl: string): 
   ].join("\n");
 }
 
-/** HTML version of the MPF email. The Payroll Group line is the ! notice. */
+/** HTML version of the MPF email. The Payroll Group line is a visible note. */
 export function mpfEmailHtml(name: string, doneUrl: string, uploadUrl: string): string {
-  const notice = "You do not need to fill in the Payroll Group.";
   return `
     <p style="margin:0 0 18px;font-size:21px;line-height:1.4;font-weight:600;color:#3D63E0;">Hello ${escapeHtml(name)},</p>
-    <p style="margin:0 0 16px;">There are two methods. Please choose one.</p>
+    <p style="margin:0 0 16px;">Please register on the eMPF app, or complete the paper form.</p>
     <p style="margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#2F4FBD;font-weight:700;">1. On the eMPF app</p>
     <ol style="margin:0 0 8px;padding-left:20px;">
       <li style="margin:0 0 8px;">Download <strong>積金易 (eMPF)</strong>, or use the website.<br>
@@ -138,13 +135,9 @@ export function mpfEmailHtml(name: string, doneUrl: string, uploadUrl: string): 
         <a href="${MPF_WEBSITE_URL}" style="color:#3D63E0;">Website — empf.org.hk</a>
       </li>
       <li style="margin:0 0 8px;">Open the job notice from the eMPF app, SMS, or email.</li>
-      <li style="margin:0 0 8px;">Log in. Choose your fund. Sign.
-        <span class="mpf-tip" title="${escapeHtml(notice)}" style="position:relative;display:inline-block;margin-left:6px;vertical-align:middle;cursor:help;">
-          <span style="display:inline-block;width:18px;height:18px;border-radius:999px;background:#fff4d6;color:#9a6700;font-weight:700;font-size:12px;line-height:18px;text-align:center;">!</span>
-          <span class="mpf-note" style="display:none;">${escapeHtml(notice)}</span>
-        </span>
-      </li>
+      <li style="margin:0 0 8px;">Log in to your eMPF account, choose your fund, and sign.</li>
     </ol>
+    <p style="margin:12px 0 0;background:#fff8eb;border:1px solid #f3dfb0;border-radius:10px;padding:8px 12px;color:#9a6700;font-size:13px;">You do not need to fill in the Payroll Group.</p>
     ${emailButton(doneUrl, "I have finished eMPF registration")}
     <hr style="border:0;border-top:1px solid #E3E8F3;margin:22px 0;">
     <p style="margin:0 0 10px;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#2F4FBD;font-weight:700;">2. Paper form</p>
@@ -155,22 +148,5 @@ export function mpfEmailHtml(name: string, doneUrl: string, uploadUrl: string): 
       <li style="margin:0 0 8px;">Upload the signed form with the button below.</li>
     </ol>
     <p style="margin:4px 0 0;color:#66708A;font-size:13px;">Please watch this video on how to register, manage, and check your MPF account: <a href="${MPF_VIDEO_URL}" style="color:#3D63E0;">register, manage, and check your MPF</a></p>
-    ${emailButton(uploadUrl, "Upload Individual eMPF Form")}
-    <style>
-      .mpf-tip:hover .mpf-note {
-        display:block !important;
-        position:absolute;
-        left:0;
-        bottom:24px;
-        width:240px;
-        background:#1B2436;
-        color:#ffffff;
-        font-size:12.5px;
-        font-weight:500;
-        line-height:1.45;
-        border-radius:8px;
-        padding:8px 10px;
-        z-index:2;
-      }
-    </style>`;
+    ${emailButton(uploadUrl, "Upload Individual eMPF Form")}`;
 }

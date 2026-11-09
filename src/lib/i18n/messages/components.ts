@@ -840,7 +840,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   Open: "開啟",
   "No email": "沒有電郵",
   "Upload signed Individual eMPF Form": "上傳已簽署的個人 eMPF 表格",
-  "Saved. HR Plus can open it from the MPF page.": "已儲存。HR Plus 可在強積金頁面開啟。",
+  "Your signed form has been received.": "已收到你的已簽署表格。",
   "Could not save the file. Please try again.": "未能儲存檔案。請再試一次。",
   "This link is only for you. No login.": "此連結只供你使用，無需登入。",
   "Watch this video. It shows how to register, manage, and check your MPF:": "觀看此影片，了解如何登記、管理及查閱你的強積金：",

@@ -55,7 +55,7 @@ export default function MpfUploadClient({ token, saved }: { token: string; saved
         />
       </label>
       {fileName && <p className="mt-3 text-sm text-ink-muted">{fileName}</p>}
-      {done && <p className="mt-3 text-sm font-medium text-emerald-700">{t("Saved. HR Plus can open it from the MPF page.")}</p>}
+      {done && <p className="mt-3 text-sm font-medium text-emerald-700">{t("Your signed form has been received.")}</p>}
       {error && <p className="mt-3 text-sm text-rose-700">{error}</p>}
     </div>
   );
