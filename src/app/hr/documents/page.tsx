@@ -6,6 +6,7 @@ import { EMPLOYMENT_TYPE_LABELS } from "@/lib/employees";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import HrDocumentFilters from "@/components/HrDocumentFilters";
 import { getT } from "@/lib/i18n/server";
+import { clientCompanies, isInternalCompanyName } from "@/lib/employerCompany";
 
 export const dynamic = "force-dynamic";
 
@@ -35,12 +36,15 @@ export default async function HrDocumentsPage({
   const now = new Date().getFullYear();
   const year = /^\d{4}$/.test(searchParams.year || "") ? searchParams.year! : String(now);
   const kind = KINDS.includes(searchParams.kind || "") ? searchParams.kind! : "all";
-  const companies = await prisma.employerCompany.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true },
-  });
+  const companies = clientCompanies(
+    await prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    })
+  );
+  const hrPlusOnly = searchParams.company === "hrplus";
   const companyId =
-    searchParams.company && companies.some((company) => company.id === searchParams.company)
+    !hrPlusOnly && searchParams.company && companies.some((company) => company.id === searchParams.company)
       ? searchParams.company
       : undefined;
 
@@ -60,7 +64,9 @@ export default async function HrDocumentsPage({
       contract: { select: { status: true } },
     },
     orderBy: { name: "asc" },
-  });
+  }).then((list) =>
+    hrPlusOnly ? list.filter((employee) => !employee.company || isInternalCompanyName(employee.company.name)) : list
+  );
   const ids = employees.map((employee) => employee.id);
   const entries =
     ids.length && (kind === "all" || kind === "payslip")
@@ -78,7 +84,8 @@ export default async function HrDocumentsPage({
 
   const rows: DocRow[] = [];
   for (const employee of employees) {
-    const company = employee.company?.name || t("No company");
+    const company =
+      employee.company && !isInternalCompanyName(employee.company.name) ? employee.company.name : t("HR Plus");
     const type = EMPLOYMENT_TYPE_LABELS[employee.employmentType || ""] || "";
     if ((kind === "all" || kind === "contract") && employee.contract && employee.contract.status !== "CANCELLED") {
       rows.push({
@@ -120,7 +127,8 @@ export default async function HrDocumentsPage({
     rows.push({
       key: `payslip-${entry.id}`,
       name: employee.name,
-      company: employee.company?.name || t("No company"),
+      company:
+        employee.company && !isInternalCompanyName(employee.company.name) ? employee.company.name : t("HR Plus"),
       type: EMPLOYMENT_TYPE_LABELS[employee.employmentType || ""] || "",
       kind: "Payslip",
       detail: entry.run.period,

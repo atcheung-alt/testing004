@@ -44,6 +44,7 @@ export default function HrDocumentFilters({
         onChange={(event) => setParam("company", event.target.value)}
       >
         <option value="">{t("All companies")}</option>
+        <option value="hrplus">{t("HR Plus")}</option>
         {companies.map((company) => (
           <option key={company.id} value={company.id}>
             {company.name}
