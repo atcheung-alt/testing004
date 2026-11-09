@@ -320,28 +320,30 @@ export default function GeneralExpenses({
           const invoiceTied = row.source === "invoice" || Boolean(row.invoiceId);
           const code = codes.get(`${row.source}-${row.id}`) || "";
           return (
-          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 hover:bg-paper">
-            <div className="min-w-0 space-y-1">
+          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-5 hover:bg-paper">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-ink">{code}</span>
+                <span className="font-mono text-sm font-medium">{code}</span>
                 {invoiceTied && row.invoiceId ? (
                   <Link href={`/invoices/${row.invoiceId}`} className="stamp border-brand-300 bg-brand-50/50 text-brand-600">{row.link}</Link>
                 ) : (
                   <span className="stamp border-line bg-paper text-ink-muted">{t("General")}</span>
                 )}
               </div>
-              <p className="text-[11px] text-ink-faint truncate">
-                <span className="font-medium text-ink-muted">{row.name}</span>
+              <p className="text-xs text-ink-muted truncate mt-0.5">
+                {row.name}
                 {" · "}
                 {t("Issued")} {issuedDate(row.date)}
                 {" · "}
                 {row.category}
-                {" · "}
-                {row.vendor ? row.vendor : t("N/A")}
               </p>
+              <p className="text-xs text-ink-faint truncate mt-0.5">{row.vendor || "\u00a0"}</p>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</span>
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Amount")}</p>
+                <p className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</p>
+              </div>
               {row.receiptHref ? (
                 <a className="text-sm text-brand-600 hover:underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a>
               ) : null}

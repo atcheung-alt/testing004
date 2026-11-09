@@ -190,6 +190,7 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "此日期會印在協議及 PDF 上。舊協議會保留目前日期，直到你在這裡修改。",
   "Enter a valid agreement date.": "請輸入有效的協議日期。",
   "Net {days} days": "淨 {days} 日",
+  Net: "淨",
   "Recruitment Agreements": "招聘協議",
   "Recruitment services terms — a separate system from quotations/invoices/receipts.":
     "招聘服務條款——獨立於報價單、發票及收據。",

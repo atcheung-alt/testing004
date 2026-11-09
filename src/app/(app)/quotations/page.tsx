@@ -67,7 +67,7 @@ async function QuotationList({
         <Link
           key={q.id}
           href={`/quotations/${q.id}`}
-          className="flex items-center justify-between px-4 sm:px-5 py-5 hover:bg-paper transition-colors gap-3"
+          className="flex flex-wrap items-center justify-between px-4 sm:px-5 py-5 hover:bg-paper transition-colors gap-3"
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -85,7 +85,10 @@ async function QuotationList({
               {q.items.length > 0 ? q.items.map((item) => item.name || t("Untitled item")).join(" \u00b7 ") : "\u00a0"}
             </p>
           </div>
-          <span className="font-mono text-sm font-medium shrink-0">{formatCurrency(q.total)}</span>
+          <div className="text-right shrink-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Total")}</p>
+            <p className="font-mono text-sm font-medium text-brand-600">{formatCurrency(q.total)}</p>
+          </div>
         </Link>
       ))}
     </div>

@@ -197,8 +197,8 @@ export default function CommissionFilters({
       <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="font-display text-2xl font-semibold text-ink">{labels.pageTitle}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-muted">{labels.pageNote}</p>
+          <h1 className="font-display text-2xl font-semibold text-ink mb-1">{labels.pageTitle}</h1>
+          <p className="lead">{labels.pageNote}</p>
         </div>
         <button type="button" className="btn-secondary shrink-0" onClick={exportCsv}>
           <Download size={15} /> {labels.exportCsv}
@@ -311,14 +311,14 @@ export default function CommissionFilters({
       ) : (
         <div className="card relative z-0 divide-y divide-line">
           {shown.map((row) => (
-            <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
+            <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-5">
               <div className="min-w-0">
                 <Link href={`/invoices/${row.invoiceId}`} className="font-mono text-sm font-medium hover:text-brand-600">{row.number}</Link>
-                <p className="mt-0.5 text-sm text-ink">
+                <p className="mt-0.5 truncate text-xs text-ink-muted">
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                 </p>
-                <p className="mt-0.5 text-xs text-ink-muted">{row.detail}</p>
+                <p className="mt-0.5 truncate text-xs text-ink-faint">{row.detail}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                   <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${row.done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{row.done ? labels.done : labels.pending}</span>
                   {canPay ? (

@@ -60,7 +60,7 @@ async function RecruitmentList({
         <Link
           key={a.id}
           href={`/recruitment/${a.id}`}
-          className="flex items-center justify-between px-4 sm:px-5 py-4 hover:bg-paper transition-colors gap-3"
+          className="flex flex-wrap items-center justify-between px-4 sm:px-5 py-5 hover:bg-paper transition-colors gap-3"
         >
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -70,8 +70,12 @@ async function RecruitmentList({
             <p className="text-xs text-ink-muted truncate mt-0.5">
               {a.companyName} · {t("Agreement date {date}", { date: formatDate(a.createdAt) })}
             </p>
+            <p className="text-xs text-ink-faint truncate mt-0.5">{a.companyEmail || "\u00a0"}</p>
           </div>
-          <span className="text-xs text-ink-faint shrink-0">{t("Net {days} days", { days: a.paymentDueDays })}</span>
+          <div className="text-right shrink-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Net")}</p>
+            <p className="font-mono text-sm font-medium">{t("Net {days} days", { days: a.paymentDueDays })}</p>
+          </div>
         </Link>
       ))}
     </div>

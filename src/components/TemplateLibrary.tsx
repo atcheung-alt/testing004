@@ -37,12 +37,12 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
   ] as const;
 
   return (
-    <div className="flex flex-col gap-6 font-sans">
-      <div className="sticky-filters flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
+      <div className="sticky-filters flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink mb-1">{title}</h1>
-          <p className="mt-1 text-xs text-ink-faint">{note}</p>
+          <p className="lead">{note}</p>
         </div>
         <button type="button" className="btn-primary shrink-0" onClick={() => { setKind("quotation"); setOpen(true); }}>
           <Plus size={14} /> {t("New Template")}
@@ -52,7 +52,7 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
         <label className="relative min-w-[12rem] flex-1 max-w-sm">
           <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
-            className="input pl-9 text-xs"
+            className="input pl-9"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("Search templates...")}
@@ -74,49 +74,43 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
       </div>
       </div>
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[48rem] text-left font-sans text-xs">
-          <tbody>
-            {shown.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-xs text-ink-faint">{t("No templates found matching your search.")}</td>
-              </tr>
-            ) : shown.map((row) => (
-              <tr key={`${row.kind}-${row.id}`} className="border-b border-line last:border-0 hover:bg-paper">
-                <td className="whitespace-nowrap px-4 py-3.5 font-bold text-ink">{row.code}</td>
-                <td className="px-4 py-3.5 font-bold text-ink">{row.name}</td>
-                <td className="px-4 py-3.5">
-                  <span className={`stamp ${row.kind === "quotation" ? "border-brand-300 bg-brand-50/50 text-brand-600" : "border-accent-300 bg-accent-100/40 text-accent-600"}`}>
-                    {row.kind === "quotation" ? t("Quotation") : t("Recruitment")}
-                  </span>
-                </td>
-                <td className="px-4 py-3.5 font-medium text-ink-muted">{row.detail || "—"}</td>
-                <td className="px-4 py-3.5">
-                  <div className="flex flex-wrap items-center justify-end gap-3">
-                    <Link
-                      href={row.kind === "quotation" ? `/quotations/new?template=${row.id}` : `/recruitment/new?template=${row.id}`}
-                      className="btn-primary px-3 py-1 text-[11px]"
-                    >
-                      {t("Use template")}
-                    </Link>
-                    <Link
-                      href={row.kind === "quotation" ? `/quotations/templates/${row.id}/edit` : `/recruitment/new?template=${row.id}&as=template`}
-                      className="text-xs font-medium text-ink-muted hover:text-brand-600"
-                    >
-                      {t("Edit")}
-                    </Link>
-                    <DeleteButton
-                      url={row.kind === "quotation" ? `/api/quotation-templates/${row.id}` : `/api/recruitment-templates/${row.id}`}
-                      confirmNumber={row.name}
-                      itemLabel="template"
-                      redirectTo="/quotations/templates"
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="card divide-y divide-line">
+        {shown.length === 0 ? (
+          <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">{t("No templates found matching your search.")}</p>
+        ) : shown.map((row) => (
+          <div key={`${row.kind}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-5 hover:bg-paper sm:px-5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-medium">{row.code}</span>
+                <span className="stamp border-line text-ink-muted">
+                  {row.kind === "quotation" ? t("Quotation") : t("Recruitment")}
+                </span>
+              </div>
+              <p className="mt-0.5 truncate text-xs text-ink-muted">{row.name}</p>
+              <p className="mt-0.5 truncate text-xs text-ink-faint">{row.detail || "\u00a0"}</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3 shrink-0">
+              <Link
+                href={row.kind === "quotation" ? `/quotations/new?template=${row.id}` : `/recruitment/new?template=${row.id}`}
+                className="btn-primary px-3 py-1 text-xs"
+              >
+                {t("Use template")}
+              </Link>
+              <Link
+                href={row.kind === "quotation" ? `/quotations/templates/${row.id}/edit` : `/recruitment/new?template=${row.id}&as=template`}
+                className="text-xs font-medium text-ink-muted hover:text-brand-600"
+              >
+                {t("Edit")}
+              </Link>
+              <DeleteButton
+                url={row.kind === "quotation" ? `/api/quotation-templates/${row.id}` : `/api/recruitment-templates/${row.id}`}
+                confirmNumber={row.name}
+                itemLabel="template"
+                redirectTo="/quotations/templates"
+              />
+            </div>
+          </div>
+        ))}
       </div>
 
       {open ? (

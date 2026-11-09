@@ -229,21 +229,24 @@ async function MoneyList({
     <div className="flex flex-col gap-4">
       {summary}
 
-      <div className="card overflow-x-auto">
-        <div className="min-w-[46rem] divide-y divide-line">
+      <div className="card divide-y divide-line">
         {rows.map((row) => (
-          <div key={row.key} className="flex items-center justify-between px-4 sm:px-5 py-5 gap-6 hover:bg-paper">
-            <Link href={row.href} className="min-w-[18rem] hover:opacity-80">
+          <div key={row.key} className="flex flex-wrap items-center justify-between px-4 sm:px-5 py-5 gap-3 hover:bg-paper">
+            <Link href={row.href} className="min-w-0 hover:opacity-80">
               <div className="flex items-center gap-2">
+                <span className="font-mono text-sm font-medium">{row.title}</span>
                 <span className="stamp border-line text-ink-muted">
                   {row.kind === "receipt" ? t("Receipt") : t("Expense")}
                 </span>
-                <span className="font-mono text-sm font-medium whitespace-nowrap">{row.title}</span>
               </div>
-              <p className="text-xs text-ink-muted whitespace-nowrap mt-0.5">{row.subtitle}</p>
+              <p className="text-xs text-ink-muted truncate mt-0.5">{row.subtitle}</p>
+              <p className="text-xs text-ink-faint truncate mt-0.5">&nbsp;</p>
             </Link>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="font-mono text-sm font-medium">{formatCurrency(row.amount)}</span>
+            <div className="flex items-center gap-4 sm:gap-5 shrink-0">
+              <div className="text-right">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Amount")}</p>
+                <p className="font-mono text-sm font-medium">{formatCurrency(row.amount)}</p>
+              </div>
               {row.receiptId && row.receiptNumber && (
                 <>
                   <DownloadPdfButton url={`/api/receipts/${row.receiptId}/pdf`} />
@@ -278,7 +281,6 @@ async function MoneyList({
             </div>
           </div>
         ))}
-        </div>
       </div>
     </div>
   );
