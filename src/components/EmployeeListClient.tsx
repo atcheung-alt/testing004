@@ -130,9 +130,9 @@ const EmployeeTable = memo(function EmployeeTable({
               <td className="hidden md:table-cell px-5 py-3 text-ink-muted">
                 {e.title || t("No title set")}
               </td>
-              <td className="hidden lg:table-cell px-5 py-3 text-ink-muted" onClick={(event) => event.stopPropagation()}>
+              <td className="hidden lg:table-cell px-5 py-3 text-ink-muted whitespace-nowrap" onClick={(event) => event.stopPropagation()}>
                 <select
-                  className="input py-1 text-sm"
+                  className="input py-1 text-sm w-[11rem]"
                   value={e.companyId || ""}
                   aria-label={t("Company")}
                   onChange={(event) => onCompanyChange(e.id, event.target.value)}
