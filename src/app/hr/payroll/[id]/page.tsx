@@ -163,7 +163,6 @@ export default async function PayrollRunPage({
 
   const grouped = serialized.map((entry) => ({ ...entry, group: bucket(entry) }));
   const staff = await prisma.employee.findMany({
-    where: { status: "ACTIVE" },
     select: {
       id: true,
       name: true,
