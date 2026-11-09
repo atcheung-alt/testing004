@@ -37,7 +37,11 @@ const BORDER = "#000000";
 // one atomic is what caused the original stretched-page bug. `rowFitsOnOnePage`
 // below estimates which case a given item falls into from its description
 // length, so each row gets whichever behavior is actually safe for it.
-const TABLE_DESC_CHARS_PER_LINE = 20; // conservative for the ~25%-wide description column, incl. CJK text
+// 12, not 20: CJK and a no-space measurement string wrap tighter than one
+// Latin character per 20. An atomic row (wrap={false}) that is actually
+// taller than one page is what stops the PDF from generating. 12 keeps a
+// normal short description on one page, and lets a long one continue.
+const TABLE_DESC_CHARS_PER_LINE = 12;
 const TABLE_ROW_MAX_SAFE_LINES = 34; // ~34 lines comfortably fits within a full page even if the row doesn't start at the very top
 
 function estimatedDescLineCount(item: { description?: string | null; fees?: { label: string; amount: number }[] }): number {

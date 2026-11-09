@@ -81,30 +81,98 @@ export const PDF_FONT_BOLD = REGULAR && BOLD ? "NotoSansSC" : "Helvetica-Bold";
 // overflowing straight past its column's right edge instead of wrapping.
 // Real CJK typography allows a line break between almost any two
 // characters, so runs of CJK characters are split into individually
-// breakable units here; non-CJK runs (English words, units, numbers) are
-// left exactly as before, fully unbroken.
+// breakable units here.
+//
+// A measurement run with no spaces, such as "37×1.39×1.43×1.44×1.45×1",
+// is also one "word". Left unbroken it is wider than the description
+// column, and that is what stops the PDF from being generated. Break only
+// before each measurement sign so "×1.45" stays one piece and moves to the
+// next line or page together. A short number such as "1.45" is never cut.
+// A single piece that is still wider than the column is broken so the PDF
+// can be placed; the break is moved off a short decimal when it can be.
 const CJK_RANGES =
   /[\u3000-\u303F\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF\uAC00-\uD7A3]/;
 
-Font.registerHyphenationCallback((word) => {
-  if (!CJK_RANGES.test(word)) return [word];
+const MEASUREMENT_SIGN = /[×✕✖*]/;
 
-  // Group consecutive non-CJK characters together (so an embedded English
-  // term or number inside mostly-CJK text isn't split character-by-character
-  // too), but split every CJK character out as its own breakable unit.
+/** Pieces react-pdf is allowed to wrap between. Joining them rebuilds `word`. */
+export function pdfBreakableUnits(word: string): string[] {
+  if (!word) return [];
+  if (!CJK_RANGES.test(word)) return fitColumn(measurementParts(word));
+
   const parts: string[] = [];
   let buffer = "";
+  const flush = () => {
+    if (!buffer) return;
+    parts.push(...fitColumn(measurementParts(buffer)));
+    buffer = "";
+  };
   for (const char of word) {
     if (CJK_RANGES.test(char)) {
-      if (buffer) {
-        parts.push(buffer);
-        buffer = "";
-      }
+      flush();
       parts.push(char);
+    } else {
+      buffer += char;
+    }
+  }
+  flush();
+  return parts;
+}
+
+function measurementParts(token: string): string[] {
+  const parts: string[] = [];
+  let buffer = "";
+  const chars = Array.from(token);
+  for (let i = 0; i < chars.length; i += 1) {
+    const char = chars[i];
+    const prev = chars[i - 1] || "";
+    const next = chars[i + 1] || "";
+    const isMeasureSign =
+      MEASUREMENT_SIGN.test(char) ||
+      ((char === "x" || char === "X") && /\d/.test(prev) && /\d/.test(next));
+    if (isMeasureSign && buffer) {
+      parts.push(buffer);
+      buffer = char;
     } else {
       buffer += char;
     }
   }
   if (buffer) parts.push(buffer);
   return parts;
-});
+}
+
+// Digits at 8pt fit about 24 across the 25% description column. A longer
+// unbreakable piece overflows that column and the PDF cannot be generated.
+const MAX_UNBROKEN = 24;
+
+function fitColumn(parts: string[]): string[] {
+  return parts.flatMap((part) => chunksThatFit(part));
+}
+
+function chunksThatFit(token: string): string[] {
+  const chars = Array.from(token);
+  if (chars.length <= MAX_UNBROKEN) return [token];
+  const parts: string[] = [];
+  let i = 0;
+  while (i < chars.length) {
+    let end = Math.min(i + MAX_UNBROKEN, chars.length);
+    if (end < chars.length) {
+      const window = chars.slice(i, end).join("");
+      const atEnd = window.match(/(\d+\.\d*)$/);
+      if (atEnd && atEnd.index !== undefined && atEnd.index > 0) {
+        end = i + Array.from(window.slice(0, atEnd.index)).length;
+      } else if (atEnd && atEnd.index === 0) {
+        const number = chars.slice(i).join("").match(/^\d+\.\d+/);
+        if (number && Array.from(number[0]).length <= MAX_UNBROKEN) {
+          end = i + Array.from(number[0]).length;
+        }
+      }
+    }
+    if (end <= i) end = i + 1;
+    parts.push(chars.slice(i, end).join(""));
+    i = end;
+  }
+  return parts;
+}
+
+Font.registerHyphenationCallback((word) => pdfBreakableUnits(word));
