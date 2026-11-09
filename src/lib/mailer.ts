@@ -1,4 +1,7 @@
+import dns from "dns";
 import nodemailer from "nodemailer";
+
+dns.setDefaultResultOrder("ipv4first");
 import { COMPANY } from "@/lib/company";
 import { getEffectiveCompany, getEffectiveCc } from "@/lib/appSettings";
 
@@ -32,6 +35,12 @@ function getTransport() {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    // IPv6 to the mail host often hangs for minutes, then falls back and
+    // sends. Forcing IPv4 makes the connection use the working address now.
+    family: 4,
+    connectionTimeout: 10_000,
+    greetingTimeout: 20_000,
+    socketTimeout: 30_000,
   });
 }
 
@@ -285,6 +294,8 @@ export async function sendDocumentEmail({
     signingUrl ? signingCtaHtml(signingUrl, ctaLabel) : ""
   }${secondaryCtaUrl ? signingCtaHtml(secondaryCtaUrl, secondaryCtaLabel) : ""}${emailSignatureHtml(company)}`;
 
+  const started = Date.now();
+  try {
   await transport.sendMail({
     from,
     to,
@@ -316,4 +327,13 @@ export async function sendDocumentEmail({
       })),
     ],
   });
+  console.info(`[mail] sent in ${Date.now() - started}ms`);
+  } catch (err: unknown) {
+    const code = err && typeof err === "object" && "code" in err ? String(err.code) : "unknown";
+    console.error(`[mail] failed in ${Date.now() - started}ms code=${code}`);
+    if (code === "ETIMEDOUT" || code === "ESOCKET" || code === "ECONNECTION") {
+      throw new Error("The mail server did not answer in time. Try again.");
+    }
+    throw err;
+  }
 }

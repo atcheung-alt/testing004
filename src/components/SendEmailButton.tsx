@@ -134,6 +134,7 @@ export default function SendEmailButton({
       const res = await fetch(endpoint || `/api/${kind}/${id}/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(25_000),
         body: JSON.stringify({
           to: to.trim(),
           cc: ccList,
@@ -148,7 +149,11 @@ export default function SendEmailButton({
       if (!res.ok) throw new Error(data.error || "Failed to send the email.");
       setStatus({ type: "success", to: data.to || to.trim() });
     } catch (err: any) {
-      setStatus({ type: "error", message: err.message });
+      const timedOut = err?.name === "TimeoutError" || err?.name === "AbortError";
+      setStatus({
+        type: "error",
+        message: timedOut ? t("The mail server did not answer in time. Try again.") : err.message,
+      });
     }
   }
 

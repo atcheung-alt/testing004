@@ -476,6 +476,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
     "建立紀錄並電郵連結，讓對方自行填寫個人資料 — 香港身份證、地址、緊急聯絡人及銀行資料。",
   "Email address": "電郵地址",
   "Sending…": "發送中…",
+  "The mail server did not answer in time. Try again.": "郵件伺服器沒有及時回覆。請再試一次。",
   "Create & send invite": "建立並發送邀請",
   "Please describe this expense.": "請描述這項支出。",
   "Please enter a valid amount.": "請輸入有效金額。",
