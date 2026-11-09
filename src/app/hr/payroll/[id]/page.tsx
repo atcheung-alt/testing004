@@ -17,6 +17,7 @@ import { findClientBill, readClientTerms, serviceFeeFor, termFor } from "@/lib/c
 import { formatCurrency } from "@/lib/calculations";
 import ClientInvoiceButton from "@/components/ClientInvoiceButton";
 import PayrollCompanyFilter from "@/components/PayrollCompanyFilter";
+import PayrollMonthEditor from "@/components/PayrollMonthEditor";
 export const dynamic = "force-dynamic";
 
 export default async function PayrollRunPage({
@@ -161,6 +162,40 @@ export default async function PayrollRunPage({
   }
 
   const grouped = serialized.map((entry) => ({ ...entry, group: bucket(entry) }));
+  const staff = await prisma.employee.findMany({
+    where: { status: "ACTIVE" },
+    select: {
+      id: true,
+      name: true,
+      title: true,
+      preferredName: true,
+      nickname: true,
+      nameChinese: true,
+    },
+    orderBy: { name: "asc" },
+  });
+  const onRun = new Set(run.entries.map((entry) => entry.employeeId));
+  const monthPeople = [
+    ...run.entries.map((entry) => ({
+      employeeId: entry.employeeId,
+      entryId: entry.id,
+      name: getEmployeeDisplayName({
+        name: entry.employeeName,
+        preferredName: entry.employee.preferredName,
+        nickname: entry.employee.nickname,
+        nameChinese: entry.employee.nameChinese,
+      }),
+      note: t("On this payroll"),
+    })),
+    ...staff
+      .filter((employee) => !onRun.has(employee.id))
+      .map((employee) => ({
+        employeeId: employee.id,
+        entryId: null,
+        name: getEmployeeDisplayName(employee),
+        note: employee.title ? `${t("Not on this payroll")} · ${employee.title}` : t("Not on this payroll"),
+      })),
+  ];
 
   return (
     <PayrollRunSearch>
@@ -173,12 +208,19 @@ export default async function PayrollRunPage({
           <div className="flex items-center gap-3">
             <h1 className="font-display text-2xl font-semibold text-ink">{label}</h1>
           </div>
-          <DeleteButton
+          <div className="flex items-center gap-2">
+            <PayrollMonthEditor
+              runId={run.id}
+              periodLabel={label}
+              people={monthPeople}
+            />
+            <DeleteButton
             url={`/api/payroll/${run.id}`}
             confirmNumber={run.period}
             itemLabel={t("payroll run")}
             redirectTo="/hr/payroll"
           />
+          </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-ink">

@@ -80,3 +80,16 @@ export async function PATCH(
 
   return NextResponse.json(updated);
 }
+
+/** Remove this person from the month only. The employee record stays. */
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string; entryId: string } }) {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
+
+  const entry = await prisma.payrollEntry.findUnique({ where: { id: params.entryId } });
+  if (!entry || entry.runId !== params.id) {
+    return NextResponse.json({ error: "Payroll entry not found." }, { status: 404 });
+  }
+  await prisma.payrollEntry.delete({ where: { id: entry.id } });
+  return NextResponse.json({ success: true });
+}
