@@ -11,6 +11,7 @@ import SearchBox from "@/components/SearchBox";
 import InviteEmployeeButton from "@/components/InviteEmployeeButton";
 import EmployeeListClient, { EmployeeListItem } from "@/components/EmployeeListClient";
 import EmployeeListFilters from "@/components/EmployeeListFilters";
+import { clientCompanies } from "@/lib/employerCompany";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -122,7 +123,7 @@ async function EmployeeList({
       name: e.name,
       preferredName: e.preferredName,
       nickname: e.nickname,
-      companyId: e.companyId,
+      companyId: e.companyId && companies.some((company) => company.id === e.companyId) ? e.companyId : null,
       nameChinese: e.nameChinese,
       title: e.title,
       status: e.status,
@@ -185,10 +186,12 @@ export default async function EmployeesPage({
   const user = await getCurrentUser();
   const scope = await employeeScopeFor(user);
   if (scope.mode === "deny") redirect("/hr/profile");
-  const companies = await prisma.employerCompany.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true },
-  });
+  const companies = clientCompanies(
+    await prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    })
+  );
   const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
   const exportParams = new URLSearchParams();

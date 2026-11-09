@@ -1,6 +1,7 @@
 import EmployeeForm from "@/components/EmployeeForm";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
+import { clientCompanies } from "@/lib/employerCompany";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +11,12 @@ export default async function NewEmployeePage() {
   // The form covers every field, including HKID/bank/salary — admin-only,
   // same as viewing or editing an existing record.
   await requireAdminPage();
-  const companies = await prisma.employerCompany.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true },
-  });
+  const companies = clientCompanies(
+    await prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    })
+  );
 
   return (
     <div className="flex flex-col gap-6">

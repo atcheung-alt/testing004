@@ -809,6 +809,11 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "No documents match these filters.": "沒有符合這些篩選的文件。",
   "Add the companies you park staff for. HR Plus is the default when you invite someone.":
     "新增你掛靠員工的公司。邀請員工時，預設公司是 HR Plus。",
+  "Add and manage external client companies. Staff without a client company assigned will default to HR Plus internal payroll.":
+    "新增和管理外部客戶公司。沒有指定客戶公司的員工，會預設歸入 HR Plus 內部出糧。",
+  "HR Plus is the internal company. Add the client company name instead.":
+    "HR Plus 是內部公司。請改為輸入客戶公司名稱。",
+  "HR Plus is the internal company and cannot be changed.": "HR Plus 是內部公司，不能修改或刪除。",
   "Choose full time, part time, or freelance.": "請選擇全職、兼職或自由工作。",
   "Choose a company.": "請選擇公司。",
   "Days and times you worked": "上班日子和時間",

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import EmployeeForm from "@/components/EmployeeForm";
 import { canManageEmployee } from "@/lib/documentAccess";
+import { clientCompanies } from "@/lib/employerCompany";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -21,10 +22,12 @@ export default async function EditEmployeePage({ params }: { params: { id: strin
     },
   });
   if (!employee) notFound();
-  const companies = await prisma.employerCompany.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true },
-  });
+  const companies = clientCompanies(
+    await prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    })
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,6 +49,7 @@ export default async function EditEmployeePage({ params }: { params: { id: strin
           employmentType: employee.employmentType as any,
           payRateType: employee.payRateType as any,
           status: employee.status as any,
+          companyId: companies.some((company) => company.id === employee.companyId) ? employee.companyId : null,
           startDate: employee.startDate ? employee.startDate.toISOString() : null,
           birthday: employee.birthday ? employee.birthday.toISOString() : null,
           lastDay: employee.lastDay ? employee.lastDay.toISOString() : null,

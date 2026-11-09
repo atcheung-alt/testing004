@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import RejoinEmployeeForm from "@/components/RejoinEmployeeForm";
 import { canManageEmployee } from "@/lib/documentAccess";
+import { clientCompanies } from "@/lib/employerCompany";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +19,12 @@ export default async function RejoinEmployeePage({ params }: { params: { id: str
   if (employee.status !== "FORMER") redirect(`/hr/employees/${employee.id}`);
   if (employee.laterEmployment) redirect(`/hr/employees/${employee.laterEmployment.id}`);
 
-  const companies = await prisma.employerCompany.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    select: { id: true, name: true },
-  });
+  const companies = clientCompanies(
+    await prisma.employerCompany.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: { id: true, name: true },
+    })
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,7 +45,7 @@ export default async function RejoinEmployeePage({ params }: { params: { id: str
           nickname: employee.nickname || "",
           employmentType: employee.employmentType || "",
           salary: employee.salary,
-          companyId: employee.companyId || "",
+          companyId: companies.some((company) => company.id === employee.companyId) ? employee.companyId || "" : "",
         }}
       />
     </div>

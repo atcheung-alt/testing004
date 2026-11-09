@@ -6,6 +6,7 @@ import { ensureOnboardingToken, onboardingUrlFor } from "@/lib/signing";
 import { sendDocumentEmail } from "@/lib/mailer";
 import { logActivity } from "@/lib/activity";
 import { splitNameGuess } from "@/lib/employees";
+import { isInternalCompanyName } from "@/lib/employerCompany";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,21 +36,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Choose full time, part time, or freelance." }, { status: 400 });
   }
 
-  const requestedCompanyId = typeof body.companyId === "string" ? body.companyId : "";
-  let companyId = requestedCompanyId;
+  const requestedCompanyId = typeof body.companyId === "string" ? body.companyId.trim() : "";
+  let companyId: string | null = requestedCompanyId || null;
   if (companyId) {
-    const company = await prisma.employerCompany.findUnique({ where: { id: companyId }, select: { id: true } });
+    const company = await prisma.employerCompany.findUnique({
+      where: { id: companyId },
+      select: { id: true, name: true },
+    });
     if (!company) return NextResponse.json({ error: "Choose a company." }, { status: 400 });
-  } else {
-    const companies = await prisma.employerCompany.findMany({ select: { id: true, name: true, sortOrder: true } });
-    const existing = companies.find((company) => company.name.toLowerCase().replace(/[^a-z]/g, "") === "hrplus");
-    if (existing) {
-      companyId = existing.id;
-    } else {
-      const lastOrder = companies.reduce((max, company) => Math.max(max, company.sortOrder), 0);
-      const created = await prisma.employerCompany.create({ data: { name: "HR Plus", sortOrder: lastOrder + 1 } });
-      companyId = created.id;
-    }
+    if (isInternalCompanyName(company.name)) companyId = null;
   }
 
   // Invited employees start life in ONBOARDING (not the schema default

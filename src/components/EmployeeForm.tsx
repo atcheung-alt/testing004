@@ -305,7 +305,7 @@ export default function EmployeeForm({
           <div>
             <label className="label">{t("Company")}</label>
             <select className="input" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-              <option value="">{t("No company")}</option>
+              <option value="">{t("HR Plus")}</option>
               {companies.map((company) => (
                 <option key={company.id} value={company.id}>
                   {company.name}

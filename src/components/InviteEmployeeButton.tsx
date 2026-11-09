@@ -11,17 +11,12 @@ import { useT } from "@/lib/i18n/client";
  *  everything else (HKID, address, emergency contact, bank details)
  *  themselves via that link; this modal intentionally asks for nothing
  *  more than what's needed to create the record and send it. */
-function isHrPlus(name: string) {
-  return name.toLowerCase().replace(/[^a-z]/g, "") === "hrplus";
-}
-
 export default function InviteEmployeeButton({ companies }: { companies: { id: string; name: string }[] }) {
   const router = useRouter();
-  const hrPlus = companies.find((company) => isHrPlus(company.name));
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [companyId, setCompanyId] = useState(hrPlus?.id || "");
+  const [companyId, setCompanyId] = useState("");
   const [employmentType, setEmploymentType] = useState("FULL_TIME");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +27,7 @@ export default function InviteEmployeeButton({ companies }: { companies: { id: s
     setOpen(false);
     setName("");
     setEmail("");
-    setCompanyId(hrPlus?.id || "");
+    setCompanyId("");
     setEmploymentType("FULL_TIME");
     setError(null);
   }
@@ -106,7 +101,7 @@ export default function InviteEmployeeButton({ companies }: { companies: { id: s
                 <div>
                   <label className="label">{t("Company")}</label>
                   <select className="input" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-                    {!hrPlus && <option value="">{t("HR Plus")}</option>}
+                    <option value="">{t("HR Plus")}</option>
                     {companies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name}

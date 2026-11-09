@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPage } from "@/lib/auth";
 import { periodLabel } from "@/lib/payroll";
 import { getEmployeeDisplayName } from "@/lib/employeeName";
+import { isInternalCompanyName } from "@/lib/employerCompany";
 import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
 import { PayrollRunSearch, PayrollRunSearchBox, PayrollRunTables } from "@/components/PayrollRunSearch";
@@ -63,7 +64,7 @@ export default async function PayrollRunPage({
   >();
   for (const entry of run.entries) {
     const companyId = entry.employee.companyId;
-    if (!companyId || !entry.employee.company) continue;
+    if (!companyId || !entry.employee.company || isInternalCompanyName(entry.employee.company.name)) continue;
     const current = clientGroups.get(companyId) || {
       companyId,
       name: entry.employee.company.name,

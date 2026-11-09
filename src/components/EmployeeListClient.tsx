@@ -131,19 +131,26 @@ const EmployeeTable = memo(function EmployeeTable({
                 {e.title || t("No title set")}
               </td>
               <td className="hidden lg:table-cell px-5 py-3" onClick={(event) => event.stopPropagation()}>
+                <div className="flex flex-col items-start gap-1">
+                {!e.companyId ? (
+                  <span className="inline-flex bg-slate-100 text-slate-700 font-semibold text-xs px-2 py-0.5 rounded">
+                    {t("HR Plus")}
+                  </span>
+                ) : null}
                 <select
                   className="input py-1 text-sm"
                   value={e.companyId || ""}
                   aria-label={t("Company")}
                   onChange={(event) => onCompanyChange(e.id, event.target.value)}
                 >
-                  <option value="">{t("No company")}</option>
+                  <option value="">{t("HR Plus")}</option>
                   {companies.map((company) => (
                     <option key={company.id} value={company.id}>
                       {company.name}
                     </option>
                   ))}
                 </select>
+                </div>
               </td>
               <td className="px-5 py-3">
                 <span className={`stamp justify-center ${statusStampClass(e.status)}`}>{t(e.status)}</span>
@@ -259,7 +266,7 @@ export default function EmployeeListClient({
     })),
     {
       key: "none",
-      title: t("No company"),
+      title: t("HR Plus"),
       rows: employees.filter(
         (employee) => !employee.companyId || !companies.some((company) => company.id === employee.companyId)
       ),
@@ -358,7 +365,7 @@ export default function EmployeeListClient({
                     value={selected.companyId || ""}
                     onChange={(event) => changeCompany(selected.id, event.target.value)}
                   >
-                    <option value="">{t("No company")}</option>
+                    <option value="">{t("HR Plus")}</option>
                     {companies.map((company) => (
                       <option key={company.id} value={company.id}>
                         {company.name}
