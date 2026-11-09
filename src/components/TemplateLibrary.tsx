@@ -97,8 +97,8 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
         {shown.length === 0 ? (
           <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">{t("No templates found matching your search.")}</p>
         ) : shown.map((row) => (
-          <div key={`${row.kind}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 py-5 hover:bg-paper sm:px-5">
-            <div className="min-w-0">
+          <div key={`${row.kind}-${row.id}`} className="flex items-center justify-between gap-3 px-4 py-5 hover:bg-paper sm:px-5">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm font-medium">{row.code}</span>
                 <span className="stamp border-line text-ink-muted">
@@ -108,7 +108,7 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
               <p className="mt-0.5 truncate text-xs text-ink-muted">{row.name}</p>
               <p className="mt-0.5 truncate text-xs text-ink-faint">{row.detail || "\u00a0"}</p>
             </div>
-            <div className="flex flex-wrap items-center justify-end gap-3 shrink-0">
+            <div className="flex items-center justify-end gap-3 shrink-0">
               <Link
                 href={row.kind === "quotation" ? `/quotations/new?template=${row.id}` : `/recruitment/new?template=${row.id}`}
                 className="btn-primary px-3 py-1 text-xs"
