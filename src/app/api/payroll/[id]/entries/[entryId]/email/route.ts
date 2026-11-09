@@ -61,6 +61,7 @@ export async function POST(
         content: built.buffer,
       },
       extraAttachments,
+      hrSignature: true,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Failed to send the email." }, { status: 502 });

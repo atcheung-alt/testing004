@@ -42,6 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       body: mpfEmailBody(employee.name, doneUrl, uploadUrl),
       htmlBody: mpfEmailHtml(employee.name, doneUrl, uploadUrl),
       attachment: { filename: MPF_FORM_FILENAME, content: form },
+      hrSignature: true,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Failed to send the email." }, { status: 502 });

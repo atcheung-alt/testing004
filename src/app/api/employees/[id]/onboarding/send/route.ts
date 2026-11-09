@@ -61,6 +61,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       body: `Hi ${employee.name},\n\nPlease click the button below to fill in your personal details for our records. This only needs to be done once.`,
       signingUrl: onboardingUrl,
       ctaLabel: "Fill in my details",
+      hrSignature: true,
     });
   } catch (err: any) {
     return NextResponse.json(

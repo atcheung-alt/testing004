@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         body: `Hi ${name},\n\nPlease click the button below to fill in your personal details for our records. This only needs to be done once.`,
         signingUrl: onboardingUrl,
         ctaLabel: "Fill in my details",
+        hrSignature: true,
       });
       await prisma.employee.update({
         where: { id: employee.id },

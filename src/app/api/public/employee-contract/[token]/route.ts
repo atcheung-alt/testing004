@@ -123,6 +123,7 @@ ${COMPANY.name}`,
               },
             ]
           : undefined,
+        hrSignature: true,
       });
       await logActivity({
         documentType: "employee",

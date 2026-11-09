@@ -140,6 +140,28 @@ function emailHeaderHtml(company: Company, logoCid?: string | null): string {
   return `<span style="font-size:18px;font-weight:700;color:${BRAND.brand700};">${company.name}</span>`;
 }
 
+const HR_MAIL_TEL = "3905 0662";
+const HR_MAIL_EMAIL = "contact@hrplus.info";
+
+/** Signature used only on emails the HR system sends to staff. */
+function hrEmailSignatureHtml(companyName: string): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:28px;border-collapse:collapse;">
+      <tr>
+        <td style="width:3px;background-color:${BRAND.brand500};background-image:${BRAND.gradient};border-radius:2px;"></td>
+        <td style="padding-left:14px;font-size:13px;line-height:1.6;color:${BRAND.inkMuted};">
+          <span>Tel: ${HR_MAIL_TEL}</span><br/>
+          <span>Email: <a href="mailto:${HR_MAIL_EMAIL}" style="color:${BRAND.brand600};text-decoration:none;">${HR_MAIL_EMAIL}</a></span><br/>
+          <span style="color:${BRAND.inkFaint};font-size:12px;">${companyName}</span>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function hrEmailSignatureText(companyName: string): string {
+  return ["", "--", `Tel: ${HR_MAIL_TEL}`, `Email: ${HR_MAIL_EMAIL}`, companyName].join("\n");
+}
+
 /** Professional email signature, appended to outgoing messages. */
 export function emailSignatureHtml(company: Company): string {
   const c = company.contact;
@@ -215,6 +237,8 @@ export type SendArgs = {
    *  after the first one. */
   secondaryCtaUrl?: string;
   secondaryCtaLabel?: string;
+  /** Staff mail from the HR system. Client documents keep the usual signature. */
+  hrSignature?: boolean;
 };
 
 /** Styled call-to-action button + fallback plain link for the signing/payment email. */
@@ -263,6 +287,7 @@ export async function sendDocumentEmail({
   ctaLabel = "Review & Sign Online",
   secondaryCtaUrl,
   secondaryCtaLabel = "Add to Calendar",
+  hrSignature = false,
 }: SendArgs) {
   const transport = getTransport();
   if (!transport) {
@@ -290,9 +315,11 @@ export async function sendDocumentEmail({
   const logoAsset = company.logoData ? parseDataUrl(company.logoData) : null;
   const logoCid = logoAsset ? "company-logo" : null;
 
+  const signatureHtml = hrSignature ? hrEmailSignatureHtml(company.name) : emailSignatureHtml(company);
+  const signatureText = hrSignature ? hrEmailSignatureText(company.name) : emailSignatureText(company);
   const innerHtml = `${htmlBody || bodyToHtml(body)}${
     signingUrl ? signingCtaHtml(signingUrl, ctaLabel) : ""
-  }${secondaryCtaUrl ? signingCtaHtml(secondaryCtaUrl, secondaryCtaLabel) : ""}${emailSignatureHtml(company)}`;
+  }${secondaryCtaUrl ? signingCtaHtml(secondaryCtaUrl, secondaryCtaLabel) : ""}${signatureHtml}`;
 
   const started = Date.now();
   try {
@@ -303,7 +330,7 @@ export async function sendDocumentEmail({
     subject,
     text: `${body}\n${signingUrl ? signingCtaText(signingUrl, ctaLabel) : ""}${
       secondaryCtaUrl ? signingCtaText(secondaryCtaUrl, secondaryCtaLabel) : ""
-    }${emailSignatureText(company)}`,
+    }${signatureText}`,
     html: emailShell(innerHtml, company, logoCid),
     attachments: [
       ...(logoAsset

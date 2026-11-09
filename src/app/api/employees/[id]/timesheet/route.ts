@@ -44,6 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         body: `Please fill in the days you worked in ${period}, with the start and end time of each day.\n\nHR Plus will check the hours before pay is processed.`,
         signingUrl: url,
         ctaLabel: "Fill in hours",
+        hrSignature: true,
       });
       emailed = true;
     } catch (err: any) {

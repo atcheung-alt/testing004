@@ -69,6 +69,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       extraAttachments,
       signingUrl,
       ctaLabel: "Review & Sign Online",
+      hrSignature: true,
     });
   } catch (err: any) {
     return NextResponse.json(
