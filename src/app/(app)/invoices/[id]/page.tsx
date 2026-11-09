@@ -92,7 +92,7 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     raw.quotation?.shares || [],
     raw.total
   );
-  const linkedExpenses = await generalExpensesForInvoice(raw.id);
+  const linkedExpenses = await generalExpensesForInvoice(raw.id, raw.number);
   const invoiceExpenseTotal = raw.expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const expenseTotal = invoiceExpenseTotal + linkedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const savedBilling = storedCommissionTotal(raw.quotation?.shareMode || "AMOUNT", raw.quotation?.shares || []);

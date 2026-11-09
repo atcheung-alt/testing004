@@ -55,7 +55,7 @@ export default async function CommissionPage({
     loadColleagues(),
   ]);
   const marks = await loadCommissionMarks(invoices.map((invoice) => invoice.id));
-  const linkedSums = await generalExpenseSums(invoices.map((invoice) => invoice.id));
+  const linkedSums = await generalExpenseSums(invoices.map((invoice) => ({ id: invoice.id, number: invoice.number })));
   const paidOn = await loadCommissionPaid(invoices.map((invoice) => invoice.id));
   const owned = await commissionOwnedInvoiceIds(access);
   const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";

@@ -65,6 +65,7 @@ export async function refreshBillingAfterExpense(invoiceId: string, delta = 0): 
     where: { id: invoiceId },
     select: {
       total: true,
+      number: true,
       expenses: { select: { amount: true } },
       quotation: {
         select: {
@@ -80,7 +81,7 @@ export async function refreshBillingAfterExpense(invoiceId: string, delta = 0): 
   let generalSum = 0;
   try {
     const rows = await prisma.generalExpense.findMany({
-      where: { invoiceId },
+      where: { OR: [{ invoiceId }, { invoiceNumber: invoice.number }] },
       select: { amount: true },
     });
     generalSum = rows.reduce((sum, row) => sum + row.amount, 0);

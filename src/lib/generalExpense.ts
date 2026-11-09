@@ -61,10 +61,10 @@ const lightSelect = {
   createdBy: true,
 } as const;
 
-export async function generalExpensesForInvoice(invoiceId: string): Promise<{ id: string; name: string; category: string; amount: number; fileName: string }[]> {
+export async function generalExpensesForInvoice(invoiceId: string, invoiceNumber: string): Promise<{ id: string; name: string; category: string; amount: number; fileName: string }[]> {
   try {
     return await prisma.generalExpense.findMany({
-      where: { invoiceId },
+      where: { OR: [{ invoiceId }, { invoiceNumber }] },
       orderBy: { spentAt: "desc" },
       select: { id: true, name: true, category: true, amount: true, fileName: true },
     });
@@ -73,17 +73,24 @@ export async function generalExpensesForInvoice(invoiceId: string): Promise<{ id
   }
 }
 
-export async function generalExpenseSums(invoiceIds: string[]): Promise<Map<string, number>> {
+export async function generalExpenseSums(invoices: { id: string; number: string }[]): Promise<Map<string, number>> {
   const sums = new Map<string, number>();
-  if (!invoiceIds.length) return sums;
+  if (!invoices.length) return sums;
+  const idByNumber = new Map(invoices.map((invoice) => [invoice.number, invoice.id]));
   try {
     const rows = await prisma.generalExpense.findMany({
-      where: { invoiceId: { in: invoiceIds } },
-      select: { invoiceId: true, amount: true },
+      where: {
+        OR: [
+          { invoiceId: { in: invoices.map((invoice) => invoice.id) } },
+          { invoiceNumber: { in: invoices.map((invoice) => invoice.number) } },
+        ],
+      },
+      select: { invoiceId: true, invoiceNumber: true, amount: true },
     });
     for (const row of rows) {
-      if (!row.invoiceId) continue;
-      sums.set(row.invoiceId, (sums.get(row.invoiceId) || 0) + row.amount);
+      const id = idByNumber.get(row.invoiceNumber) || (invoices.some((invoice) => invoice.id === row.invoiceId) ? row.invoiceId : "");
+      if (!id) continue;
+      sums.set(id, (sums.get(id) || 0) + row.amount);
     }
   } catch {
     return sums;

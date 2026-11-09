@@ -46,7 +46,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
 
   if (!record) notFound();
   const { quotation, expenses, ...invoice } = record;
-  const linkedExpenses = await generalExpensesForInvoice(invoice.id);
+  const linkedExpenses = await generalExpensesForInvoice(invoice.id, invoice.number);
   const invoiceExpenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const expenseTotal = invoiceExpenseTotal + linkedExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const [calendarEvent, quoteCreator] = await Promise.all([
