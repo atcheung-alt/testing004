@@ -4,7 +4,7 @@ import { requireAdminApi } from "@/lib/auth";
 import { sendDocumentEmail } from "@/lib/mailer";
 import { isValidEmail } from "@/lib/settings";
 import { logActivity } from "@/lib/activity";
-import { ensureMpfFormColumns, ensureMpfFormToken, mpfEmailBody, mpfFormUrlFor, MPF_FORM_FILENAME, readIndividualEmpfForm } from "@/lib/mpfForm";
+import { ensureMpfFormColumns, ensureMpfFormToken, mpfDoneUrlFor, mpfEmailBody, mpfFormUrlFor, MPF_FORM_FILENAME, readIndividualEmpfForm } from "@/lib/mpfForm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,8 +39,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       subject: "Individual eMPF Form",
       body: mpfEmailBody(employee.name),
       attachment: { filename: MPF_FORM_FILENAME, content: form },
-      signingUrl: mpfFormUrlFor(token, request),
-      ctaLabel: "Upload Individual eMPF Form",
+      signingUrl: mpfDoneUrlFor(token, request),
+      ctaLabel: "I have finished eMPF registration",
+      secondaryCtaUrl: mpfFormUrlFor(token, request),
+      secondaryCtaLabel: "Upload Individual eMPF Form",
     });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || "Failed to send the email." }, { status: 502 });

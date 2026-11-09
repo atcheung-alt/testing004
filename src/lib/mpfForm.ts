@@ -25,6 +25,10 @@ export function mpfFormUrlFor(token: string, request?: NextRequest | Request): s
   return `${resolveBaseUrl(request)}/mpf/${token}`;
 }
 
+export function mpfDoneUrlFor(token: string, request?: NextRequest | Request): string {
+  return `${resolveBaseUrl(request)}/mpf/${token}/done`;
+}
+
 let columnsReady: Promise<void> | null = null;
 
 /** Add the MPF link columns if this database does not have them yet. */
@@ -34,6 +38,7 @@ export function ensureMpfFormColumns(): Promise<void> {
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormSentAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormDriveFileId" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormDriveUrl" TEXT`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormCompletedAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(
       `CREATE UNIQUE INDEX IF NOT EXISTS "Employee_mpfFormToken_key" ON "Employee"("mpfFormToken")`
     );
@@ -64,10 +69,16 @@ export function mpfEmailBody(name: string): string {
   return [
     `Hello ${name},`,
     "",
-    "Please register your eMPF and return your Individual eMPF Form.",
+    "Recommended: register online on eMPF. No paper form.",
     "",
-    `1. Watch this video. It shows how to register, manage, and check your MPF: ${MPF_VIDEO_URL}`,
-    "2. Open the attached Individual eMPF Form, fill it in, and sign it.",
-    "3. Upload the signed Individual eMPF Form using the button below.",
+    "1. HR Plus enters your name, phone number, and HKID in eMPF first.",
+    "2. eMPF notifies you in the eMPF app, by SMS, or by email.",
+    "3. Log in to your eMPF account, open that job notice, choose your fund, and sign online.",
+    "",
+    "When that is finished, press “I have finished eMPF registration”.",
+    "",
+    "If you cannot use eMPF online, use the attached Individual eMPF Form instead.",
+    `Watch this video to register, manage, and check your MPF: ${MPF_VIDEO_URL}`,
+    "Fill in and sign the form, then press “Upload Individual eMPF Form”.",
   ].join("\n");
 }

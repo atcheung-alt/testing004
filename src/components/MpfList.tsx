@@ -9,7 +9,7 @@ type Row = {
   id: string;
   name: string;
   email: string;
-  status: "not" | "wait" | "saved";
+  status: "not" | "wait" | "saved" | "done";
   driveUrl: string | null;
 };
 
@@ -68,18 +68,24 @@ export default function MpfList({ people }: { people: Row[] }) {
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      person.status === "saved"
+                      person.status === "saved" || person.status === "done"
                         ? "bg-emerald-50 text-emerald-700"
                         : person.status === "wait"
                         ? "bg-orange-50 text-orange-700"
                         : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {person.status === "saved" ? t("Saved") : person.status === "wait" ? t("Waiting") : t("Not sent")}
+                    {person.status === "saved"
+                      ? t("Saved")
+                      : person.status === "done"
+                      ? t("Done")
+                      : person.status === "wait"
+                      ? t("Waiting")
+                      : t("Not sent")}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  {person.status === "saved" && person.driveUrl ? (
+                  {person.status === "done" ? null : person.status === "saved" && person.driveUrl ? (
                     <a className="btn-secondary !px-3 !py-1 text-xs" href={person.driveUrl} target="_blank" rel="noreferrer">
                       {t("Open")}
                     </a>

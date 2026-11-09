@@ -783,6 +783,8 @@ model Employee {
   mpfFormSentAt      DateTime?
   mpfFormDriveFileId String?
   mpfFormDriveUrl    String?
+  // Set when the employee confirms they finished on the eMPF app or website.
+  mpfFormCompletedAt DateTime?
 
   // --- Onboarding (self-service personal-details form) ---------------------
   // Admin only enters name + email at first, then sends a public link (same

@@ -826,6 +826,13 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Not on this payroll": "不在這次出糧",
   "No one to add.": "沒有可新增的人。",
   "Not sent": "未發送",
+  Done: "已完成",
+  "I have finished eMPF registration": "我已完成積金易登記",
+  "eMPF registration is done.": "積金易登記已完成。",
+  "Have you finished on eMPF?": "你已在積金易完成登記嗎？",
+  "HR Plus entered your name, phone number, and HKID in eMPF.": "HR Plus 已在積金易輸入你的姓名、電話和身份證號碼。",
+  "You opened the job notice in the eMPF app or website.": "你已在積金易 App 或網站開啟該工作通知。",
+  "You chose your fund and signed online.": "你已選擇基金組合並完成電子簽署。",
   Waiting: "等待中",
   Saved: "已儲存",
   "Send again": "再發送",
@@ -842,6 +849,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Please contact {company} if you need a new link.": "如需新連結，請聯絡{company}。",
   "Send the Individual eMPF Form. The signed file is saved in Google Drive as MFP file. Open opens that file.":
     "發送個人 eMPF 表格。簽署後的檔案會以 MFP file 儲存到 Google Drive。開啟會打開該檔案。",
+  "Recommended: the employee finishes on eMPF and presses the button in the email. The paper form is still attached, and a signed file is saved in Google Drive as MFP file.":
+    "建議員工在積金易完成，並在電郵按完成。紙本表格仍會附上。簽署檔會以 MFP file 存到 Google Drive。",
   "This employee has no email address.": "這位員工沒有電郵地址。",
   "Remove from this payroll?": "從這次出糧移除？",
   "{name} will leave {period} only. Their employee record stays.": "{name}只會離開{period}。員工紀錄會保留。",
