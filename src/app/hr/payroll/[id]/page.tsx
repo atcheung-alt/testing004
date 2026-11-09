@@ -8,6 +8,7 @@ import { getEmployeeDisplayName } from "@/lib/employeeName";
 import { isInternalCompanyName } from "@/lib/employerCompany";
 import { COMPANY } from "@/lib/company";
 import DeleteButton from "@/components/DeleteButton";
+import FinishPayrollButton from "@/components/FinishPayrollButton";
 import { PayrollRunSearch, PayrollRunSearchBox, PayrollRunTables } from "@/components/PayrollRunSearch";
 import { getAppLanguage, getT } from "@/lib/i18n/server";
 import { readStaffDirectory } from "@/lib/staffDirectory";
@@ -177,12 +178,34 @@ export default async function PayrollRunPage({
             redirectTo="/hr/payroll"
           />
         </div>
-        <p className="text-sm text-ink-muted mt-1">
-          {t("{paid} of {total} paid", {
-            paid: companyEntries.length - unpaid.length,
-            total: companyEntries.length,
-          })}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-ink">
+            {t("{paid} of {total} paid", {
+              paid: companyEntries.length - unpaid.length,
+              total: companyEntries.length,
+            })}
+          </p>
+          <FinishPayrollButton
+            runId={run.id}
+            ready={companyEntries.length > 0 && unpaid.length === 0}
+            done={run.status === "FINALIZED"}
+          />
+        </div>
+        {companyEntries.length > 0 ? (
+          <p
+            className={`mt-2 rounded-xl border px-3 py-2 text-sm ${
+              unpaid.length === 0
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-amber-200 bg-amber-50 text-amber-800"
+            }`}
+          >
+            {unpaid.length === 0
+              ? t("Everyone is paid. You can finish this payroll.")
+              : t("{count} still to pay. Finish stays off until each person is marked paid.", {
+                  count: unpaid.length,
+                })}
+          </p>
+        ) : null}
         <p className="text-sm text-ink-muted mt-1">
           {visibleEntries.length === 1
             ? t("{count} Employee", { count: visibleEntries.length })

@@ -789,6 +789,11 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
     "自由工作帳號只能查看自己建立的文件。在這裡輸入其電郵（以逗號分隔），即可讓他們開啟這張發票及相關檔案。",
   "HR Plus staff payroll": "HR Plus 員工出糧",
   "{paid} of {total} paid": "已支付 {paid} / {total}",
+  "Finish this payroll": "完成這次出糧",
+  "Payroll finished": "出糧已完成",
+  "{count} still to pay. Finish stays off until each person is marked paid.":
+    "還有 {count} 人未支付。要等每個人都標為已支付，才能完成這次出糧。",
+  "Everyone is paid. You can finish this payroll.": "全部已支付。可以完成這次出糧。",
   PAID: "已支付",
   UNPAID: "未支付",
   "Mark this person as paid?": "將這位標為已支付？",

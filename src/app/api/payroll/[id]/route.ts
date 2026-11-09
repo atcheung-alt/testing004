@@ -18,11 +18,29 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   return NextResponse.json(run);
 }
 
-// There used to be a "finalize" PATCH here that locked every entry against
-// further edits. That's been removed — payroll runs stay editable
-// indefinitely now (see PayrollRunEntries.tsx). Uploading payslips to Drive
-// no longer piggybacks on finalizing either; see the dedicated
-// /api/payroll/[id]/drive-sync route for that, triggered manually instead.
+/** Marks the run finished once every row is paid. Rows stay editable. */
+export async function PATCH(_request: NextRequest, { params }: { params: { id: string } }) {
+  const denied = await requireAdminApi();
+  if (denied) return denied;
+
+  const run = await prisma.payrollRun.findUnique({
+    where: { id: params.id },
+    include: { entries: { select: { paidAt: true } } },
+  });
+  if (!run) return NextResponse.json({ error: "Payroll run not found." }, { status: 404 });
+  if (run.entries.some((entry) => !entry.paidAt)) {
+    return NextResponse.json(
+      { error: "All employees must be marked as PAID before finalizing this run." },
+      { status: 400 }
+    );
+  }
+
+  const updated = await prisma.payrollRun.update({
+    where: { id: run.id },
+    data: { status: "FINALIZED", finalizedAt: run.finalizedAt ?? new Date() },
+  });
+  return NextResponse.json(updated);
+}
 
 /** A payroll run can always be deleted now — there's no "finalized, historical
  *  record" state protecting it anymore. */
