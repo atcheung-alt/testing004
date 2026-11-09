@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Download, Search } from "lucide-react";
+import { CalendarRange, Download, Search } from "lucide-react";
 import CommissionPaidToggle from "@/components/CommissionPaidToggle";
 import { hongKongDay } from "@/lib/commission";
 
@@ -53,10 +53,9 @@ function MonthField({ name, value, label, allTime }: { name: string; value: stri
   }
 
   return (
-    <div ref={boxRef} className="relative flex items-center gap-2 text-sm text-ink-muted">
-      <span>{label}:</span>
+    <div ref={boxRef} className="relative">
       <input ref={inputRef} type="hidden" name={name} defaultValue={value} />
-      <button type="button" className="h-9 w-40 rounded-lg border border-line bg-surface px-3 text-left text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20" onClick={() => setOpen((current) => !current)}>
+      <button type="button" aria-label={label} className="input !w-auto text-left" onClick={() => setOpen((current) => !current)}>
         {value || allTime}
       </button>
       {open ? (
@@ -209,14 +208,15 @@ export default function CommissionFilters({
         id="billing-filters"
         action="/commission"
         method="get"
-        className="flex flex-wrap items-center gap-2"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center"
         onChange={(event: FormEvent<HTMLFormElement>) => {
           if ((event.target as HTMLElement).tagName === "SELECT") event.currentTarget.requestSubmit();
         }}
       >
         <input type="hidden" name="state" value={state} />
         <input type="hidden" name="paid" value={paid} />
-        <label className="relative min-w-[12rem] flex-1 max-w-sm">
+        <input type="hidden" name="kind" value={kind} />
+        <label className="relative w-full sm:w-72">
           <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
           <input
             ref={searchRef}
@@ -225,7 +225,7 @@ export default function CommissionFilters({
             placeholder={labels.search}
             aria-label={labels.search}
             autoComplete="off"
-            className="h-9 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+            className="input pl-9"
             onChange={(event) => setQuery(event.target.value)}
           />
           {needle && menuBox && typeof document !== "undefined"
@@ -250,14 +250,14 @@ export default function CommissionFilters({
             )
             : null}
         </label>
-        <div className="flex flex-wrap items-center gap-2">
-        <select name="kind" defaultValue={kind} aria-label={labels.type} className="h-9 rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-          <option value="">{labels.type}: {labels.all}</option>
-          <option value="event">{labels.type}: {labels.event}</option>
-          <option value="recruitment">{labels.type}: {labels.recruitment}</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <CalendarRange size={15} className="shrink-0 text-ink-faint" />
+          <MonthField name="from" value={from} label={labels.from} allTime={labels.allTime} />
+          <span className="text-sm text-ink-faint">–</span>
+          <MonthField name="to" value={to} label={labels.to} allTime={labels.allTime} />
+        </div>
         {people.length ? (
-          <select name="who" defaultValue={who} aria-label={labels.allStaff} className="h-9 max-w-[14rem] rounded-lg border border-line bg-surface px-3 text-sm text-ink outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+          <select name="who" defaultValue={who} aria-label={labels.allStaff} className="input !w-auto max-w-[14rem]">
             <option value="">{labels.allStaff}</option>
             {people.map((person) => (
               <option key={person.code} value={person.code}>
@@ -266,13 +266,6 @@ export default function CommissionFilters({
             ))}
           </select>
         ) : null}
-          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1">
-            <span className="text-sm" aria-hidden="true">📅</span>
-            <MonthField name="from" value={from} label={labels.from} allTime={labels.allTime} />
-            <span className="text-ink-faint">-</span>
-            <MonthField name="to" value={to} label={labels.to} allTime={labels.allTime} />
-          </div>
-        </div>
       </form>
       <div className="flex flex-wrap gap-2">
         {([
@@ -292,8 +285,29 @@ export default function CommissionFilters({
           if (nextPaid) params.set("paid", nextPaid);
           const href = params.toString() ? `/commission?${params}` : "/commission";
           return (
-            <Link key={name} href={href} className={`stamp ${active ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}>
+            <Link key={name} href={href} className={`stamp ${active ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}>
               {name === "ALL" ? labels.all : name === "PENDING" ? labels.pending : name === "DONE" ? labels.done : name === "UNPAID" ? labels.unpaid : labels.paid}
+            </Link>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {([
+          ["", labels.all],
+          ["event", labels.event],
+          ["recruitment", labels.recruitment],
+        ] as const).map(([nextKind, label]) => {
+          const params = new URLSearchParams();
+          if (nextKind) params.set("kind", nextKind);
+          if (who) params.set("who", who);
+          if (from) params.set("from", from);
+          if (to) params.set("to", to);
+          if (state) params.set("state", state);
+          if (paid) params.set("paid", paid);
+          const href = params.toString() ? `/commission?${params}` : "/commission";
+          return (
+            <Link key={nextKind || "all"} href={href} className={`stamp ${kind === nextKind ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}>
+              {label}
             </Link>
           );
         })}

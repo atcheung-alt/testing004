@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { CalendarRange, Plus, Search, X } from "lucide-react";
 import DeleteButton from "@/components/DeleteButton";
 import { useT } from "@/lib/i18n/client";
 
@@ -12,12 +12,15 @@ export type TemplateRow = {
   kind: "quotation" | "recruitment";
   name: string;
   detail: string;
+  createdAt: string;
 };
 
 export default function TemplateLibrary({ rows, title, note }: { rows: TemplateRow[]; title: string; note: string }) {
   const t = useT();
   const [tab, setTab] = useState<"all" | "quotation" | "recruitment">("all");
   const [query, setQuery] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<"quotation" | "recruitment">("quotation");
 
@@ -25,15 +28,18 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
     const q = query.trim().toLowerCase();
     return rows.filter((row) => {
       if (tab !== "all" && row.kind !== tab) return false;
-      if (!q) return true;
-      return `${row.code} ${row.name} ${row.detail} ${row.kind}`.toLowerCase().includes(q);
+      if (q && !`${row.code} ${row.name} ${row.detail} ${row.kind}`.toLowerCase().includes(q)) return false;
+      const day = row.createdAt.slice(0, 10);
+      if (from && day < from) return false;
+      if (to && day > to) return false;
+      return true;
     });
-  }, [rows, tab, query]);
+  }, [rows, tab, query, from, to]);
 
   const tabs = [
-    ["all", "All Templates"],
-    ["quotation", "Quotation Templates"],
-    ["recruitment", "Recruitment Templates"],
+    ["all", "All"],
+    ["quotation", "Quotation"],
+    ["recruitment", "Recruitment"],
   ] as const;
 
   return (
@@ -48,24 +54,37 @@ export default function TemplateLibrary({ rows, title, note }: { rows: TemplateR
           <Plus size={14} /> {t("New Template")}
         </button>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <label className="relative min-w-[12rem] flex-1 max-w-sm">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
-          <input
-            className="input pl-9"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("Search templates...")}
-            aria-label={t("Search templates")}
-          />
-        </label>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <label className="relative w-full sm:w-72">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+            <input
+              className="input pl-9"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("Search templates...")}
+              aria-label={t("Search templates")}
+            />
+          </label>
+          <div className="flex items-center gap-2">
+            <CalendarRange size={15} className="text-ink-faint shrink-0" />
+            <input type="date" className="input !w-auto" aria-label={t("From date")} value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+            <span className="text-ink-faint text-sm">–</span>
+            <input type="date" className="input !w-auto" aria-label={t("To date")} value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+            {(from || to) && (
+              <button type="button" onClick={() => { setFrom(""); setTo(""); }} aria-label={t("Clear date range")} className="text-ink-faint hover:text-danger-500 transition-colors">
+                <X size={15} />
+              </button>
+            )}
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {tabs.map(([id, label]) => (
             <button
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`stamp bg-surface ${tab === id ? "border-brand-500 bg-brand-50 font-semibold text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}
+              className={`stamp ${tab === id ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
             >
               {t(label)}
             </button>

@@ -17,13 +17,12 @@ export default async function QuotationTemplatesPage() {
     listRecruitmentTemplates(),
   ]);
 
-  const drafted: (TemplateRow & { createdAt: Date })[] = [
+  const drafted: (Omit<TemplateRow, "code" | "createdAt"> & { createdAt: Date })[] = [
     ...quotations.map((template) => ({
       id: template.id,
       kind: "quotation" as const,
       name: template.name,
       detail: [template.title, template.items.map((item) => item.name).filter(Boolean).join(", ")].filter(Boolean).join(" · "),
-      code: "",
       createdAt: template.createdAt,
     })),
     ...recruitment.map((template) => ({
@@ -31,7 +30,6 @@ export default async function QuotationTemplatesPage() {
       kind: "recruitment" as const,
       name: template.name,
       detail: [template.companyName || template.role, template.requirements].filter(Boolean).join(" · "),
-      code: "",
       createdAt: template.createdAt,
     })),
   ];
@@ -42,7 +40,7 @@ export default async function QuotationTemplatesPage() {
       const year = row.createdAt.getFullYear();
       const next = (counts.get(year) || 0) + 1;
       counts.set(year, next);
-      return { ...row, code: `TP-${year}-${String(next).padStart(4, "0")}` };
+      return { ...row, code: `TP-${year}-${String(next).padStart(4, "0")}`, createdAt: row.createdAt.toISOString() };
     });
 
   return <TemplateLibrary rows={rows} title={t("Templates")} note={t("Manage and reuse saved quotation and recruitment templates.")} />;

@@ -311,9 +311,9 @@ export default function ReceiptsPage({
   }
 
   const views: { id: View; label: string }[] = [
+    { id: "all", label: t("All") },
     { id: "receipts", label: t("Receipts") },
     { id: "expenses", label: t("Expense") },
-    { id: "all", label: t("All") },
   ];
 
   return (
@@ -332,6 +332,10 @@ export default function ReceiptsPage({
       </div>
 
       <div className="flex flex-col gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        <SearchBox placeholder="Search by customer…" />
+        <DateRangeFilter />
+      </div>
       <div className="flex flex-wrap gap-2">
         {views.map((item) => (
           <Link
@@ -342,11 +346,6 @@ export default function ReceiptsPage({
             {item.label}
           </Link>
         ))}
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <SearchBox placeholder="Search by customer…" />
-        <DateRangeFilter />
       </div>
       </div>
       </div>

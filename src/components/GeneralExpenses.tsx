@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, Plus, Search } from "lucide-react";
+import { CalendarRange, Download, Plus, Search, X } from "lucide-react";
 import { formatCurrency } from "@/lib/calculations";
 import { useT } from "@/lib/i18n/client";
 
@@ -205,16 +205,21 @@ export default function GeneralExpenses({
       </div>
 
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center max-w-xl">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative w-full sm:w-72">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
             <input className="input pl-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("Search by vendor, code, or expense...")} />
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-2">
-            <span className="text-ink-faint text-sm" aria-hidden="true">📅</span>
-            <input className="w-28 bg-transparent text-center text-xs text-ink outline-none" type="date" aria-label={t("From date")} value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
-            <span className="text-ink-faint text-xs">-</span>
-            <input className="w-28 bg-transparent text-center text-xs text-ink outline-none" type="date" aria-label={t("To date")} value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+          <div className="flex items-center gap-2">
+            <CalendarRange size={15} className="text-ink-faint shrink-0" />
+            <input className="input !w-auto" type="date" aria-label={t("From date")} value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} />
+            <span className="text-ink-faint text-sm">–</span>
+            <input className="input !w-auto" type="date" aria-label={t("To date")} value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} />
+            {(from || to) && (
+              <button type="button" onClick={() => { setFrom(""); setTo(""); }} aria-label={t("Clear date range")} className="text-ink-faint hover:text-danger-500 transition-colors">
+                <X size={15} />
+              </button>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -223,7 +228,7 @@ export default function GeneralExpenses({
               key={type}
               type="button"
               onClick={() => setTypeFilter(type)}
-              className={`stamp ${typeFilter === type ? "border-brand-500 bg-brand-50 text-brand-600" : "border-line text-ink-muted hover:bg-paper"}`}
+              className={`stamp ${typeFilter === type ? "border-brand-500 text-brand-500" : "border-line text-ink-muted"}`}
             >
               {type === "ALL" ? t("All") : type === "GENERAL" ? t("General Expense") : t("Invoice Expense")}
             </button>
