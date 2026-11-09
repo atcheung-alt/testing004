@@ -41,12 +41,14 @@ export function PayrollRunTables({
   entries,
   groups,
   runId,
+  period,
   periodLabel,
   companyName,
 }: {
   entries: ListedEntry[];
   groups: Group[];
   runId: string;
+  period: string;
   periodLabel: string;
   companyName: string;
 }) {
@@ -77,7 +79,7 @@ export function PayrollRunTables({
               <h2 className="font-display text-lg font-semibold text-ink">{group.title}</h2>
               <p className="text-sm text-ink-muted">{group.note}</p>
             </div>
-            <PayrollRunEntries runId={runId} entries={rows} periodLabel={periodLabel} companyName={companyName} />
+            <PayrollRunEntries runId={runId} entries={rows} period={period} periodLabel={periodLabel} companyName={companyName} />
           </section>
         );
       })}

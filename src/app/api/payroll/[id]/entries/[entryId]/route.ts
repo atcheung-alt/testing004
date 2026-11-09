@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
-import { computeEntryTotals } from "@/lib/payroll";
+import { computeEntryTotals, proratedDays, salaryMonthMark } from "@/lib/payroll";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +56,11 @@ export async function PATCH(
   const bonus = body.bonus !== undefined ? Math.max(0, Number(body.bonus) || 0) : entry.bonus;
   const paidAt = typeof body.paid === "boolean" ? (body.paid ? new Date() : null) : entry.paidAt;
 
+  const startDate = entry.employee?.startDate ?? null;
+  const prorated =
+    entry.payBasis === "SALARY" && salaryMonthMark(startDate, entry.run.period) === "prorated" && startDate
+      ? proratedDays(startDate, entry.run.period)
+      : null;
   const totals = computeEntryTotals({
     payBasis: entry.payBasis,
     rate,
@@ -63,8 +68,9 @@ export async function PATCH(
     mpfApplicable,
     bonus,
     employmentType: entry.employmentType,
-    startDate: entry.employee?.startDate ?? null,
+    startDate,
     period: entry.run.period,
+    salaryMonthDays: prorated && unitsWorked > 0 ? prorated.monthDays : undefined,
   });
 
   const updated = await prisma.payrollEntry.update({

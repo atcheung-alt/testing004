@@ -272,6 +272,7 @@ export type PayrollEntry = {
   nickname?: string | null;
   nameChinese?: string | null;
   employerName?: string | null;
+  startDate?: string | null;
   employeeEmail?: string | null;
   employmentType?: EmploymentType | null;
   payBasis: PayBasis;

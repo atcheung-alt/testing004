@@ -9,6 +9,8 @@ import {
   defaultUnitsWorked,
   defaultMpfApplicable,
   computeEntryTotals,
+  proratedDays,
+  salaryMonthMark,
   isUnpaidIntern,
 } from "@/lib/payroll";
 import { approvedUnitsFor } from "@/lib/timesheets";
@@ -82,7 +84,11 @@ export async function POST(request: NextRequest) {
       const payBasis = payBasisFor(emp.employmentType, emp.payRateType);
       const rate = rateFor(payBasis, emp.salary, emp.payRate);
       const approved = await approvedUnitsFor(emp.id, period, payBasis);
-      const unitsWorked = approved === null ? defaultUnitsWorked(payBasis, period) : approved;
+      let unitsWorked = approved === null ? defaultUnitsWorked(payBasis, period) : approved;
+      const mark = salaryMonthMark(emp.startDate, period);
+      const split =
+        mark === "prorated" && payBasis === "SALARY" && emp.startDate ? proratedDays(emp.startDate, period) : null;
+      if (split && approved === null) unitsWorked = split.days;
       const mpfApplicable = defaultMpfApplicable(emp.employmentType, emp.startDate, period);
       const totals = computeEntryTotals({
         payBasis,
@@ -92,6 +98,7 @@ export async function POST(request: NextRequest) {
         employmentType: emp.employmentType,
         startDate: emp.startDate,
         period,
+        salaryMonthDays: split?.monthDays,
       });
       return {
         employeeId: emp.id,

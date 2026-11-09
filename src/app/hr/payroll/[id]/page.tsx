@@ -41,6 +41,7 @@ export default async function PayrollRunPage({
               preferredName: true,
               nickname: true,
               nameChinese: true,
+              startDate: true,
               company: { select: { id: true, name: true } },
             },
           },
@@ -111,6 +112,7 @@ export default async function PayrollRunPage({
     preferredName: entry.employee.preferredName,
     nickname: entry.employee.nickname,
     nameChinese: entry.employee.nameChinese,
+    startDate: entry.employee.startDate ? entry.employee.startDate.toISOString() : null,
     employerName:
       entry.employee.company && !isInternalCompanyName(entry.employee.company.name)
         ? entry.employee.company.name
@@ -291,6 +293,7 @@ export default async function PayrollRunPage({
         entries={grouped as any}
         groups={sections.map((section) => ({ key: section.key, title: t(section.title), note: t(section.note) }))}
         runId={run.id}
+        period={run.period}
         periodLabel={label}
         companyName={COMPANY.shortName || COMPANY.name}
       />

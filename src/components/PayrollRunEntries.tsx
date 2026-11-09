@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, ExternalLink, UploadCloud } from "lucide-react";
+import { CheckCircle2, Loader2, ExternalLink, Pencil, UploadCloud } from "lucide-react";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import SendEmailButton from "@/components/SendEmailButton";
 import { formatCurrency, formatDate } from "@/lib/calculations";
-import { PAY_BASIS_LABELS, PAY_BASIS_UNIT_LABELS } from "@/lib/payroll";
+import { PAY_BASIS_LABELS, PAY_BASIS_UNIT_LABELS, daysInPeriod, proratedDays, salaryMonthMark } from "@/lib/payroll";
 import { payslipEmailContent } from "@/lib/settings";
 import { useAppLanguage, useT } from "@/lib/i18n/client";
 import { getEmployeeDisplayName } from "@/lib/employeeName";
@@ -15,6 +15,7 @@ import type { PayrollEntry } from "@/types";
 type Props = {
   runId: string;
   entries: PayrollEntry[];
+  period: string;
   periodLabel: string;
   companyName: string;
 };
@@ -25,7 +26,7 @@ type Props = {
  *  duplicated client-side), same philosophy as computeTotals elsewhere in
  *  this app never being trusted from client input. Runs stay editable
  *  indefinitely — there's no "finalize and lock" step anymore. */
-export default function PayrollRunEntries({ runId, entries: initialEntries, periodLabel, companyName }: Props) {
+export default function PayrollRunEntries({ runId, entries: initialEntries, period, periodLabel, companyName }: Props) {
   const t = useT();
   const language = useAppLanguage();
   const router = useRouter();
@@ -37,6 +38,8 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmPaid, setConfirmPaid] = useState<{ id: string; name: string; paid: boolean } | null>(null);
+  const [confirmMpf, setConfirmMpf] = useState<{ id: string; month: string; on: boolean } | null>(null);
+  const [editingDaysId, setEditingDaysId] = useState<string | null>(null);
 
   async function patchEntry(entryId: string, patch: Record<string, unknown>) {
     setSavingId(entryId);
@@ -121,6 +124,10 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                 companyName,
                 language,
               });
+              const started = entry.startDate ? new Date(entry.startDate) : null;
+              const monthMark = entry.payBasis === "SALARY" ? salaryMonthMark(started, period) : null;
+              const monthDays = monthMark === "prorated" && started ? proratedDays(started, period).monthDays : daysInPeriod(period);
+              const shownDays = monthMark === "prorated" ? entry.unitsWorked : monthDays;
               return (
                 <tr id={`payroll-${entry.id}`} key={entry.id} className="border-b border-line last:border-0 align-top">
                   <td className="px-4 py-3">
@@ -133,6 +140,41 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                       })}
                     </p>
                     <p className="text-xs text-ink-muted">{entry.employeeTitle}</p>
+                    {monthMark === "prorated" && (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                        {t("PRORATED ({days}/{total} days)", { days: shownDays, total: monthDays })}
+                        <button
+                          type="button"
+                          className="text-blue-700"
+                          title={t("Edit days")}
+                          onClick={() => setEditingDaysId(editingDaysId === entry.id ? null : entry.id)}
+                        >
+                          <Pencil size={11} />
+                        </button>
+                      </span>
+                    )}
+                    {monthMark === "first-full" && (
+                      <span className="mt-1 inline-flex rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                        {t("1ST FULL MONTH ({days}/{total} days)", { days: monthDays, total: monthDays })}
+                      </span>
+                    )}
+                    {editingDaysId === entry.id && monthMark === "prorated" && (
+                      <label className="mt-1 block text-[11px] text-ink-muted">
+                        {t("Edit days")}
+                        <input
+                          type="number"
+                          min={0}
+                          max={monthDays}
+                          className="input ml-1 w-16 py-0.5 text-xs"
+                          defaultValue={entry.unitsWorked}
+                          onBlur={(e) => {
+                            const value = Math.max(0, Math.min(monthDays, parseFloat(e.target.value) || 0));
+                            setEditingDaysId(null);
+                            if (value !== entry.unitsWorked) patchEntry(entry.id, { unitsWorked: value });
+                          }}
+                        />
+                      </label>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <button
@@ -197,7 +239,27 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 font-mono">{formatCurrency(entry.grossPay)}</td>
+                  <td className="px-4 py-3 font-mono">
+                    {formatCurrency(entry.grossPay)}
+                    {monthMark === "prorated" && (
+                      <p className="mt-1 text-[11px] font-sans font-normal text-ink-muted">
+                        {t("({days}/{total} days × {amount})", {
+                          days: shownDays,
+                          total: monthDays,
+                          amount: formatCurrency(entry.rate),
+                        })}
+                      </p>
+                    )}
+                    {monthMark === "first-full" && (
+                      <p className="mt-1 text-[11px] font-sans font-normal text-ink-muted">
+                        {t("({days}/{total} days × {amount})", {
+                          days: monthDays,
+                          total: monthDays,
+                          amount: formatCurrency(entry.rate),
+                        })}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     {entry.employmentType === "FULL_TIME" ? (
                       <input
@@ -216,12 +278,13 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={entry.mpfApplicable}
-                      onChange={(e) => patchEntry(entry.id, { mpfApplicable: e.target.checked })}
-                      className="w-4 h-4"
-                    />
+                    <button
+                      type="button"
+                      className={`text-sm font-semibold ${entry.mpfApplicable ? "text-emerald-700" : "text-ink-muted"}`}
+                      onClick={() => setConfirmMpf({ id: entry.id, month: periodLabel, on: !entry.mpfApplicable })}
+                    >
+                      {entry.mpfApplicable ? t("Yes") : t("No")}
+                    </button>
                   </td>
                   <td className="px-4 py-3 font-mono">{formatCurrency(entry.employeeMpf)}</td>
                   <td className="px-4 py-3 font-mono font-semibold">{formatCurrency(entry.netPay)}</td>
@@ -304,6 +367,35 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
           )}
         </button>
       </div>
+      {confirmMpf && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
+          <div className="card w-full max-w-sm p-5">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              {confirmMpf.on ? t("Turn employee MPF on?") : t("Turn employee MPF off?")}
+            </h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              {confirmMpf.on
+                ? t("{month} will deduct 5% from this pay.", { month: confirmMpf.month })
+                : t("{month} will not deduct employee MPF.", { month: confirmMpf.month })}
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn-secondary" onClick={() => setConfirmMpf(null)}>
+                {t("Not now")}
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={() => {
+                  patchEntry(confirmMpf.id, { mpfApplicable: confirmMpf.on });
+                  setConfirmMpf(null);
+                }}
+              >
+                {confirmMpf.on ? t("Yes, turn on") : t("Yes, turn off")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {confirmPaid && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4">
           <div className="card w-full max-w-sm p-5">

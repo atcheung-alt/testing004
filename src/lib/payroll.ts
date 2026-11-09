@@ -111,9 +111,46 @@ export function employeeMpfOnHoliday(startDate: Date | null, period: string): bo
 }
 
 /** Gross pay for one entry, given its pay basis/rate/units worked. */
-export function computeGrossPay(payBasis: string, rate: number, unitsWorked: number): number {
+export function daysInPeriod(period: string): number {
+  const [year, month] = period.split("-").map(Number);
+  if (!year || !month) return 0;
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** Joining month after the 1st is prorated. The next full calendar month is
+ *  the first complete month. A start on the 1st makes that month the first
+ *  complete month. Later months have no mark. */
+export function salaryMonthMark(
+  startDate: Date | null | undefined,
+  period: string
+): "prorated" | "first-full" | null {
+  if (!startDate || !isValidPeriod(period)) return null;
+  const start = hkYmd(startDate);
+  const [year, month] = period.split("-").map(Number);
+  const startKey = start.y * 12 + start.m;
+  const periodKey = year * 12 + month;
+  if (start.d > 1 && startKey === periodKey) return "prorated";
+  const firstFullKey = start.d > 1 ? startKey + 1 : startKey;
+  return periodKey === firstFullKey ? "first-full" : null;
+}
+
+export function proratedDays(startDate: Date, period: string): { days: number; monthDays: number } {
+  const start = hkYmd(startDate);
+  const monthDays = daysInPeriod(period);
+  return { days: Math.max(0, monthDays - start.d + 1), monthDays };
+}
+
+export function computeGrossPay(
+  payBasis: string,
+  rate: number,
+  unitsWorked: number,
+  salaryMonthDays?: number
+): number {
   if (payBasis === "DAILY" || payBasis === "HOURLY") {
     return round2((rate || 0) * (unitsWorked || 0));
+  }
+  if (payBasis === "SALARY" && salaryMonthDays && salaryMonthDays > 0 && unitsWorked > 0) {
+    return round2((unitsWorked / salaryMonthDays) * (rate || 0));
   }
   // SALARY and PROJECT_FEE are both flat amounts, not per-unit.
   return round2(rate || 0);
@@ -136,8 +173,9 @@ export function computeEntryTotals(input: {
   employmentType?: string | null;
   startDate?: Date | null;
   period?: string | null;
+  salaryMonthDays?: number;
 }): { grossPay: number; employeeMpf: number; employerMpf: number; netPay: number } {
-  const grossPay = computeGrossPay(input.payBasis, input.rate, input.unitsWorked);
+  const grossPay = computeGrossPay(input.payBasis, input.rate, input.unitsWorked, input.salaryMonthDays);
   const holiday =
     input.startDate && input.period ? employeeMpfOnHoliday(input.startDate, input.period) : false;
   const eligible =
