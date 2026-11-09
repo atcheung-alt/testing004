@@ -98,6 +98,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
           <thead>
             <tr className="border-b border-line text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">
               <th className="px-4 py-3">{t("Employee")}</th>
+              <th className="px-4 py-3">{t("Paid")}</th>
               <th className="px-4 py-3">{t("Pay basis")}</th>
               <th className="px-4 py-3">{t("Rate")}</th>
               <th className="px-4 py-3">{t("Units worked")}</th>
@@ -107,7 +108,6 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
               <th className="px-4 py-3">{t("Employee MPF")}</th>
               <th className="px-4 py-3">{t("Net pay")}</th>
               <th className="px-4 py-3">{t("Payslip")}</th>
-              <th className="px-4 py-3">{t("Paid")}</th>
             </tr>
           </thead>
           <tbody>
@@ -133,6 +133,30 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                       })}
                     </p>
                     <p className="text-xs text-ink-muted">{entry.employeeTitle}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                        entry.paidAt
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : "border-rose-200 bg-rose-50 text-rose-700"
+                      }`}
+                      onClick={() =>
+                        setConfirmPaid({
+                          id: entry.id,
+                          name: getEmployeeDisplayName({
+                            name: entry.employeeName,
+                            preferredName: entry.preferredName,
+                            nickname: entry.nickname,
+                            nameChinese: entry.nameChinese,
+                          }),
+                          paid: !entry.paidAt,
+                        })
+                      }
+                    >
+                      {entry.paidAt ? t("PAID") : t("UNPAID")}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-ink-muted">{t(PAY_BASIS_LABELS[entry.payBasis] || entry.payBasis)}</td>
                   <td className="px-4 py-3">
@@ -240,37 +264,13 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                        entry.paidAt
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : "border-rose-200 bg-rose-50 text-rose-700"
-                      }`}
-                      onClick={() =>
-                        setConfirmPaid({
-                          id: entry.id,
-                          name: getEmployeeDisplayName({
-                            name: entry.employeeName,
-                            preferredName: entry.preferredName,
-                            nickname: entry.nickname,
-                            nameChinese: entry.nameChinese,
-                          }),
-                          paid: !entry.paidAt,
-                        })
-                      }
-                    >
-                      {entry.paidAt ? t("PAID") : t("UNPAID")}
-                    </button>
-                  </td>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-line bg-brand-50/40 font-semibold">
-              <td className="px-4 py-3" colSpan={4}>
+              <td className="px-4 py-3" colSpan={5}>
                 {t("Totals")}
               </td>
               <td className="px-4 py-3 font-mono">{formatCurrency(totals.gross)}</td>
@@ -278,7 +278,6 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
               <td className="px-4 py-3" />
               <td className="px-4 py-3 font-mono">{formatCurrency(totals.employeeMpf)}</td>
               <td className="px-4 py-3 font-mono">{formatCurrency(totals.net)}</td>
-              <td className="px-4 py-3" />
               <td className="px-4 py-3" />
             </tr>
           </tfoot>
