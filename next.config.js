@@ -21,7 +21,7 @@ const nextConfig = {
     // job). Rather than list each one and risk missing one, force it into
     // every API route's bundle explicitly.
     outputFileTracingIncludes: {
-      "/api/**/*": ["./src/lib/pdf/fonts/**"],
+      "/api/**/*": ["./src/lib/pdf/fonts/**", "./src/lib/mpf/**"],
     },
     // Every page in this app (dashboard totals, quotation/invoice status,
     // etc.) is `force-dynamic` and expects live data straight from the DB

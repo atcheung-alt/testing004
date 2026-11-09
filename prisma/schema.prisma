@@ -776,6 +776,13 @@ model Employee {
   // surfaces a reminder once the 60-day statutory enrollment window is
   // closing/overdue, and hides it as soon as this is set.
   mpfVerifiedAt   DateTime?
+  // Private link emailed with the Individual eMPF Form. The signed file the
+  // employee uploads is stored in their Drive folder as "MFP file", and
+  // these two fields are the link used by Open on the MPF page.
+  mpfFormToken       String?   @unique
+  mpfFormSentAt      DateTime?
+  mpfFormDriveFileId String?
+  mpfFormDriveUrl    String?
 
   // --- Onboarding (self-service personal-details form) ---------------------
   // Admin only enters name + email at first, then sends a public link (same

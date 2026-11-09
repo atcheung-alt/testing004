@@ -14,6 +14,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/recruitment-sign/",
   "/leave/",
   "/onboarding/",
+  "/mpf/",
   "/contract-sign/",
   // The public massage-booking page — unlike everything else on this list,
   // there's no per-record token scoping it to one client (see
@@ -71,6 +72,7 @@ const PUBLIC_CLIENT_PATH_PREFIXES = [
   "/recruitment-sign/",
   "/leave/",
   "/onboarding/",
+  "/mpf/",
   "/contract-sign/",
   "/book",
   "/booking-cancel/",

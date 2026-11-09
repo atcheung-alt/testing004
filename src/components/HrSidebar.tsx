@@ -11,6 +11,7 @@ import {
   Wallet,
   FileText,
   Clock,
+  ShieldCheck,
   UserCircle,
   Menu,
   LogOut,
@@ -63,6 +64,7 @@ function buildNavItems(
       ? [{ href: "/hr/companies", label: t("Client companies"), icon: Building2 }]
       : []),
     { href: "/hr/payroll", label: t("Payroll"), icon: Wallet },
+    { href: "/hr/mpf", label: t("MPF"), icon: ShieldCheck },
     { href: "/hr/documents", label: t("Documents"), icon: FileText },
     { href: "/hr/attendance", label: t("Attendance"), icon: Clock },
     { href: "/hr/profile", label: t("Profile"), icon: UserCircle },
