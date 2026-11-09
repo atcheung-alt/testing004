@@ -1,9 +1,9 @@
 import dns from "dns";
 import nodemailer from "nodemailer";
-
-dns.setDefaultResultOrder("ipv4first");
 import { COMPANY } from "@/lib/company";
 import { getEffectiveCompany, getEffectiveCc } from "@/lib/appSettings";
+
+dns.setDefaultResultOrder("ipv4first");
 
 type Company = typeof COMPANY;
 
@@ -35,9 +35,9 @@ function getTransport() {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // IPv6 to the mail host often hangs for minutes, then falls back and
-    // sends. Forcing IPv4 makes the connection use the working address now.
-    family: 4,
+    // Prefer IPv4 above. A short DNS wait stops a dead address from holding
+    // the send for minutes.
+    dnsTimeout: 5_000,
     connectionTimeout: 10_000,
     greetingTimeout: 20_000,
     socketTimeout: 30_000,
