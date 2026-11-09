@@ -824,6 +824,7 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   Close: "關閉",
   "On this payroll": "在這次出糧",
   "Not on this payroll": "不在這次出糧",
+  "No one to add.": "沒有可新增的人。",
   "Remove from this payroll?": "從這次出糧移除？",
   "{name} will leave {period} only. Their employee record stays.": "{name}只會離開{period}。員工紀錄會保留。",
   "Yes, remove": "是，移除",
