@@ -22,6 +22,10 @@ export default function MpfList({ people }: { people: Row[] }) {
   const visible = people.filter((person) => employeeNameMatches(person.name, query) || employeeNameMatches(person.email, query));
 
   async function send(id: string) {
+    const ok = window.confirm(
+      t("Enter this employee's name, phone, and HKID on eMPF and start the enrolment. Send this email only after that is done.")
+    );
+    if (!ok) return;
     setBusyId(id);
     setError(null);
     const res = await fetch(`/api/employees/${id}/mpf/email`, { method: "POST" });

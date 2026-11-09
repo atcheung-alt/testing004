@@ -45,7 +45,7 @@ export default async function MpfPage() {
     <div>
       <h1 className="font-display text-2xl font-semibold text-ink">{t("MPF")}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        {t("Recommended: the employee finishes on eMPF and presses the button in the email. The paper form is still attached, and a signed file is saved in Google Drive as MFP file.")}
+        {t("The email offers two methods. The employee chooses one. A signed paper form is saved in Google Drive as MFP file.")}
       </p>
       <div className="mt-4">
         <MpfList people={people} />

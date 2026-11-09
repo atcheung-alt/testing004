@@ -849,8 +849,10 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
   "Please contact {company} if you need a new link.": "如需新連結，請聯絡{company}。",
   "Send the Individual eMPF Form. The signed file is saved in Google Drive as MFP file. Open opens that file.":
     "發送個人 eMPF 表格。簽署後的檔案會以 MFP file 儲存到 Google Drive。開啟會打開該檔案。",
-  "Recommended: the employee finishes on eMPF and presses the button in the email. The paper form is still attached, and a signed file is saved in Google Drive as MFP file.":
-    "建議員工在積金易完成，並在電郵按完成。紙本表格仍會附上。簽署檔會以 MFP file 存到 Google Drive。",
+  "The email offers two methods. The employee chooses one. A signed paper form is saved in Google Drive as MFP file.":
+    "電郵有兩種方法，員工選一種。簽署後的紙本表格會以 MFP file 存到 Google Drive。",
+  "Enter this employee's name, phone, and HKID on eMPF and start the enrolment. Send this email only after that is done.":
+    "請先在積金易輸入這位員工的姓名、電話和身份證號碼，並開始登記。完成後才發送這封電郵。",
   "This employee has no email address.": "這位員工沒有電郵地址。",
   "Remove from this payroll?": "從這次出糧移除？",
   "{name} will leave {period} only. Their employee record stays.": "{name}只會離開{period}。員工紀錄會保留。",
