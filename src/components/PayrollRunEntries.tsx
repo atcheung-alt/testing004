@@ -141,7 +141,7 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                     </p>
                     <p className="text-xs text-ink-muted">{entry.employeeTitle}</p>
                     {monthMark === "prorated" && (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                      <span className="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium leading-none text-blue-700">
                         {t("PRORATED ({days}/{total} days)", { days: shownDays, total: monthDays })}
                         <button
                           type="button"
@@ -149,12 +149,12 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                           title={t("Edit days")}
                           onClick={() => setEditingDaysId(editingDaysId === entry.id ? null : entry.id)}
                         >
-                          <Pencil size={11} />
+                          <Pencil size={9} />
                         </button>
                       </span>
                     )}
                     {monthMark === "first-full" && (
-                      <span className="mt-1 inline-flex rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700">
+                      <span className="mt-1 inline-flex whitespace-nowrap rounded-full border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium leading-none text-blue-700">
                         {t("1ST FULL MONTH ({days}/{total} days)", { days: monthDays, total: monthDays })}
                       </span>
                     )}
