@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ExternalLink } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { formatCurrency, formatDate } from "@/lib/calculations";
+import { billingDefaultAmount, billingFormula, formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, normalizeInvoiceStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
 import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
@@ -31,7 +31,7 @@ import { invoiceCanModify, invoiceVisible } from "@/lib/documentAccess";
 import { getCurrentUser } from "@/lib/auth";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode, staffCodeFromId } from "@/lib/staffCode";
-import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
+import { commissionSplitFromStored, isShareHolderNumber, storedCommissionTotal } from "@/lib/quotationShares";
 import { commissionDateName, formatCommissionDay } from "@/lib/commission";
 import { loadCommissionMark } from "@/lib/invoiceCommission";
 import { loadClientSource } from "@/lib/clientSource";
@@ -91,6 +91,10 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
     raw.quotation?.shares || [],
     raw.total
   );
+  const expenseTotal = raw.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const savedBilling = storedCommissionTotal(raw.quotation?.shareMode || "AMOUNT", raw.quotation?.shares || []);
+  const billingTotal = savedBilling ?? billingDefaultAmount(raw.total, expenseTotal);
+  const billingSum = billingFormula(raw.total, expenseTotal);
   const viewerCode = session ? staffCodeFromId(session.userId) : "";
   const ownPercent = split.partners.reduce(
     (sum, share) => (colleagueCode(share.colleagueName, colleagues) === viewerCode ? sum + share.percent : sum),
@@ -296,7 +300,8 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         invoiceId={invoice.id}
         canEdit={canModify}
         creatorName={creatorName}
-        commissionTotal={canModify ? split.total : 0}
+        commissionTotal={canModify ? billingTotal : 0}
+        formula={billingSum}
         ownAmount={ownAmount}
         shares={
           canModify

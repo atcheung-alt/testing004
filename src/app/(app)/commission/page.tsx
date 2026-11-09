@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { formatCurrency } from "@/lib/calculations";
+import { billingFormula, formatCurrency } from "@/lib/calculations";
 import { commissionShareVisible, commissionOwnedInvoiceIds, currentCommissionAccess } from "@/lib/documentAccess";
 import { commissionDayReached, commissionDayInWhen, hongKongDay } from "@/lib/commission";
 import { loadCommissionMarks } from "@/lib/invoiceCommission";
@@ -41,6 +41,7 @@ export default async function CommissionPage({
             title: true,
             total: true,
             status: true,
+            expenses: { select: { amount: true } },
             quotation: {
               select: {
                 shareMode: true,
@@ -98,6 +99,7 @@ export default async function CommissionPage({
           nickname: colleagues.find((person) => person.code === partner.colleagueName)?.nickname || "",
           legalName: colleagues.find((person) => person.code === partner.colleagueName)?.name || "",
           amount: (split.total * partner.percent) / 100,
+          formula: billingFormula(invoice.total, invoice.expenses.reduce((sum, expense) => sum + expense.amount, 0)),
           mark,
           done,
           paidDay,
@@ -133,6 +135,7 @@ export default async function CommissionPage({
           colleagueName: row.colleagueName,
           nickname: row.nickname,
           legalName: row.legalName,
+          formula: row.formula,
           detail: [
             row.person,
             row.mark ? t(row.mark.workKind === "RECRUITMENT" ? "Recruitment" : "Event") : "",

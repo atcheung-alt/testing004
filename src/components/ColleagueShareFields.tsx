@@ -144,6 +144,7 @@ export default function ColleagueShareFields({
   shares,
   onSharesChange,
   colleagues,
+  formula,
   children,
 }: {
   creatorName: string;
@@ -152,6 +153,7 @@ export default function ColleagueShareFields({
   shares: ColleagueShare[];
   onSharesChange: (shares: ColleagueShare[]) => void;
   colleagues: StaffColleague[];
+  formula?: string;
   children?: ReactNode;
 }) {
   const t = useT();
@@ -214,20 +216,23 @@ export default function ColleagueShareFields({
       </summary>
 
       <div className="flex flex-col gap-3 px-5 pb-5">
-        <label className="flex max-w-[180px] items-center gap-1.5 rounded-xl border border-line bg-paper px-3 py-1.5 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
-          <span className="text-sm font-semibold text-ink-muted">HK$</span>
-          <input
-            id="commission-total"
-            className="w-full border-0 bg-transparent text-base font-semibold text-ink outline-none"
-            type="number"
-            min={0}
-            step="0.01"
-            inputMode="decimal"
-            aria-label={t("Total billing")}
-            value={Number.isFinite(commissionTotal) ? commissionTotal : 0}
-            onChange={(e) => onCommissionTotalChange(Number(e.target.value))}
-          />
-        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex w-[150px] items-center gap-1.5 rounded-xl border border-line bg-paper px-3 py-1.5 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+            <span className="text-sm font-semibold text-ink-muted">HK$</span>
+            <input
+              id="commission-total"
+              className="w-full border-0 bg-transparent text-base font-semibold text-ink outline-none"
+              type="number"
+              min={0}
+              step="0.01"
+              inputMode="decimal"
+              aria-label={t("Total billing")}
+              value={Number.isFinite(commissionTotal) ? commissionTotal : 0}
+              onChange={(e) => onCommissionTotalChange(Number(e.target.value))}
+            />
+          </label>
+          {formula ? <p className="text-sm text-ink-muted">{formula}</p> : null}
+        </div>
 
         <div
           className={`flex h-2 overflow-hidden rounded-full bg-line ${over ? "ring-1 ring-danger-500" : ""}`}

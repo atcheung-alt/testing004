@@ -10,7 +10,8 @@ import { getEventForInvoice } from "@/lib/events";
 import { invoiceCanModify } from "@/lib/documentAccess";
 import { loadColleagues, loadCreatorNickname } from "@/lib/quotationAuthor";
 import { colleagueCode } from "@/lib/staffCode";
-import { commissionSplitFromStored, isShareHolderNumber } from "@/lib/quotationShares";
+import { billingDefaultAmount, billingFormula } from "@/lib/calculations";
+import { commissionSplitFromStored, isShareHolderNumber, storedCommissionTotal } from "@/lib/quotationShares";
 import { loadCommissionMark } from "@/lib/invoiceCommission";
 import { loadClientSource } from "@/lib/clientSource";
 
@@ -24,6 +25,7 @@ export default async function EditInvoicePage({ params }: { params: { id: string
       where: { id: params.id },
       include: {
         items: { orderBy: { sortOrder: "asc" } },
+        expenses: { select: { amount: true } },
         quotation: {
           select: {
             id: true,
@@ -42,7 +44,8 @@ export default async function EditInvoicePage({ params }: { params: { id: string
   ]);
 
   if (!record) notFound();
-  const { quotation, ...invoice } = record;
+  const { quotation, expenses, ...invoice } = record;
+  const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const [calendarEvent, quoteCreator] = await Promise.all([
     getEventForInvoice(invoice.id),
     quotation && !isShareHolderNumber(quotation.number)
@@ -80,7 +83,8 @@ export default async function EditInvoicePage({ params }: { params: { id: string
         invoiceId={invoice.id}
         canEdit
         creatorName={creatorName}
-        commissionTotal={split.total}
+        commissionTotal={storedCommissionTotal(quotation?.shareMode || "AMOUNT", quotation?.shares || []) ?? billingDefaultAmount(invoice.total, expenseTotal)}
+        formula={billingFormula(invoice.total, expenseTotal)}
         shares={split.partners.map((share) => ({
           colleagueName: colleagueCode(share.colleagueName, colleagues),
           value: share.percent,

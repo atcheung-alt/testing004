@@ -16,6 +16,7 @@ export default function QuotationShareEditor({
   shares: initialShares,
   ownAmount = 0,
   colleagues,
+  formula,
 }: {
   invoiceId: string;
   canEdit: boolean;
@@ -24,6 +25,7 @@ export default function QuotationShareEditor({
   shares: { colleagueName: string; value: number }[];
   ownAmount?: number;
   colleagues: StaffColleague[];
+  formula?: string;
 }) {
   const t = useT();
   const router = useRouter();
@@ -96,6 +98,7 @@ export default function QuotationShareEditor({
         setShares(next);
       }}
       colleagues={colleagues}
+      formula={formula}
     >
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" className="btn-primary" onClick={save} disabled={saving}>

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CustomerFields, { emptyCustomer } from "@/components/CustomerFields";
 import LineItemsEditor, { emptyLineItem } from "@/components/LineItemsEditor";
 import DocumentMetaFields from "@/components/DocumentMetaFields";
 import NewCustomerPrompt, { type PromptCustomer } from "@/components/NewCustomerPrompt";
 import ColleagueShareFields, { emptyColleagueShare, type ColleagueShare } from "@/components/ColleagueShareFields";
-import { formatDate } from "@/lib/calculations";
+import { billingDefaultAmount, billingFormula, computeTotals, formatDate } from "@/lib/calculations";
 import {
   DEFAULT_PAYMENT_DUE_DAYS,
   DEFAULT_REMINDER_TEMPLATES,
@@ -71,6 +71,7 @@ export default function InvoiceForm({
         : emptyCustomer()
   );
   const [commissionTotal, setCommissionTotal] = useState(0);
+  const [billingTouched, setBillingTouched] = useState(false);
   const [shares, setShares] = useState<ColleagueShare[]>([emptyColleagueShare(), emptyColleagueShare()]);
   const [workKind, setWorkKind] = useState(
     invoice?.workKind === "EVENT" || invoice?.workKind === "RECRUITMENT" ? invoice.workKind : ""
@@ -124,6 +125,12 @@ export default function InvoiceForm({
   // issueDate + paymentDueDays (see computeDueDate). This is purely a live
   // preview so staff see the resulting date as they edit either input.
   const dueDateLabel = computeDueDateLabel(issueDate, paymentDueDays);
+  const itemTotal = computeTotals(items, taxRate, discount).total;
+  const suggestedBilling = billingDefaultAmount(itemTotal, 0);
+
+  useEffect(() => {
+    if (!billingTouched) setCommissionTotal(suggestedBilling);
+  }, [billingTouched, suggestedBilling]);
 
   function handlePaymentDueDaysChange(days: number) {
     setPaymentDueDays(days);
@@ -452,7 +459,11 @@ export default function InvoiceForm({
         <ColleagueShareFields
           creatorName={creatorName}
           commissionTotal={commissionTotal}
-          onCommissionTotalChange={setCommissionTotal}
+          onCommissionTotalChange={(value) => {
+            setBillingTouched(true);
+            setCommissionTotal(value);
+          }}
+          formula={billingFormula(itemTotal, 0)}
           shares={shares}
           onSharesChange={setShares}
           colleagues={colleagues}

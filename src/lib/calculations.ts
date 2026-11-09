@@ -84,6 +84,17 @@ export function lineTotalWithFee(item: { amount: number; fees?: Fee[] | null }):
 
 import { COMPANY } from "@/lib/company";
 
+/** Billing starts as the invoice total minus the expenses recorded on that invoice. */
+export function billingDefaultAmount(itemTotal: number, expenseTotal: number): number {
+  const net = round2((Number(itemTotal) || 0) - (Number(expenseTotal) || 0));
+  return net > 0 ? net : 0;
+}
+
+export function billingFormula(itemTotal: number, expenseTotal: number): string {
+  const net = billingDefaultAmount(itemTotal, expenseTotal);
+  return `${formatCurrency(itemTotal)} − ${formatCurrency(expenseTotal)} = ${formatCurrency(net)}`;
+}
+
 export function formatCurrency(amount: number, currency: string = COMPANY.currency): string {
   return new Intl.NumberFormat(COMPANY.currencyLocale, {
     style: "currency",

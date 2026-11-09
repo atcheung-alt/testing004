@@ -18,6 +18,7 @@ export type BillingRow = {
   nickname: string;
   legalName: string;
   detail: string;
+  formula: string;
   amount: string;
   amountValue: number;
   kind: "" | "EVENT" | "RECRUITMENT";
@@ -332,6 +333,7 @@ export default function CommissionFilters({
                   {row.customerName}
                   {row.title ? ` · ${row.title}` : ""}
                 </p>
+                <p className="mt-0.5 truncate text-xs text-ink-faint">{row.formula}</p>
                 <p className="mt-0.5 truncate text-xs text-ink-faint">{row.detail}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-xs">
                   <span className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${row.done ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>{row.done ? labels.done : labels.pending}</span>

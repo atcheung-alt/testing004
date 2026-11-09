@@ -90,6 +90,16 @@ export type CommissionSplit = {
 
 /** Turn saved share rows into a commission total plus each partner's percentage of it.
  *  Older rows that were an amount, or a percentage of the invoice, are converted. */
+/** The amount saved from the billing field, or null when this invoice has no saved billing yet. */
+export function storedCommissionTotal(
+  shareMode: string,
+  shares: { colleagueName: string; value: number }[]
+): number | null {
+  if (shareMode !== "COMMISSION") return null;
+  const pool = shares.find((share) => isCommissionTotalRow(share.colleagueName));
+  return pool ? pool.value : null;
+}
+
 export function commissionSplitFromStored(
   shareMode: string,
   shares: { colleagueName: string; value: number }[],
