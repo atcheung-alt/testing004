@@ -161,13 +161,14 @@ export default function PayrollRunEntries({ runId, entries: initialEntries, peri
                             if (value !== entry.unitsWorked) patchEntry(entry.id, { unitsWorked: value });
                           }}
                         />
-                        <span className="text-xs text-ink-faint">{t(unitLabel)}</span>
+                        <span className="text-xs text-ink">{t(unitLabel)}</span>
+                        <span className="text-xs text-ink">· {entry.employerName || t("HR Plus")}</span>
                       </div>
                     ) : (
-                      <span className="text-ink-muted">
+                      <span className="text-ink">
                         {entry.payBasis === "DAILY" || entry.payBasis === "HOURLY"
-                          ? `${entry.unitsWorked} ${t(unitLabel)}`
-                          : "—"}
+                          ? `${entry.unitsWorked} ${t(unitLabel)} · ${entry.employerName || t("HR Plus")}`
+                          : entry.employerName || t("HR Plus")}
                       </span>
                     )}
                   </td>

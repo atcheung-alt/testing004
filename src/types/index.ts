@@ -271,6 +271,7 @@ export type PayrollEntry = {
   preferredName?: string | null;
   nickname?: string | null;
   nameChinese?: string | null;
+  employerName?: string | null;
   employeeEmail?: string | null;
   employmentType?: EmploymentType | null;
   payBasis: PayBasis;

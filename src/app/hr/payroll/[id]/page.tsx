@@ -110,6 +110,10 @@ export default async function PayrollRunPage({
     preferredName: entry.employee.preferredName,
     nickname: entry.employee.nickname,
     nameChinese: entry.employee.nameChinese,
+    employerName:
+      entry.employee.company && !isInternalCompanyName(entry.employee.company.name)
+        ? entry.employee.company.name
+        : null,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
     payslipSentAt: entry.payslipSentAt ? entry.payslipSentAt.toISOString() : null,
