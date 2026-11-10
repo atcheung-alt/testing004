@@ -315,7 +315,7 @@ function markText(text: string, query: string) {
 }
 
 function BookingList({ bookings }: { bookings: DeskBookingView[] }) {
-  const [open, setOpen] = useState(bookings.length < 5);
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const arrived = bookings.filter((booking) => booking.arrived).length;
   const needle = query.trim().toLowerCase();
