@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
-import ListScroll from "@/components/ListScroll";
 import PageTransition from "@/components/PageTransition";
 import RequiredSetupGate from "@/components/RequiredSetupGate";
 import { getCurrentUser } from "@/lib/auth";
@@ -70,9 +68,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </main>
       </div>
       <RequiredSetupGate isAdmin={isAdmin} missingFields={missingSettings} />
-      <Suspense fallback={null}>
-        <ListScroll />
-      </Suspense>
     </div>
   );
 }
