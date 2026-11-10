@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 import { employeeNameMatches } from "@/lib/employeeName";
 import { useT } from "@/lib/i18n/client";
@@ -19,7 +19,7 @@ export default function MpfList({ people }: { people: Row[] }) {
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState(null as string | null);
   const visible = people.filter((person) => employeeNameMatches(person.name, query) || employeeNameMatches(person.email, query));
 
   async function send(id: string) {
@@ -79,7 +79,8 @@ export default function MpfList({ people }: { people: Row[] }) {
               </tr>
             )}
             {visible.map((person) => (
-              <tr key={person.id} className="border-b border-line/70">
+              <Fragment key={person.id}>
+              <tr className="border-b border-line/70">
                 <td className="px-4 py-3">
                   <p className="font-medium text-ink">{person.name}</p>
                   <p className="text-xs text-ink-muted">{person.email || t("No email")}</p>
@@ -145,6 +146,7 @@ export default function MpfList({ people }: { people: Row[] }) {
                   </td>
                 </tr>
               )}
+              </Fragment>
             ))}
           </tbody>
         </table>
