@@ -253,7 +253,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
       </p>
 
       <section className="card mt-5 p-5">
-        <h2 className="text-base font-semibold">Event</h2>
+        <h2 className="font-display text-2xl font-semibold text-ink">Event</h2>
         <Field label="Name">
           <input className="input" value={name} onChange={(event) => setName(event.target.value)} />
         </Field>
@@ -284,7 +284,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
       </section>
 
       <section className="card mt-4 p-5">
-        <h2 className="text-base font-semibold">Links</h2>
+        <h2 className="font-display text-2xl font-semibold text-ink">Links</h2>
         <div className="mt-4 space-y-4">
           <LinkRow label="Candidate link" url={open.joinUrl} copied={copied === "join"} onCopy={async () => setCopied((await copy(open.joinUrl)) ? "join" : "")} />
           <LinkRow label="Client manager link" url={open.hostUrl} copied={copied === "host"} onCopy={async () => setCopied((await copy(open.hostUrl)) ? "host" : "")} />
