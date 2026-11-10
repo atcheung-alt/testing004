@@ -6,7 +6,6 @@ import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import { dateRangeFilter } from "@/lib/dateRange";
 import InvoiceStatusToggle from "@/components/InvoiceStatusToggle";
-import ScrollRestorer from "@/components/ScrollRestorer";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
@@ -165,13 +164,8 @@ export default function InvoicesPage({
     return `/invoices${params.toString() ? `?${params}` : ""}`;
   }
 
-  // Distinct per filter/search combo, so returning to a different view of
-  // this same list doesn't restore some other view's scroll position.
-  const restoreKey = listHref({});
-
   return (
     <div className="flex flex-col gap-4">
-      <ScrollRestorer restoreKey={restoreKey} />
       <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
