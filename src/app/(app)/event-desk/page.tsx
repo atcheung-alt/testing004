@@ -5,8 +5,9 @@ import { listDeskEvents, loadDeskEvent, requireDeskUser } from "@/lib/eventDesk"
 export const dynamic = "force-dynamic";
 
 export default async function EventDeskPage({ searchParams }: { searchParams: { id?: string } }) {
-  if (!(await requireDeskUser())) notFound();
+  const user = await requireDeskUser();
+  if (!user) notFound();
   const events = await listDeskEvents();
   const open = searchParams.id ? await loadDeskEvent(searchParams.id) : null;
-  return <EventDesk key={open?.id || "list"} events={events} open={open} />;
+  return <EventDesk key={open?.id || "list"} events={events} open={open} senderEmail={user.email} />;
 }

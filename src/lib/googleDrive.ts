@@ -121,6 +121,19 @@ export async function findOrCreateFolder(
 
 export type UpsertedDriveFile = { id: string; webViewLink: string };
 
+/** Remove one file this account created. A missing file is treated as already gone. */
+export async function deleteDriveFile(fileId: string): Promise<void> {
+  const headers = await authHeaders();
+  const res = await fetch(`${DRIVE_API}/files/${encodeURIComponent(fileId)}?${SHARED_DRIVE_PARAMS}`, {
+    method: "DELETE",
+    headers,
+  });
+  if (res.status === 404 || res.status === 204) return;
+  if (!res.ok) {
+    throw new Error(`Drive file delete failed (${res.status}): ${await res.text()}`);
+  }
+}
+
 /**
  * Create or update (in place) a PDF file in Drive. Passing the previously
  * stored `fileId` overwrites that same file's content instead of creating a

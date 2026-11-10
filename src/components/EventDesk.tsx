@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { ChevronDown, ChevronUp, Plus, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react";
 import clsx from "clsx";
 
 export type DeskEventSummary = { id: string; code: string; name: string; eventDate: string; booked: number };
@@ -39,7 +39,15 @@ async function copy(text: string) {
   }
 }
 
-export default function EventDesk({ events, open }: { events: DeskEventSummary[]; open: DeskEventView | null }) {
+export default function EventDesk({
+  events,
+  open,
+  senderEmail,
+}: {
+  events: DeskEventSummary[];
+  open: DeskEventView | null;
+  senderEmail: string;
+}) {
   const router = useRouter();
   const [creating, setCreating] = useState(events.length === 0);
   const [name, setName] = useState(open?.name || "");
@@ -285,6 +293,8 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
         </button>
       </section>
 
+      <ShareLinks event={open} senderEmail={senderEmail} />
+
       <section className="card mt-4 p-5">
         <h2 className="font-display text-2xl font-semibold text-ink">Links</h2>
         <div className="mt-4 space-y-4">
@@ -301,6 +311,114 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
 
       <BookingList bookings={open.bookings} />
     </div>
+  );
+}
+
+function defaultShareBody(event: DeskEventView) {
+  return [
+    "Hello,",
+    "",
+    `Here are the links for ${event.name}.`,
+    "",
+    "Candidate link",
+    "People use this form to book a name, an email, and one time slot.",
+    event.joinUrl,
+    "",
+    "Manager link",
+    "This is your board. Bookings appear as they come in, and you can move someone to another slot.",
+    event.hostUrl,
+    "",
+    "Door QR",
+    "On the day, the candidate scans the event QR and enters the email they booked with. That marks them as arrived.",
+    "",
+    "HR Plus",
+  ].join("\n");
+}
+
+function ShareLinks({ event, senderEmail }: { event: DeskEventView; senderEmail: string }) {
+  const [emails, setEmails] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const [subject, setSubject] = useState(`${event.name} — Event desk links and instructions`);
+  const [body, setBody] = useState(defaultShareBody(event));
+  const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<{ type: "ok" | "bad"; message: string } | null>(null);
+
+  function addEmail(value = draft) {
+    const next = value.trim().replace(/,$/, "");
+    if (!next || emails.includes(next)) {
+      setDraft("");
+      return;
+    }
+    setEmails([...emails, next]);
+    setDraft("");
+  }
+
+  async function send() {
+    const list = draft.trim() && !emails.includes(draft.trim()) ? [...emails, draft.trim()] : emails;
+    if (!list.length) {
+      setStatus({ type: "bad", message: "Add at least one manager email." });
+      return;
+    }
+    setSending(true);
+    setStatus(null);
+    const response = await fetch(`/api/event-desk/${event.id}/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: list, subject, body }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    setSending(false);
+    if (!response.ok) {
+      setStatus({ type: "bad", message: payload.error || "Could not send the email." });
+      return;
+    }
+    setEmails([]);
+    setDraft("");
+    setStatus({ type: "ok", message: `Email sent to ${list.join(", ")}` });
+  }
+
+  return (
+    <section className="card mt-4 p-5">
+      <h2 className="border-b border-line pb-3 font-display text-2xl font-semibold text-ink">Send desk links by email</h2>
+      <label className="label mt-4">Send to (manager email accounts)</label>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-paper px-2 py-2 focus-within:border-brand-500 focus-within:bg-white">
+        {emails.map((email) => (
+          <span key={email} className="inline-flex items-center gap-1 rounded-full border border-brand-500/30 bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-500">
+            {email}
+            <button type="button" aria-label="Remove" onClick={() => setEmails(emails.filter((item) => item !== email))}>
+              <X size={12} />
+            </button>
+          </span>
+        ))}
+        <input
+          className="min-w-[220px] flex-1 border-0 bg-transparent px-1 py-1 text-sm outline-none"
+          value={draft}
+          placeholder={emails.length ? "Add another" : "Type a manager email and press Enter or comma"}
+          onChange={(input) => setDraft(input.target.value)}
+          onKeyDown={(input) => {
+            if (input.key === "Enter" || input.key === ",") {
+              input.preventDefault();
+              addEmail();
+            }
+          }}
+          onBlur={() => {
+            if (draft.trim()) addEmail();
+          }}
+        />
+      </div>
+      <label className="label mt-4">From</label>
+      <p className="rounded-xl border border-line bg-paper px-3 py-2 text-sm">{senderEmail}</p>
+      <label className="label mt-4">Subject</label>
+      <input className="input" value={subject} onChange={(input) => setSubject(input.target.value)} />
+      <label className="label mt-4">Email content</label>
+      <textarea className="input min-h-[320px]" value={body} onChange={(input) => setBody(input.target.value)} />
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className={clsx("text-sm font-medium", status?.type === "ok" ? "text-emerald-700" : "text-danger-600")}>{status?.message}</p>
+        <button type="button" className="btn-primary" disabled={sending} onClick={send}>
+          {sending ? "Sending..." : "Send email"}
+        </button>
+      </div>
+    </section>
   );
 }
 

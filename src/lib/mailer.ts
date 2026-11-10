@@ -239,6 +239,8 @@ export type SendArgs = {
    *  after the first one. */
   secondaryCtaUrl?: string;
   secondaryCtaLabel?: string;
+  /** When set, the message is sent from this address and replies go there. */
+  fromAddress?: string;
   /** Staff mail from the HR system. Client documents keep the usual signature. */
   hrSignature?: boolean;
 };
@@ -290,6 +292,7 @@ export async function sendDocumentEmail({
   secondaryCtaUrl,
   secondaryCtaLabel = "Add to Calendar",
   hrSignature = false,
+  fromAddress,
 }: SendArgs) {
   const transport = getTransport();
   if (!transport) {
@@ -301,7 +304,9 @@ export async function sendDocumentEmail({
   const [company, standingCc] = await Promise.all([getEffectiveCompany(), getEffectiveCc()]);
 
   const from =
-    process.env.SMTP_FROM || `${company.name} <${company.email || process.env.SMTP_USER}>`;
+    fromAddress ||
+    process.env.SMTP_FROM ||
+    `${company.name} <${company.email || process.env.SMTP_USER}>`;
 
   // CC the standing recipients configured on the Settings page (unless
   // CC'ing is turned off there), in addition to any explicit cc.
@@ -327,6 +332,7 @@ export async function sendDocumentEmail({
   try {
   await transport.sendMail({
     from,
+    replyTo: fromAddress || undefined,
     to,
     cc: ccList.length ? ccList : undefined,
     subject,

@@ -24,6 +24,7 @@ export default function JoinForm({
   const [email, setEmail] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [slot, setSlot] = useState("");
+  const [hour, setHour] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ name: string; slot: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -68,21 +69,35 @@ export default function JoinForm({
           <br />
           {done.slot}
         </p>
+        <p className="mt-3 text-sm text-ink-muted">
+          A confirmation letter will be sent to <span className="font-semibold text-ink">{email}</span>.
+        </p>
         <p className="mt-3 text-sm text-ink-muted">On the day, scan the event QR code at the door and enter this email to confirm you have arrived.</p>
       </div>
     );
   }
 
+  const hours = Array.from(new Set(times.map((item) => item.time.slice(0, 2)))).sort();
+  const openHour = hours.includes(hour) ? hour : hours[0] || "";
+  const visible = times.filter((item) => item.time.startsWith(openHour));
+
   return (
     <>
-    <p className="text-xs font-semibold text-brand-500">{title}</p>
-    <h1 className="font-display text-2xl mt-2">Pick a time</h1>
-    <p className="lead mt-2">{when || "Choose one time. Name and email are required."}</p>
+    <div className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3">
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-sm font-semibold text-white">HR</span>
+      <span>
+        <span className="block text-sm font-semibold">HR Plus</span>
+        <span className="block text-xs text-ink-muted">{title}</span>
+      </span>
+    </div>
+    <h1 className="font-display text-2xl mt-4">Pick a time</h1>
+    <p className="lead mt-2">{when || "Choose an hour, then one time slot."}</p>
     <div className="card mt-4 p-5">
       <label className="block text-sm font-semibold">Name</label>
       <input className="input mt-1.5" value={name} onChange={(event) => setName(event.target.value)} placeholder="Chan Tai Man" />
       <label className="mt-3 block text-sm font-semibold">Email</label>
       <input className="input mt-1.5" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@email.com" />
+      <p className="mt-1.5 text-sm text-ink-muted">Use an email you can receive mail on. The booking note is sent there.</p>
       {fields.map((question) => (
         <div key={question.label}>
           <label className="mt-3 block text-sm font-semibold">
@@ -97,21 +112,32 @@ export default function JoinForm({
         </div>
       ))}
       <p className="mt-3 text-sm font-semibold">Time slot</p>
-      <div className="mt-2 space-y-2">
-        {times.map((item) => (
+      <div className="mt-2 flex flex-wrap gap-2">
+        {hours.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => { setHour(item); setSlot(""); }}
+            className={clsx("stamp", openHour === item ? "border-brand-500 text-brand-500" : "border-line text-ink-muted")}
+          >
+            {item}:00
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {visible.map((item) => (
           <button
             key={item.time}
             type="button"
             disabled={item.left <= 0}
             onClick={() => setSlot(item.time)}
             className={clsx(
-              "flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left",
-              slot === item.time ? "border-brand-500 bg-brand-50" : "border-line",
+              "rounded-full border px-3 py-2 text-sm",
+              slot === item.time ? "border-brand-500 bg-brand-50 text-brand-500" : "border-line",
               item.left <= 0 && "opacity-45"
             )}
           >
-            <span className="font-semibold">{item.time}</span>
-            <span className="text-sm text-ink-muted">{item.left <= 0 ? "Full" : `${item.left} seats left`}</span>
+            {item.time}
           </button>
         ))}
       </div>

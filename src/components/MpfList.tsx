@@ -19,6 +19,7 @@ export default function MpfList({ people }: { people: Row[] }) {
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
   const visible = people.filter((person) => employeeNameMatches(person.name, query) || employeeNameMatches(person.email, query));
 
   async function send(id: string) {
@@ -33,6 +34,20 @@ export default function MpfList({ people }: { people: Row[] }) {
     setBusyId(null);
     if (!res.ok) {
       setError(body.error || t("Failed to send the email."));
+      return;
+    }
+    router.refresh();
+  }
+
+  async function removeFile(id: string) {
+    setBusyId(id);
+    setError(null);
+    const res = await fetch(`/api/employees/${id}/mpf/file`, { method: "DELETE" });
+    const body = await res.json().catch(() => ({}));
+    setBusyId(null);
+    setConfirmId(null);
+    if (!res.ok) {
+      setError(body.error || t("Could not delete the file."));
       return;
     }
     router.refresh();
@@ -90,9 +105,14 @@ export default function MpfList({ people }: { people: Row[] }) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   {person.status === "done" ? null : person.status === "saved" && person.driveUrl ? (
-                    <a className="btn-secondary !px-3 !py-1 text-xs" href={person.driveUrl} target="_blank" rel="noreferrer">
-                      {t("Open")}
-                    </a>
+                    <span className="inline-flex gap-2">
+                      <a className="btn-secondary !px-3 !py-1 text-xs" href={person.driveUrl} target="_blank" rel="noreferrer">
+                        {t("Open")}
+                      </a>
+                      <button type="button" className="btn-secondary !px-3 !py-1 text-xs" onClick={() => setConfirmId(person.id)}>
+                        {t("Delete")}
+                      </button>
+                    </span>
                   ) : (
                     <button
                       type="button"
@@ -105,6 +125,26 @@ export default function MpfList({ people }: { people: Row[] }) {
                   )}
                 </td>
               </tr>
+              {confirmId === person.id && (
+                <tr>
+                  <td colSpan={3} className="px-4 pb-3">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      <p className="font-semibold">{t("This deletes the file forever.")}</p>
+                      <p className="mt-1">
+                        {t("Only the MPF file is removed, from HR Plus and from Google Drive. This person stays on the list. This cannot be undone.")}
+                      </p>
+                      <div className="mt-3 flex gap-2">
+                        <button type="button" className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white" disabled={busyId === person.id} onClick={() => removeFile(person.id)}>
+                          {t("Delete forever")}
+                        </button>
+                        <button type="button" className="btn-secondary !px-3 !py-1 text-xs" onClick={() => setConfirmId(null)}>
+                          {t("Cancel")}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              )}
             ))}
           </tbody>
         </table>
