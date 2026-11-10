@@ -20,7 +20,16 @@ import { useEffect } from "react";
  * render lands. Restoring it ourselves here sidesteps that entirely,
  * independent of Next's caching behavior.
  */
-export default function ScrollRestorer({ restoreKey }: { restoreKey: string }) {
+const INVOICE_LINKS = ["/invoices/"];
+
+export default function ScrollRestorer({
+  restoreKey,
+  linkPrefixes = INVOICE_LINKS,
+}: {
+  restoreKey: string;
+  linkPrefixes?: string[];
+}) {
+  const prefixKey = linkPrefixes.join("|");
   useEffect(() => {
     const storageKey = `scroll:${restoreKey}`;
     const saved = sessionStorage.getItem(storageKey);
@@ -55,7 +64,7 @@ export default function ScrollRestorer({ restoreKey }: { restoreKey: string }) {
       const link = target.closest("a");
       if (!link) return;
       const href = link.getAttribute("href") || "";
-      if (!href.startsWith("/invoices/")) return;
+      if (!linkPrefixes.some((prefix) => href.startsWith(prefix))) return;
       sessionStorage.setItem(storageKey, String(window.scrollY));
       locked = true;
     }
@@ -70,7 +79,7 @@ export default function ScrollRestorer({ restoreKey }: { restoreKey: string }) {
       document.removeEventListener("pointerdown", onPointerDown, true);
       window.removeEventListener("scroll", onScroll);
     };
-  }, [restoreKey]);
+  }, [restoreKey, prefixKey]);
 
   return null;
 }

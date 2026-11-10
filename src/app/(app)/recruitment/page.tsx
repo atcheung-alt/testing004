@@ -9,6 +9,7 @@ import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
 import PageBar from "@/components/PageBar";
+import ScrollRestorer from "@/components/ScrollRestorer";
 import SaveRecruitmentTemplateButton from "@/components/SaveRecruitmentTemplateButton";
 import { getT } from "@/lib/i18n/server";
 
@@ -99,6 +100,7 @@ export default function RecruitmentPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <ScrollRestorer restoreKey={statusHref(searchParams.status)} linkPrefixes={["/recruitment/"]} />
       <div className="sticky-filters flex flex-col gap-4">
       <PageBar
         title={t("Recruitment Agreements")}

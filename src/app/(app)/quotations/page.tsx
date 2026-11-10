@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { dateRangeFilter } from "@/lib/dateRange";
 import StatusBadge from "@/components/StatusBadge";
+import ScrollRestorer from "@/components/ScrollRestorer";
 import EmptyState from "@/components/EmptyState";
 import SearchBox from "@/components/SearchBox";
 import DateRangeFilter from "@/components/DateRangeFilter";
@@ -121,6 +122,7 @@ export default function QuotationsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <ScrollRestorer restoreKey={statusHref(searchParams.status)} linkPrefixes={["/quotations/"]} />
       <div className="sticky-filters flex flex-col gap-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

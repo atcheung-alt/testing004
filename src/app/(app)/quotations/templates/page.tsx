@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import ScrollRestorer from "@/components/ScrollRestorer";
 import TemplateLibrary, { type TemplateRow } from "@/components/TemplateLibrary";
 import { getT } from "@/lib/i18n/server";
 import { andFilters, currentTemplateFilter } from "@/lib/documentAccess";
@@ -43,5 +44,13 @@ export default async function QuotationTemplatesPage() {
       return { ...row, code: `TP-${year}-${String(next).padStart(4, "0")}`, createdAt: row.createdAt.toISOString() };
     });
 
-  return <TemplateLibrary rows={rows} title={t("Templates")} note={t("Manage and reuse saved quotation and recruitment templates.")} />;
+  return (
+    <>
+      <ScrollRestorer
+        restoreKey="/quotations/templates"
+        linkPrefixes={["/quotations/templates/", "/quotations/new", "/recruitment/new"]}
+      />
+      <TemplateLibrary rows={rows} title={t("Templates")} note={t("Manage and reuse saved quotation and recruitment templates.")} />
+    </>
+  );
 }
