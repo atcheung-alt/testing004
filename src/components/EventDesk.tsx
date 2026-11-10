@@ -283,9 +283,11 @@ export default function EventDesk({
           onGenerate={generateSlots}
         />
         {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
-        <button type="button" className="btn-primary mt-5" disabled={saving} onClick={saveEvent}>
-          Save changes
-        </button>
+        <div className="mt-4 flex justify-end">
+          <button type="button" className="btn-primary" disabled={saving} onClick={saveEvent}>
+            Save changes
+          </button>
+        </div>
       </section>
 
       <ShareLinks event={open} senderEmail={senderEmail} />
