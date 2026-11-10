@@ -14,7 +14,9 @@ type Board = {
 
 export default function HostBoard({ token, initial }: { token: string; initial: Board }) {
   const [board, setBoard] = useState(initial);
-  const [slot, setSlot] = useState(initial.slots[0] || "");
+  const [slot, setSlot] = useState("All");
+  const [status, setStatus] = useState<"All" | "Booked" | "Arrived">("All");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [menu, setMenu] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
@@ -30,8 +32,14 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
     return () => clearInterval(timer);
   }, [token]);
 
-  const showing = slot && board.slots.includes(slot) ? slot : board.slots[0] || "";
-  const rows = board.bookings.filter((booking) => booking.slot === showing);
+  const showing = slot === "All" || board.slots.includes(slot) ? slot : "All";
+  const needle = query.trim().toLowerCase();
+  const rows = board.bookings.filter((booking) => {
+    if (showing !== "All" && booking.slot !== showing) return false;
+    if (status === "Arrived" && !booking.arrived) return false;
+    if (status === "Booked" && booking.arrived) return false;
+    return `${booking.name} ${booking.email}`.toLowerCase().includes(needle);
+  });
 
   async function patch(body: Record<string, unknown>, nextSlot?: string) {
     setError("");
@@ -69,11 +77,19 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
           }}
         >
           <input className="input" type="email" value={scanEmail} placeholder="Booking email" onChange={(event) => setScanEmail(event.target.value)} required />
-          <button type="submit" className="btn-primary">Check in</button>
+          <button type="submit" className="h-11 shrink-0 whitespace-nowrap rounded-xl border border-line bg-white px-4 text-sm font-semibold">Check in</button>
         </form>
       )}
-      <div className="mt-6 flex gap-4 overflow-auto">
-        {board.slots.map((time) => (
+      <input className="input mt-4" value={query} placeholder="Search name or email" onChange={(event) => setQuery(event.target.value)} />
+      <div className="mt-3 flex gap-2">
+        {(["All", "Booked", "Arrived"] as const).map((name) => (
+          <button key={name} type="button" onClick={() => setStatus(name)} className={clsx("rounded-full border px-3 py-1.5 text-sm", status === name ? "border-ink text-ink" : "border-line text-ink-muted")}>
+            {name}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 flex gap-4 overflow-auto">
+        {["All", ...board.slots].map((time) => (
           <button
             key={time}
             type="button"
@@ -86,7 +102,7 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
       </div>
       {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
       <div className="card mt-2">
-        {rows.length === 0 && <p className="p-5 text-sm text-ink-muted">No one in this time.</p>}
+        {rows.length === 0 && <p className="p-5 text-sm text-ink-muted">No one matches.</p>}
         {rows.map((booking) => (
           <div key={booking.id} className="border-b border-line last:border-b-0">
             <div className="grid grid-cols-[40px_1fr_auto] items-center gap-3 px-4 py-3.5">
@@ -95,7 +111,7 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
               </span>
               <div className="min-w-0">
                 <p className="truncate font-semibold">{booking.name}</p>
-                <p className="truncate text-sm text-ink-muted">{booking.email}</p>
+                <p className="truncate text-sm text-ink-muted">{booking.email}{showing === "All" ? ` · ${booking.slot}` : ""}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className={clsx("rounded-full px-2 py-1 text-xs font-semibold", booking.arrived ? "bg-emerald-50 text-emerald-700" : "bg-paper text-ink-muted")}>
