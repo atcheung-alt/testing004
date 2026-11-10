@@ -38,6 +38,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/join/",
   "/host/",
   "/door/",
+  "/sample/",
   "/api/auth/",
   "/api/access-requests",
   "/api/public/",
@@ -85,6 +86,7 @@ const PUBLIC_CLIENT_PATH_PREFIXES = [
   "/join/",
   "/host/",
   "/door/",
+  "/sample/",
 ];
 
 function isPublicClientPath(pathname: string): boolean {

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EV-2026-0004 Massage</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1c1730; --muted:#6e6882; --faint:#948eaa; --line:#e6e2f0; --paper:#f6f4fb; --brand:#6d4aff; --danger:#c5364e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:Inter,"PingFang HK","Noto Sans TC",sans-serif; }
+  button, input, select { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  .wrap { max-width:760px; margin:0 auto; padding:28px 16px 80px; }
+  .switch { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .switch button { border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 14px; color:var(--muted); }
+  .switch button.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  h1, h2 { font-family:Fraunces,Georgia,serif; font-weight:600; margin:0; }
+  h1 { font-size:28px; }
+  h2 { font-size:24px; }
+  .lead, .quiet { color:var(--muted); font-size:14px; margin:6px 0 0; }
+  .card { margin-top:14px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px; }
+  label { display:block; font-size:13px; font-weight:650; margin:14px 0 6px; }
+  input { width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .slots, .hours { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .chip { border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px 12px; font-size:13px; }
+  .chip.on { border-color:var(--brand); color:var(--brand); background:#f3efff; }
+  .primary { border:0; border-radius:12px; padding:10px 16px; color:#fff; font-weight:650; background:linear-gradient(135deg,#7a5cff,#4d35d6); }
+  .ghost { border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 16px; }
+  .right { display:flex; justify-content:flex-end; margin-top:16px; }
+  .person { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--line); }
+  .danger { margin-top:18px; border:1px solid #f0c2cb; background:#fff5f6; color:var(--danger); border-radius:16px; padding:16px; }
+  .danger button { border:0; background:var(--danger); color:#fff; border-radius:12px; padding:10px 14px; font-weight:650; margin-top:10px; }
+  .gone { text-align:center; padding:48px 16px; }
+  .url { font-family:ui-monospace,monospace; font-size:12px; color:var(--faint); word-break:break-all; margin-top:4px; }
+  @media (max-width:700px) { .grid { grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="switch">
+    <button id="tabS" type="button">1 · Event page for HR</button>
+    <button id="tabM" class="on" type="button">2 · Manager page for the client</button>
+  </div>
+  <div id="app"></div>
+</div>
+<script>
+let view = "manager";
+let deleted = false;
+let ask = false;
+let hour = "10";
+const people = {
+  "10:00 – 10:30": [
+    { name: "Chan Tai Man", email: "tai.man@harbourbank.com", arrived: true },
+    { name: "Ng Siu Wai", email: "siuwai.ng@harbourbank.com", arrived: false }
+  ],
+  "10:30 – 11:00": [
+    { name: "Lee Mei", email: "lee.mei@harbourbank.com", arrived: true },
+    { name: "Wong Ka Ho", email: "kaho.wong@harbourbank.com", arrived: false }
+  ],
+  "11:00 – 11:30": [
+    { name: "Cheung Yat", email: "cheung.yat@harbourbank.com", arrived: false },
+    { name: "Lam Hoi", email: "lam.hoi@harbourbank.com", arrived: true }
+  ],
+  "11:30 – 12:00": [
+    { name: "Tsang Wing", email: "wing.tsang@harbourbank.com", arrived: false },
+    { name: "Ho Yee", email: "ho.yee@harbourbank.com", arrived: false }
+  ],
+  "12:00 – 12:30": [
+    { name: "Au Ming", email: "au.ming@harbourbank.com", arrived: true },
+    { name: "Poon Ka", email: "poon.ka@harbourbank.com", arrived: false }
+  ],
+  "12:30 – 13:00": [
+    { name: "Yip Lok", email: "yip.lok@harbourbank.com", arrived: false },
+    { name: "Ma Sze", email: "ma.sze@harbourbank.com", arrived: false }
+  ]
+};
+let picked = "10:30 – 11:00";
+
+function staff() {
+  if (deleted) {
+    return `<div class="card gone"><h1>EV-2026-0004 is deleted</h1><p class="lead">Massage is no longer on the event list. The candidate link, manager link, and door QR stop working.</p></div>`;
+  }
+  return `
+    <h1>EV-2026-0004</h1>
+    <p class="lead">Massage · 12 booked · 4 arrived</p>
+    <section class="card">
+      <h2>Event</h2>
+      <label>Name</label>
+      <input value="Massage">
+      <label>Event date</label>
+      <input value="11 Nov 2026">
+      <p class="quiet" style="margin-top:14px"><b style="color:var(--ink)">Name and email</b><br>These two questions are already on the form.</p>
+      <label>Time slots</label>
+      <div class="grid">
+        <div><label>Start</label><input value="10:00"></div>
+        <div><label>End</label><input value="13:00"></div>
+        <div><label>Minutes each</label><input value="30"></div>
+        <div><label>Seats per slot</label><input value="2"></div>
+      </div>
+      <div class="slots">
+        ${Object.keys(people).map(slot => `<span class="chip">${slot}</span>`).join("")}
+      </div>
+      <div class="right"><button class="primary" type="button">Save changes</button></div>
+    </section>
+    <section class="card">
+      <h2>Email the links to the manager</h2>
+      <p class="quiet">Send the candidate link, the manager link, and the door QR PDF to the client.</p>
+    </section>
+    <section class="card">
+      <h2>Links</h2>
+      <div class="person" style="border:0"><div><b>Candidate link</b><div class="url">https://app.hrplustalent.com/join/massage-sample</div></div></div>
+      <div class="person"><div><b>Client manager link</b><div class="url">https://app.hrplustalent.com/host/massage-sample</div></div></div>
+      <p style="margin:14px 0 0"><b>Door QR</b></p>
+      <p class="quiet">The candidate scans this. Their phone asks for the booking email, then shows the time slot.</p>
+      <p class="quiet">Confirmation email is sent from contact@hrplus.info</p>
+    </section>
+    <section class="danger">
+      <b>Delete this event</b>
+      <p class="quiet" style="color:var(--danger)">This removes EV-2026-0004 Massage, including every booking. The links and QR stop working. This cannot be undone.</p>
+      ${ask
+        ? `<div style="display:flex;gap:8px"><button id="yes" type="button">Delete forever</button><button class="ghost" id="no" type="button">Cancel</button></div>`
+        : `<button id="ask" type="button">Delete event</button>`}
+    </section>`;
+}
+function manager() {
+  const rows = people[picked] || [];
+  return `
+    <p style="color:var(--brand);font-size:12px;font-weight:700;margin:0">Client manager</p>
+    <h1 style="margin-top:8px">Massage</h1>
+    <p class="lead">11 Nov 2026 · 12 booked · 4 arrived. This page updates when someone books or scans the QR.</p>
+    <div class="hours">
+      ${Object.keys(people).map(slot => `<button class="chip ${picked===slot?"on":""}" data-slot="${slot}" type="button">${slot} · ${people[slot].length}/2</button>`).join("")}
+    </div>
+    <section class="card">
+      ${rows.length ? rows.map(person => `<div class="person"><div><b>${person.name}</b><div class="quiet">${person.email}</div></div><span class="chip">${person.arrived ? "Arrived" : "Booked"}</span></div>`).join("") : `<p class="quiet">No one in this slot yet.</p>`}
+    </section>`;
+}
+function render() {
+  document.getElementById("tabS").className = view === "staff" ? "on" : "";
+  document.getElementById("tabM").className = view === "manager" ? "on" : "";
+  document.getElementById("app").innerHTML = view === "staff" ? staff() : manager();
+  document.getElementById("tabS").onclick = () => { view = "staff"; render(); };
+  document.getElementById("tabM").onclick = () => { view = "manager"; render(); };
+  const askBtn = document.getElementById("ask");
+  if (askBtn) askBtn.onclick = () => { ask = true; render(); };
+  const no = document.getElementById("no");
+  if (no) no.onclick = () => { ask = false; render(); };
+  const yes = document.getElementById("yes");
+  if (yes) yes.onclick = () => { deleted = true; ask = false; render(); };
+  document.querySelectorAll("[data-slot]").forEach(btn => btn.onclick = () => { picked = btn.dataset.slot; render(); });
+}
+render();
+</script>
+</body>
+</html>
