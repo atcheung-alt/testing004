@@ -35,12 +35,14 @@ function getTransport() {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // Prefer IPv4 above. A short DNS wait stops a dead address from holding
-    // the send for minutes.
+    // Prefer IPv4 via dns.setDefaultResultOrder above. Do not set family: 4.
+    // These caps stop a quiet SMTP server from holding the function open.
+    // The send stays in the request, so a failure still returns to the screen
+    // and the email is not reported as sent.
     dnsTimeout: 5_000,
-    connectionTimeout: 10_000,
-    greetingTimeout: 20_000,
-    socketTimeout: 30_000,
+    connectionTimeout: 8_000,
+    greetingTimeout: 5_000,
+    socketTimeout: 15_000,
   });
 }
 
