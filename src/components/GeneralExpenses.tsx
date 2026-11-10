@@ -89,6 +89,10 @@ export default function GeneralExpenses({
       if (!q) return true;
       const code = codes.get(`${row.source}-${row.id}`) || "";
       return `${row.name} ${row.vendor} ${row.category} ${code} ${row.link}`.toLowerCase().includes(q);
+    }).sort((a, b) => {
+      const left = codes.get(`${a.source}-${a.id}`) || "";
+      const right = codes.get(`${b.source}-${b.id}`) || "";
+      return left < right ? 1 : left > right ? -1 : 0;
     });
   }, [history, query, typeFilter, from, to, codes]);
 

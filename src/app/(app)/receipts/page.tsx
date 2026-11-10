@@ -210,7 +210,14 @@ async function MoneyList({
         amount: expense.amount,
       };
     }),
-  ].sort((a, b) => b.when.getTime() - a.when.getTime());
+  ].sort((a, b) => {
+    const dayA = a.when.toISOString().slice(0, 10);
+    const dayB = b.when.toISOString().slice(0, 10);
+    if (dayA !== dayB) return dayA < dayB ? 1 : -1;
+    const codeA = a.receiptNumber || a.title;
+    const codeB = b.receiptNumber || b.title;
+    return codeA < codeB ? 1 : codeA > codeB ? -1 : 0;
+  });
 
   const summary = (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
