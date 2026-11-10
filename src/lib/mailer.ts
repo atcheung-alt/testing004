@@ -197,6 +197,25 @@ export function emailSignatureText(company: Company): string {
     .join("\n");
 }
 
+function deskEmailSignatureHtml(companyName: string): string {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:28px;border-collapse:collapse;">
+      <tr>
+        <td style="width:3px;background-color:${BRAND.brand500};background-image:${BRAND.gradient};border-radius:2px;"></td>
+        <td style="padding-left:14px;font-size:13px;line-height:1.6;color:${BRAND.inkMuted};">
+          <strong style="font-size:14px;color:${BRAND.ink};">${companyName}</strong><br/>
+          <span>Tel: ${HR_MAIL_TEL}</span><br/>
+          <span>Email: <a href="mailto:${HR_MAIL_EMAIL}" style="color:${BRAND.brand600};text-decoration:none;">${HR_MAIL_EMAIL}</a></span><br/>
+          <span style="color:${BRAND.inkFaint};font-size:12px;">${companyName}</span>
+        </td>
+      </tr>
+    </table>`;
+}
+
+function deskEmailSignatureText(companyName: string): string {
+  return ["", "--", companyName, `Tel: ${HR_MAIL_TEL}`, `Email: ${HR_MAIL_EMAIL}`, companyName].join("\n");
+}
+
 /** Turn a plain-text body into simple HTML (paragraphs + line breaks). The
  *  first paragraph is almost always the opening greeting ("Hi {name},") —
  *  every caller in this app starts its body that way — so it gets its own
@@ -241,6 +260,8 @@ export type SendArgs = {
   secondaryCtaLabel?: string;
   /** When set, the message is sent from this address and replies go there. */
   fromAddress?: string;
+  /** Event desk booking confirmation only. */
+  deskSignature?: boolean;
   /** Staff mail from the HR system. Client documents keep the usual signature. */
   hrSignature?: boolean;
 };
@@ -292,6 +313,7 @@ export async function sendDocumentEmail({
   secondaryCtaUrl,
   secondaryCtaLabel = "Add to Calendar",
   hrSignature = false,
+  deskSignature = false,
   fromAddress,
 }: SendArgs) {
   const transport = getTransport();
@@ -322,8 +344,16 @@ export async function sendDocumentEmail({
   const logoAsset = company.logoData ? parseDataUrl(company.logoData) : null;
   const logoCid = logoAsset ? "company-logo" : null;
 
-  const signatureHtml = hrSignature ? hrEmailSignatureHtml(company.name) : emailSignatureHtml(company);
-  const signatureText = hrSignature ? hrEmailSignatureText(company.name) : emailSignatureText(company);
+  const signatureHtml = deskSignature
+    ? deskEmailSignatureHtml(company.name)
+    : hrSignature
+      ? hrEmailSignatureHtml(company.name)
+      : emailSignatureHtml(company);
+  const signatureText = deskSignature
+    ? deskEmailSignatureText(company.name)
+    : hrSignature
+      ? hrEmailSignatureText(company.name)
+      : emailSignatureText(company);
   const innerHtml = `${htmlBody || bodyToHtml(body)}${
     signingUrl ? signingCtaHtml(signingUrl, ctaLabel) : ""
   }${secondaryCtaUrl ? signingCtaHtml(secondaryCtaUrl, secondaryCtaLabel) : ""}${signatureHtml}`;

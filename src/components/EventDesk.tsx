@@ -59,7 +59,6 @@ export default function EventDesk({
   const [startTime, setStartTime] = useState("09:30");
   const [endTime, setEndTime] = useState("17:00");
   const [durationAmount, setDurationAmount] = useState("30");
-  const [durationUnit, setDurationUnit] = useState<"min" | "hour">("min");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
@@ -126,10 +125,9 @@ export default function EventDesk({
   function generateSlots() {
     const start = minutesFromClock(startTime);
     const end = minutesFromClock(endTime);
-    const amount = Number(durationAmount);
-    const step = durationUnit === "hour" ? amount * 60 : amount;
-    if (start == null || end == null || !Number.isFinite(amount) || step <= 0) {
-      setError("Enter a start, an end, and a length in minutes or hours.");
+    const step = Number(durationAmount);
+    if (start == null || end == null || !Number.isFinite(step) || step <= 0) {
+      setError("Enter a start, an end, and a length in minutes.");
       return;
     }
     if (end <= start) {
@@ -225,12 +223,10 @@ export default function EventDesk({
               startTime={startTime}
               endTime={endTime}
               durationAmount={durationAmount}
-              durationUnit={durationUnit}
               slotCap={slotCap}
               onStart={setStartTime}
               onEnd={setEndTime}
               onDurationAmount={setDurationAmount}
-              onDurationUnit={setDurationUnit}
               onCap={setSlotCap}
               onGenerate={generateSlots}
             />
@@ -279,12 +275,10 @@ export default function EventDesk({
           startTime={startTime}
           endTime={endTime}
           durationAmount={durationAmount}
-          durationUnit={durationUnit}
           slotCap={slotCap}
           onStart={setStartTime}
           onEnd={setEndTime}
           onDurationAmount={setDurationAmount}
-          onDurationUnit={setDurationUnit}
           onCap={setSlotCap}
           onGenerate={generateSlots}
         />
@@ -329,7 +323,7 @@ function defaultShareBody(event: DeskEventView) {
     event.hostUrl,
     "",
     "Door QR",
-    "On the day, the candidate scans the event QR and enters the email they booked with. That marks them as arrived.",
+    "The QR code is attached as a PDF. On the day, the candidate scans it and enters the email they booked with. That marks them as arrived.",
     "",
     "HR Plus",
   ].join("\n");
@@ -379,7 +373,7 @@ function ShareLinks({ event, senderEmail }: { event: DeskEventView; senderEmail:
 
   return (
     <section className="card mt-4 p-5">
-      <h2 className="border-b border-line pb-3 font-display text-2xl font-semibold text-ink">Send desk links by email</h2>
+      <h2 className="border-b border-line pb-3 font-display text-2xl font-semibold text-ink">Email the links to the manager</h2>
       <label className="label mt-4">Send to (manager email accounts)</label>
       <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-paper px-2 py-2 focus-within:border-brand-500 focus-within:bg-white">
         {emails.map((email) => (
@@ -492,12 +486,10 @@ function SetupFields(props: {
   startTime: string;
   endTime: string;
   durationAmount: string;
-  durationUnit: "min" | "hour";
   slotCap: number;
   onStart: (value: string) => void;
   onEnd: (value: string) => void;
   onDurationAmount: (value: string) => void;
-  onDurationUnit: (value: "min" | "hour") => void;
   onCap: (value: number) => void;
   onGenerate: () => void;
 }) {
@@ -541,7 +533,7 @@ function SetupFields(props: {
       </div>
       <div className="mt-5">
         <p className="text-sm font-semibold">Time slots</p>
-        <p className="mt-1 text-sm text-ink-muted">Set a start, an end, and how long each booking is. Then generate the list.</p>
+        <p className="mt-1 text-sm text-ink-muted">Type a start, an end, and how many minutes each booking lasts. Seats is how many people can take the same slot.</p>
         <div className="mt-3 grid gap-2 sm:grid-cols-4">
           <label className="block text-sm">
             Start
@@ -552,22 +544,16 @@ function SetupFields(props: {
             <input className="input mt-1" inputMode="numeric" placeholder="17:00" value={props.endTime} onChange={(event) => props.onEnd(event.target.value)} />
           </label>
           <label className="block text-sm">
-            Length
-            <span className="mt-1 flex gap-2">
-              <input className="input" inputMode="numeric" placeholder="30" value={props.durationAmount} onChange={(event) => props.onDurationAmount(event.target.value)} />
-              <select className="input !w-auto" value={props.durationUnit} onChange={(event) => props.onDurationUnit(event.target.value === "hour" ? "hour" : "min")}>
-                <option value="min">minutes</option>
-                <option value="hour">hours</option>
-              </select>
-            </span>
+            Minutes each
+            <input className="input mt-1" inputMode="numeric" placeholder="30" value={props.durationAmount} onChange={(event) => props.onDurationAmount(event.target.value.replace(/[^\d]/g, ""))} />
           </label>
           <label className="block text-sm">
             Seats per slot
-            <input className="input mt-1" type="number" min={1} value={props.slotCap} onChange={(event) => props.onCap(Number(event.target.value) || 1)} />
+            <input className="input mt-1" inputMode="numeric" placeholder="1" value={props.slotCap || ""} onChange={(event) => props.onCap(Number(event.target.value.replace(/[^\d]/g, "")) || 0)} />
           </label>
         </div>
-        <button type="button" className="btn-primary mt-3" onClick={props.onGenerate}>
-          Generate slots
+        <button type="button" className="btn-secondary mt-3" onClick={props.onGenerate}>
+          Make the time slots
         </button>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {props.slots.map((slot, index) => (

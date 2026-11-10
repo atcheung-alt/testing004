@@ -54,7 +54,7 @@ export default function JoinForm({
     const payload = await response.json().catch(() => ({}));
     setSaving(false);
     if (!response.ok) {
-      setError(payload.error || "Could not book.");
+      setError(payload.error || "We could not send the confirmation email. Check the email address and try again.");
       return;
     }
     setDone(payload.booking);

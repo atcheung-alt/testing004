@@ -64,6 +64,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       to: email,
       subject: `You’re booked — ${event.name}`,
       fromAddress: from,
+      deskSignature: true,
       body: [
         `Hello ${name},`,
         "",
@@ -80,6 +81,11 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     });
   } catch (err) {
     console.error("[desk-join] confirmation email failed", err);
+    await prisma.deskBooking.delete({ where: { id: booking.id } }).catch(() => undefined);
+    return NextResponse.json(
+      { error: "We could not send the confirmation email. Check the email address and try again." },
+      { status: 502 }
+    );
   }
   return NextResponse.json({ booking: { name: booking.name, slot: booking.slot } });
 }
