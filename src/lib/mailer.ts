@@ -360,7 +360,7 @@ export async function sendDocumentEmail({
 
   const started = Date.now();
   try {
-  await transport.sendMail({
+  const sent = await transport.sendMail({
     from,
     replyTo: fromAddress || undefined,
     to,
@@ -392,6 +392,10 @@ export async function sendDocumentEmail({
       })),
     ],
   });
+  const rejected = Array.isArray(sent.rejected) ? sent.rejected.map((item) => String(item)) : [];
+  if (rejected.length) {
+    throw new Error("We could not send the confirmation. Type the email again and make sure the address is correct.");
+  }
   console.info(`[mail] sent in ${Date.now() - started}ms`);
   } catch (err: unknown) {
     const code = err && typeof err === "object" && "code" in err ? String(err.code) : "unknown";
