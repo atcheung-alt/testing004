@@ -21,6 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     questions: Array.isArray(body.questions) ? body.questions : undefined,
     slots: Array.isArray(body.slots) ? body.slots.filter((item: unknown) => typeof item === "string") : undefined,
     slotCap: Number.isFinite(Number(body.slotCap)) ? Number(body.slotCap) : undefined,
+    confirmFrom: typeof body.confirmFrom === "string" ? body.confirmFrom : undefined,
   });
   return NextResponse.json({ event });
 }

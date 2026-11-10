@@ -1253,6 +1253,7 @@ model DeskEvent {
   joinToken  String        @unique
   hostToken  String        @unique
   doorToken  String        @unique
+  confirmFrom String       @default("contact@hrplus.info")
   bookings   DeskBooking[]
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt

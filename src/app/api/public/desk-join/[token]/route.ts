@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ensureDeskTables, parseDeskQuestions, parseStringList } from "@/lib/eventDesk";
+import { sendDocumentEmail } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
 
@@ -54,5 +55,31 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   const booking = await prisma.deskBooking.create({
     data: { eventId: event.id, name, email, slot, answers: JSON.stringify(answers) },
   });
+  const when = /^\d{4}-\d{2}-\d{2}$/.test(event.eventDate)
+    ? new Date(`${event.eventDate}T00:00:00`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+    : event.eventDate;
+  const from = event.confirmFrom?.includes("@") ? event.confirmFrom : "contact@hrplus.info";
+  try {
+    await sendDocumentEmail({
+      to: email,
+      subject: `You’re booked — ${event.name}`,
+      fromAddress: from,
+      body: [
+        `Hello ${name},`,
+        "",
+        "This confirms your place at the activity. Keep this email. On the day, scan the event QR and enter the same email address.",
+        "",
+        `Activity: ${event.name}`,
+        `Date: ${when || "To be confirmed"}`,
+        `Name: ${name}`,
+        `Email: ${email}`,
+        `Time slot: ${slot}`,
+        "",
+        "HR Plus",
+      ].join("\n"),
+    });
+  } catch (err) {
+    console.error("[desk-join] confirmation email failed", err);
+  }
   return NextResponse.json({ booking: { name: booking.name, slot: booking.slot } });
 }

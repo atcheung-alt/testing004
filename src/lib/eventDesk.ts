@@ -49,6 +49,7 @@ export async function ensureDeskTables(): Promise<void> {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_doorToken_key" ON "DeskEvent"("doorToken")`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "code" TEXT NOT NULL DEFAULT ''`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "slotCap" INTEGER NOT NULL DEFAULT 1`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "confirmFrom" TEXT NOT NULL DEFAULT 'contact@hrplus.info'`);
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "DeskBooking" (
       "id" TEXT PRIMARY KEY,
@@ -164,6 +165,7 @@ function present(row: {
   joinToken: string;
   hostToken: string;
   doorToken: string;
+  confirmFrom?: string;
   bookings: { id: string; name: string; email: string; answers: string; slot: string; arrived: boolean }[];
 }) {
   const base = deskBaseUrl();
@@ -178,6 +180,7 @@ function present(row: {
     joinUrl: `${base}/join/${row.joinToken}`,
     hostUrl: `${base}/host/${row.hostToken}`,
     doorUrl: `${base}/door/${row.doorToken}`,
+    confirmFrom: row.confirmFrom || "contact@hrplus.info",
     bookings: row.bookings.map((booking) => ({
       id: booking.id,
       name: booking.name,
@@ -213,14 +216,15 @@ export async function createDeskEvent(name: string, eventDate: string, questions
   return present(row);
 }
 
-export async function updateDeskEvent(id: string, input: { name?: string; eventDate?: string; questions?: DeskQuestion[]; slots?: string[]; slotCap?: number }) {
+export async function updateDeskEvent(id: string, input: { name?: string; eventDate?: string; questions?: DeskQuestion[]; slots?: string[]; slotCap?: number; confirmFrom?: string }) {
   await ensureDeskTables();
-  const data: { name?: string; eventDate?: string; questions?: string; slots?: string; slotCap?: number } = {};
+  const data: { name?: string; eventDate?: string; questions?: string; slots?: string; slotCap?: number; confirmFrom?: string } = {};
   if (typeof input.name === "string") data.name = input.name.trim().slice(0, 120);
   if (typeof input.eventDate === "string") data.eventDate = input.eventDate.trim().slice(0, 40);
   if (Array.isArray(input.questions)) data.questions = JSON.stringify(parseDeskQuestions(JSON.stringify(input.questions)));
   if (Array.isArray(input.slots)) data.slots = JSON.stringify(input.slots.map((item) => item.trim().slice(0, 40)).filter(Boolean).slice(0, 96));
   if (typeof input.slotCap === "number") data.slotCap = Math.min(500, Math.max(1, Math.round(input.slotCap) || 1));
+  if (typeof input.confirmFrom === "string" && input.confirmFrom.includes("@")) data.confirmFrom = input.confirmFrom.trim().slice(0, 160);
   const row = await prisma.deskEvent.update({
     where: { id },
     data,

@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { ChevronDown, ChevronUp, Plus, Search, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import clsx from "clsx";
 
 export type DeskEventSummary = { id: string; code: string; name: string; eventDate: string; booked: number };
@@ -27,6 +27,7 @@ export type DeskEventView = {
   joinUrl: string;
   hostUrl: string;
   doorUrl: string;
+  confirmFrom: string;
   bookings: DeskBookingView[];
 };
 
@@ -306,10 +307,9 @@ export default function EventDesk({
             {qr && <img src={qr} alt="Event QR code" className="mt-3 h-44 w-44 rounded-xl border border-line bg-white p-2" />}
           </div>
           {savedNote && <p className="text-sm text-emerald-700">{savedNote}</p>}
+          <ConfirmFrom eventId={open.id} initial={open.confirmFrom || "contact@hrplus.info"} />
         </div>
       </section>
-
-      <BookingList bookings={open.bookings} />
     </div>
   );
 }
@@ -422,68 +422,34 @@ function ShareLinks({ event, senderEmail }: { event: DeskEventView; senderEmail:
   );
 }
 
-function markText(text: string, query: string) {
-  if (!query) return text;
-  const index = text.toLowerCase().indexOf(query);
-  if (index < 0) return text;
-  return (
-    <>
-      {text.slice(0, index)}
-      <mark className="bg-brand-50 text-inherit">{text.slice(index, index + query.length)}</mark>
-      {text.slice(index + query.length)}
-    </>
-  );
-}
+function ConfirmFrom({ eventId, initial }: { eventId: string; initial: string }) {
+  const [value, setValue] = useState(initial);
+  const [note, setNote] = useState("");
 
-function BookingList({ bookings }: { bookings: DeskBookingView[] }) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const arrived = bookings.filter((booking) => booking.arrived).length;
-  const needle = query.trim().toLowerCase();
-  const visible = bookings.filter((booking) => {
-    const status = booking.arrived ? "arrived" : "booked";
-    return `${booking.name} ${booking.email} ${booking.slot} ${status}`.toLowerCase().includes(needle);
-  });
+  async function save() {
+    const next = value.trim().includes("@") ? value.trim() : "contact@hrplus.info";
+    setValue(next);
+    const response = await fetch(`/api/event-desk/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirmFrom: next }),
+    });
+    setNote(response.ok ? "Saved. Candidate confirmations are sent from this address." : "Could not save that address.");
+  }
+
   return (
-    <section className="card mt-4">
-      <button type="button" className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left" onClick={() => setOpen(!open)}>
-        <span className="text-base font-semibold">
-          Bookings ({bookings.length} booked · {arrived} arrived)
-        </span>
-        {open ? <ChevronUp size={18} className="text-ink-muted" /> : <ChevronDown size={18} className="text-ink-muted" />}
-      </button>
-      {open && (
-        <div className="px-4 pb-4">
-          <div className="relative">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
-            <input className="input pl-9" placeholder="Search by name, email, or time slot..." value={query} onChange={(event) => setQuery(event.target.value)} />
-          </div>
-          <div className="mt-2 divide-y divide-line">
-            {bookings.length === 0 && <p className="py-4 text-sm text-ink-muted">No bookings yet.</p>}
-            {bookings.length > 0 && visible.length === 0 && (
-              <p className="py-4 text-sm text-ink-muted">No bookings found matching &apos;{query.trim()}&apos;</p>
-            )}
-            {visible.map((booking) => (
-              <div key={booking.id} className="flex items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">{markText(booking.name, needle)}</p>
-                  <p className="truncate text-sm text-ink-muted">
-                    {markText(booking.email, needle)} · {markText(booking.slot, needle)}
-                    {Object.entries(booking.answers)
-                      .filter(([, value]) => value)
-                      .map(([key, value]) => ` · ${key}: ${value}`)
-                      .join("")}
-                  </p>
-                </div>
-                <span className={clsx("stamp shrink-0", booking.arrived ? "border-emerald-600 text-emerald-700" : "border-line text-ink-muted")}>
-                  {booking.arrived ? "Arrived" : "Booked"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </section>
+    <div>
+      <label className="text-sm font-semibold" htmlFor="confirm-from">Confirmation email is sent from</label>
+      <input
+        id="confirm-from"
+        className="input mt-1.5"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onBlur={save}
+      />
+      <p className="mt-1.5 text-sm text-ink-muted">After a candidate books, the confirmation is sent from this address. It starts as contact@hrplus.info.</p>
+      {note && <p className="mt-1.5 text-sm text-emerald-700">{note}</p>}
+    </div>
   );
 }
 
