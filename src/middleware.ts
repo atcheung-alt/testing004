@@ -100,7 +100,11 @@ export async function middleware(request: NextRequest) {
       // header would only reach the browser, not our own render.
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set("x-theme-follow-system", "1");
-      return NextResponse.next({ request: { headers: requestHeaders } });
+      const response = NextResponse.next({ request: { headers: requestHeaders } });
+      if (pathname.startsWith("/join/") || pathname.startsWith("/host/") || pathname.startsWith("/door/")) {
+        response.headers.set("Cache-Control", "no-store");
+      }
+      return response;
     }
     return NextResponse.next();
   }

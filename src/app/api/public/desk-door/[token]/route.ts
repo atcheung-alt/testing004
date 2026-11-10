@@ -4,6 +4,13 @@ import { ensureDeskTables } from "@/lib/eventDesk";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
+  await ensureDeskTables();
+  const event = await prisma.deskEvent.findUnique({ where: { doorToken: params.token }, select: { name: true, eventDate: true } });
+  if (!event) return NextResponse.json({ error: "This QR code is not valid." }, { status: 404 });
+  return NextResponse.json({ name: event.name, eventDate: event.eventDate });
+}
+
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
   await ensureDeskTables();
   const event = await prisma.deskEvent.findUnique({ where: { doorToken: params.token } });

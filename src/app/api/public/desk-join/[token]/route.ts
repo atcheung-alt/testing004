@@ -4,6 +4,25 @@ import { ensureDeskTables, parseDeskQuestions, parseStringList } from "@/lib/eve
 
 export const dynamic = "force-dynamic";
 
+export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
+  await ensureDeskTables();
+  const event = await prisma.deskEvent.findUnique({
+    where: { joinToken: params.token },
+    include: { bookings: { select: { slot: true } } },
+  });
+  if (!event) return NextResponse.json({ error: "This link is not valid." }, { status: 404 });
+  const cap = event.slotCap || 1;
+  return NextResponse.json({
+    name: event.name,
+    eventDate: event.eventDate,
+    questions: parseDeskQuestions(event.questions),
+    slots: parseStringList(event.slots).map((time) => ({
+      time,
+      left: cap - event.bookings.filter((booking) => booking.slot === time).length,
+    })),
+  });
+}
+
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
   await ensureDeskTables();
   const event = await prisma.deskEvent.findUnique({ where: { joinToken: params.token } });

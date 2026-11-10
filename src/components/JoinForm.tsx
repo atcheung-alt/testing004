@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 
 export default function JoinForm({
   token,
+  eventName,
+  eventDate,
   questions,
   slots,
 }: {
   token: string;
+  eventName: string;
+  eventDate: string;
   questions: { label: string; required: boolean }[];
   slots: { time: string; left: number }[];
 }) {
+  const [title, setTitle] = useState(eventName);
+  const [when, setWhen] = useState(eventDate);
+  const [fields, setFields] = useState(questions);
+  const [times, setTimes] = useState(slots);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -19,6 +27,20 @@ export default function JoinForm({
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ name: string; slot: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const response = await fetch(`/api/public/desk-join/${token}`, { cache: "no-store" });
+      if (!response.ok) return;
+      const next = await response.json();
+      setTitle(next.name || "");
+      setWhen(next.eventDate || "");
+      setFields(Array.isArray(next.questions) ? next.questions : []);
+      setTimes(Array.isArray(next.slots) ? next.slots : []);
+      setSlot((current) => (next.slots?.some((item: { time: string }) => item.time === current) ? current : ""));
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [token]);
 
   async function book() {
     setError("");
@@ -52,12 +74,16 @@ export default function JoinForm({
   }
 
   return (
+    <>
+    <p className="text-xs font-semibold text-brand-500">{title}</p>
+    <h1 className="font-display text-2xl mt-2">Pick a time</h1>
+    <p className="lead mt-2">{when || "Choose one time. Name and email are required."}</p>
     <div className="card mt-4 p-5">
       <label className="block text-sm font-semibold">Name</label>
       <input className="input mt-1.5" value={name} onChange={(event) => setName(event.target.value)} placeholder="Chan Tai Man" />
       <label className="mt-3 block text-sm font-semibold">Email</label>
       <input className="input mt-1.5" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@email.com" />
-      {questions.map((question) => (
+      {fields.map((question) => (
         <div key={question.label}>
           <label className="mt-3 block text-sm font-semibold">
             {question.label}
@@ -72,7 +98,7 @@ export default function JoinForm({
       ))}
       <p className="mt-3 text-sm font-semibold">Time slot</p>
       <div className="mt-2 space-y-2">
-        {slots.map((item) => (
+        {times.map((item) => (
           <button
             key={item.time}
             type="button"
@@ -94,5 +120,6 @@ export default function JoinForm({
         Confirm booking
       </button>
     </div>
+    </>
   );
 }

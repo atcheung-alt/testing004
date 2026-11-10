@@ -20,10 +20,13 @@ export default async function JoinPage({ params }: { params: { token: string } }
   }));
   return (
     <main className="mx-auto max-w-lg px-4 py-10">
-      <p className="text-xs font-semibold text-brand-500">{event.name}</p>
-      <h1 className="font-display text-2xl mt-2">Pick a time</h1>
-      <p className="lead mt-2">{event.eventDate || "Choose one time. Name and email are required."}</p>
-      <JoinForm token={params.token} questions={parseDeskQuestions(event.questions)} slots={slots} />
+      <JoinForm
+        token={params.token}
+        eventName={event.name}
+        eventDate={event.eventDate}
+        questions={parseDeskQuestions(event.questions)}
+        slots={slots}
+      />
     </main>
   );
 }

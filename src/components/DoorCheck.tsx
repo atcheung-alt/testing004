@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function DoorCheck({ token, eventName }: { token: string; eventName: string }) {
+  const [title, setTitle] = useState(eventName);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [done, setDone] = useState<{ name: string; slot: string } | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const response = await fetch(`/api/public/desk-door/${token}`, { cache: "no-store" });
+      if (!response.ok) return;
+      const next = await response.json();
+      if (next.name) setTitle(next.name);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [token]);
 
   async function arrive() {
     setError("");
@@ -28,7 +39,7 @@ export default function DoorCheck({ token, eventName }: { token: string; eventNa
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center">
       <div className="card w-full max-w-sm p-5">
-        <p className="text-xs font-semibold text-brand-500">{eventName}</p>
+        <p className="text-xs font-semibold text-brand-500">{title}</p>
         {done ? (
           <>
             <h1 className="font-display text-2xl mt-2">You’re confirmed</h1>

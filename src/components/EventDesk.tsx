@@ -54,6 +54,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savedNote, setSavedNote] = useState("");
   const [qr, setQr] = useState("");
   const [query, setQuery] = useState("");
 
@@ -105,6 +106,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
       setError(payload.error || "Could not save.");
       return;
     }
+    setSavedNote("Saved. The candidate link, manager link, and QR now use this form.");
     router.refresh();
   }
 
@@ -293,6 +295,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
             <p className="mt-1 text-sm text-ink-muted">The candidate scans this. Their phone asks for the booking email, then shows the time slot.</p>
             {qr && <img src={qr} alt="Event QR code" className="mt-3 h-44 w-44 rounded-xl border border-line bg-white p-2" />}
           </div>
+          {savedNote && <p className="text-sm text-emerald-700">{savedNote}</p>}
         </div>
       </section>
 
