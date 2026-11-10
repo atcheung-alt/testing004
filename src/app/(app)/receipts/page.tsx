@@ -214,8 +214,8 @@ async function MoneyList({
     const dayA = a.when.toISOString().slice(0, 10);
     const dayB = b.when.toISOString().slice(0, 10);
     if (dayA !== dayB) return dayA < dayB ? 1 : -1;
-    const codeA = a.receiptNumber || a.title;
-    const codeB = b.receiptNumber || b.title;
+    const codeA = a.title;
+    const codeB = b.title;
     return codeA < codeB ? 1 : codeA > codeB ? -1 : 0;
   });
 
