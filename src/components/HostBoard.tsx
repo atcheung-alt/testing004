@@ -34,6 +34,8 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
   }, [token]);
 
   const showing = slot === "All" || board.slots.includes(slot) ? slot : "All";
+  const arrivedTotal = board.bookings.filter((booking) => booking.arrived).length;
+  const waitingTotal = board.bookings.length - arrivedTotal;
   const needle = query.trim().toLowerCase();
   const rows = board.bookings.filter((booking) => {
     if (showing !== "All" && booking.slot !== showing) return false;
@@ -81,7 +83,8 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
           <button type="submit" className="h-11 shrink-0 whitespace-nowrap rounded-xl border border-line bg-white px-4 text-sm font-semibold">Check in</button>
         </form>
       )}
-      <input className="input mt-4" value={query} placeholder="Search name or email" onChange={(event) => setQuery(event.target.value)} />
+      <p className="mt-4 text-xs text-ink-muted">Arrived {arrivedTotal} · Not arrived {waitingTotal}</p>
+      <input className="input mt-2" value={query} placeholder="Search name or email" onChange={(event) => setQuery(event.target.value)} />
       <div className="mt-3 flex gap-2">
         {(["All", "Booked", "Arrived"] as const).map((name) => (
           <button key={name} type="button" onClick={() => setStatus(name)} className={clsx("rounded-full border px-3 py-1.5 text-sm", status === name ? "border-ink text-ink" : "border-line text-ink-muted")}>
