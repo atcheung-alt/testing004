@@ -49,7 +49,8 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   const [slotCap, setSlotCap] = useState(open?.slotCap || 1);
   const [startTime, setStartTime] = useState("09:30");
   const [endTime, setEndTime] = useState("17:00");
-  const [duration, setDuration] = useState(30);
+  const [durationAmount, setDurationAmount] = useState("30");
+  const [durationUnit, setDurationUnit] = useState<"min" | "hour">("min");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
@@ -112,18 +113,29 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   }
 
   function generateSlots() {
-    const [sh, sm] = startTime.split(":").map(Number);
-    const [eh, em] = endTime.split(":").map(Number);
-    if (![sh, sm, eh, em].every((n) => Number.isFinite(n))) return;
-    let cur = sh * 60 + sm;
-    const end = eh * 60 + em;
-    const next: string[] = [];
-    while (cur + duration <= end && next.length < 96) {
-      const endMin = cur + duration;
-      const label = `${pad(cur)} – ${pad(endMin)}`;
-      next.push(label);
-      cur = endMin;
+    const start = minutesFromClock(startTime);
+    const end = minutesFromClock(endTime);
+    const amount = Number(durationAmount);
+    const step = durationUnit === "hour" ? amount * 60 : amount;
+    if (start == null || end == null || !Number.isFinite(amount) || step <= 0) {
+      setError("Enter a start, an end, and a length in minutes or hours.");
+      return;
     }
+    if (end <= start) {
+      setError("The end time has to be after the start.");
+      return;
+    }
+    let cur = start;
+    const next: string[] = [];
+    while (cur + step <= end && next.length < 96) {
+      next.push(`${pad(cur)} – ${pad(cur + step)}`);
+      cur += step;
+    }
+    if (!next.length) {
+      setError("That length does not fit between the start and the end.");
+      return;
+    }
+    setError("");
     setSlots(next);
   }
 
@@ -201,11 +213,13 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
               onRemoveSlot={(index) => setSlots(slots.filter((_, i) => i !== index))}
               startTime={startTime}
               endTime={endTime}
-              duration={duration}
+              durationAmount={durationAmount}
+              durationUnit={durationUnit}
               slotCap={slotCap}
               onStart={setStartTime}
               onEnd={setEndTime}
-              onDuration={setDuration}
+              onDurationAmount={setDurationAmount}
+              onDurationUnit={setDurationUnit}
               onCap={setSlotCap}
               onGenerate={generateSlots}
             />
@@ -253,11 +267,13 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
           onRemoveSlot={(index) => setSlots(slots.filter((_, i) => i !== index))}
           startTime={startTime}
           endTime={endTime}
-          duration={duration}
+          durationAmount={durationAmount}
+          durationUnit={durationUnit}
           slotCap={slotCap}
           onStart={setStartTime}
           onEnd={setEndTime}
-          onDuration={setDuration}
+          onDurationAmount={setDurationAmount}
+          onDurationUnit={setDurationUnit}
           onCap={setSlotCap}
           onGenerate={generateSlots}
         />
@@ -316,6 +332,15 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+function minutesFromClock(value: string) {
+  const match = value.trim().match(/^(\d{1,2})[:.](\d{2})$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
 function pad(minutes: number) {
   return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
@@ -336,11 +361,13 @@ function SetupFields(props: {
   onRemoveSlot: (index: number) => void;
   startTime: string;
   endTime: string;
-  duration: number;
+  durationAmount: string;
+  durationUnit: "min" | "hour";
   slotCap: number;
   onStart: (value: string) => void;
   onEnd: (value: string) => void;
-  onDuration: (value: number) => void;
+  onDurationAmount: (value: string) => void;
+  onDurationUnit: (value: "min" | "hour") => void;
   onCap: (value: number) => void;
   onGenerate: () => void;
 }) {
@@ -388,20 +415,21 @@ function SetupFields(props: {
         <div className="mt-3 grid gap-2 sm:grid-cols-4">
           <label className="block text-sm">
             Start
-            <input className="input mt-1" type="time" value={props.startTime} onChange={(event) => props.onStart(event.target.value)} />
+            <input className="input mt-1" inputMode="numeric" placeholder="09:30" value={props.startTime} onChange={(event) => props.onStart(event.target.value)} />
           </label>
           <label className="block text-sm">
             End
-            <input className="input mt-1" type="time" value={props.endTime} onChange={(event) => props.onEnd(event.target.value)} />
+            <input className="input mt-1" inputMode="numeric" placeholder="17:00" value={props.endTime} onChange={(event) => props.onEnd(event.target.value)} />
           </label>
           <label className="block text-sm">
-            Duration
-            <select className="input mt-1" value={props.duration} onChange={(event) => props.onDuration(Number(event.target.value))}>
-              <option value={10}>10m</option>
-              <option value={15}>15m</option>
-              <option value={30}>30m</option>
-              <option value={60}>1h</option>
-            </select>
+            Length
+            <span className="mt-1 flex gap-2">
+              <input className="input" inputMode="numeric" placeholder="30" value={props.durationAmount} onChange={(event) => props.onDurationAmount(event.target.value)} />
+              <select className="input !w-auto" value={props.durationUnit} onChange={(event) => props.onDurationUnit(event.target.value === "hour" ? "hour" : "min")}>
+                <option value="min">minutes</option>
+                <option value="hour">hours</option>
+              </select>
+            </span>
           </label>
           <label className="block text-sm">
             Seats per slot
