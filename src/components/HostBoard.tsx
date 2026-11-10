@@ -124,13 +124,20 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
               </div>
             </div>
             {menu === booking.id && (
-              <div className="mx-4 mb-3 rounded-xl border border-line bg-white p-1.5">
-                <select className="input" value={booking.slot} onChange={(event) => patch({ bookingId: booking.id, slot: event.target.value }, event.target.value)}>
+              <div className="mx-4 mb-3">
+                <div className="flex flex-wrap gap-2">
                   {board.slots.map((time) => (
-                    <option key={time} value={time}>{time}</option>
+                    <button
+                      key={time}
+                      type="button"
+                      onClick={() => patch({ bookingId: booking.id, slot: time }, time)}
+                      className={clsx("rounded-full border px-3 py-1.5 text-sm", booking.slot === time ? "border-ink text-ink" : "border-line text-ink-muted")}
+                    >
+                      {time}
+                    </button>
                   ))}
-                </select>
-                <button type="button" className="mt-1 block w-full rounded-lg px-2.5 py-2 text-left text-sm text-rose-700" onClick={() => { setConfirmId(booking.id); setMenu(""); }}>
+                </div>
+                <button type="button" className="mt-2 block rounded-lg px-1 py-2 text-left text-sm text-rose-700" onClick={() => { setConfirmId(booking.id); setMenu(""); }}>
                   Delete
                 </button>
               </div>
