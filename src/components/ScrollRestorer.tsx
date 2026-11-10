@@ -33,27 +33,23 @@ export default function ScrollRestorer({
   useEffect(() => {
     const storageKey = `scroll:${restoreKey}`;
     const saved = sessionStorage.getItem(storageKey);
-    if (saved) {
-      const y = Number(saved);
-      if (!Number.isNaN(y)) {
-        // The real list streams in via <Suspense> and may not have replaced
-        // the "Loading…" fallback yet on the first frame after mount, so a
-        // single scrollTo can land before there's anything to scroll to —
-        // keep re-applying it across a few frames until the content (and
-        // the page's full height) has actually settled.
-        let attempts = 0;
-        const applyScroll = () => {
-          window.scrollTo(0, y);
-          attempts += 1;
-          if (attempts < 10) requestAnimationFrame(applyScroll);
-        };
+    const y = saved ? Number(saved) : 0;
+    const holding = !Number.isNaN(y) && y > 8;
+    const holdUntil = holding ? performance.now() + 2000 : 0;
+    if (holding) {
+      // Next scrolls back to the top after the fresh list renders. Keep
+      // putting the saved height back until that late jump has finished.
+      const applyScroll = () => {
+        if (performance.now() >= holdUntil) return;
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
         requestAnimationFrame(applyScroll);
-      }
+      };
+      requestAnimationFrame(applyScroll);
     }
 
     let locked = false;
     function save() {
-      if (locked) return;
+      if (locked || performance.now() < holdUntil) return;
       sessionStorage.setItem(storageKey, String(window.scrollY));
     }
     // Save before Next scrolls the window to the top. A later scroll-to-top
@@ -69,6 +65,10 @@ export default function ScrollRestorer({
       locked = true;
     }
     function onScroll() {
+      if (holding && performance.now() < holdUntil) {
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+        return;
+      }
       if (locked && window.scrollY < 8) return;
       locked = false;
       save();
