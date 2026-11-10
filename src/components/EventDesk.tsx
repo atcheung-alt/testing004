@@ -63,6 +63,7 @@ export default function EventDesk({
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
   const [savedNote, setSavedNote] = useState("");
+  const [askDelete, setAskDelete] = useState(false);
   const [qr, setQr] = useState("");
   const [query, setQuery] = useState("");
 
@@ -115,6 +116,21 @@ export default function EventDesk({
       return;
     }
     setSavedNote("Saved. The candidate link, manager link, and QR now use this form.");
+    router.refresh();
+  }
+
+  async function removeEvent() {
+    if (!open) return;
+    setError("");
+    setSaving(true);
+    const response = await fetch(`/api/event-desk/${open.id}`, { method: "DELETE" });
+    const payload = await response.json().catch(() => ({}));
+    setSaving(false);
+    if (!response.ok) {
+      setError(payload.error || "Could not delete the event.");
+      return;
+    }
+    router.push("/event-desk");
     router.refresh();
   }
 
@@ -305,6 +321,27 @@ export default function EventDesk({
           {savedNote && <p className="text-sm text-emerald-700">{savedNote}</p>}
           <ConfirmFrom eventId={open.id} initial={open.confirmFrom || "contact@hrplus.info"} />
         </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-5 text-rose-700">
+        <p className="font-semibold">Delete this event</p>
+        <p className="mt-1 text-sm">
+          This removes {open.code} {open.name}, including every booking. The links and QR stop working. This cannot be undone.
+        </p>
+        {askDelete ? (
+          <div className="mt-3 flex gap-2">
+            <button type="button" className="rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white" disabled={saving} onClick={removeEvent}>
+              Delete forever
+            </button>
+            <button type="button" className="btn-secondary" onClick={() => setAskDelete(false)}>
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button type="button" className="mt-3 rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white" onClick={() => setAskDelete(true)}>
+            Delete event
+          </button>
+        )}
       </section>
     </div>
   );

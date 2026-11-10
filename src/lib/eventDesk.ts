@@ -216,6 +216,12 @@ export async function createDeskEvent(name: string, eventDate: string, questions
   return present(row);
 }
 
+export async function deleteDeskEvent(id: string) {
+  await ensureDeskTables();
+  await prisma.deskBooking.deleteMany({ where: { eventId: id } });
+  await prisma.deskEvent.delete({ where: { id } });
+}
+
 export async function updateDeskEvent(id: string, input: { name?: string; eventDate?: string; questions?: DeskQuestion[]; slots?: string[]; slotCap?: number; confirmFrom?: string }) {
   await ensureDeskTables();
   const data: { name?: string; eventDate?: string; questions?: string; slots?: string; slotCap?: number; confirmFrom?: string } = {};

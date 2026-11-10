@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { loadDeskEvent, requireDeskUser, updateDeskEvent } from "@/lib/eventDesk";
+import { deleteDeskEvent, loadDeskEvent, requireDeskUser, updateDeskEvent } from "@/lib/eventDesk";
 
 export const dynamic = "force-dynamic";
 
@@ -24,4 +24,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     confirmFrom: typeof body.confirmFrom === "string" ? body.confirmFrom : undefined,
   });
   return NextResponse.json({ event });
+}
+
+export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await requireDeskUser())) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const existing = await loadDeskEvent(params.id);
+  if (!existing) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  await deleteDeskEvent(params.id);
+  return NextResponse.json({ ok: true });
 }
