@@ -1247,6 +1247,7 @@ model DeskEvent {
   name       String
   code       String        @unique @default("")
   eventDate  String        @default("")
+  slotCap    Int           @default(1)
   questions  String        @default("[]")
   slots      String        @default("[]")
   joinToken  String        @unique

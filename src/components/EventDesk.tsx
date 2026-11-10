@@ -15,20 +15,20 @@ export type DeskBookingView = {
   slot: string;
   arrived: boolean;
 };
+export type DeskQuestion = { label: string; required: boolean };
 export type DeskEventView = {
   id: string;
   code: string;
   name: string;
   eventDate: string;
-  questions: string[];
+  slotCap: number;
+  questions: DeskQuestion[];
   slots: string[];
   joinUrl: string;
   hostUrl: string;
   doorUrl: string;
   bookings: DeskBookingView[];
 };
-
-const STARTER_SLOTS = ["09:30 – 10:30", "10:30 – 11:30", "14:00 – 15:00", "15:00 – 16:00"];
 
 async function copy(text: string) {
   try {
@@ -44,10 +44,12 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   const [creating, setCreating] = useState(events.length === 0);
   const [name, setName] = useState(open?.name || "");
   const [eventDate, setEventDate] = useState(open?.eventDate || "");
-  const [questions, setQuestions] = useState<string[]>(open?.questions || []);
-  const [slots, setSlots] = useState<string[]>(open?.slots?.length ? open.slots : STARTER_SLOTS);
-  const [draftQuestion, setDraftQuestion] = useState("");
-  const [draftSlot, setDraftSlot] = useState("");
+  const [questions, setQuestions] = useState<DeskQuestion[]>(open?.questions || []);
+  const [slots, setSlots] = useState<string[]>(open?.slots || []);
+  const [slotCap, setSlotCap] = useState(open?.slotCap || 1);
+  const [startTime, setStartTime] = useState("09:30");
+  const [endTime, setEndTime] = useState("17:00");
+  const [duration, setDuration] = useState(30);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
@@ -75,7 +77,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
     const response = await fetch("/api/event-desk", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, eventDate, questions, slots }),
+      body: JSON.stringify({ name, eventDate, questions, slots, slotCap }),
     });
     const payload = await response.json().catch(() => ({}));
     setSaving(false);
@@ -94,7 +96,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
     const response = await fetch(`/api/event-desk/${open.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, eventDate, questions, slots }),
+      body: JSON.stringify({ name, eventDate, questions, slots, slotCap }),
     });
     const payload = await response.json().catch(() => ({}));
     setSaving(false);
@@ -106,17 +108,23 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   }
 
   function addQuestion() {
-    const next = draftQuestion.trim();
-    if (!next || questions.includes(next)) return;
-    setQuestions([...questions, next]);
-    setDraftQuestion("");
+    setQuestions([...questions, { label: "", required: false }]);
   }
 
-  function addSlot() {
-    const next = draftSlot.trim();
-    if (!next || slots.includes(next)) return;
-    setSlots([...slots, next]);
-    setDraftSlot("");
+  function generateSlots() {
+    const [sh, sm] = startTime.split(":").map(Number);
+    const [eh, em] = endTime.split(":").map(Number);
+    if (![sh, sm, eh, em].every((n) => Number.isFinite(n))) return;
+    let cur = sh * 60 + sm;
+    const end = eh * 60 + em;
+    const next: string[] = [];
+    while (cur + duration <= end && next.length < 96) {
+      const endMin = cur + duration;
+      const label = `${pad(cur)} – ${pad(endMin)}`;
+      next.push(label);
+      cur = endMin;
+    }
+    setSlots(next);
   }
 
   if (!open) {
@@ -180,28 +188,26 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
         {creating && (
           <section className="card p-5">
             <h2 className="text-base font-semibold">New event</h2>
-            <p className="mt-1 text-sm text-ink-muted">Name, email, and a time are always on the candidate form. Add only the extra questions.</p>
             <Field label="Event name">
               <input className="input" value={name} onChange={(event) => setName(event.target.value)} placeholder="Harbour Bank career day" />
             </Field>
-            <Field label="Date">
-              <input className="input" value={eventDate} onChange={(event) => setEventDate(event.target.value)} placeholder="18 Nov 2026" />
-            </Field>
-            <QuestionList
+            <SetupFields
+              eventDate={eventDate}
+              onDate={setEventDate}
               questions={questions}
-              draft={draftQuestion}
-              onDraft={setDraftQuestion}
-              onAdd={addQuestion}
-              onChange={(index, value) => setQuestions(questions.map((item, i) => (i === index ? value : item)))}
-              onRemove={(index) => setQuestions(questions.filter((_, i) => i !== index))}
-            />
-            <SlotList
+              onQuestions={setQuestions}
+              onAddQuestion={addQuestion}
               slots={slots}
-              draft={draftSlot}
-              onDraft={setDraftSlot}
-              onAdd={addSlot}
-              onChange={(index, value) => setSlots(slots.map((item, i) => (i === index ? value : item)))}
-              onRemove={(index) => setSlots(slots.filter((_, i) => i !== index))}
+              onRemoveSlot={(index) => setSlots(slots.filter((_, i) => i !== index))}
+              startTime={startTime}
+              endTime={endTime}
+              duration={duration}
+              slotCap={slotCap}
+              onStart={setStartTime}
+              onEnd={setEndTime}
+              onDuration={setDuration}
+              onCap={setSlotCap}
+              onGenerate={generateSlots}
             />
             {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
             <div className="mt-5 flex gap-2">
@@ -237,24 +243,23 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
         <Field label="Name">
           <input className="input" value={name} onChange={(event) => setName(event.target.value)} />
         </Field>
-        <Field label="Date">
-          <input className="input" value={eventDate} onChange={(event) => setEventDate(event.target.value)} placeholder="18 Nov 2026" />
-        </Field>
-        <QuestionList
+        <SetupFields
+          eventDate={eventDate}
+          onDate={setEventDate}
           questions={questions}
-          draft={draftQuestion}
-          onDraft={setDraftQuestion}
-          onAdd={addQuestion}
-          onChange={(index, value) => setQuestions(questions.map((item, i) => (i === index ? value : item)))}
-          onRemove={(index) => setQuestions(questions.filter((_, i) => i !== index))}
-        />
-        <SlotList
+          onQuestions={setQuestions}
+          onAddQuestion={addQuestion}
           slots={slots}
-          draft={draftSlot}
-          onDraft={setDraftSlot}
-          onAdd={addSlot}
-          onChange={(index, value) => setSlots(slots.map((item, i) => (i === index ? value : item)))}
-          onRemove={(index) => setSlots(slots.filter((_, i) => i !== index))}
+          onRemoveSlot={(index) => setSlots(slots.filter((_, i) => i !== index))}
+          startTime={startTime}
+          endTime={endTime}
+          duration={duration}
+          slotCap={slotCap}
+          onStart={setStartTime}
+          onEnd={setEndTime}
+          onDuration={setDuration}
+          onCap={setSlotCap}
+          onGenerate={generateSlots}
         />
         {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
         <button type="button" className="btn-primary mt-5" disabled={saving} onClick={saveEvent}>
@@ -311,80 +316,159 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function QuestionList({
-  questions,
-  draft,
-  onDraft,
-  onAdd,
-  onChange,
-  onRemove,
-}: {
-  questions: string[];
-  draft: string;
-  onDraft: (value: string) => void;
-  onAdd: () => void;
-  onChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
+function pad(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
+function dateLabel(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value || "Choose a date";
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function SetupFields(props: {
+  eventDate: string;
+  onDate: (value: string) => void;
+  questions: DeskQuestion[];
+  onQuestions: (questions: DeskQuestion[]) => void;
+  onAddQuestion: () => void;
+  slots: string[];
+  onRemoveSlot: (index: number) => void;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  slotCap: number;
+  onStart: (value: string) => void;
+  onEnd: (value: string) => void;
+  onDuration: (value: number) => void;
+  onCap: (value: number) => void;
+  onGenerate: () => void;
 }) {
   return (
-    <div className="mt-5">
-      <p className="text-sm font-semibold">Extra questions</p>
-      <p className="mt-1 text-sm text-ink-muted">Name, email, and time slot stay on the form. These are the extra ones.</p>
-      <div className="mt-3 space-y-2">
-        {questions.map((question, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <input className="input" value={question} onChange={(event) => onChange(index, event.target.value)} />
-            <button type="button" className="btn-secondary shrink-0" onClick={() => onRemove(index)}>
-              Remove
-            </button>
-          </div>
-        ))}
+    <>
+      <Field label="Event date">
+        <DayField value={props.eventDate} onChange={props.onDate} />
+      </Field>
+      <div className="mt-5">
+        <p className="text-sm font-semibold">Name and email</p>
+        <p className="mt-1 text-sm text-ink-muted">These two questions are already on the form.</p>
       </div>
-      <div className="mt-2 flex items-center gap-2">
-        <input className="input" value={draft} onChange={(event) => onDraft(event.target.value)} placeholder="Phone" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onAdd(); } }} />
-        <button type="button" className="btn-secondary shrink-0" onClick={onAdd}>
-          Add
+      <div className="mt-5">
+        <p className="text-sm font-semibold">Extra questions</p>
+        <div className="mt-3 space-y-2">
+          {props.questions.map((question, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                className="input"
+                placeholder="Question"
+                value={question.label}
+                onChange={(event) => props.onQuestions(props.questions.map((item, i) => (i === index ? { ...item, label: event.target.value } : item)))}
+              />
+              <select
+                className="input !w-auto shrink-0"
+                value={question.required ? "1" : "0"}
+                onChange={(event) => props.onQuestions(props.questions.map((item, i) => (i === index ? { ...item, required: event.target.value === "1" } : item)))}
+              >
+                <option value="1">Required</option>
+                <option value="0">Optional</option>
+              </select>
+              <button type="button" className="btn-secondary shrink-0" onClick={() => props.onQuestions(props.questions.filter((_, i) => i !== index))}>
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="btn-secondary mt-2" onClick={props.onAddQuestion}>
+          + Add custom question
         </button>
       </div>
-    </div>
+      <div className="mt-5">
+        <p className="text-sm font-semibold">Time slots</p>
+        <p className="mt-1 text-sm text-ink-muted">Set a start, an end, and how long each booking is. Then generate the list.</p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+          <label className="block text-sm">
+            Start
+            <input className="input mt-1" type="time" value={props.startTime} onChange={(event) => props.onStart(event.target.value)} />
+          </label>
+          <label className="block text-sm">
+            End
+            <input className="input mt-1" type="time" value={props.endTime} onChange={(event) => props.onEnd(event.target.value)} />
+          </label>
+          <label className="block text-sm">
+            Duration
+            <select className="input mt-1" value={props.duration} onChange={(event) => props.onDuration(Number(event.target.value))}>
+              <option value={10}>10m</option>
+              <option value={15}>15m</option>
+              <option value={30}>30m</option>
+              <option value={60}>1h</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            Seats per slot
+            <input className="input mt-1" type="number" min={1} value={props.slotCap} onChange={(event) => props.onCap(Number(event.target.value) || 1)} />
+          </label>
+        </div>
+        <button type="button" className="btn-primary mt-3" onClick={props.onGenerate}>
+          Generate slots
+        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {props.slots.map((slot, index) => (
+            <span key={`${slot}-${index}`} className="flex items-center justify-between rounded-full border border-line px-3 py-1.5 text-sm">
+              {slot}
+              <button type="button" className="ml-2 text-ink-muted" onClick={() => props.onRemoveSlot(index)} aria-label="Remove time">
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }
 
-function SlotList({
-  slots,
-  draft,
-  onDraft,
-  onAdd,
-  onChange,
-  onRemove,
-}: {
-  slots: string[];
-  draft: string;
-  onDraft: (value: string) => void;
-  onAdd: () => void;
-  onChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
-}) {
+function DayField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? value.split("-").map(Number) : null;
+  const today = new Date();
+  const [cursor, setCursor] = useState(() => (parsed ? new Date(parsed[0], parsed[1] - 1, 1) : new Date(today.getFullYear(), today.getMonth(), 1)));
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const first = new Date(year, month, 1).getDay();
+  const count = new Date(year, month + 1, 0).getDate();
+  const cells = [...Array(first).fill(0), ...Array.from({ length: count }, (_, i) => i + 1)];
   return (
-    <div className="mt-5">
-      <p className="text-sm font-semibold">Time slots</p>
-      <p className="mt-1 text-sm text-ink-muted">Each time holds 200 people.</p>
-      <div className="mt-3 space-y-2">
-        {slots.map((slot, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <input className="input" value={slot} onChange={(event) => onChange(index, event.target.value)} />
-            <button type="button" className="btn-secondary shrink-0" onClick={() => onRemove(index)}>
-              Remove
-            </button>
+    <div className="relative">
+      <button type="button" className="input !w-auto min-w-[220px] text-left" onClick={() => setOpen(!open)}>
+        {dateLabel(value)}
+      </button>
+      {open && (
+        <div className="absolute z-10 mt-2 w-72 rounded-2xl border border-line bg-white p-3 shadow-soft">
+          <div className="flex items-center justify-between">
+            <button type="button" className="btn-secondary" onClick={() => setCursor(new Date(year, month - 1, 1))}>‹</button>
+            <span className="text-sm font-semibold">{cursor.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
+            <button type="button" className="btn-secondary" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
           </div>
-        ))}
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <input className="input" value={draft} onChange={(event) => onDraft(event.target.value)} placeholder="16:00 – 17:00" onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); onAdd(); } }} />
-        <button type="button" className="btn-secondary shrink-0" onClick={onAdd}>
-          Add
-        </button>
-      </div>
+          <div className="mt-2 grid grid-cols-7 gap-1 text-center text-xs text-ink-faint">
+            {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
+          </div>
+          <div className="mt-1 grid grid-cols-7 gap-1">
+            {cells.map((day, index) => {
+              const iso = day ? `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}` : "";
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  disabled={!day}
+                  onClick={() => { onChange(iso); setOpen(false); }}
+                  className={clsx("h-9 rounded-lg text-sm", iso && iso === value ? "bg-brand-500 text-white" : "hover:bg-paper")}
+                >
+                  {day || ""}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

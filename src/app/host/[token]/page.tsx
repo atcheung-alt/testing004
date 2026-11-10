@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { DESK_SLOT_CAP, ensureDeskTables, parseAnswers, parseStringList } from "@/lib/eventDesk";
+import { ensureDeskTables, parseAnswers, parseStringList } from "@/lib/eventDesk";
 import HostBoard from "@/components/HostBoard";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export default async function HostPage({ params }: { params: { token: string } }
           name: event.name,
           eventDate: event.eventDate,
           slots: parseStringList(event.slots),
-          cap: DESK_SLOT_CAP,
+          cap: event.slotCap || 1,
           bookings: event.bookings.map((booking) => ({
             id: booking.id,
             name: booking.name,

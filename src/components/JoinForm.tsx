@@ -9,7 +9,7 @@ export default function JoinForm({
   slots,
 }: {
   token: string;
-  questions: string[];
+  questions: { label: string; required: boolean }[];
   slots: { time: string; left: number }[];
 }) {
   const [name, setName] = useState("");
@@ -58,12 +58,15 @@ export default function JoinForm({
       <label className="mt-3 block text-sm font-semibold">Email</label>
       <input className="input mt-1.5" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@email.com" />
       {questions.map((question) => (
-        <div key={question}>
-          <label className="mt-3 block text-sm font-semibold">{question}</label>
+        <div key={question.label}>
+          <label className="mt-3 block text-sm font-semibold">
+            {question.label}
+            {question.required ? "" : " (optional)"}
+          </label>
           <input
             className="input mt-1.5"
-            value={answers[question] || ""}
-            onChange={(event) => setAnswers({ ...answers, [question]: event.target.value })}
+            value={answers[question.label] || ""}
+            onChange={(event) => setAnswers({ ...answers, [question.label]: event.target.value })}
           />
         </div>
       ))}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { DESK_SLOT_CAP, ensureDeskTables, parseStringList } from "@/lib/eventDesk";
+import { ensureDeskTables, parseDeskQuestions, parseStringList } from "@/lib/eventDesk";
 
 export const dynamic = "force-dynamic";
 
@@ -16,19 +16,22 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (!name || !email.includes("@") || !slots.includes(slot)) {
     return NextResponse.json({ error: "Enter a name, an email, and a time." }, { status: 400 });
   }
-  const questions = parseStringList(event.questions);
+  const questions = parseDeskQuestions(event.questions);
   const raw = body.answers && typeof body.answers === "object" ? body.answers as Record<string, unknown> : {};
   const answers: Record<string, string> = {};
   for (const question of questions) {
-    const value = raw[question];
-    answers[question] = typeof value === "string" ? value.trim().slice(0, 200) : "";
+    const value = raw[question.label];
+    answers[question.label] = typeof value === "string" ? value.trim().slice(0, 200) : "";
+    if (question.required && !answers[question.label]) {
+      return NextResponse.json({ error: `Enter ${question.label}.` }, { status: 400 });
+    }
   }
   const [taken, same] = await Promise.all([
     prisma.deskBooking.count({ where: { eventId: event.id, slot } }),
     prisma.deskBooking.findFirst({ where: { eventId: event.id, email } }),
   ]);
   if (same) return NextResponse.json({ error: "This email is already booked." }, { status: 400 });
-  if (taken >= DESK_SLOT_CAP) return NextResponse.json({ error: "That time is full." }, { status: 400 });
+  if (taken >= (event.slotCap || 1)) return NextResponse.json({ error: "That time is full." }, { status: 400 });
   const booking = await prisma.deskBooking.create({
     data: { eventId: event.id, name, email, slot, answers: JSON.stringify(answers) },
   });

@@ -4,6 +4,27 @@ import { generateSigningToken } from "@/lib/signing";
 import { getCurrentUser } from "@/lib/auth";
 
 export const DESK_SLOT_CAP = 200;
+
+export type DeskQuestion = { label: string; required: boolean };
+
+export function parseDeskQuestions(value: string): DeskQuestion[] {
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        if (typeof item === "string") return { label: item.trim(), required: false };
+        if (item && typeof item === "object" && typeof item.label === "string") {
+          return { label: item.label.trim(), required: Boolean(item.required) };
+        }
+        return null;
+      })
+      .filter((item): item is DeskQuestion => Boolean(item?.label))
+      .slice(0, 8);
+  } catch {
+    return [];
+  }
+}
 export const DEFAULT_DESK_SLOTS = ["09:30 – 10:30", "10:30 – 11:30", "14:00 – 15:00", "15:00 – 16:00"];
 
 export async function ensureDeskTables(): Promise<void> {
@@ -13,6 +34,7 @@ export async function ensureDeskTables(): Promise<void> {
       "name" TEXT NOT NULL,
       "code" TEXT NOT NULL DEFAULT '',
       "eventDate" TEXT NOT NULL DEFAULT '',
+      "slotCap" INTEGER NOT NULL DEFAULT 1,
       "questions" TEXT NOT NULL DEFAULT '[]',
       "slots" TEXT NOT NULL DEFAULT '[]',
       "joinToken" TEXT NOT NULL,
@@ -26,6 +48,7 @@ export async function ensureDeskTables(): Promise<void> {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_hostToken_key" ON "DeskEvent"("hostToken")`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_doorToken_key" ON "DeskEvent"("doorToken")`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "code" TEXT NOT NULL DEFAULT ''`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "slotCap" INTEGER NOT NULL DEFAULT 1`);
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "DeskBooking" (
       "id" TEXT PRIMARY KEY,
@@ -135,6 +158,7 @@ function present(row: {
   name: string;
   code: string;
   eventDate: string;
+  slotCap: number;
   questions: string;
   slots: string;
   joinToken: string;
@@ -148,7 +172,8 @@ function present(row: {
     code: row.code,
     name: row.name,
     eventDate: row.eventDate,
-    questions: parseStringList(row.questions),
+    slotCap: row.slotCap || 1,
+    questions: parseDeskQuestions(row.questions),
     slots: parseStringList(row.slots),
     joinUrl: `${base}/join/${row.joinToken}`,
     hostUrl: `${base}/host/${row.hostToken}`,
@@ -169,15 +194,16 @@ function cleanList(items: string[] | undefined, fallback: string[], max: number,
   return JSON.stringify(source.map((item) => item.trim().slice(0, length)).filter(Boolean).slice(0, max));
 }
 
-export async function createDeskEvent(name: string, eventDate: string, questions?: string[], slots?: string[]) {
+export async function createDeskEvent(name: string, eventDate: string, questions?: DeskQuestion[], slots?: string[], slotCap = 1) {
   await ensureDeskTables();
   const row = await prisma.deskEvent.create({
     data: {
       name: name.slice(0, 120),
       code: await nextEventCode(),
       eventDate: eventDate.slice(0, 40),
-      questions: cleanList(questions, [], 8, 80),
-      slots: cleanList(slots, DEFAULT_DESK_SLOTS, 12, 40),
+      slotCap: Math.min(500, Math.max(1, Math.round(slotCap) || 1)),
+      questions: JSON.stringify(parseDeskQuestions(JSON.stringify(questions || []))),
+      slots: cleanList(slots, [], 96, 40),
       joinToken: generateSigningToken(),
       hostToken: generateSigningToken(),
       doorToken: generateSigningToken(),
@@ -187,17 +213,14 @@ export async function createDeskEvent(name: string, eventDate: string, questions
   return present(row);
 }
 
-export async function updateDeskEvent(id: string, input: { name?: string; eventDate?: string; questions?: string[]; slots?: string[] }) {
+export async function updateDeskEvent(id: string, input: { name?: string; eventDate?: string; questions?: DeskQuestion[]; slots?: string[]; slotCap?: number }) {
   await ensureDeskTables();
-  const data: { name?: string; eventDate?: string; questions?: string; slots?: string } = {};
+  const data: { name?: string; eventDate?: string; questions?: string; slots?: string; slotCap?: number } = {};
   if (typeof input.name === "string") data.name = input.name.trim().slice(0, 120);
   if (typeof input.eventDate === "string") data.eventDate = input.eventDate.trim().slice(0, 40);
-  if (Array.isArray(input.questions)) {
-    data.questions = JSON.stringify(input.questions.map((item) => item.trim().slice(0, 80)).filter(Boolean).slice(0, 8));
-  }
-  if (Array.isArray(input.slots)) {
-    data.slots = JSON.stringify(input.slots.map((item) => item.trim().slice(0, 40)).filter(Boolean).slice(0, 12));
-  }
+  if (Array.isArray(input.questions)) data.questions = JSON.stringify(parseDeskQuestions(JSON.stringify(input.questions)));
+  if (Array.isArray(input.slots)) data.slots = JSON.stringify(input.slots.map((item) => item.trim().slice(0, 40)).filter(Boolean).slice(0, 96));
+  if (typeof input.slotCap === "number") data.slotCap = Math.min(500, Math.max(1, Math.round(input.slotCap) || 1));
   const row = await prisma.deskEvent.update({
     where: { id },
     data,

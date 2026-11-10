@@ -18,8 +18,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   const event = await updateDeskEvent(params.id, {
     name: typeof body.name === "string" ? body.name : undefined,
     eventDate: typeof body.eventDate === "string" ? body.eventDate : undefined,
-    questions: Array.isArray(body.questions) ? body.questions.filter((item: unknown) => typeof item === "string") : undefined,
+    questions: Array.isArray(body.questions) ? body.questions : undefined,
     slots: Array.isArray(body.slots) ? body.slots.filter((item: unknown) => typeof item === "string") : undefined,
+    slotCap: Number.isFinite(Number(body.slotCap)) ? Number(body.slotCap) : undefined,
   });
   return NextResponse.json({ event });
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { DESK_SLOT_CAP, ensureDeskTables, parseAnswers, parseStringList } from "@/lib/eventDesk";
+import { ensureDeskTables, parseAnswers, parseStringList } from "@/lib/eventDesk";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ function view(event: NonNullable<Awaited<ReturnType<typeof eventByHost>>>) {
     name: event.name,
     eventDate: event.eventDate,
     slots: parseStringList(event.slots),
-    cap: DESK_SLOT_CAP,
+    cap: event.slotCap || 1,
     bookings: event.bookings.map((booking) => ({
       id: booking.id,
       name: booking.name,
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { token:
   if (!booking || !slots.includes(slot)) return NextResponse.json({ error: "Could not move that booking." }, { status: 400 });
   if (booking.slot !== slot) {
     const taken = event.bookings.filter((row) => row.slot === slot).length;
-    if (taken >= DESK_SLOT_CAP) return NextResponse.json({ error: "That time is full." }, { status: 400 });
+    if (taken >= (event.slotCap || 1)) return NextResponse.json({ error: "That time is full." }, { status: 400 });
     await prisma.deskBooking.update({ where: { id: booking.id }, data: { slot } });
   }
   const next = await eventByHost(params.token);
