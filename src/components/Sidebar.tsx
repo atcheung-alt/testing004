@@ -25,6 +25,7 @@ import {
   Package,
   IdCard,
   HandCoins,
+  QrCode,
 } from "lucide-react";
 import clsx from "clsx";
 import CompanyLogo from "@/components/CompanyLogo";
@@ -68,6 +69,7 @@ function buildNavGroups(t: (key: string) => string): NavGroup[] {
       items: [
         { href: "/recruitment", label: t("Recruitment"), icon: Briefcase },
         { href: "/recruitment/online-cv", label: t("Online CV"), icon: IdCard },
+        { href: "/event-desk", label: t("Event desk"), icon: QrCode },
         { href: "/massage", label: t("Massage"), icon: Medal },
         { href: "/clients", label: t("Clients"), icon: Users },
       ],
@@ -284,6 +286,7 @@ export default function Sidebar({
   allowedPages = "all",
   canManage = false,
   showOnlineCv = false,
+  showEventDesk = false,
 }: {
   logoData?: string | null;
   logoDataDark?: string | null;
@@ -292,6 +295,7 @@ export default function Sidebar({
   allowedPages?: "all" | string[];
   canManage?: boolean;
   showOnlineCv?: boolean;
+  showEventDesk?: boolean;
 }) {
   const pathname = usePathname();
   const t = useT();
@@ -304,9 +308,14 @@ export default function Sidebar({
       ...group,
       items:
         allowedPages === "all"
-          ? group.items.filter((item) => item.href !== "/recruitment/online-cv" || showOnlineCv)
+          ? group.items.filter((item) => {
+              if (item.href === "/recruitment/online-cv") return showOnlineCv;
+              if (item.href === "/event-desk") return showEventDesk;
+              return true;
+            })
           : group.items.filter((item) => {
               if (item.href === "/recruitment/online-cv" && !showOnlineCv) return false;
+              if (item.href === "/event-desk") return showEventDesk;
               if (item.href === "/") return allowedPages.includes("dashboard");
               if (item.href === "/quotations/templates") return allowedPages.includes("templates");
               if (item.href === "/quotations") return allowedPages.includes("quotations");

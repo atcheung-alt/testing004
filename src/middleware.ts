@@ -112,7 +112,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const onlineCvOnly = pathname === "/recruitment/online-cv" || pathname.startsWith("/recruitment/online-cv/") || pathname === "/cv-desk" || pathname.startsWith("/cv-desk/");
-  if (onlineCvOnly && session.email.trim().toLowerCase() !== "atcheung@hrplus.info") {
+  const eventDeskOnly = pathname === "/event-desk" || pathname.startsWith("/event-desk/");
+  if ((onlineCvOnly || eventDeskOnly) && session.email.trim().toLowerCase() !== "atcheung@hrplus.info") {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Not found." }, { status: 404 });
     }
