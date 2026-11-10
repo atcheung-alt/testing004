@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import { Plus, Search } from "lucide-react";
 import clsx from "clsx";
 
 export type DeskEventSummary = { id: string; name: string; eventDate: string; booked: number };
@@ -50,6 +51,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
   const [qr, setQr] = useState("");
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (!open?.doorUrl) return;
@@ -117,40 +119,62 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   }
 
   if (!open) {
+    const needle = query.trim().toLowerCase();
+    const visible = needle ? events.filter((event) => `${event.name} ${event.eventDate}`.toLowerCase().includes(needle)) : events;
     return (
-      <div className="max-w-3xl">
-        <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl">Events</h1>
-            <p className="lead mt-2">One event per client. Open an event to change its questions.</p>
+            <h1 className="font-display text-2xl font-semibold text-ink mb-1">Events</h1>
+            <p className="lead">One event per client. Open an event to change its questions.</p>
           </div>
-          <button type="button" className="btn-primary shrink-0" onClick={() => setCreating(true)}>
-            New event
-          </button>
+          <div className="flex gap-2 shrink-0">
+            <button type="button" className="btn-primary" onClick={() => setCreating(true)}>
+              <Plus size={15} /> New event
+            </button>
+          </div>
         </div>
 
-        <div className="card mt-5 divide-y divide-line">
-          {events.length === 0 && <p className="p-5 text-sm text-ink-muted">No events yet.</p>}
-          {events.map((event) => (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+              <input className="input pl-9" placeholder="Search by event…" value={query} onChange={(event) => setQuery(event.target.value)} />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <span className="stamp border-brand-500 text-brand-500">All</span>
+          </div>
+        </div>
+
+        <div className="card divide-y divide-line">
+          {visible.length === 0 && <p className="px-4 sm:px-5 py-5 text-sm text-ink-muted">No events yet.</p>}
+          {visible.map((event) => (
             <button
               key={event.id}
               type="button"
               onClick={() => router.push(`/event-desk?id=${event.id}`)}
-              className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-paper"
+              className="flex w-full flex-wrap items-center justify-between px-4 sm:px-5 py-5 hover:bg-paper transition-colors gap-3 text-left"
             >
-              <span className="min-w-0">
-                <span className="block truncate font-semibold">{event.name}</span>
-                <span className="mt-0.5 block text-sm text-ink-muted">
-                  {event.eventDate || "Date not set"} · {event.booked} booked
-                </span>
-              </span>
-              <span className="stamp shrink-0 border-line text-ink-muted">Edit</span>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm font-medium">{event.name}</span>
+                </div>
+                <p className="text-xs text-ink-muted truncate mt-0.5">{event.eventDate || "Date not set"}</p>
+                <p className="text-xs text-ink-faint truncate mt-0.5">{event.booked} booked</p>
+              </div>
+              <div className="flex items-center gap-4 sm:gap-5 shrink-0">
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Booked</p>
+                  <p className="font-mono text-sm text-ink">{event.booked}</p>
+                </div>
+              </div>
             </button>
           ))}
         </div>
 
         {creating && (
-          <section className="card mt-5 p-5">
+          <section className="card p-5">
             <h2 className="text-base font-semibold">New event</h2>
             <p className="mt-1 text-sm text-ink-muted">Name, email, and a time are always on the candidate form. Add only the extra questions.</p>
             <Field label="Event name">
