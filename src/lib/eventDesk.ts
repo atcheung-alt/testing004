@@ -135,14 +135,19 @@ function present(row: {
   };
 }
 
-export async function createDeskEvent(name: string, eventDate: string) {
+function cleanList(items: string[] | undefined, fallback: string[], max: number, length: number) {
+  const source = Array.isArray(items) && items.length ? items : fallback;
+  return JSON.stringify(source.map((item) => item.trim().slice(0, length)).filter(Boolean).slice(0, max));
+}
+
+export async function createDeskEvent(name: string, eventDate: string, questions?: string[], slots?: string[]) {
   await ensureDeskTables();
   const row = await prisma.deskEvent.create({
     data: {
       name: name.slice(0, 120),
       eventDate: eventDate.slice(0, 40),
-      questions: "[]",
-      slots: JSON.stringify(DEFAULT_DESK_SLOTS),
+      questions: cleanList(questions, [], 8, 80),
+      slots: cleanList(slots, DEFAULT_DESK_SLOTS, 12, 40),
       joinToken: generateSigningToken(),
       hostToken: generateSigningToken(),
       doorToken: generateSigningToken(),

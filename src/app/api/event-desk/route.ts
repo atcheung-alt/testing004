@@ -14,6 +14,8 @@ export async function POST(request: NextRequest) {
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const eventDate = typeof body.eventDate === "string" ? body.eventDate.trim() : "";
   if (!name) return NextResponse.json({ error: "Enter an event name." }, { status: 400 });
-  const event = await createDeskEvent(name, eventDate);
+  const questions = Array.isArray(body.questions) ? body.questions.filter((item: unknown) => typeof item === "string") : [];
+  const slots = Array.isArray(body.slots) ? body.slots.filter((item: unknown) => typeof item === "string") : [];
+  const event = await createDeskEvent(name, eventDate, questions, slots);
   return NextResponse.json({ event });
 }
