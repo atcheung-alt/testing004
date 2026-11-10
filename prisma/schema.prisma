@@ -1239,3 +1239,34 @@ model AccessGroup {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// An HR Plus event desk day: one client event, its own questions, and three
+// public tokens (candidate form, manager list, door QR). New empty tables.
+model DeskEvent {
+  id         String        @id @default(cuid())
+  name       String
+  eventDate  String        @default("")
+  questions  String        @default("[]")
+  slots      String        @default("[]")
+  joinToken  String        @unique
+  hostToken  String        @unique
+  doorToken  String        @unique
+  bookings   DeskBooking[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model DeskBooking {
+  id        String    @id @default(cuid())
+  eventId   String
+  event     DeskEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  answers   String    @default("{}")
+  slot      String
+  arrived   Boolean   @default(false)
+  arrivedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([eventId, createdAt])
+}

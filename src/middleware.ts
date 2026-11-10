@@ -35,6 +35,9 @@ const PUBLIC_PATH_PREFIXES = [
   "/massage-survey/",
   // One worker's monthly hours link. Token-scoped, no login.
   "/timesheet/",
+  "/join/",
+  "/host/",
+  "/door/",
   "/api/auth/",
   "/api/access-requests",
   "/api/public/",
@@ -79,6 +82,9 @@ const PUBLIC_CLIENT_PATH_PREFIXES = [
   "/manage-booking/",
   "/massage-survey/",
   "/timesheet/",
+  "/join/",
+  "/host/",
+  "/door/",
 ];
 
 function isPublicClientPath(pathname: string): boolean {
