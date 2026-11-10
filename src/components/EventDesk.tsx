@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { Plus, Search } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Search } from "lucide-react";
 import clsx from "clsx";
 
 export type DeskEventSummary = { id: string; code: string; name: string; eventDate: string; booked: number };
@@ -296,30 +296,73 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
         </div>
       </section>
 
-      <section className="card mt-4">
-        <h2 className="px-4 pt-4 text-base font-semibold">Bookings</h2>
-        <div className="mt-2 divide-y divide-line">
-          {open.bookings.length === 0 && <p className="px-4 py-5 text-sm text-ink-muted">No bookings yet.</p>}
-          {open.bookings.map((booking) => (
-            <div key={booking.id} className="flex items-center justify-between gap-3 px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{booking.name}</p>
-                <p className="truncate text-sm text-ink-muted">
-                  {booking.email} · {booking.slot}
-                  {Object.entries(booking.answers)
-                    .filter(([, value]) => value)
-                    .map(([key, value]) => ` · ${key}: ${value}`)
-                    .join("")}
-                </p>
-              </div>
-              <span className={clsx("stamp shrink-0", booking.arrived ? "border-emerald-600 text-emerald-700" : "border-line text-ink-muted")}>
-                {booking.arrived ? "Arrived" : "Booked"}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <BookingList bookings={open.bookings} />
     </div>
+  );
+}
+
+function markText(text: string, query: string) {
+  if (!query) return text;
+  const index = text.toLowerCase().indexOf(query);
+  if (index < 0) return text;
+  return (
+    <>
+      {text.slice(0, index)}
+      <mark className="bg-brand-50 text-inherit">{text.slice(index, index + query.length)}</mark>
+      {text.slice(index + query.length)}
+    </>
+  );
+}
+
+function BookingList({ bookings }: { bookings: DeskBookingView[] }) {
+  const [open, setOpen] = useState(bookings.length < 5);
+  const [query, setQuery] = useState("");
+  const arrived = bookings.filter((booking) => booking.arrived).length;
+  const needle = query.trim().toLowerCase();
+  const visible = bookings.filter((booking) => {
+    const status = booking.arrived ? "arrived" : "booked";
+    return `${booking.name} ${booking.email} ${booking.slot} ${status}`.toLowerCase().includes(needle);
+  });
+  return (
+    <section className="card mt-4">
+      <button type="button" className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left" onClick={() => setOpen(!open)}>
+        <span className="text-base font-semibold">
+          Bookings ({bookings.length} booked · {arrived} arrived)
+        </span>
+        {open ? <ChevronUp size={18} className="text-ink-muted" /> : <ChevronDown size={18} className="text-ink-muted" />}
+      </button>
+      {open && (
+        <div className="px-4 pb-4">
+          <div className="relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" />
+            <input className="input pl-9" placeholder="Search by name, email, or time slot..." value={query} onChange={(event) => setQuery(event.target.value)} />
+          </div>
+          <div className="mt-2 divide-y divide-line">
+            {bookings.length === 0 && <p className="py-4 text-sm text-ink-muted">No bookings yet.</p>}
+            {bookings.length > 0 && visible.length === 0 && (
+              <p className="py-4 text-sm text-ink-muted">No bookings found matching &apos;{query.trim()}&apos;</p>
+            )}
+            {visible.map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between gap-3 py-3">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{markText(booking.name, needle)}</p>
+                  <p className="truncate text-sm text-ink-muted">
+                    {markText(booking.email, needle)} · {markText(booking.slot, needle)}
+                    {Object.entries(booking.answers)
+                      .filter(([, value]) => value)
+                      .map(([key, value]) => ` · ${key}: ${value}`)
+                      .join("")}
+                  </p>
+                </div>
+                <span className={clsx("stamp shrink-0", booking.arrived ? "border-emerald-600 text-emerald-700" : "border-line text-ink-muted")}>
+                  {booking.arrived ? "Arrived" : "Booked"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
