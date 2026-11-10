@@ -101,7 +101,7 @@ export function parseAnswers(value: string): Record<string, string> {
 
 export async function requireDeskUser() {
   const user = await getCurrentUser();
-  if (!user || user.email.trim().toLowerCase() !== "atcheung@hrplus.info") return null;
+  if (!user) return null;
   return user;
 }
 
