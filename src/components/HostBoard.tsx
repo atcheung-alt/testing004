@@ -19,6 +19,7 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
   const [menu, setMenu] = useState("");
+  const [confirmId, setConfirmId] = useState("");
   const [scanOpen, setScanOpen] = useState(false);
   const [scanEmail, setScanEmail] = useState("");
 
@@ -124,14 +125,28 @@ export default function HostBoard({ token, initial }: { token: string; initial: 
             </div>
             {menu === booking.id && (
               <div className="mx-4 mb-3 rounded-xl border border-line bg-white p-1.5">
-                <button type="button" className="block w-full rounded-lg px-2.5 py-2 text-left text-sm" onClick={() => patch({ bookingId: booking.id, arrived: !booking.arrived })}>
-                  {booking.arrived ? "Mark as not arrived" : "Mark arrived"}
-                </button>
-                <select className="input mt-1" value={booking.slot} onChange={(event) => patch({ bookingId: booking.id, slot: event.target.value }, event.target.value)}>
+                <select className="input" value={booking.slot} onChange={(event) => patch({ bookingId: booking.id, slot: event.target.value }, event.target.value)}>
                   {board.slots.map((time) => (
                     <option key={time} value={time}>{time}</option>
                   ))}
                 </select>
+                <button type="button" className="mt-1 block w-full rounded-lg px-2.5 py-2 text-left text-sm text-rose-700" onClick={() => { setConfirmId(booking.id); setMenu(""); }}>
+                  Delete
+                </button>
+              </div>
+            )}
+            {confirmId === booking.id && (
+              <div className="mx-4 mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                <p className="font-semibold">Delete {booking.name}?</p>
+                <p className="mt-1">This removes their booking. This cannot be undone.</p>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white" onClick={() => { setConfirmId(""); patch({ bookingId: booking.id, remove: true }); }}>
+                    Delete
+                  </button>
+                  <button type="button" className="rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold" onClick={() => setConfirmId("")}>
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
           </div>

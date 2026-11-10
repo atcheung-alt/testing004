@@ -53,6 +53,11 @@ export async function PATCH(request: NextRequest, { params }: { params: { token:
   const booking = event.bookings.find((row) => row.id === bookingId);
   if (!booking) return NextResponse.json({ error: "Could not update that booking." }, { status: 400 });
   const data: { slot?: string; arrived?: boolean; arrivedAt?: Date | null } = {};
+  if (body.remove === true) {
+    await prisma.deskBooking.delete({ where: { id: booking.id } });
+    const next = await eventByHost(params.token);
+    return NextResponse.json(view(next!));
+  }
   if (typeof body.arrived === "boolean") {
     data.arrived = body.arrived;
     data.arrivedAt = body.arrived ? new Date() : null;
