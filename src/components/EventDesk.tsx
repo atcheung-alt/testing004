@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 import clsx from "clsx";
 
 export type DeskEventSummary = { id: string; name: string; eventDate: string; booked: number };
@@ -48,6 +49,18 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
   const [saving, setSaving] = useState(false);
+  const [qr, setQr] = useState("");
+
+  useEffect(() => {
+    if (!open?.doorUrl) return;
+    let live = true;
+    QRCode.toDataURL(open.doorUrl, { margin: 1, width: 480, errorCorrectionLevel: "M" }).then((url) => {
+      if (live) setQr(url);
+    });
+    return () => {
+      live = false;
+    };
+  }, [open?.doorUrl]);
 
   async function createEvent() {
     setError("");
@@ -226,7 +239,11 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
         <div className="mt-4 space-y-4">
           <LinkRow label="Candidate link" url={open.joinUrl} copied={copied === "join"} onCopy={async () => setCopied((await copy(open.joinUrl)) ? "join" : "")} />
           <LinkRow label="Client manager link" url={open.hostUrl} copied={copied === "host"} onCopy={async () => setCopied((await copy(open.hostUrl)) ? "host" : "")} />
-          <LinkRow label="Door QR link" url={open.doorUrl} copied={copied === "door"} onCopy={async () => setCopied((await copy(open.doorUrl)) ? "door" : "")} />
+          <div>
+            <p className="text-sm font-semibold">Door QR</p>
+            <p className="mt-1 text-sm text-ink-muted">The candidate scans this. Their phone asks for the booking email, then shows the time slot.</p>
+            {qr && <img src={qr} alt="Event QR code" className="mt-3 h-44 w-44 rounded-xl border border-line bg-white p-2" />}
+          </div>
         </div>
       </section>
 
