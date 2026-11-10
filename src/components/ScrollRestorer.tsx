@@ -42,16 +42,33 @@ export default function ScrollRestorer({ restoreKey }: { restoreKey: string }) {
       }
     }
 
+    let locked = false;
     function save() {
+      if (locked) return;
       sessionStorage.setItem(storageKey, String(window.scrollY));
     }
-    // Continuous, not just on unload — clicking a row link is a client-side
-    // route change, not a real page unload, so `beforeunload` alone would
-    // never fire and we'd have nothing saved to restore later.
-    window.addEventListener("scroll", save, { passive: true });
-    return () => {
+    // Save before Next scrolls the window to the top. A later scroll-to-top
+    // must not replace the row position with 0.
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest("a");
+      if (!link) return;
+      const href = link.getAttribute("href") || "";
+      if (!href.startsWith("/invoices/")) return;
+      sessionStorage.setItem(storageKey, String(window.scrollY));
+      locked = true;
+    }
+    function onScroll() {
+      if (locked && window.scrollY < 8) return;
+      locked = false;
       save();
-      window.removeEventListener("scroll", save);
+    }
+    document.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("scroll", onScroll);
     };
   }, [restoreKey]);
 
