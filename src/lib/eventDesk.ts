@@ -11,6 +11,7 @@ export async function ensureDeskTables(): Promise<void> {
     CREATE TABLE IF NOT EXISTS "DeskEvent" (
       "id" TEXT PRIMARY KEY,
       "name" TEXT NOT NULL,
+      "code" TEXT NOT NULL DEFAULT '',
       "eventDate" TEXT NOT NULL DEFAULT '',
       "questions" TEXT NOT NULL DEFAULT '[]',
       "slots" TEXT NOT NULL DEFAULT '[]',
@@ -24,6 +25,7 @@ export async function ensureDeskTables(): Promise<void> {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_joinToken_key" ON "DeskEvent"("joinToken")`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_hostToken_key" ON "DeskEvent"("hostToken")`);
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "DeskEvent_doorToken_key" ON "DeskEvent"("doorToken")`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "DeskEvent" ADD COLUMN IF NOT EXISTS "code" TEXT NOT NULL DEFAULT ''`);
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "DeskBooking" (
       "id" TEXT PRIMARY KEY,
@@ -79,14 +81,38 @@ export async function requireDeskUser() {
   return user;
 }
 
+async function nextEventCode(): Promise<string> {
+  const year = new Date().getFullYear();
+  const pattern = `EV-${year}-`;
+  const rows = await prisma.deskEvent.findMany({
+    where: { code: { startsWith: pattern } },
+    select: { code: true },
+  });
+  let maxSeq = 0;
+  for (const row of rows) {
+    const seq = parseInt(row.code.slice(pattern.length), 10);
+    if (!Number.isNaN(seq) && seq > maxSeq) maxSeq = seq;
+  }
+  return `${pattern}${String(maxSeq + 1).padStart(4, "0")}`;
+}
+
+async function fillMissingEventCodes(): Promise<void> {
+  const missing = await prisma.deskEvent.findMany({ where: { code: "" }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  for (const row of missing) {
+    await prisma.deskEvent.update({ where: { id: row.id }, data: { code: await nextEventCode() } });
+  }
+}
+
 export async function listDeskEvents() {
   await ensureDeskTables();
+  await fillMissingEventCodes();
   const rows = await prisma.deskEvent.findMany({
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { bookings: true } } },
   });
   return rows.map((row) => ({
     id: row.id,
+    code: row.code,
     name: row.name,
     eventDate: row.eventDate,
     booked: row._count.bookings,
@@ -95,6 +121,7 @@ export async function listDeskEvents() {
 
 export async function loadDeskEvent(id: string) {
   await ensureDeskTables();
+  await fillMissingEventCodes();
   const row = await prisma.deskEvent.findUnique({
     where: { id },
     include: { bookings: { orderBy: { createdAt: "desc" } } },
@@ -106,6 +133,7 @@ export async function loadDeskEvent(id: string) {
 function present(row: {
   id: string;
   name: string;
+  code: string;
   eventDate: string;
   questions: string;
   slots: string;
@@ -117,6 +145,7 @@ function present(row: {
   const base = deskBaseUrl();
   return {
     id: row.id,
+    code: row.code,
     name: row.name,
     eventDate: row.eventDate,
     questions: parseStringList(row.questions),
@@ -145,6 +174,7 @@ export async function createDeskEvent(name: string, eventDate: string, questions
   const row = await prisma.deskEvent.create({
     data: {
       name: name.slice(0, 120),
+      code: await nextEventCode(),
       eventDate: eventDate.slice(0, 40),
       questions: cleanList(questions, [], 8, 80),
       slots: cleanList(slots, DEFAULT_DESK_SLOTS, 12, 40),

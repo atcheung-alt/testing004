@@ -6,7 +6,7 @@ import QRCode from "qrcode";
 import { Plus, Search } from "lucide-react";
 import clsx from "clsx";
 
-export type DeskEventSummary = { id: string; name: string; eventDate: string; booked: number };
+export type DeskEventSummary = { id: string; code: string; name: string; eventDate: string; booked: number };
 export type DeskBookingView = {
   id: string;
   name: string;
@@ -17,6 +17,7 @@ export type DeskBookingView = {
 };
 export type DeskEventView = {
   id: string;
+  code: string;
   name: string;
   eventDate: string;
   questions: string[];
@@ -120,7 +121,7 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
 
   if (!open) {
     const needle = query.trim().toLowerCase();
-    const visible = needle ? events.filter((event) => `${event.name} ${event.eventDate}`.toLowerCase().includes(needle)) : events;
+    const visible = needle ? events.filter((event) => `${event.code} ${event.name} ${event.eventDate}`.toLowerCase().includes(needle)) : events;
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -158,9 +159,12 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-medium">{event.name}</span>
+                  <span className="font-mono text-sm font-medium">{event.code}</span>
                 </div>
-                <p className="text-xs text-ink-muted truncate mt-0.5">{event.eventDate || "Date not set"}</p>
+                <p className="text-xs text-ink-muted truncate mt-0.5">
+                  {event.name}
+                  {event.eventDate ? ` · ${event.eventDate}` : ""}
+                </p>
                 <p className="text-xs text-ink-faint truncate mt-0.5">{event.booked} booked</p>
               </div>
               <div className="flex items-center gap-4 sm:gap-5 shrink-0">
@@ -223,9 +227,9 @@ export default function EventDesk({ events, open }: { events: DeskEventSummary[]
       <button type="button" className="text-sm text-ink-muted" onClick={() => router.push("/event-desk")}>
         ← Events
       </button>
-      <h1 className="font-display text-2xl mt-3">{open.name}</h1>
-      <p className="lead mt-2">
-        {open.bookings.length} booked · {arrived} arrived
+      <h1 className="font-display text-2xl font-semibold text-ink mt-3">{open.code}</h1>
+      <p className="lead">
+        {open.name} · {open.bookings.length} booked · {arrived} arrived
       </p>
 
       <section className="card mt-5 p-5">

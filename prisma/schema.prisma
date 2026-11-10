@@ -1245,6 +1245,7 @@ model AccessGroup {
 model DeskEvent {
   id         String        @id @default(cuid())
   name       String
+  code       String        @unique @default("")
   eventDate  String        @default("")
   questions  String        @default("[]")
   slots      String        @default("[]")
