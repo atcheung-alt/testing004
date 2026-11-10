@@ -18,23 +18,7 @@ function issuedDate(iso: string) {
   return `${day}/${month}/${year}`;
 }
 
-function expenseCodes(history: HistoryRow[]) {
-  const byYear = new Map<string, HistoryRow[]>();
-  for (const row of history) {
-    const year = row.date.slice(0, 4) || "0000";
-    const list = byYear.get(year) || [];
-    list.push(row);
-    byYear.set(year, list);
-  }
-  const codes = new Map<string, string>();
-  for (const [year, list] of byYear) {
-    const sorted = [...list].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.id.localeCompare(b.id)));
-    sorted.forEach((row, index) => {
-      codes.set(`${row.source}-${row.id}`, `EX-${year}-${String(index + 1).padStart(4, "0")}`);
-    });
-  }
-  return codes;
-}
+import { expenseCodes } from "@/lib/expenseCodes";
 
 const CATEGORIES = [
   "Rent & Office",

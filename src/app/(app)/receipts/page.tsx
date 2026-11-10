@@ -15,6 +15,7 @@ import { isValidEmail, receiptEmailContent } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
 import { ensureGeneralExpenseTable } from "@/lib/generalExpense";
+import { expenseCodes } from "@/lib/expenseCodes";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,6 @@ async function MoneyList({
 
   const invoiceExpenses = await prisma.invoiceExpense.findMany({
           where: {
-            createdAt: range,
             invoice: visibility || undefined,
           },
           include: {
@@ -78,7 +78,6 @@ async function MoneyList({
         });
 
   const generalExpenses = await prisma.generalExpense.findMany({
-          where: range ? { spentAt: range } : undefined,
           orderBy: { spentAt: "desc" },
           select: {
             id: true,
@@ -105,9 +104,14 @@ async function MoneyList({
   });
 
   const receiptTotal = receipts.reduce((sum, receipt) => sum + (receipt.invoice?.total || 0), 0);
+  const inRange = (date: string) => {
+    if (from && date < from) return false;
+    if (to && date > to) return false;
+    return true;
+  };
   const expenseTotal =
-    invoiceExpenses.reduce((sum, expense) => sum + expense.amount, 0) +
-    generalExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    invoiceExpenses.filter((expense) => inRange(expense.createdAt.toISOString().slice(0, 10))).reduce((sum, expense) => sum + expense.amount, 0) +
+    generalExpenses.filter((expense) => inRange(expense.spentAt.toISOString().slice(0, 10))).reduce((sum, expense) => sum + expense.amount, 0);
 
   type Row = {
     key: string;
@@ -125,7 +129,22 @@ async function MoneyList({
     customerEmail?: string | null;
     emailSubject?: string;
     emailBody?: string;
+    detail?: string;
   };
+
+  const coded = [
+    ...invoiceExpenses.map((expense) => ({
+      id: expense.id,
+      source: "invoice" as const,
+      date: expense.createdAt.toISOString().slice(0, 10),
+    })),
+    ...generalExpenses.map((expense) => ({
+      id: expense.id,
+      source: "general" as const,
+      date: expense.spentAt.toISOString().slice(0, 10),
+    })),
+  ];
+  const codes = expenseCodes(coded);
 
   const rows: Row[] = [
     ...(view === "expenses" ? [] : receipts).map((receipt) => ({
@@ -159,13 +178,14 @@ async function MoneyList({
           }).body
         : "",
     })),
-    ...(view === "receipts" ? [] : expenses).map((expense) => ({
+    ...(view === "receipts" ? [] : expenses).filter((expense) => inRange(expense.createdAt.toISOString().slice(0, 10))).map((expense) => ({
       key: `expense-${expense.id}`,
       when: expense.createdAt,
       kind: "expense" as const,
       href: `/invoices/${expense.invoice.id}`,
-      title: expense.category === "Others" ? expense.label || t("Others") : t(expense.category),
-      subtitle: `${expense.invoice.number} · ${expense.invoice.customerName} · ${formatDate(expense.createdAt)}`,
+      title: codes.get(`invoice-${expense.id}`) || expense.category,
+      subtitle: expense.category === "Others" ? expense.label || t("Others") : t(expense.category),
+      detail: `${expense.invoice.number} · ${expense.invoice.customerName} · ${formatDate(expense.createdAt)}`,
       amount: expense.amount,
       expenseId: expense.id,
       invoiceId: expense.invoice.id,
@@ -174,7 +194,7 @@ async function MoneyList({
       emailSubject: `Expense for ${expense.invoice.number}`,
       emailBody: `Dear ${expense.invoice.customerName || "Customer"},\n\nPlease find the expense record for invoice ${expense.invoice.number} attached.\n`,
     })),
-    ...(view === "receipts" ? [] : generals).map((expense) => {
+    ...(view === "receipts" ? [] : generals).filter((expense) => inRange(expense.spentAt.toISOString().slice(0, 10))).map((expense) => {
       const linked = Boolean(expense.invoiceNumber);
       const when = formatDate(expense.spentAt);
       return {
@@ -182,8 +202,9 @@ async function MoneyList({
         when: expense.spentAt,
         kind: "expense" as const,
         href: expense.invoiceId ? `/invoices/${expense.invoiceId}` : "/expenses",
-        title: expense.name || t("General"),
-        subtitle: linked
+        title: codes.get(`general-${expense.id}`) || expense.name || t("General"),
+        subtitle: expense.name || t("General"),
+        detail: linked
           ? `${expense.invoiceNumber} · ${expense.vendor || "—"} · ${when}`
           : [when, expense.vendor].filter(Boolean).join(" · "),
         amount: expense.amount,
@@ -240,7 +261,7 @@ async function MoneyList({
                 </span>
               </div>
               <p className="text-xs text-ink-muted truncate mt-0.5">{row.subtitle}</p>
-              <p className="text-xs text-ink-faint truncate mt-0.5">&nbsp;</p>
+              <p className="text-xs text-ink-faint truncate mt-0.5">{row.detail || "\u00a0"}</p>
             </Link>
             <div className="flex items-center gap-4 sm:gap-5 shrink-0">
               <div className="text-right">
