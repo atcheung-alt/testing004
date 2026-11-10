@@ -5,6 +5,16 @@ import { sendDocumentEmail } from "@/lib/mailer";
 
 export const dynamic = "force-dynamic";
 
+function emailLooksDeliverable(email: string) {
+  if (!/^[a-z0-9][a-z0-9._%+-]{0,63}@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email)) return false;
+  const [local, domain] = email.split("@");
+  if (/_{3,}|\+{2,}|[^a-z0-9]{3,}/i.test(local)) return false;
+  const letters = local.match(/[a-z0-9]/gi) || [];
+  if (letters.length < 3) return false;
+  if (domain.includes("..") || domain.startsWith("-") || domain.endsWith("-")) return false;
+  return true;
+}
+
 export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
   await ensureDeskTables();
   const event = await prisma.deskEvent.findUnique({
@@ -36,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (!name || !slots.includes(slot)) {
     return NextResponse.json({ error: "Enter a name, an email, and a time." }, { status: 400 });
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+  if (!emailLooksDeliverable(email)) {
     return NextResponse.json(
       { error: "That email address looks wrong. Type it again and make sure it is correct." },
       { status: 400 }

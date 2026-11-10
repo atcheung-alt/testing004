@@ -45,7 +45,7 @@ export default function JoinForm({
 
   async function book() {
     setError("");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+    if (!/^[a-z0-9][a-z0-9._%+-]{0,63}@[a-z0-9.-]+\.[a-z]{2,}$/i.test(email.trim()) || /_{3,}|\+{2,}/.test(email.trim().split("@")[0] || "")) {
       setError("That email address looks wrong. Type it again and make sure it is correct.");
       return;
     }
