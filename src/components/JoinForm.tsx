@@ -45,6 +45,10 @@ export default function JoinForm({
 
   async function book() {
     setError("");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      setError("That email address looks wrong. Type it again and make sure it is correct.");
+      return;
+    }
     setSaving(true);
     const response = await fetch(`/api/public/desk-join/${token}`, {
       method: "POST",
@@ -54,7 +58,7 @@ export default function JoinForm({
     const payload = await response.json().catch(() => ({}));
     setSaving(false);
     if (!response.ok) {
-      setError(payload.error || "We could not send the confirmation email. Check the email address and try again.");
+      setError(payload.error || "We could not send the confirmation. Type the email again and make sure the address is correct.");
       return;
     }
     setDone(payload.booking);

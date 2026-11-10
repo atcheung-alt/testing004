@@ -33,8 +33,14 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase().slice(0, 160) : "";
   const slot = typeof body.slot === "string" ? body.slot.trim() : "";
   const slots = parseStringList(event.slots);
-  if (!name || !email.includes("@") || !slots.includes(slot)) {
+  if (!name || !slots.includes(slot)) {
     return NextResponse.json({ error: "Enter a name, an email, and a time." }, { status: 400 });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return NextResponse.json(
+      { error: "That email address looks wrong. Type it again and make sure it is correct." },
+      { status: 400 }
+    );
   }
   const questions = parseDeskQuestions(event.questions);
   const raw = body.answers && typeof body.answers === "object" ? body.answers as Record<string, unknown> : {};
@@ -83,7 +89,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     console.error("[desk-join] confirmation email failed", err);
     await prisma.deskBooking.delete({ where: { id: booking.id } }).catch(() => undefined);
     return NextResponse.json(
-      { error: "We could not send the confirmation email. Check the email address and try again." },
+      { error: "We could not send the confirmation. Type the email again and make sure the address is correct." },
       { status: 502 }
     );
   }
