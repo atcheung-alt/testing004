@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Clock, Loader2, AlertCircle, CheckCircle2, CalendarDays, ChevronLeft, Check } from "lucide-react";
+import { Clock, Loader2, AlertCircle, CheckCircle2, CalendarDays, Check } from "lucide-react";
 import clsx from "clsx";
 import PublicBookingShell from "@/components/PublicBookingShell";
 import type { PublicCompany } from "@/components/PublicCompanyHeader";
@@ -198,9 +197,6 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
             <button type="button" onClick={() => setConfirmed(null)} className="btn-primary">
               {t("Make another booking")}
             </button>
-            <Link href="/book" className="btn-secondary">
-              {t("All Appointments")}
-            </Link>
           </div>
         </div>
       </PublicBookingShell>
@@ -211,9 +207,6 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
     <PublicBookingShell company={company}>
       <div className="flex flex-col gap-6">
         <div>
-          <Link href="/book" className="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink mb-3">
-            <ChevronLeft size={15} /> {t("All Appointments")}
-          </Link>
           <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{event.name}</h1>
           {event.companyName && (
             <p className="text-sm text-ink mt-1">{t("For {company}", { company: event.companyName })}</p>
