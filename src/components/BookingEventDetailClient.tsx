@@ -101,6 +101,10 @@ function BookingDetail({
   const t = useT();
 
   async function handleCancel() {
+    if (!note.trim()) {
+      setError(t("Write a reason. The client receives it in the email."));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -127,6 +131,10 @@ function BookingDetail({
   }
 
   async function handleReject() {
+    if (!note.trim()) {
+      setError(t("Write a reason. The client receives it in the email."));
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -711,12 +719,12 @@ export default function BookingEventDetailClient({
   }
 
   async function quickCancel(booking: BookingItem) {
-    const note = window.prompt(t("Cancel {name}? They will be emailed. You can add a short reason, or leave it blank.", { name: booking.clientName })) ;
-    if (note === null) return;
+    const note = window.prompt(t("Cancel {name}? Write the reason. They will receive it by email.", { name: booking.clientName }));
+    if (note === null || !note.trim()) return;
     setQuickActionId(booking.id);
     setQuickActionError(null);
     try {
-      const warning = await handleDecide(booking.id, "CANCELLED", note.trim() || null);
+      const warning = await handleDecide(booking.id, "CANCELLED", note.trim());
       if (warning) setQuickActionError({ id: booking.id, message: warning });
     } catch (err: any) {
       setQuickActionError({ id: booking.id, message: err.message });
@@ -726,17 +734,12 @@ export default function BookingEventDetailClient({
   }
 
   async function quickReject(booking: BookingItem) {
-    if (
-      !window.confirm(
-        t("Reject the booking request from {name}? They'll be emailed a note that it couldn't be confirmed — use the full booking view instead if you want to add a reason.", { name: booking.clientName })
-      )
-    ) {
-      return;
-    }
+    const note = window.prompt(t("Reject {name}? Write the reason. They will receive it by email.", { name: booking.clientName }));
+    if (note === null || !note.trim()) return;
     setQuickActionId(booking.id);
     setQuickActionError(null);
     try {
-      const warning = await handleDecide(booking.id, "REJECTED", null);
+      const warning = await handleDecide(booking.id, "REJECTED", note.trim());
       if (warning) setQuickActionError({ id: booking.id, message: warning });
     } catch (err: any) {
       setQuickActionError({ id: booking.id, message: err.message });

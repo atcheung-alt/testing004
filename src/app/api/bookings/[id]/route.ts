@@ -88,6 +88,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 
   const decidedNote = typeof body.decidedNote === "string" ? body.decidedNote.trim() || null : null;
+  if ((nextStatus === "CANCELLED" || nextStatus === "REJECTED") && !decidedNote) {
+    return NextResponse.json({ error: "Write a reason. The client receives it in the email." }, { status: 400 });
+  }
   const booking = await updateBookingStatus(params.id, nextStatus, decidedNote);
 
   const slotLabel = formatSlotLabel(existing.slotDate, existing.slotStartTime, existing.slotDurationMins);

@@ -54,6 +54,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [savedChoice, setSavedChoice] = useState<{ status: string; slotLabel: string } | null>(null);
   const [confirmed, setConfirmed] = useState<{
     date: string;
     startTime: string;
@@ -61,6 +62,24 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
     status: string;
     email: string;
   } | null>(null);
+
+  useEffect(() => {
+    const key = `hrplus-booking:${event.id}`;
+    let stop = false;
+    async function load() {
+      const id = window.localStorage.getItem(key);
+      if (!id) return;
+      const res = await fetch(`/api/public/bookings/status?id=${encodeURIComponent(id)}&eventId=${encodeURIComponent(event.id)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!stop) setSavedChoice(data.booking || null);
+    }
+    load();
+    const timer = window.setInterval(load, 8000);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+    };
+  }, [event.id]);
 
   const selectedSlot = slots.find((s) => s.id === selectedSlotId) || null;
   const [screen, setScreen] = useState<"date" | "time" | "details">(date ? "time" : "date");
@@ -122,6 +141,11 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
         }),
       });
       const data = await readJsonOrThrow(res, "Something went wrong. Please try again.");
+      window.localStorage.setItem(`hrplus-booking:${event.id}`, data.id);
+      setSavedChoice({
+        status: data.status,
+        slotLabel: formatSlotLabel(data.date, data.startTime, data.durationMins),
+      });
       setConfirmed({
         date: data.date,
         startTime: data.startTime,
@@ -196,6 +220,11 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
           )}
           {event.description && (
             <p className="text-sm text-ink-muted mt-2 max-w-2xl whitespace-pre-wrap">{event.description}</p>
+          )}
+          {savedChoice && (
+            <p className="mt-3 text-sm text-ink rounded-md border border-line bg-surface px-3 py-2">
+              {t("Your choice")}: {savedChoice.slotLabel} · {t(savedChoice.status)}
+            </p>
           )}
           {event.requiresConfirmation && (
             <p className="mt-3 text-sm text-ink-muted rounded-md border border-line bg-surface px-3 py-2 inline-block">

@@ -18,7 +18,7 @@ export default function NewBookingEventForm() {
   const [untilTime, setUntilTime] = useState("13:00");
   const [durationMins, setDurationMins] = useState("30");
   const [seats, setSeats] = useState("2");
-  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
