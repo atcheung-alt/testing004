@@ -286,6 +286,10 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                   {t("No times available that day — please pick another date on the calendar.")}
                 </p>
               ) : (
+                <>
+                <p className="text-sm text-ink-muted pb-2">
+                  {t("Choose a time. The next step asks for your name, email, and phone. A full time cannot be selected.")}
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {slots.map((slot) => {
                     const full = slot.available <= 0;
@@ -318,6 +322,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                     );
                   })}
                 </div>
+                </>
               )}
             </div>
           )}

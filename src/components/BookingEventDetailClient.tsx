@@ -337,6 +337,12 @@ export default function BookingEventDetailClient({
   const [slots, setSlots] = useState(() => sortSlots(initialSlots));
   const [bookings, setBookings] = useState(initialBookings);
   const [modalBooking, setModalBooking] = useState<BookingItem | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [guestSlotId, setGuestSlotId] = useState("");
+  const [guestBusy, setGuestBusy] = useState(false);
+  const [guestError, setGuestError] = useState("");
 
   // --- Event header: inline edit + active toggle + delete ------------------
   const [editing, setEditing] = useState(false);
@@ -704,6 +710,21 @@ export default function BookingEventDetailClient({
     }
   }
 
+  async function quickCancel(booking: BookingItem) {
+    const note = window.prompt(t("Cancel {name}? They will be emailed. You can add a short reason, or leave it blank.", { name: booking.clientName })) ;
+    if (note === null) return;
+    setQuickActionId(booking.id);
+    setQuickActionError(null);
+    try {
+      const warning = await handleDecide(booking.id, "CANCELLED", note.trim() || null);
+      if (warning) setQuickActionError({ id: booking.id, message: warning });
+    } catch (err: any) {
+      setQuickActionError({ id: booking.id, message: err.message });
+    } finally {
+      setQuickActionId(null);
+    }
+  }
+
   async function quickReject(booking: BookingItem) {
     if (
       !window.confirm(
@@ -750,19 +771,28 @@ export default function BookingEventDetailClient({
 
   function BookingRow({ b }: { b: BookingItem }) {
     const t = useT();
+    const busy = quickActionId === b.id;
     return (
-      <button
-        type="button"
-        onClick={() => setModalBooking(b)}
-        className="flex items-center justify-between gap-3 py-2.5 text-left hover:bg-paper -mx-1 px-1 rounded-lg transition-colors w-full"
-      >
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+        <button type="button" onClick={() => setModalBooking(b)} className="min-w-0 text-left">
           <p className="text-sm font-medium text-ink truncate">
             {formatDateLabel(b.slotDate)} · {formatTimeRangeLabel(b.slotStartTime, b.slotDurationMins)} · {b.clientName}
           </p>
+          <p className="text-xs text-ink-muted truncate">{[b.clientEmail, b.clientPhone].filter(Boolean).join(" · ") || t("No email")}</p>
+        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {b.status === "PENDING" && (
+            <>
+              <button type="button" onClick={() => quickConfirm(b.id)} disabled={busy} className="btn-primary !py-1.5 !px-3 text-xs">{t("Confirm")}</button>
+              <button type="button" onClick={() => quickReject(b)} disabled={busy} className="btn-secondary !py-1.5 !px-3 text-xs">{t("Reject")}</button>
+            </>
+          )}
+          {b.status === "CONFIRMED" && (
+            <button type="button" onClick={() => quickCancel(b)} disabled={busy} className="btn-secondary !py-1.5 !px-3 text-xs">{t("Cancel")}</button>
+          )}
+          <span className={clsx("stamp shrink-0", STATUS_BADGE_STYLES[b.status])}>{t(b.status)}</span>
         </div>
-        <span className={clsx("stamp shrink-0", STATUS_BADGE_STYLES[b.status])}>{t(b.status)}</span>
-      </button>
+      </div>
     );
   }
 
@@ -1153,6 +1183,81 @@ export default function BookingEventDetailClient({
         )}
       </div>
 
+      <form
+        className="card p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3"
+        onSubmit={async (eventForm) => {
+          eventForm.preventDefault();
+          setGuestBusy(true);
+          setGuestError("");
+          try {
+            const res = await fetch("/api/public/bookings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                slotId: guestSlotId,
+                clientName: guestName,
+                clientEmail: guestEmail,
+                clientPhone: guestPhone,
+              }),
+            });
+            const data = await readJsonOrThrow(res, t("Could not add this guest."));
+            const slot = slots.find((item) => item.id === guestSlotId);
+            if (slot) {
+              setBookings((prev) => [
+                {
+                  id: data.id,
+                  slotId: slot.id,
+                  clientName: guestName.trim(),
+                  clientPhone: guestPhone.trim(),
+                  clientEmail: guestEmail.trim(),
+                  notes: "",
+                  status: data.status,
+                  decidedNote: null,
+                  slotDate: slot.date,
+                  slotStartTime: slot.startTime,
+                  slotDurationMins: slot.durationMins,
+                },
+                ...prev,
+              ]);
+              setSlots((prev) => prev.map((item) => item.id === slot.id ? { ...item, taken: item.taken + 1, available: Math.max(0, item.available - 1) } : item));
+            }
+            setGuestName("");
+            setGuestEmail("");
+            setGuestPhone("");
+          } catch (err: any) {
+            setGuestError(err.message);
+          } finally {
+            setGuestBusy(false);
+          }
+        }}
+      >
+        <h2 className="font-display text-lg font-semibold text-ink sm:col-span-2">{t("Add a guest")}</h2>
+        <p className="text-sm text-ink-muted sm:col-span-2">{t("Use this when you book someone yourself. The confirmation email uses the address you type.")}</p>
+        <div>
+          <label className="label">{t("Name")}</label>
+          <input className="input" value={guestName} onChange={(e) => setGuestName(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label">{t("Email")}</label>
+          <input className="input" type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label">{t("Phone")}</label>
+          <input className="input" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} />
+        </div>
+        <div>
+          <label className="label">{t("Time")}</label>
+          <select className="input" value={guestSlotId} onChange={(e) => setGuestSlotId(e.target.value)} required>
+            <option value="">{t("Choose a time")}</option>
+            {slots.filter((slot) => slot.available > 0).map((slot) => (
+              <option key={slot.id} value={slot.id}>{formatDateLabel(slot.date)} · {formatTimeRangeLabel(slot.startTime, slot.durationMins)}</option>
+            ))}
+          </select>
+        </div>
+        {guestError ? <p className="text-sm text-danger-600 sm:col-span-2">{guestError}</p> : null}
+        <button className="btn-primary sm:col-span-2 justify-self-start" type="submit" disabled={guestBusy}>{guestBusy ? t("Saving…") : t("Add this guest")}</button>
+      </form>
+
       {/* Pending requests */}
       <div className="card p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3 mb-3">
@@ -1174,6 +1279,7 @@ export default function BookingEventDetailClient({
                       <p className="text-sm font-medium text-ink truncate">
                         {formatDateLabel(b.slotDate)} · {formatTimeRangeLabel(b.slotStartTime, b.slotDurationMins)} · {b.clientName}
                       </p>
+                      <p className="text-xs text-ink-muted truncate">{[b.clientEmail, b.clientPhone].filter(Boolean).join(" · ") || t("No email")}</p>
                     </button>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button type="button" onClick={() => quickConfirm(b.id)} disabled={busy} className="btn-primary !py-1.5 !px-3 text-xs">
