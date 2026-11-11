@@ -12,7 +12,7 @@ export default async function NewBookingEventPage() {
         <h1 className="font-display text-2xl font-semibold text-ink mb-1">{t("New Booking Event")}</h1>
         <p className="text-sm text-ink-muted">
           {t(
-            "Give it a name and the range of days it can be booked on — you'll add its actual time slots and quota from its detail page next."
+            "Name the visit, the day, and the hours. The times are created for you. Clients only see a time that still has a seat."
           )}
         </p>
       </div>

@@ -14,6 +14,10 @@ export default function NewBookingEventForm() {
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [fromTime, setFromTime] = useState("10:00");
+  const [untilTime, setUntilTime] = useState("13:00");
+  const [durationMins, setDurationMins] = useState("30");
+  const [seats, setSeats] = useState("2");
   const [requiresConfirmation, setRequiresConfirmation] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +33,32 @@ export default function NewBookingEventForm() {
         body: JSON.stringify({ name, companyName, description, startDate, endDate, requiresConfirmation }),
       });
       const data = await readJsonOrThrow(res, "Could not create this event.");
+      const lastDay = endDate || startDate;
+      const days: string[] = [];
+      const cursor = new Date(`${startDate}T00:00:00`);
+      const stop = new Date(`${lastDay}T00:00:00`);
+      while (cursor.getTime() <= stop.getTime()) {
+        const month = String(cursor.getMonth() + 1).padStart(2, "0");
+        const day = String(cursor.getDate()).padStart(2, "0");
+        days.push(`${cursor.getFullYear()}-${month}-${day}`);
+        cursor.setDate(cursor.getDate() + 1);
+        if (days.length > 31) break;
+      }
+      for (const date of days) {
+        const slots = await fetch(`/api/bookings/events/${data.id}/slots`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "bulk",
+            date,
+            startTime: fromTime,
+            endTime: untilTime,
+            durationMins: Number(durationMins),
+            quota: Number(seats),
+          }),
+        });
+        await readJsonOrThrow(slots, "The day was created, but the times were not. Add them on the event page.");
+      }
       router.push(`/bookings/${data.id}`);
     } catch (err: any) {
       setError(err.message);
@@ -74,31 +104,48 @@ export default function NewBookingEventForm() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="label">{t("Start date *")}</label>
+          <label className="label">{t("Day *")}</label>
           <input
             type="date"
             className="input"
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              if (!endDate || endDate < e.target.value) setEndDate(e.target.value);
+            }}
             required
           />
         </div>
         <div>
-          <label className="label">{t("End date *")}</label>
+          <label className="label">{t("Last day")}</label>
           <input
             type="date"
             className="input"
-            value={endDate}
+            value={endDate || startDate}
             min={startDate || undefined}
             onChange={(e) => setEndDate(e.target.value)}
             required
           />
         </div>
+        <div>
+          <label className="label">{t("From")}</label>
+          <input type="time" className="input" value={fromTime} onChange={(e) => setFromTime(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label">{t("Until")}</label>
+          <input type="time" className="input" value={untilTime} onChange={(e) => setUntilTime(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label">{t("Each visit, in minutes")}</label>
+          <input type="number" min={1} max={480} className="input" value={durationMins} onChange={(e) => setDurationMins(e.target.value)} required />
+        </div>
+        <div>
+          <label className="label">{t("Seats at each time")}</label>
+          <input type="number" min={1} max={500} className="input" value={seats} onChange={(e) => setSeats(e.target.value)} required />
+        </div>
       </div>
       <p className="text-xs text-ink-faint -mt-2">
-        {t(
-          "For a single-day event, use the same date for both. This is the range you'll be able to add time slots within."
-        )}
+        {t("Use the same day twice for one day. Times are filled from the start until the end. A time with no seats left shows as full and cannot be booked.")}
       </p>
 
       <label className="flex items-start gap-2.5 rounded-xl border border-line p-3 cursor-pointer">
