@@ -14,6 +14,7 @@ import SendEmailButton from "@/components/SendEmailButton";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import DeleteButton from "@/components/DeleteButton";
 import ActivityTimeline from "@/components/ActivityTimeline";
+import PageBackHeader from "@/components/PageBackHeader";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -39,15 +40,13 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="font-display text-2xl font-semibold text-ink">{agreement.number}</h1>
-            <StatusBadge status={agreement.status} />
-          </div>
-          <p className="text-sm text-ink-muted">{agreement.companyName}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      <PageBackHeader
+        backLabel={t("All recruitments")}
+        fallbackRoute="/recruitment"
+        title={agreement.number}
+        status={<StatusBadge status={agreement.status} />}
+        meta={<p className="text-sm text-ink-muted">{agreement.companyName}</p>}
+        actions={<>
           <StatusUpdater kind="recruitment" id={agreement.id} status={agreement.status} disabled={locked} />
           <DownloadPdfButton url={`/api/recruitment/${agreement.id}/pdf`} />
           <SendEmailButton
@@ -77,8 +76,8 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
             itemLabel={t("recruitment agreement")}
             redirectTo="/recruitment"
           />
-        </div>
-      </div>
+        </>}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card p-5">

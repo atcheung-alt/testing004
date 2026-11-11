@@ -13,18 +13,46 @@ import { ArrowLeft } from "lucide-react";
  * there's no in-app history to go back to (e.g. the page was opened
  * directly via a bookmark or new tab).
  */
-export default function BackButton({ fallbackHref, label }: { fallbackHref: string; label: string }) {
+export default function BackButton({
+  fallbackHref,
+  label,
+  listRoute,
+}: {
+  fallbackHref: string;
+  label: string;
+  listRoute?: string;
+}) {
   const router = useRouter();
 
   return (
     <button
       type="button"
       onClick={() => {
-        if (typeof window !== "undefined" && window.history.length > 1) {
-          router.back();
-        } else {
-          router.push(fallbackHref);
+        const route = listRoute || "";
+        let fromList = false;
+        if (route) {
+          try {
+            const saved = JSON.parse(sessionStorage.getItem("hrplus-return") || "null") as { list?: string; detail?: string } | null;
+            const list = saved?.list || "";
+            const detail = saved?.detail || "";
+            fromList = Boolean(
+              detail &&
+                window.location.pathname.startsWith(detail) &&
+                (list === route || list.startsWith(`${route}?`))
+            );
+          } catch {
+            fromList = false;
+          }
         }
+        if (fromList && window.history.length > 1) {
+          router.back();
+          return;
+        }
+        if (!route && window.history.length > 1) {
+          router.back();
+          return;
+        }
+        router.push(fallbackHref);
       }}
       className="text-sm text-ink-muted hover:text-ink flex items-center gap-1 w-fit"
     >

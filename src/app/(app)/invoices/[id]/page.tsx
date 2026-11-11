@@ -14,7 +14,7 @@ import SyncDriveButton from "@/components/SyncDriveButton";
 import DeleteButton from "@/components/DeleteButton";
 import DuplicateButton from "@/components/DuplicateButton";
 import DocumentItemsTable from "@/components/DocumentItemsTable";
-import BackButton from "@/components/BackButton";
+import PageBackHeader from "@/components/PageBackHeader";
 import ActivityTimeline from "@/components/ActivityTimeline";
 import MarkOnCalendarButton from "@/components/MarkOnCalendarButton";
 import { getEventForInvoice } from "@/lib/events";
@@ -165,13 +165,12 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <BackButton fallbackHref="/invoices" label={t("All invoices")} />
-        <div className="flex flex-wrap items-start justify-between gap-4 mt-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="font-display text-2xl font-semibold text-ink">{invoice.number}</h1>
-              <StatusBadge status={getInvoiceDisplayStatus(invoice)} />
-            </div>
+        <PageBackHeader
+          backLabel={t("All invoices")}
+          fallbackRoute="/invoices"
+          title={invoice.number}
+          status={<StatusBadge status={getInvoiceDisplayStatus(invoice)} />}
+          meta={<>
             {invoice.title && (
               <p className="text-sm font-medium text-ink mb-0.5">{invoice.title}</p>
             )}
@@ -190,8 +189,8 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
                 </Link>
               </p>
             )}
-          </div>
-          <div className="flex flex-wrap gap-2">
+          </>}
+          actions={<>
             {canModify && <StatusUpdater kind="invoice" id={invoice.id} status={normalizeInvoiceStatus(invoice.status)} />}
             <DownloadPdfButton url={`/api/invoices/${invoice.id}/pdf`} />
             <SendEmailButton
@@ -235,8 +234,8 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
               itemLabel={t("invoice")}
               redirectTo="/invoices"
             />}
-          </div>
-        </div>
+          </>}
+        />
       </div>
 
       {invoice.status === "PENDING_VERIFICATION" && (

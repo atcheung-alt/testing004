@@ -15,6 +15,7 @@ import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DocumentItemsTable from "@/components/DocumentItemsTable";
 import QuotationCommentsCard from "@/components/QuotationCommentsCard";
 import ActivityTimeline from "@/components/ActivityTimeline";
+import PageBackHeader from "@/components/PageBackHeader";
 import { defaultEmailContent, isValidEmail } from "@/lib/settings";
 import { COMPANY } from "@/lib/company";
 import { ensureSigningToken, signingUrlFromHeaders } from "@/lib/signing";
@@ -64,12 +65,12 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="font-display text-2xl font-semibold text-ink">{quotation.number}</h1>
-            <StatusBadge status={quotation.status} />
-          </div>
+      <PageBackHeader
+        backLabel={t("All quotations")}
+        fallbackRoute="/quotations"
+        title={quotation.number}
+        status={<StatusBadge status={quotation.status} />}
+        meta={<>
           {quotation.title && (
             <p className="text-sm font-medium text-ink mb-0.5">{quotation.title}</p>
           )}
@@ -87,16 +88,8 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
               </Link>
             </p>
           )}
-        </div>
-        {/* No shrink-0 here on purpose — that's what caused the overflow.
-            shrink-0 told the browser this box may never get narrower than
-            its "everything on one line" width, which blocked its own
-            flex-wrap rows from ever actually wrapping at in-between
-            viewport widths. Letting it shrink/wrap normally (and letting
-            the outer row above wrap this whole block onto its own line via
-            flex-wrap when there isn't room beside the heading) fixes every
-            width, not just one breakpoint. */}
-        <div className="flex flex-wrap gap-2 items-start sm:justify-end">
+        </>}
+        actions={<>
           {canModify && <StatusUpdater kind="quotation" id={quotation.id} status={quotation.status} disabled={locked} />}
           <DownloadPdfButton url={`/api/quotations/${quotation.id}/pdf`} />
           <SendEmailButton
@@ -132,8 +125,8 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
                 : undefined
             }
             />}
-        </div>
-      </div>
+        </>}
+      />
 
       {quotation.status === "CHANGES_REQUESTED" && (
         <div className="card p-4 bg-accent-100/50 border-accent-300 text-sm text-accent-600">

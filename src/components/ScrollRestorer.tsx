@@ -62,6 +62,10 @@ export default function ScrollRestorer({
       const href = link.getAttribute("href") || "";
       if (!linkPrefixes.some((prefix) => href.startsWith(prefix))) return;
       sessionStorage.setItem(storageKey, String(window.scrollY));
+      sessionStorage.setItem("hrplus-return", JSON.stringify({
+        list: `${window.location.pathname}${window.location.search}`,
+        detail: href.split("?")[0],
+      }));
       locked = true;
     }
     function onScroll() {
