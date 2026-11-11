@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   let booking;
   try {
-    booking = await createBooking(slotId, fields, getClientIp(request), event.requiresConfirmation);
+    booking = await createBooking(slotId, fields, getClientIp(request), true);
   } catch (err: any) {
     // A schema mismatch (a column this raw SQL insert expects that hasn't
     // been pushed to the DB yet) or any other unexpected DB error should
