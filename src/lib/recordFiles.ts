@@ -49,3 +49,18 @@ export async function saveSignedRecord(args: {
   }
   return data;
 }
+
+/** Remove the saved client file from the document, then from Drive. */
+export async function deleteSignedRecord(args: {
+  kind: "invoice" | "recruitment";
+  id: string;
+  fileId: string | null;
+}) {
+  if (args.fileId) await deleteDriveFile(args.fileId);
+  const data = { recordFileId: null, recordFileUrl: null, recordFileName: null };
+  if (args.kind === "invoice") {
+    await prisma.invoice.update({ where: { id: args.id }, data });
+  } else {
+    await prisma.recruitmentAgreement.update({ where: { id: args.id }, data });
+  }
+}

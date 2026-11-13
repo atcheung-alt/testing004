@@ -240,6 +240,13 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
         />
       </div>
 
+      <RecordFileCard
+        kind="invoice"
+        id={invoice.id}
+        fileName={invoice.recordFileName || null}
+        fileUrl={invoice.recordFileUrl || null}
+      />
+
       {invoice.status === "PENDING_VERIFICATION" && (
         <div className="card p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-brand-50/60 border-brand-100">
           <p className="text-sm text-brand-700">{paymentNotice}</p>
@@ -453,13 +460,6 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
           <SyncDriveButton invoiceId={invoice.id} />
         </div>
       )}
-
-      <RecordFileCard
-        kind="invoice"
-        id={invoice.id}
-        fileName={invoice.recordFileName || null}
-        fileUrl={invoice.recordFileUrl || null}
-      />
 
       {invoice.signatureData && (
         <div className="card p-5">

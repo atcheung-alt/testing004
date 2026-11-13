@@ -81,6 +81,13 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
         </>}
       />
 
+      <RecordFileCard
+        kind="recruitment"
+        id={agreement.id}
+        fileName={agreement.recordFileName || null}
+        fileUrl={agreement.recordFileUrl || null}
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-2">
@@ -99,13 +106,6 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
           <p className="text-sm text-ink">{formatDate(agreement.createdAt)}</p>
         </div>
       </div>
-
-      <RecordFileCard
-        kind="recruitment"
-        id={agreement.id}
-        fileName={agreement.recordFileName}
-        fileUrl={agreement.recordFileUrl}
-      />
 
       {agreement.signedAt && (
         <div className="card p-5">
