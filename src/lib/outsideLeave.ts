@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { isInternalCompanyName } from "@/lib/employerCompany";
-import { generateSigningToken } from "@/lib/signing";
+import { generateSigningToken, leaveUrlFromHeaders } from "@/lib/signing";
 import { isValidEmail } from "@/lib/settings";
 import { sendDocumentEmail } from "@/lib/mailer";
 
@@ -101,6 +101,40 @@ export async function sendOutsideLeaveLinks({
     subject: `Leave requests for ${employeeName}`,
     body: `Use this link to approve or reject leave for ${employeeName}. A rejection needs a reason.\n\n${managerUrl}`,
     signingUrl: managerUrl,
+    ctaLabel: "Review leave",
+  });
+}
+
+export function managerLeaveUrl(managerToken: string) {
+  return leaveUrlFromHeaders("leave-link").replace(/\/leave\/leave-link$/, `/leave/review/${managerToken}`);
+}
+
+/** Tell the line manager as soon as any leave type is submitted. */
+export async function emailManagerAboutLeaveRequest({
+  employeeId,
+  lineManagerEmail,
+  employeeName,
+  leaveLabel,
+  when,
+  reason,
+}: {
+  employeeId: string;
+  lineManagerEmail: string;
+  employeeName: string;
+  leaveLabel: string;
+  when: string;
+  reason: string;
+}) {
+  if (!isValidEmail(lineManagerEmail)) return;
+  const managerToken = await ensureLeaveManagerToken(employeeId);
+  if (!managerToken) return;
+  await sendDocumentEmail({
+    to: lineManagerEmail,
+    fromAddress: "HR Plus <contact@hrplus.info>",
+    hrSignature: true,
+    subject: `Leave request from ${employeeName}`,
+    body: `Hi,\n\n${employeeName} requested ${leaveLabel}.\nDates: ${when}\nReason: ${reason || "No reason given."}\n\nOpen your manager link to approve it, or reject it with a reason.`,
+    signingUrl: managerLeaveUrl(managerToken),
     ctaLabel: "Review leave",
   });
 }

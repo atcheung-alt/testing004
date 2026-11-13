@@ -5,7 +5,7 @@ import { getClientIp } from "@/lib/signing";
 import { getPublicEmployeeLeaveView } from "@/lib/publicEmployeeLeave";
 import { logActivity } from "@/lib/activity";
 import { formatDate } from "@/lib/calculations";
-import { ensureOutsideLeaveColumns, OUTSIDE_LEAVE_LABELS, parseLeaveType } from "@/lib/outsideLeave";
+import { emailManagerAboutLeaveRequest, ensureOutsideLeaveColumns, isOutsideColleague, OUTSIDE_LEAVE_LABELS, parseLeaveType } from "@/lib/outsideLeave";
 
 export const runtime = "nodejs";
 
@@ -17,7 +17,11 @@ export const runtime = "nodejs";
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
   const body = await request.json().catch(() => ({}));
 
-  const employee = await prisma.employee.findUnique({ where: { leaveToken: params.token } });
+  await ensureOutsideLeaveColumns();
+  const employee = await prisma.employee.findUnique({
+    where: { leaveToken: params.token },
+    include: { company: { select: { name: true } } },
+  });
   if (!employee) {
     return NextResponse.json({ error: "This link is invalid or has expired." }, { status: 404 });
   }
@@ -35,7 +39,6 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (fields.error) {
     return NextResponse.json({ error: fields.error }, { status: 400 });
   }
-  await ensureOutsideLeaveColumns();
   const leaveType = parseLeaveType(body.leaveType);
   const documentName = String(body.documentName || "").trim().slice(0, 180);
 
@@ -52,6 +55,24 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       submittedIp: getClientIp(request),
     },
   });
+
+  if (isOutsideColleague(employee.company?.name) && employee.lineManagerEmail) {
+    try {
+      await emailManagerAboutLeaveRequest({
+        employeeId: employee.id,
+        lineManagerEmail: employee.lineManagerEmail,
+        employeeName: employee.name,
+        leaveLabel: OUTSIDE_LEAVE_LABELS[leaveType],
+        when: `${formatDate(leaveRequest.startDate)} to ${formatDate(leaveRequest.endDate)}`,
+        reason: fields.reason,
+      });
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || "The request was saved, but the email to the line manager could not be sent." },
+        { status: 502 }
+      );
+    }
+  }
 
   await logActivity({
     documentType: "employee",
