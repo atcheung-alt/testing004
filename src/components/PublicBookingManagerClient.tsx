@@ -432,7 +432,25 @@ export default function PublicBookingManagerClient({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-6">
+    <div className="booking-link min-h-screen py-6">
+      <div className="mx-auto grid w-[min(960px,calc(100%-2rem))] overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(15,23,42,0.7)] shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:grid-cols-[38%_1fr]">
+        <aside className="border-b border-white/10 px-5 py-6 lg:border-b-0 lg:border-r">
+          <span className="mb-3 inline-flex rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-[11px] tracking-[0.14em] text-amber-200">
+            {t("Manage link")}
+          </span>
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">{event.name}</h1>
+          {event.companyName && (
+            <p className="mt-1 text-sm text-ink-muted">{t("For {company}", { company: event.companyName })}</p>
+          )}
+          <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/40 px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Date")}</p>
+            <p className="mt-1 font-semibold text-ink">
+              {formatDateLabel(event.startDate)}
+              {isoDateOnly(event.startDate) !== isoDateOnly(event.endDate) ? ` – ${formatDateLabel(event.endDate)}` : ""}
+            </p>
+          </div>
+        </aside>
+        <div className="flex flex-col gap-6 px-5 py-6">
       <PublicCompanyHeader company={company} />
 
       <div className="rounded-xl border border-brand-500/30 bg-brand-50 text-brand-700 text-sm px-4 py-2.5">
@@ -705,6 +723,8 @@ export default function PublicBookingManagerClient({
           </div>
         </Portal>
       )}
+        </div>
+      </div>
     </div>
   );
 }

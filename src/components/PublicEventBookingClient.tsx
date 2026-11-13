@@ -63,20 +63,9 @@ function calendarDay(iso: string): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-/** A one-day event opens straight on that day when it is still bookable. */
-function initialDate(event: EventInfo): string | null {
-  const start = calendarDay(event.startDate);
-  if (start !== calendarDay(event.endDate)) return null;
-  const day = new Date(event.startDate);
-  day.setHours(0, 0, 0, 0);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return day < today ? null : start;
-}
-
 export default function PublicEventBookingClient({ event, company }: { event: EventInfo; company: PublicCompany }) {
   const t = useT();
-  const [date, setDate] = useState<string | null>(initialDate(event));
+  const [date, setDate] = useState<string | null>(null);
   const [slots, setSlots] = useState<SlotOption[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotsError, setSlotsError] = useState<string | null>(null);
@@ -116,7 +105,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
   }, [event.id]);
 
   const selectedSlot = slots.find((s) => s.id === selectedSlotId) || null;
-  const [screen, setScreen] = useState<"date" | "time" | "details">(date ? "time" : "date");
+  const [screen, setScreen] = useState<"date" | "time" | "details">("date");
   const step = screen === "date" ? 1 : screen === "time" ? 2 : 3;
 
   async function refreshSlots(forDate: string) {
