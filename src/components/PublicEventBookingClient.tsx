@@ -168,7 +168,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
   if (confirmed) {
     const isPending = confirmed.status === "PENDING";
     return (
-      <PublicBookingShell company={company}>
+      <PublicBookingShell company={company} dark>
         <div className="max-w-lg mx-auto card p-8 flex flex-col items-center text-center gap-3">
           <CheckCircle2 size={40} className={isPending ? "text-amber-500" : "text-emerald-500"} />
           <h1 className="font-display text-2xl font-semibold text-ink">
@@ -204,15 +204,24 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
   }
 
   return (
-    <PublicBookingShell company={company}>
+    <PublicBookingShell company={company} dark>
       <div className="flex flex-col gap-6">
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{event.name}</h1>
           {event.companyName && (
-            <p className="text-sm text-ink mt-1">{t("For {company}", { company: event.companyName })}</p>
+            <p className="text-sm text-ink-muted mt-1">{t("For {company}", { company: event.companyName })}</p>
           )}
+          <div className="mt-4 rounded-2xl border border-line bg-surface px-4 py-3 max-w-sm">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Date")}</p>
+            <p className="mt-1 font-semibold text-ink">
+              {formatDateLabel(new Date(event.startDate))}
+              {calendarDay(event.startDate) !== calendarDay(event.endDate)
+                ? ` – ${formatDateLabel(new Date(event.endDate))}`
+                : ""}
+            </p>
+          </div>
           {event.description && (
-            <p className="text-sm text-ink-muted mt-2 max-w-2xl whitespace-pre-wrap">{event.description}</p>
+            <p className="text-sm text-ink-muted mt-3 max-w-2xl whitespace-pre-wrap">{event.description}</p>
           )}
           {savedChoice && (
             <p className="mt-3 text-sm text-ink rounded-md border border-line bg-surface px-3 py-2">

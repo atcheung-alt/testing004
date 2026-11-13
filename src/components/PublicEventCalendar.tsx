@@ -16,9 +16,9 @@ const WEEKDAY_LABELS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const WEEKDAY_LABELS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
 
 const LEVEL_STYLES: Record<AvailabilityLevel, string> = {
-  OPEN: "bg-brand-50 text-brand-700 border-brand-300 hover:border-brand-500 hover:bg-brand-100",
-  FEW: "bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400 hover:bg-amber-100",
-  FULL: "bg-paper text-ink-faint border-line",
+  OPEN: "border-transparent bg-[rgba(150,184,255,0.28)] text-[#f7f9ff] hover:bg-[rgba(150,184,255,0.4)]",
+  FEW: "border-transparent bg-[#ffd7a8] text-[#2a2118] hover:bg-[#ffc98a]",
+  FULL: "border-transparent bg-transparent text-[#4e5b6d] line-through",
 };
 const LEVEL_LABELS: Record<AvailabilityLevel, string> = {
   OPEN: "Open",
@@ -31,9 +31,6 @@ function startOfDay(d: Date) {
 }
 function addDays(d: Date, n: number) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-}
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 function isSameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
@@ -161,7 +158,6 @@ export default function PublicEventCalendar({
         {weeks.flatMap((week, wi) =>
           week.map((d, di) => {
             const inMonth = isSameMonth(d, monthDate);
-            const isToday = isSameDay(d, today);
             const outOfRange = startOfDay(d).getTime() < startOfDay(minDate).getTime() || startOfDay(d).getTime() > startOfDay(maxDate).getTime() || startOfDay(d).getTime() < today.getTime();
             const key = dateKey(d);
             const isSelected = selectedDate === key;
@@ -178,32 +174,15 @@ export default function PublicEventCalendar({
                 onClick={() => onSelectDate(key)}
                 title={level ? t(LEVEL_LABELS[level]) : undefined}
                 className={clsx(
-                  "flex flex-col items-center justify-center gap-1 rounded-md border text-sm transition-colors min-h-[52px]",
-                  !inMonth && "border-transparent text-ink-faint/40 cursor-default",
-                  inMonth && outOfRange && "border-transparent text-ink-faint/60 cursor-not-allowed",
-                  inMonth && !outOfRange && !isSelected && !level && "border-line bg-surface text-ink",
+                  "flex items-center justify-center rounded-2xl border text-sm font-semibold transition-colors h-11",
+                  !inMonth && "border-transparent text-transparent cursor-default",
+                  inMonth && outOfRange && "border-transparent text-[#4e5b6d] cursor-not-allowed",
+                  inMonth && !outOfRange && !isSelected && !level && "border-transparent text-[#d5deea]",
                   inMonth && !outOfRange && !isSelected && level && LEVEL_STYLES[level],
-                  isSelected && "bg-brand-600 text-white border-brand-600"
+                  isSelected && "border-transparent bg-[#eef3ff] text-[#121826] shadow-[0_8px_20px_rgba(90,120,255,0.25)]"
                 )}
               >
-                <span className={clsx("font-medium leading-none", isToday && !isSelected && "underline decoration-brand-600 underline-offset-2")}>
-                  {d.getDate()}
-                </span>
-                {showLoading ? (
-                  <Loader2 size={10} className="animate-spin text-ink-faint" />
-                ) : inMonth && !outOfRange && level ? (
-                  <span
-                    className={clsx(
-                      "w-1.5 h-1.5 rounded-full",
-                      isSelected && "bg-white",
-                      !isSelected && level === "OPEN" && "bg-brand-600",
-                      !isSelected && level === "FEW" && "bg-amber-500",
-                      !isSelected && level === "FULL" && "bg-ink-faint"
-                    )}
-                  />
-                ) : (
-                  <span className="w-1.5 h-1.5" />
-                )}
+                <span className="leading-none">{showLoading ? <Loader2 size={14} className="animate-spin" /> : d.getDate()}</span>
               </button>
             );
           })
@@ -214,13 +193,13 @@ export default function PublicEventCalendar({
 
       <div className="flex flex-wrap items-center gap-3 mt-3 text-[11px] text-ink-muted">
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-brand-100 border border-brand-300" /> {t("Open")}
+          <span className="w-2.5 h-2.5 rounded-full bg-[#8eafff]" /> {t("Open")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-300" /> {t("Few left")}
+          <span className="w-2.5 h-2.5 rounded-full bg-[#ffd7a8]" /> {t("Few left")}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-paper border border-line" /> {t("Full")}
+          <span className="w-2.5 h-2.5 rounded-full bg-[#4e5b6d]" /> {t("Full")}
         </span>
       </div>
     </div>

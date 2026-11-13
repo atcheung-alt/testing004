@@ -5,12 +5,14 @@ import type { PublicCompany } from "@/components/PublicCompanyHeader";
 export default function PublicBookingShell({
   company,
   children,
+  dark = false,
 }: {
   company: PublicCompany;
   children: React.ReactNode;
+  dark?: boolean;
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className={dark ? "booking-link" : "min-h-screen bg-paper"}>
       <header className="border-b border-line bg-surface">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
           {company.logoData ? (
