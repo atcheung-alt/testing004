@@ -4,6 +4,7 @@ import { getPublicRecruitmentView } from "@/lib/publicRecruitment";
 import { getClientIp } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
 import { sendDocumentEmail } from "@/lib/mailer";
+import { creatorCopy } from "@/lib/recordFiles";
 import { COMPANY } from "@/lib/company";
 import { buildRecruitmentAgreementPdf } from "@/lib/pdf/build";
 
@@ -114,6 +115,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       );
       await sendDocumentEmail({
         to: recipients.length ? recipients : COMPANY.email || "",
+        cc: creatorCopy(agreement.createdByEmail, recipients),
         subject: `Signed: Recruitment Agreement ${updated.number}`,
         body: `Dear ${signerName},
 

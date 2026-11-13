@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { nextDocumentNumber } from "@/lib/numbering";
 import { generateSigningToken } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
+import { getCurrentUser } from "@/lib/auth";
 import { dateRangeFilter } from "@/lib/dateRange";
 import {
   RECRUITMENT_TERMS_TEMPLATES,
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
       language,
       status: body.status || "DRAFT",
       signingToken: generateSigningToken(),
+      createdByEmail: (await getCurrentUser())?.email || "",
       createdAt: agreementDate,
     },
   });

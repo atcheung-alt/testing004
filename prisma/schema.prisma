@@ -96,6 +96,10 @@ model RecruitmentAgreement {
   signedDocumentName String?
   signedAt          DateTime?
   signedIp          String?
+  createdByEmail    String   @default("")
+  recordFileId      String?
+  recordFileUrl     String?
+  recordFileName    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -209,6 +213,8 @@ model Quotation {
 
   // Who created this quotation. Defaults to the logged-in user's nickname.
   preparedBy      String          @default("")
+  // Login email of the person who created it. Used to Cc them when the client signs.
+  createdByEmail  String          @default("")
   // AMOUNT = each colleague share below is an exact HKD amount.
   // PERCENT = each share is a percentage of this quotation's total.
   shareMode       String          @default("AMOUNT")
@@ -305,6 +311,11 @@ model Invoice {
   signatureData   String? // base64 data URL of the invoice e-signature
   signatureName   String? // typed name accompanying the signature
   signedAt        DateTime?
+  createdByEmail  String    @default("")
+  // A file kept on this invoice when the client does not sign online.
+  recordFileId    String?
+  recordFileUrl   String?
+  recordFileName  String?
   taxRate         Float         @default(0)
   discount        Float         @default(0)
   subtotal        Float         @default(0)

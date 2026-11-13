@@ -11,6 +11,7 @@ import StatusBadge from "@/components/StatusBadge";
 import StatusUpdater from "@/components/StatusUpdater";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
 import SendEmailButton from "@/components/SendEmailButton";
+import RecordFileCard from "@/components/RecordFileCard";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import DeleteButton from "@/components/DeleteButton";
 import ActivityTimeline from "@/components/ActivityTimeline";
@@ -97,6 +98,13 @@ export default async function RecruitmentDetailPage({ params }: { params: { id: 
           <p className="text-sm text-ink">{formatDate(agreement.createdAt)}</p>
         </div>
       </div>
+
+      <RecordFileCard
+        kind="recruitment"
+        id={agreement.id}
+        fileName={agreement.recordFileName}
+        fileUrl={agreement.recordFileUrl}
+      />
 
       {agreement.signedAt && (
         <div className="card p-5">

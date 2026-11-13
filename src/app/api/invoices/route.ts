@@ -9,6 +9,7 @@ import { andFilters, currentInvoiceFilter } from "@/lib/documentAccess";
 import { commissionSplitError, commissionSplitRequested, saveCommissionMark, saveInvoiceCommissionSplit } from "@/lib/invoiceCommission";
 import { commissionFieldsFrom } from "@/lib/commission";
 import { clientSourceFrom, saveClientSource } from "@/lib/clientSource";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
   const number = await nextDocumentNumber("invoice");
   const issueDate = body.issueDate ? new Date(body.issueDate) : new Date();
 
+  const session = await getCurrentUser();
   const invoice = await prisma.invoice.create({
     data: {
       number,
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest) {
       signatureData: body.signatureData || null,
       signatureName: body.signatureName?.trim() || null,
       signedAt: body.signatureData ? new Date() : null,
+      createdByEmail: session?.email || "",
       taxRate,
       discount,
       subtotal,

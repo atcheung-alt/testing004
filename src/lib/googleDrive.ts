@@ -149,8 +149,9 @@ export async function upsertDriveFile(args: {
   name: string;
   folderId: string;
   buffer: Buffer;
+  mimeType?: string;
 }): Promise<UpsertedDriveFile> {
-  const { fileId, name, folderId, buffer } = args;
+  const { fileId, name, folderId, buffer, mimeType = "application/pdf" } = args;
   const headers = await authHeaders();
 
   if (fileId) {
@@ -158,7 +159,7 @@ export async function upsertDriveFile(args: {
       `${DRIVE_UPLOAD_API}/files/${fileId}?uploadType=media&fields=id,webViewLink&${SHARED_DRIVE_PARAMS}`,
       {
         method: "PATCH",
-        headers: { ...headers, "Content-Type": "application/pdf" },
+        headers: { ...headers, "Content-Type": mimeType },
         body: new Uint8Array(buffer),
       }
     );
@@ -198,7 +199,7 @@ export async function upsertDriveFile(args: {
       headers: {
         ...headers,
         "Content-Type": "application/json; charset=UTF-8",
-        "X-Upload-Content-Type": "application/pdf",
+        "X-Upload-Content-Type": mimeType,
         "X-Upload-Content-Length": String(buffer.length),
       },
       body: JSON.stringify({ name, parents: [folderId] }),
@@ -214,7 +215,7 @@ export async function upsertDriveFile(args: {
 
   const uploadRes = await fetch(sessionUrl, {
     method: "PUT",
-    headers: { ...headers, "Content-Type": "application/pdf", "Content-Length": String(buffer.length) },
+    headers: { ...headers, "Content-Type": mimeType, "Content-Length": String(buffer.length) },
     body: new Uint8Array(buffer),
   });
   if (!uploadRes.ok) {

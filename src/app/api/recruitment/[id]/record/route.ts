@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { saveSignedRecord } from "@/lib/recordFiles";
+
+export const runtime = "nodejs";
+
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  if (!(await getCurrentUser())) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+  const agreement = await prisma.recruitmentAgreement.findUnique({
+    where: { id: params.id },
+    select: { id: true, number: true, recordFileId: true },
+  });
+  if (!agreement) return NextResponse.json({ error: "Not found." }, { status: 404 });
+  const form = await request.formData();
+  const file = form.get("file");
+  if (!(file instanceof File)) return NextResponse.json({ error: "Choose a file." }, { status: 400 });
+  try {
+    const saved = await saveSignedRecord({
+      kind: "recruitment",
+      id: agreement.id,
+      number: agreement.number,
+      existingFileId: agreement.recordFileId,
+      fileName: file.name,
+      mimeType: file.type,
+      bytes: Buffer.from(await file.arrayBuffer()),
+    });
+    return NextResponse.json(saved);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "The file could not be saved." }, { status: 400 });
+  }
+}

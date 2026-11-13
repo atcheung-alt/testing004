@@ -11,6 +11,7 @@ import SendEmailButton from "@/components/SendEmailButton";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import VerifyPaymentButton from "@/components/VerifyPaymentButton";
 import SyncDriveButton from "@/components/SyncDriveButton";
+import RecordFileCard from "@/components/RecordFileCard";
 import DeleteButton from "@/components/DeleteButton";
 import DuplicateButton from "@/components/DuplicateButton";
 import DocumentItemsTable from "@/components/DocumentItemsTable";
@@ -451,6 +452,13 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
           <SyncDriveButton invoiceId={invoice.id} />
         </div>
       )}
+
+      <RecordFileCard
+        kind="invoice"
+        id={invoice.id}
+        fileName={invoice.recordFileName}
+        fileUrl={invoice.recordFileUrl}
+      />
 
       {invoice.signatureData && (
         <div className="card p-5">

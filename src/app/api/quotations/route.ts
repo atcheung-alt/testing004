@@ -57,16 +57,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: sharing.error }, { status: 400 });
   }
   const boundShares = await bindShareColleagueNames(sharing.shares);
+  const session = await getCurrentUser();
   let preparedBy = sharing.preparedBy;
-  if (!preparedBy) {
-    const session = await getCurrentUser();
-    if (session) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { nickname: true },
-      });
-      preparedBy = user?.nickname?.trim() || "";
-    }
+  if (!preparedBy && session) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { nickname: true },
+    });
+    preparedBy = user?.nickname?.trim() || "";
   }
   const number = await nextDocumentNumber("quotation");
 
@@ -91,6 +89,7 @@ export async function POST(request: NextRequest) {
       taxAmount,
       total,
       preparedBy,
+      createdByEmail: session?.email || "",
       shareMode: sharing.shareMode,
       items: {
         create: body.items.map(itemCreateFrom),

@@ -6,6 +6,7 @@ import { getClientIp, ensureInvoiceViewToken, invoiceViewUrlFor } from "@/lib/si
 import { getPublicQuotationView } from "@/lib/publicQuotation";
 import { buildQuotationPdf, buildInvoicePdf } from "@/lib/pdf/build";
 import { sendDocumentEmail } from "@/lib/mailer";
+import { creatorCopy } from "@/lib/recordFiles";
 import { convertQuotationToInvoice } from "@/lib/quotationToInvoice";
 import { logActivity } from "@/lib/activity";
 
@@ -142,6 +143,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
 
       await sendDocumentEmail({
         to: recipients.length ? recipients : COMPANY.email || "",
+        cc: creatorCopy(updated.createdByEmail, recipients),
         subject,
         body: emailBody,
         attachment: { filename: `${updated.number}-signed.pdf`, content: built.buffer },
@@ -194,6 +196,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
 
       await sendDocumentEmail({
         to: recipients.length ? recipients : COMPANY.email || "",
+        cc: creatorCopy(updated.createdByEmail, recipients),
         subject,
         body: emailBody,
         attachment: { filename: `${invoice.number}.pdf`, content: built.buffer },

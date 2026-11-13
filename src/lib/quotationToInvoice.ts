@@ -58,6 +58,7 @@ export async function convertQuotationToInvoice(
         subtotal: quotation.subtotal,
         taxAmount: quotation.taxAmount,
         total: quotation.total,
+        createdByEmail: quotation.createdByEmail,
         items: {
           create: quotation.items.map((item) => ({
             name: item.name,
