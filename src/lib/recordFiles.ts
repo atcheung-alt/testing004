@@ -42,7 +42,14 @@ export async function saveSignedRecord(args: {
   if (args.kind === "invoice") {
     await prisma.invoice.update({ where: { id: args.id }, data });
   } else {
-    await prisma.recruitmentAgreement.update({ where: { id: args.id }, data });
+    const current = await prisma.recruitmentAgreement.findUnique({
+      where: { id: args.id },
+      select: { status: true },
+    });
+    await prisma.recruitmentAgreement.update({
+      where: { id: args.id },
+      data: current?.status === "SENT" ? { ...data, status: "SIGNED", signedAt: new Date() } : data,
+    });
   }
   if (args.existingFileId && args.existingFileId !== saved.id) {
     await deleteDriveFile(args.existingFileId).catch(() => undefined);
