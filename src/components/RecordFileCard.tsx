@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Portal from "@/components/Portal";
 
 export default function RecordFileCard({
   kind,
@@ -87,22 +88,24 @@ export default function RecordFileCard({
       </div>
       {error && <p className="text-sm text-danger-600 mt-2">{error}</p>}
       {confirming && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 p-4">
-          <div className="card p-5 max-w-md w-full">
-            <h3 className="font-display text-lg font-semibold">Delete this file?</h3>
-            <p className="text-sm text-ink-muted mt-1">
-              {shownName} will be removed from {place} and deleted from the Signed records folder.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-              <button type="button" className="btn-secondary" disabled={busy} onClick={() => setConfirming(false)}>
-                Keep the file
-              </button>
-              <button type="button" className="btn-secondary text-danger-600" disabled={busy} onClick={remove}>
-                {busy ? "Deleting…" : "Delete the file"}
-              </button>
+        <Portal>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+            <div className="card p-5 max-w-md w-full">
+              <h3 className="font-display text-lg font-semibold">Delete this file?</h3>
+              <p className="text-sm text-ink-muted mt-1">
+                {shownName} will be removed from {place} and deleted from the Signed records folder.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-4">
+                <button type="button" className="btn-secondary" disabled={busy} onClick={() => setConfirming(false)}>
+                  Keep the file
+                </button>
+                <button type="button" className="btn-secondary text-danger-600" disabled={busy} onClick={remove}>
+                  {busy ? "Deleting…" : "Delete the file"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );
