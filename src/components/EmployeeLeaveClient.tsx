@@ -105,14 +105,15 @@ export default function EmployeeLeaveClient({
   }
 
   return (
+    <div className={view.outsideCompany ? "outside-leave-page" : undefined}>
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col gap-6">
       <CompanyHeader company={view.company} />
 
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">{t("Hi, {name}", { name: view.name })}</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink">{view.outsideCompany ? view.name : t("Hi, {name}", { name: view.name })}</h1>
         <p className="text-sm text-ink-muted mt-0.5">
           {view.outsideCompany
-            ? t("No sign-in. Pick a leave type below.")
+            ? [view.employerName, view.title].filter(Boolean).join(" · ")
             : t("Request leave, and write the days and times you worked. HR Plus approves both.")}
         </p>
       </div>
@@ -325,6 +326,7 @@ placeholder={t("e.g. Family trip")}
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }

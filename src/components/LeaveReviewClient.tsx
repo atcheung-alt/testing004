@@ -23,10 +23,20 @@ const LABELS: Record<string, string> = {
 export default function LeaveReviewClient({
   token,
   employeeName,
+  company,
+  title,
+  email,
+  annualLeaveLeft,
+  startDate,
   initial,
 }: {
   token: string;
   employeeName: string;
+  company: string;
+  title: string;
+  email: string;
+  annualLeaveLeft: number;
+  startDate: string;
   initial: Item[];
 }) {
   const [items, setItems] = useState(initial);
@@ -63,9 +73,18 @@ export default function LeaveReviewClient({
   const pending = items.filter((item) => item.status === "PENDING");
 
   return (
+    <div className="outside-leave-page">
     <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-4">
-      <h1 className="font-display text-2xl font-semibold">Leave to review</h1>
-      <p className="text-sm text-ink-muted">Line manager for {employeeName}</p>
+      <h1 className="font-display text-3xl font-medium">Leave to review</h1>
+      <p className="text-sm text-ink-muted">For the line manager of {employeeName}</p>
+      <div className="card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Employee</p><p className="font-semibold">{employeeName}</p></div>
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Company</p><p className="font-semibold">{company || "—"}</p></div>
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Position</p><p className="font-semibold">{title || "—"}</p></div>
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Email</p><p className="font-semibold">{email || "—"}</p></div>
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Annual leave left</p><p className="font-semibold">{annualLeaveLeft} days</p></div>
+        <div><p className="text-xs uppercase tracking-wide text-ink-faint">Start date</p><p className="font-semibold">{startDate}</p></div>
+      </div>
       {error && <p className="text-sm text-danger-600">{error}</p>}
       {pending.length === 0 && <div className="card p-5 text-sm text-ink-muted">No request waiting.</div>}
       {pending.map((item) => (
@@ -97,6 +116,7 @@ export default function LeaveReviewClient({
           )}
         </div>
       ))}
+    </div>
     </div>
   );
 }

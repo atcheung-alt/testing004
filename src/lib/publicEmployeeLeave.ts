@@ -22,6 +22,8 @@ export type PublicLeaveRequestView = {
 export type PublicEmployeeLeaveView = {
   id: string;
   name: string;
+  title: string;
+  employerName: string;
   status: string;
   // Despite the field name (kept as-is to avoid touching every consumer),
   // this is the *accrued-so-far* entitlement, not the flat annual figure —
@@ -65,6 +67,8 @@ export async function getPublicEmployeeLeaveView(token: string): Promise<PublicE
   return {
     id: employee.id,
     name: employee.name,
+    title: employee.title || "",
+    employerName: employee.company?.name || "",
     status: employee.status,
     annualLeaveDays: entitlement,
     leaveUsed: used,

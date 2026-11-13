@@ -49,6 +49,28 @@ html[data-theme="light"] {
   --color-danger-600: 160 58 47;
 }
 
+.outside-leave-page {
+  min-height: 100vh;
+  color-scheme: dark;
+  color: rgb(236 236 238);
+  background:
+    radial-gradient(900px 420px at 12% -10%, rgba(90, 130, 168, 0.28), transparent 60%),
+    radial-gradient(700px 380px at 100% 0%, rgba(92, 78, 140, 0.22), transparent 55%),
+    linear-gradient(180deg, #161b26 0%, #10141c 42%, #0d1218 100%);
+  --color-paper: 20 21 23;
+  --color-surface: 30 31 34;
+  --color-ink: 236 236 238;
+  --color-ink-muted: 162 163 168;
+  --color-ink-faint: 112 113 118;
+  --color-line: 48 49 53;
+  --color-brand-50: 24 39 65;
+  --color-brand-500: 91 134 255;
+  --color-brand-600: 130 166 255;
+  --color-danger-50: 51 21 18;
+  --color-danger-500: 224 104 90;
+  --color-danger-600: 240 137 124;
+}
+
 html[data-theme="dark"] {
   /* Neutral grey, not navy — paper/surface/ink/line are the tokens that
      cover ~95% of on-screen pixels (page background + every card + every

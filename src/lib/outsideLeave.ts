@@ -84,8 +84,11 @@ export async function sendOutsideLeaveLinks({
     data: { lineManagerEmail },
   });
 
+  const fromAddress = "HR Plus <contact@hrplus.info>";
   await sendDocumentEmail({
     to: colleagueEmail,
+    fromAddress,
+    hrSignature: true,
     subject: "Your leave link",
     body: `Hi ${employeeName},\n\nUse this link to request annual leave, sick leave, or no-pay leave. You do not need to sign in.\n\n${colleagueUrl}`,
     signingUrl: colleagueUrl,
@@ -93,6 +96,8 @@ export async function sendOutsideLeaveLinks({
   });
   await sendDocumentEmail({
     to: lineManagerEmail,
+    fromAddress,
+    hrSignature: true,
     subject: `Leave requests for ${employeeName}`,
     body: `Use this link to approve or reject leave for ${employeeName}. A rejection needs a reason.\n\n${managerUrl}`,
     signingUrl: managerUrl,
