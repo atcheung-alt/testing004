@@ -41,10 +41,17 @@ export default function OutsideLeaveCard({
   return (
     <div className="card p-5 flex flex-col gap-4">
       <div>
-        <h2 className="font-display text-lg font-semibold">Outside colleague leave</h2>
-        <p className="text-sm text-ink-muted mt-1">
-          This person is not an HR Plus employee, so they cannot sign in with Google. Email them a leave link. Their line manager gets a different link.
-        </p>
+        <h2 className="font-display text-lg font-semibold">Leave links</h2>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="rounded-xl bg-paper px-3 py-2.5">
+          <p className="font-semibold">1. Colleague</p>
+          <p className="text-sm text-ink-muted">They request annual leave, sick leave, or no-pay leave.</p>
+        </div>
+        <div className="rounded-xl bg-paper px-3 py-2.5">
+          <p className="font-semibold">2. Line manager</p>
+          <p className="text-sm text-ink-muted">They approve the request, or reject it with a reason.</p>
+        </div>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
