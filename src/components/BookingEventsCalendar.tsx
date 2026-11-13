@@ -43,19 +43,28 @@ const MORE_ROW_HEIGHT = 18;
 // A restrained palette, chosen from the event id so overlapping events stay
 // distinct. Not stored, and not user-editable.
 const EVENT_COLORS = ["#3B6FE0", "#0E9F8E", "#7A5AF0", "#1F9D55", "#E07A2F", "#E15B73"];
-const JOB_COLOR = "#8B93A7";
+const EVENT_PASTELS = ["#d9e6ff", "#d7f6ea", "#eadcff", "#d8f5df", "#ffe4cc", "#ffd6e0"];
+const JOB_COLOR = "#d9842b";
+const JOB_PASTEL = "#ffe4cc";
 
 export function eventBarColor(id: string): string {
+  return EVENT_COLORS[colorIndex(id)];
+}
+
+function colorIndex(id: string) {
   let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return EVENT_COLORS[hash % EVENT_COLORS.length];
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return hash % EVENT_COLORS.length;
 }
 
 function colorFor(event: { id: string; kind?: "booking" | "job" }) {
   if (event.kind === "job") return JOB_COLOR;
-  return eventBarColor(event.id);
+  return EVENT_COLORS[colorIndex(event.id)];
+}
+
+function pastelFor(event: { id: string; kind?: "booking" | "job" }) {
+  if (event.kind === "job") return JOB_PASTEL;
+  return EVENT_PASTELS[colorIndex(event.id)];
 }
 
 function startOfDay(d: Date) {
@@ -181,7 +190,7 @@ function WeekRow({
     HEADER_HEIGHT + (maxLaneUsed + 1) * (BAR_HEIGHT + BAR_GAP) + (hasMoreRow ? MORE_ROW_HEIGHT : 6);
 
   return (
-    <div className="grid grid-cols-7 divide-x divide-slate-200 border-t border-slate-200 bg-white text-xs" style={{ minHeight: Math.max(rowHeight, 90) }}>
+    <div className="grid grid-cols-7 gap-2 text-xs" style={{ minHeight: Math.max(rowHeight, 96) }}>
       {week.map((d, i) => {
         const inMonth = d.getMonth() === monthDate.getMonth();
         const today_ = isSameDay(d, today);
@@ -191,7 +200,7 @@ function WeekRow({
         const shown = onDay.filter((s) => s.lane < MAX_LANES);
         const extra = hiddenByDay[i];
         return (
-          <div key={i} className={clsx("flex min-h-[90px] flex-col p-2", !inMonth && "bg-slate-50")}>
+          <div key={i} className={clsx("flex min-h-[96px] flex-col rounded-2xl bg-[#f7f5fc] p-2", !inMonth && "opacity-40")}>
             <span
               className={clsx(
                 "mb-1 inline-flex font-semibold",
@@ -214,12 +223,11 @@ function WeekRow({
                     onClick={() => onEventClick(s.ev)}
                     title={s.ev.name}
                     className={clsx(
-                      "flex w-full items-center gap-1 truncate rounded border px-1.5 py-0.5 text-left text-[10px] font-medium",
-                      job ? "border-amber-200 bg-amber-50/30 text-amber-950" : "border-indigo-200 bg-indigo-50/30 text-indigo-950",
-                      !job && !s.ev.active && "border-dashed"
+                      "flex w-full items-center truncate rounded-lg px-2 py-1 text-left text-[11px] font-semibold text-slate-900",
+                      !job && !s.ev.active && "opacity-60"
                     )}
+                    style={{ backgroundColor: pastelFor(s.ev) }}
                   >
-                    <span className={clsx("h-3 w-0.5 shrink-0 rounded-full", job ? "bg-amber-700" : "bg-indigo-600")} />
                     <span className="truncate">{s.ev.name}</span>
                   </button>
                 );
@@ -322,7 +330,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
   });
 
   return (
-    <div className="w-full space-y-6 rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm">
+    <div className="w-full space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-6">
           <button
@@ -332,29 +340,23 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
             aria-expanded={!collapsed}
           >
             {collapsed ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronUp size={16} className="text-slate-400" />}
-            <h2 className="text-lg font-bold text-slate-900">{monthLabel}</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">{monthLabel}</h2>
           </button>
-          <div className="flex items-center gap-4 text-xs font-medium text-slate-600">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-indigo-600" aria-hidden="true" />
-              {t("Booking")}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-700" aria-hidden="true" />
-              {t("Invoice job")}
-            </span>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
+            <span className="rounded-full bg-[#eadcff] px-3 py-1">{t("Booking")}</span>
+            <span className="rounded-full bg-[#ffe4cc] px-3 py-1">{t("Invoice job")}</span>
           </div>
         </div>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <button type="button" onClick={goToday} className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">
+            <button type="button" onClick={goToday} className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
               {t("Today")}
             </button>
-            <div className="flex items-center overflow-hidden rounded-md border border-slate-200">
-              <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="border-r border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
                 <ChevronLeft size={16} />
               </button>
-              <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="p-1.5 text-slate-600 hover:bg-slate-50">
+              <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
                 <ChevronRight size={16} />
               </button>
             </div>
@@ -364,8 +366,8 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
 
       {!collapsed && (
           <div key={monthLabel}>
-          <div className="overflow-hidden rounded-lg border border-slate-200">
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/50 py-2.5 text-center text-xs font-semibold text-slate-600">
+          <div className="space-y-2">
+          <div className="mb-2 grid grid-cols-7 py-2 text-center text-[11px] font-bold uppercase tracking-wide text-slate-500">
             {WEEKDAY_LABELS.map((label) => (
               <div key={label}>{t(label)}</div>
             ))}
