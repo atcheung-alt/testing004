@@ -5,6 +5,7 @@ import { getClientIp } from "@/lib/signing";
 import { getPublicEmployeeLeaveView } from "@/lib/publicEmployeeLeave";
 import { logActivity } from "@/lib/activity";
 import { formatDate } from "@/lib/calculations";
+import { ensureOutsideLeaveColumns, OUTSIDE_LEAVE_LABELS, parseLeaveType } from "@/lib/outsideLeave";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (fields.error) {
     return NextResponse.json({ error: fields.error }, { status: 400 });
   }
+  await ensureOutsideLeaveColumns();
+  const leaveType = parseLeaveType(body.leaveType);
+  const documentName = String(body.documentName || "").trim().slice(0, 180);
 
   const leaveRequest = await prisma.leaveRequest.create({
     data: {
@@ -43,6 +47,8 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       isHalfDay: fields.isHalfDay,
       halfDayPeriod: fields.halfDayPeriod,
       reason: fields.reason,
+      leaveType,
+      documentName: documentName || null,
       submittedIp: getClientIp(request),
     },
   });
@@ -53,9 +59,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     type: "CREATED",
     actor: "CLIENT",
     actorName: employee.name,
-    description: fields.isHalfDay
-      ? `Requested ${fields.halfDayPeriod} half-day leave ${formatDate(leaveRequest.startDate)}`
-      : `Requested leave ${formatDate(leaveRequest.startDate)} – ${formatDate(leaveRequest.endDate)}`,
+    description: `Requested ${OUTSIDE_LEAVE_LABELS[leaveType]} ${formatDate(leaveRequest.startDate)} – ${formatDate(leaveRequest.endDate)}`,
   });
 
   const view = await getPublicEmployeeLeaveView(params.token);

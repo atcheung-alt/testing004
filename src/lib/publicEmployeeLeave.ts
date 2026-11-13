@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { computeLeaveBalance, requestDuration } from "@/lib/employees";
 import { logClientView } from "@/lib/activity";
 import { getEffectiveCompany } from "@/lib/appSettings";
+import { ensureOutsideLeaveColumns, isOutsideColleague } from "@/lib/outsideLeave";
 
 export type PublicLeaveRequestView = {
   id: string;
@@ -11,6 +12,8 @@ export type PublicLeaveRequestView = {
   halfDayPeriod: string | null;
   days: number;
   reason: string;
+  leaveType: string;
+  documentName: string | null;
   status: string;
   decidedNote: string | null;
   createdAt: string;
@@ -31,6 +34,7 @@ export type PublicEmployeeLeaveView = {
   // Onboarding employees can still request leave (they're current staff,
   // just mid-paperwork) — only FORMER blocks it.
   canRequestLeave: boolean;
+  outsideCompany: boolean;
   leaveRequests: PublicLeaveRequestView[];
   company: { name: string; shortName?: string; logoData?: string | null; logoDataDark?: string | null };
 };
@@ -42,9 +46,10 @@ export type PublicEmployeeLeaveView = {
  * control, exactly like Quotation.signingToken.
  */
 export async function getPublicEmployeeLeaveView(token: string): Promise<PublicEmployeeLeaveView | null> {
+  await ensureOutsideLeaveColumns();
   const employee = await prisma.employee.findUnique({
     where: { leaveToken: token },
-    include: { leaveRequests: { orderBy: { createdAt: "desc" } } },
+    include: { leaveRequests: { orderBy: { createdAt: "desc" } }, company: { select: { name: true } } },
   });
   if (!employee) return null;
 
@@ -65,6 +70,7 @@ export async function getPublicEmployeeLeaveView(token: string): Promise<PublicE
     leaveUsed: used,
     leaveRemaining: remaining,
     canRequestLeave: employee.status !== "FORMER",
+    outsideCompany: isOutsideColleague(employee.company?.name),
     leaveRequests: employee.leaveRequests.map((r) => ({
       id: r.id,
       startDate: r.startDate.toISOString(),
@@ -73,6 +79,8 @@ export async function getPublicEmployeeLeaveView(token: string): Promise<PublicE
       halfDayPeriod: r.halfDayPeriod,
       days: requestDuration(r),
       reason: r.reason,
+      leaveType: r.leaveType,
+      documentName: r.documentName,
       status: r.status,
       decidedNote: r.decidedNote,
       createdAt: r.createdAt.toISOString(),

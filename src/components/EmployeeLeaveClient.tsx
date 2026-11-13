@@ -51,6 +51,8 @@ export default function EmployeeLeaveClient({
   const [isHalfDay, setIsHalfDay] = useState(false);
   const [halfDayPeriod, setHalfDayPeriod] = useState<"AM" | "PM">("AM");
   const [reason, setReason] = useState("");
+  const [leaveType, setLeaveType] = useState<"ANNUAL" | "SICK" | "NO_PAY">("ANNUAL");
+  const [documentName, setDocumentName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSubmitted, setJustSubmitted] = useState(false);
@@ -81,6 +83,8 @@ export default function EmployeeLeaveClient({
           isHalfDay,
           halfDayPeriod: isHalfDay ? halfDayPeriod : undefined,
           reason,
+          leaveType: view.outsideCompany ? leaveType : "ANNUAL",
+          documentName: view.outsideCompany && leaveType === "SICK" ? documentName : "",
         }),
       });
       const data = await res.json();
@@ -91,6 +95,7 @@ export default function EmployeeLeaveClient({
       setIsHalfDay(false);
       setHalfDayPeriod("AM");
       setReason("");
+      setDocumentName("");
       setJustSubmitted(true);
     } catch (err: any) {
       setError(err.message);
@@ -106,10 +111,20 @@ export default function EmployeeLeaveClient({
       <div>
         <h1 className="font-display text-2xl font-semibold text-ink">{t("Hi, {name}", { name: view.name })}</h1>
         <p className="text-sm text-ink-muted mt-0.5">
-          {t("Request leave, and write the days and times you worked. HR Plus approves both.")}
+          {view.outsideCompany
+            ? t("No sign-in. Pick a leave type below.")
+            : t("Request leave, and write the days and times you worked. HR Plus approves both.")}
         </p>
       </div>
 
+      {view.outsideCompany ? (
+        <div className="card p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1">{t("Annual leave left")}</p>
+          <p className={`font-display text-4xl font-semibold ${view.leaveRemaining < 0 ? "text-danger-500" : "text-brand-600"}`}>
+            {view.leaveRemaining} <span className="text-lg text-ink-muted">{t("days")}</span>
+          </p>
+        </div>
+      ) : (
       <div className="card p-5 grid grid-cols-3 gap-4 text-center">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1">
@@ -135,6 +150,7 @@ export default function EmployeeLeaveClient({
           <p className="text-xs text-ink-faint">{t("days")}</p>
         </div>
       </div>
+      )}
 
       {view.canRequestLeave ? (
         <form onSubmit={submit} className="card p-5 flex flex-col gap-4">
@@ -152,6 +168,33 @@ export default function EmployeeLeaveClient({
           {justSubmitted && (
             <div className="bg-emerald-50 border border-emerald-500/30 text-emerald-700 text-sm rounded-xl px-3 py-2">
 {t("Request submitted — a staff member will review it soon.")}
+            </div>
+          )}
+
+          {view.outsideCompany && (
+            <div>
+              <label className="label">{t("Type of leave")}</label>
+              <div className="grid grid-cols-1 gap-2">
+                {(
+                  [
+                    ["ANNUAL", "Annual leave", "Paid time off"],
+                    ["SICK", "Sick leave", "Add a document"],
+                    ["NO_PAY", "No-pay leave", "Unpaid day off"],
+                  ] as const
+                ).map(([value, title, hint]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setLeaveType(value)}
+                    className={`rounded-xl border px-4 py-3 text-left ${
+                      leaveType === value ? "border-brand-500 bg-brand-50" : "border-line"
+                    }`}
+                  >
+                    <span className="block font-semibold">{t(title)}</span>
+                    <span className="block text-xs text-ink-muted">{t(hint)}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -216,6 +259,21 @@ export default function EmployeeLeaveClient({
             )}
           </div>
 
+          {view.outsideCompany && leaveType === "SICK" && (
+            <div>
+              <label className="label">{t("Sick leave document")}</label>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="input"
+                onChange={(e) => setDocumentName(e.target.files?.[0]?.name || "")}
+              />
+              <p className="mt-1 text-xs text-ink-faint">
+                {documentName ? t("Attached: {name}", { name: documentName }) : t("Add a medical note, photo, or PDF.")}
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="label">{t("Reason (optional)")}</label>
             <textarea
@@ -237,7 +295,7 @@ placeholder={t("e.g. Family trip")}
         </div>
       )}
 
-      {timesheet && <TimesheetForm token={timesheet.token} initial={timesheet} embedded />}
+      {!view.outsideCompany && timesheet && <TimesheetForm token={timesheet.token} initial={timesheet} embedded />}
 
       <div className="card p-5">
         <h2 className="font-display text-lg font-semibold mb-4">{t("Request History")}</h2>

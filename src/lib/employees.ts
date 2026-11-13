@@ -579,6 +579,7 @@ type LeaveSpan = {
   startDate: Date | string;
   endDate: Date | string;
   isHalfDay?: boolean;
+  leaveType?: string | null;
 };
 
 /** Days a single leave request spans — 0.5 for a half-day request,
@@ -588,10 +589,10 @@ export function requestDuration(request: LeaveSpan): number {
   return daysBetweenInclusive(request.startDate, request.endDate);
 }
 
-/** Total days used across every APPROVED leave request. */
+/** Total annual-leave days used across every APPROVED request. Sick leave and no-pay leave do not reduce this. */
 export function computeLeaveUsed(requests: LeaveSpan[]): number {
   return requests
-    .filter((r) => r.status === "APPROVED")
+    .filter((r) => r.status === "APPROVED" && (r.leaveType == null || r.leaveType === "ANNUAL"))
     .reduce((sum, r) => sum + requestDuration(r), 0);
 }
 

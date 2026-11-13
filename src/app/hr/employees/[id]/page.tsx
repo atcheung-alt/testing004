@@ -34,6 +34,8 @@ import { loadEmploymentHistory } from "@/lib/employmentHistory";
 import { defaultTimesheetPeriod, sheetsForEmployee, timesheetBasis } from "@/lib/timesheets";
 import EmployeeTimesheetCard from "@/components/EmployeeTimesheetCard";
 import { getT } from "@/lib/i18n/server";
+import OutsideLeaveCard from "@/components/OutsideLeaveCard";
+import { ensureOutsideLeaveColumns, isOutsideColleague } from "@/lib/outsideLeave";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +59,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
   const scope = await employeeScopeFor(user);
   if (scope.mode === "deny") redirect("/hr/profile");
   if (!(await employeeVisibleById(params.id))) notFound();
+  await ensureOutsideLeaveColumns();
   const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
   // Two different Prisma queries, not one query with fields hidden in the
@@ -570,6 +573,14 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               </div>
             )}
           </div>
+        )}
+
+        {isOutsideColleague(employee.company?.name) && (
+          <OutsideLeaveCard
+            employeeId={employee.id}
+            defaultColleagueEmail={employee.email || employee.personalEmail || employee.companyEmail || ""}
+            defaultManagerEmail={employee.lineManagerEmail || ""}
+          />
         )}
 
         <div className="card p-5">

@@ -46,7 +46,7 @@ export default async function EmployeeLeavePage({ params }: { params: { token: s
   }
 
   const period = defaultTimesheetPeriod();
-  const sheet = view.canRequestLeave ? await openTimesheet(view.id, period) : null;
+  const sheet = view.canRequestLeave && !view.outsideCompany ? await openTimesheet(view.id, period) : null;
   const employee = sheet
     ? await prisma.employee.findUnique({
         where: { id: view.id },

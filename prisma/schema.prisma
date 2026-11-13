@@ -765,6 +765,10 @@ model Employee {
   // Quotation.signingToken, generated on first use via ensureLeaveToken().
   // A FORMER employee's link stops accepting new requests (still viewable).
   leaveToken      String?  @unique
+  // Outside colleagues (company is not HR Plus) cannot sign in. Staff email
+  // their leave link and a separate link to the line manager.
+  lineManagerEmail String?
+  leaveManagerToken String? @unique
 
   // --- MPF enrollment -------------------------------------------------------
   // Manually toggled by staff once a new employee's MPF scheme enrollment has
@@ -932,6 +936,10 @@ model LeaveRequest {
   isHalfDay   Boolean   @default(false)
   halfDayPeriod String?
   reason      String    @default("")
+  // ANNUAL counts against the balance. SICK and NO_PAY do not.
+  leaveType   String    @default("ANNUAL")
+  // File name of a sick-leave document. The file itself is not stored.
+  documentName String?
   status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
   submittedIp String?
   decidedAt   DateTime?
