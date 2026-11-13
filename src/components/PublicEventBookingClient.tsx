@@ -26,6 +26,17 @@ type DescriptionBlock =
   | { type: "label"; text: string }
   | { type: "fact"; label: string; text: string };
 
+function tidyOrdinals(text: string) {
+  return text.replace(/\b(\d+)th\b/gi, (_all, raw) => {
+    const num = Number(raw);
+    const mod = num % 100;
+    if (mod >= 11 && mod <= 13) return `${num}th`;
+    const end = num % 10;
+    const suffix = end === 1 ? "st" : end === 2 ? "nd" : end === 3 ? "rd" : "th";
+    return `${num}${suffix}`;
+  });
+}
+
 function descriptionBlocks(text: string): DescriptionBlock[] {
   const blocks: DescriptionBlock[] = [];
   for (const raw of text.replace(/\r/g, "").split("\n")) {
@@ -33,14 +44,14 @@ function descriptionBlocks(text: string): DescriptionBlock[] {
     if (!line) continue;
     const fact = line.match(/^(?:[·•*\-]\s*)?(date|time|remarks|session)\s*[:：]\s*(.+)$/i);
     if (fact) {
-      blocks.push({ type: "fact", label: fact[1], text: fact[2].trim() });
+      blocks.push({ type: "fact", label: fact[1], text: tidyOrdinals(fact[2].trim()) });
       continue;
     }
     if (/^(event details|registration method)\s*:?\s*$/i.test(line)) {
       blocks.push({ type: "label", text: line.replace(/:\s*$/, "") });
       continue;
     }
-    blocks.push({ type: "p", text: line });
+    blocks.push({ type: "p", text: tidyOrdinals(line) });
   }
   return blocks;
 }
@@ -232,9 +243,16 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
 
   return (
     <PublicBookingShell company={company} dark>
-      <div className="lg:grid lg:grid-cols-[minmax(280px,0.9fr)_1.25fr] lg:min-h-[calc(100vh-3.5rem)]">
-        <aside className="border-b border-line px-6 py-8 lg:border-b-0 lg:border-r lg:overflow-auto">
-          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink tracking-tight">{event.name}</h1>
+      <div className="mx-auto my-6 grid w-[min(960px,calc(100%-2rem))] overflow-hidden rounded-[20px] border border-white/10 bg-[rgba(15,23,42,0.7)] shadow-[0_24px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl lg:grid-cols-[38%_1fr]">
+        <aside className="border-b border-white/10 px-5 py-6 lg:border-b-0 lg:border-r">
+          {/trail\s*link|trial\s*link/i.test(event.name) && (
+            <span className="mb-3 inline-flex rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 text-[11px] tracking-[0.14em] text-amber-200">
+              TRIAL LINK
+            </span>
+          )}
+          <h1 className="text-3xl font-semibold tracking-tight text-ink">
+            {event.name.replace(/\(([^)]*trail\s*link[^)]*)\)/i, "").replace(/trail\s*link\s*for\s*client\s*reference/i, "").trim() || event.name}
+          </h1>
           {event.companyName && (
             <p className="text-sm text-ink-muted mt-1">{t("For {company}", { company: event.companyName })}</p>
           )}
@@ -362,7 +380,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                 <p className="text-sm text-ink-muted pb-2">
                   {t("Choose a time. The next step asks for your name, email, and phone. A full time cannot be selected.")}
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {slots.map((slot) => {
                     const full = slot.available <= 0;
                     const isSelected = slot.id === selectedSlotId;
@@ -376,15 +394,15 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                           setScreen("details");
                         }}
                         className={clsx(
-                          "flex items-center justify-between gap-3 rounded-md border px-3 py-3 text-left text-sm transition-colors",
+                          "flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left text-sm transition-colors",
                           isSelected
-                            ? "border-brand-600 bg-brand-600 text-white"
+                            ? "border-indigo-500 bg-indigo-600/20 text-white shadow-[0_0_15px_rgba(99,102,241,0.25)]"
                             : full
-                              ? "border-line text-ink-faint cursor-not-allowed bg-paper"
-                              : "border-line bg-surface hover:border-brand-300 hover:bg-brand-50 text-ink"
+                              ? "border-white/10 text-slate-500 cursor-not-allowed bg-slate-950/40"
+                              : "border-white/10 bg-slate-900/60 text-white hover:border-indigo-400/50"
                         )}
                       >
-                        <span className="font-medium">{formatTimeRangeLabel(slot.startTime, slot.durationMins)}</span>
+                        <span className="font-medium tabular-nums">{formatTimeRangeLabel(slot.startTime, slot.durationMins)}{isSelected ? " ✓" : ""}</span>
                         <span className={clsx("text-xs shrink-0", isSelected ? "text-white/80" : "text-ink-faint")}>
                           {full
                             ? t("Full")
@@ -410,7 +428,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                   {t("Change time")}
                 </button>
               </div>
-              <div className="flex items-center gap-2 text-sm text-ink rounded-md border border-line bg-paper px-3 py-2">
+              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm text-ink">
                 <CalendarDays size={15} className="text-brand-600 shrink-0" />
                 {formatSlotLabel(date, selectedSlot.startTime, selectedSlot.durationMins)}
               </div>
@@ -420,7 +438,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                   <label className="label">{t("Your name *")}</label>
                   <input
                     type="text"
-                    className="input"
+                    className="h-11 w-full rounded-[10px] border border-white/10 bg-slate-950/60 px-3 focus:border-indigo-500 focus:outline-none"
                     autoComplete="name"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
@@ -431,7 +449,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                   <label className="label">{t("Phone (optional)")}</label>
                   <input
                     type="tel"
-                    className="input"
+                    className="h-11 w-full rounded-[10px] border border-white/10 bg-slate-950/60 px-3 focus:border-indigo-500 focus:outline-none"
                     autoComplete="tel"
                     value={clientPhone}
                     onChange={(e) => setClientPhone(e.target.value)}
@@ -443,7 +461,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                 <label className="label">{t("Email *")}</label>
                 <input
                   type="email"
-                  className="input"
+                  className="h-11 w-full rounded-[10px] border border-white/10 bg-slate-950/60 px-3 focus:border-indigo-500 focus:outline-none"
                   autoComplete="email"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
@@ -455,7 +473,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
               <div>
                 <label className="label">{t("Notes (optional)")}</label>
                 <textarea
-                  className="input min-h-[70px]"
+                  className="min-h-[80px] w-full rounded-[10px] border border-white/10 bg-slate-950/60 px-3 py-2 focus:border-indigo-500 focus:outline-none"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder={t("Anything else we should know")}
@@ -469,7 +487,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
                 </div>
               )}
 
-              <button type="submit" disabled={submitting} className="btn-primary self-start">
+              <button type="submit" disabled={submitting} className="flex h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:brightness-110 disabled:opacity-60">
                 {submitting && <Loader2 size={15} className="animate-spin" />}
                 {submitting ? t("Submitting…") : event.requiresConfirmation ? t("Request booking") : t("Confirm booking")}
               </button>

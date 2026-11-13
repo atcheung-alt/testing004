@@ -75,10 +75,8 @@ html[data-theme="light"] {
   min-height: 100vh;
   color-scheme: dark;
   color: #e8eef8;
-  background:
-    radial-gradient(900px 420px at 0% 0%, rgba(90, 130, 255, 0.22), transparent 55%),
-    radial-gradient(700px 380px at 100% 0%, rgba(150, 90, 230, 0.16), transparent 50%),
-    linear-gradient(180deg, #161b26, #0d1218);
+  background: radial-gradient(ellipse at top, #1e293b 0%, #090d16 65%);
+  font-family: Inter, "Avenir Next", "Segoe UI", sans-serif;
   --color-paper: 13 18 24;
   --color-surface: 28 34 46;
   --color-ink: 232 238 248;

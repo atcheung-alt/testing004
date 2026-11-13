@@ -16,9 +16,9 @@ const WEEKDAY_LABELS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const WEEKDAY_LABELS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
 
 const LEVEL_STYLES: Record<AvailabilityLevel, string> = {
-  OPEN: "border-transparent bg-[rgba(150,184,255,0.28)] text-[#f7f9ff] hover:bg-[rgba(150,184,255,0.4)]",
-  FEW: "border-transparent bg-[#ffd7a8] text-[#2a2118] hover:bg-[#ffc98a]",
-  FULL: "border-transparent bg-transparent text-[#4e5b6d] line-through",
+  OPEN: "border-indigo-500/30 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25",
+  FEW: "border-amber-400/30 bg-amber-400/15 text-amber-200 hover:bg-amber-400/25",
+  FULL: "border-transparent bg-transparent text-[#475569]",
 };
 const LEVEL_LABELS: Record<AvailabilityLevel, string> = {
   OPEN: "Open",
@@ -154,7 +154,7 @@ export default function PublicEventCalendar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {weeks.flatMap((week, wi) =>
           week.map((d, di) => {
             const inMonth = isSameMonth(d, monthDate);
@@ -174,15 +174,18 @@ export default function PublicEventCalendar({
                 onClick={() => onSelectDate(key)}
                 title={level ? t(LEVEL_LABELS[level]) : undefined}
                 className={clsx(
-                  "flex items-center justify-center rounded-2xl border text-sm font-semibold transition-colors h-11",
+                  "flex flex-col items-center justify-center rounded-[10px] border text-sm font-semibold transition-colors h-11",
                   !inMonth && "border-transparent text-transparent cursor-default",
-                  inMonth && outOfRange && "border-transparent text-[#4e5b6d] cursor-not-allowed",
-                  inMonth && !outOfRange && !isSelected && !level && "border-transparent text-[#d5deea]",
-                  inMonth && !outOfRange && !isSelected && level && LEVEL_STYLES[level],
-                  isSelected && "border-transparent bg-[#eef3ff] text-[#121826] shadow-[0_8px_20px_rgba(90,120,255,0.25)]"
+                  inMonth && (outOfRange || level === "FULL") && "border-transparent text-[#475569] cursor-not-allowed",
+                  inMonth && !outOfRange && !isSelected && !level && "border-transparent text-[#475569]",
+                  inMonth && !outOfRange && !isSelected && level && level !== "FULL" && LEVEL_STYLES[level],
+                  isSelected && "border-white bg-white text-slate-900"
                 )}
               >
                 <span className="leading-none">{showLoading ? <Loader2 size={14} className="animate-spin" /> : d.getDate()}</span>
+                {inMonth && !outOfRange && !isSelected && (level === "OPEN" || level === "FEW") ? (
+                  <span className={clsx("mt-1 h-1 w-1 rounded-full", level === "FEW" ? "bg-amber-300" : "bg-indigo-400 shadow-[0_0_6px_#818cf8]")} />
+                ) : null}
               </button>
             );
           })
