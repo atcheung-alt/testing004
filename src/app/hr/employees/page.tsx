@@ -13,6 +13,7 @@ import EmployeeListClient, { EmployeeListItem } from "@/components/EmployeeListC
 import EmployeeListFilters from "@/components/EmployeeListFilters";
 import { clientCompanies } from "@/lib/employerCompany";
 import { getT } from "@/lib/i18n/server";
+import { ensureOutsideLeaveColumns } from "@/lib/outsideLeave";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,7 @@ async function EmployeeList({
   scopeWhere: Record<string, unknown> | null;
 }) {
   const t = getT();
+  await ensureOutsideLeaveColumns();
   // This page is admin-only (see requireAdminPage below), so the query pulls
   // every field the row-click preview panel wants to show — no narrower
   // select needed since there's no non-admin viewer of this data to protect
