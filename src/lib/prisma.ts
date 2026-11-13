@@ -12,16 +12,22 @@ function buildPrisma() {
     if (columnsReady) return Promise.resolve();
     if (!ready) {
       ready = (async () => {
-        await base.$executeRawUnsafe(`ALTER TABLE "Quotation" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
-        await base.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
-        await base.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileId" TEXT`);
-        await base.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
-        await base.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
-        await base.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
-        await base.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileId" TEXT`);
-        await base.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
-        await base.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
-        columnsReady = true;
+        // A separate client so this check never holds the connection the page query is waiting on.
+        const ddl = new PrismaClient();
+        try {
+          await ddl.$executeRawUnsafe(`ALTER TABLE "Quotation" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileId" TEXT`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "createdByEmail" TEXT NOT NULL DEFAULT ''`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileId" TEXT`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
+          await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
+          columnsReady = true;
+        } finally {
+          await ddl.$disconnect();
+        }
       })().catch((error) => {
         ready = null;
         throw error;
