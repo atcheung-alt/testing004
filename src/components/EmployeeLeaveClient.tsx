@@ -157,7 +157,7 @@ export default function EmployeeLeaveClient({
       )}
 
       {view.canRequestLeave ? (
-        <form onSubmit={submit} className="card p-5 flex flex-col gap-4">
+        <form noValidate onSubmit={submit} className="card p-5 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <CalendarDays size={18} className="text-brand-600" />
             <h2 className="font-display text-lg font-semibold">{t("Request Leave")}</h2>
@@ -219,7 +219,6 @@ export default function EmployeeLeaveClient({
                 type="date"
                 className="input"
                 value={endDate}
-                min={startDate || undefined}
                 disabled={isHalfDay}
                 onChange={(e) => setEndDate(e.target.value)}
               />
@@ -268,7 +267,6 @@ export default function EmployeeLeaveClient({
               <label className="label">{t("Sick leave document")}</label>
               <input
                 type="file"
-                accept="image/*,.pdf"
                 className="input"
                 onChange={(e) => {
                   const file = e.target.files?.[0];

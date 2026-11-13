@@ -42,7 +42,15 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   const leaveType = parseLeaveType(body.leaveType);
   const documentName = String(body.documentName || "").trim().slice(0, 180);
   const documentData = typeof body.documentData === "string" ? body.documentData : "";
-  if (documentData && !/^data:(application\/pdf|image\/[a-z0-9.+-]+);base64,/.test(documentData)) {
+  const documentMime = documentData.match(/^data:([^;,]*);base64,/)?.[1] || "";
+  const documentLooksLikeFile = /\.(pdf|png|jpe?g|gif|webp|heic)$/i.test(documentName);
+  if (
+    documentData &&
+    documentMime !== "application/pdf" &&
+    documentMime !== "application/octet-stream" &&
+    !documentMime.startsWith("image/") &&
+    !documentLooksLikeFile
+  ) {
     return NextResponse.json({ error: "Attach a PDF or a photo." }, { status: 400 });
   }
   if (documentData.length > 12_000_000) {
