@@ -100,6 +100,12 @@ export default async function QuotationDetailPage({ params }: { params: { id: st
             defaultBody={email.body}
             emailValid={isValidEmail(quotation.customerEmail)}
             showCc
+            defaultCc={
+              isValidEmail(quotation.createdByEmail) &&
+              quotation.createdByEmail.trim().toLowerCase() !== (quotation.customerEmail || "").trim().toLowerCase()
+                ? quotation.createdByEmail.trim()
+                : ""
+            }
           />
           {!signed && signingUrl && <CopySigningLinkButton url={signingUrl} />}
           {canModify && (

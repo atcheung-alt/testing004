@@ -34,6 +34,8 @@ type Props = {
   emailValid: boolean;
   /** Offer a per-send CC field, in addition to any standing CC set in Settings. */
   showCc?: boolean;
+  /** Starting value for the CC field. The sender can clear or change it. */
+  defaultCc?: string;
   /** Override the default `/api/{kind}/{id}/email` POST target — needed for
    *  sub-resources like an employee's contract, which lives at
    *  `/api/employees/{id}/contract/email` instead. */
@@ -63,6 +65,7 @@ export default function SendEmailButton({
   defaultBody,
   emailValid,
   showCc = false,
+  defaultCc = "",
   endpoint,
   label = "Send email",
   isFollowUp = false,
@@ -72,7 +75,7 @@ export default function SendEmailButton({
   const [open, setOpen] = useState(false);
   const [pdfLanguage, setPdfLanguage] = useState<PdfDownloadLanguage>(appLanguageToPdf(appLanguage));
   const [to, setTo] = useState(defaultTo);
-  const [cc, setCc] = useState("");
+  const [cc, setCc] = useState(defaultCc);
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
   const [status, setStatus] = useState<Status>({ type: "idle" });
@@ -240,6 +243,11 @@ export default function SendEmailButton({
                     {!ccValid && (
                       <p className="mt-1 text-xs text-danger-500">
                         {t("One of these doesn't look like a valid email.")}
+                      </p>
+                    )}
+                    {defaultCc && cc.trim().toLowerCase() === defaultCc.trim().toLowerCase() && (
+                      <p className="mt-1 text-xs text-ink-faint">
+                        {t("This address created the quotation. Clear the box to send with no copy, or type a different email.")}
                       </p>
                     )}
                   </div>
