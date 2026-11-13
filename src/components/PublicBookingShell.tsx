@@ -14,7 +14,7 @@ export default function PublicBookingShell({
   return (
     <div className={dark ? "booking-link" : "min-h-screen bg-paper"}>
       <header className="border-b border-line bg-surface">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
+        <div className={dark ? "px-6 h-14 flex items-center gap-3" : "max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-3"}>
           {company.logoData ? (
             <CompanyLogo
               logoData={company.logoData}
@@ -30,7 +30,7 @@ export default function PublicBookingShell({
           )}
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">{children}</main>
+      <main className={dark ? "w-full" : "max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10"}>{children}</main>
     </div>
   );
 }

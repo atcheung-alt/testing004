@@ -21,6 +21,30 @@ type EventInfo = {
 
 type SlotOption = { id: string; startTime: string; durationMins: number; quota: number; available: number };
 
+type DescriptionBlock =
+  | { type: "p"; text: string }
+  | { type: "label"; text: string }
+  | { type: "fact"; label: string; text: string };
+
+function descriptionBlocks(text: string): DescriptionBlock[] {
+  const blocks: DescriptionBlock[] = [];
+  for (const raw of text.replace(/\r/g, "").split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    const fact = line.match(/^(?:[·•*\-]\s*)?(date|time|remarks|session)\s*[:：]\s*(.+)$/i);
+    if (fact) {
+      blocks.push({ type: "fact", label: fact[1], text: fact[2].trim() });
+      continue;
+    }
+    if (/^(event details|registration method)\s*:?\s*$/i.test(line)) {
+      blocks.push({ type: "label", text: line.replace(/:\s*$/, "") });
+      continue;
+    }
+    blocks.push({ type: "p", text: line });
+  }
+  return blocks;
+}
+
 function calendarDay(iso: string): string {
   const date = new Date(iso);
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -203,26 +227,42 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
     );
   }
 
+  const story = descriptionBlocks(event.description || "");
+  const hasFacts = story.some((block) => block.type === "fact");
+
   return (
     <PublicBookingShell company={company} dark>
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="font-display text-3xl font-semibold text-ink tracking-tight">{event.name}</h1>
+      <div className="lg:grid lg:grid-cols-[minmax(280px,0.9fr)_1.25fr] lg:min-h-[calc(100vh-3.5rem)]">
+        <aside className="border-b border-line px-6 py-8 lg:border-b-0 lg:border-r lg:overflow-auto">
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink tracking-tight">{event.name}</h1>
           {event.companyName && (
             <p className="text-sm text-ink-muted mt-1">{t("For {company}", { company: event.companyName })}</p>
           )}
-          <div className="mt-4 rounded-2xl border border-line bg-surface px-4 py-3 max-w-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{t("Date")}</p>
-            <p className="mt-1 font-semibold text-ink">
-              {formatDateLabel(new Date(event.startDate))}
-              {calendarDay(event.startDate) !== calendarDay(event.endDate)
-                ? ` – ${formatDateLabel(new Date(event.endDate))}`
-                : ""}
-            </p>
+          <div className="mt-6 text-sm text-ink-muted leading-relaxed">
+            {!hasFacts && (
+              <div className="border-t border-line py-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide">{t("Date")}</p>
+                <p className="mt-1 text-lg font-semibold text-ink">
+                  {formatDateLabel(new Date(event.startDate))}
+                  {calendarDay(event.startDate) !== calendarDay(event.endDate)
+                    ? ` – ${formatDateLabel(new Date(event.endDate))}`
+                    : ""}
+                </p>
+              </div>
+            )}
+            {story.map((block, index) =>
+              block.type === "fact" ? (
+                <div key={index} className="border-t border-line py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide">{t(block.label[0].toUpperCase() + block.label.slice(1).toLowerCase())}</p>
+                  <p className="mt-1 text-lg font-semibold text-ink">{block.text}</p>
+                </div>
+              ) : block.type === "label" ? (
+                <p key={index} className="mt-4 text-[11px] font-semibold uppercase tracking-wide">{block.text}</p>
+              ) : (
+                <p key={index} className="mt-3">{block.text}</p>
+              )
+            )}
           </div>
-          {event.description && (
-            <p className="text-sm text-ink-muted mt-3 max-w-2xl whitespace-pre-wrap">{event.description}</p>
-          )}
           {savedChoice && (
             <p className="mt-3 text-sm text-ink rounded-md border border-line bg-surface px-3 py-2">
               {t("Your choice")}: {savedChoice.slotLabel} · {t(savedChoice.status)}
@@ -233,7 +273,8 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
               {t("A staff member confirms each request before it is final.")}
             </p>
           )}
-        </div>
+        </aside>
+        <div className="px-6 py-8">
 
         <ol className="flex flex-wrap items-center gap-2 text-sm">
           {(
@@ -275,7 +316,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
           })}
         </ol>
 
-        <form onSubmit={submit} className="card p-5 sm:p-6 flex flex-col gap-5 max-w-xl">
+        <form onSubmit={submit} className="flex flex-col gap-5">
           {screen === "date" && (
             <div>
               <h2 className="font-display text-xl font-semibold text-ink">{t("Pick a Date")}</h2>
@@ -435,6 +476,7 @@ export default function PublicEventBookingClient({ event, company }: { event: Ev
             </div>
           )}
         </form>
+        </div>
       </div>
     </PublicBookingShell>
   );
