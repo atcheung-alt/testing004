@@ -27,6 +27,7 @@ export function ensureOutsideLeaveColumns() {
         `ALTER TABLE "LeaveRequest" ADD COLUMN IF NOT EXISTS "leaveType" TEXT NOT NULL DEFAULT 'ANNUAL'`
       );
       await prisma.$executeRawUnsafe(`ALTER TABLE "LeaveRequest" ADD COLUMN IF NOT EXISTS "documentName" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "LeaveRequest" ADD COLUMN IF NOT EXISTS "documentData" TEXT`);
     })().catch((error) => {
       columnsReady = null;
       throw error;
@@ -39,6 +40,20 @@ export function isOutsideColleague(companyName: string | null | undefined) {
   const name = companyName?.trim();
   if (!name) return false;
   return !isInternalCompanyName(name);
+}
+
+export function leaveFileResponse(dataUrl: string | null | undefined, name: string | null | undefined) {
+  const match = String(dataUrl || "").match(/^data:([^;,]+);base64,([\s\S]+)$/);
+  if (!match) return null;
+  const bytes = Buffer.from(match[2], "base64");
+  const filename = (name || "leave-document").replace(/["\r\n]/g, "");
+  return new Response(bytes, {
+    headers: {
+      "Content-Type": match[1],
+      "Content-Disposition": `inline; filename="${filename}"`,
+      "Cache-Control": "private, no-store",
+    },
+  });
 }
 
 export function parseLeaveType(value: unknown): OutsideLeaveType {

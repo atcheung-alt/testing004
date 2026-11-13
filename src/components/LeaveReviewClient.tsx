@@ -10,6 +10,7 @@ type Item = {
   endDate: string;
   reason: string;
   documentName: string | null;
+  hasDocument: boolean;
   status: string;
   decidedNote: string | null;
 };
@@ -134,7 +135,13 @@ export default function LeaveReviewClient({
             </span>
           </div>
           <p className="text-sm">{item.reason || "No reason given."}</p>
-          <p className="text-sm text-ink-muted">{item.documentName ? `Document: ${item.documentName}` : "No document attached."}</p>
+          {item.hasDocument ? (
+            <a className="text-sm underline" href={`/api/public/leave/review/${token}/file/${item.id}`} target="_blank" rel="noreferrer">
+              Open {item.documentName || "document"}
+            </a>
+          ) : (
+            <p className="text-sm text-ink-muted">{item.documentName ? `Document: ${item.documentName}` : "No document attached."}</p>
+          )}
           {item.status === "REJECTED" && item.decidedNote && (
             <p className="text-sm text-ink-muted">Rejection reason: {item.decidedNote}</p>
           )}

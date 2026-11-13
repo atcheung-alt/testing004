@@ -41,6 +41,13 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   }
   const leaveType = parseLeaveType(body.leaveType);
   const documentName = String(body.documentName || "").trim().slice(0, 180);
+  const documentData = typeof body.documentData === "string" ? body.documentData : "";
+  if (documentData && !/^data:(application\/pdf|image\/[a-z0-9.+-]+);base64,/.test(documentData)) {
+    return NextResponse.json({ error: "Attach a PDF or a photo." }, { status: 400 });
+  }
+  if (documentData.length > 12_000_000) {
+    return NextResponse.json({ error: "That file is too large. Keep it under 8 MB." }, { status: 400 });
+  }
 
   const leaveRequest = await prisma.leaveRequest.create({
     data: {
@@ -52,6 +59,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       reason: fields.reason,
       leaveType,
       documentName: documentName || null,
+      documentData: documentData || null,
       submittedIp: getClientIp(request),
     },
   });

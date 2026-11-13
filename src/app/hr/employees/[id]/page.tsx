@@ -595,6 +595,8 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               isHalfDay: r.isHalfDay,
               halfDayPeriod: r.halfDayPeriod,
               reason: r.reason,
+              documentName: r.documentName,
+              hasDocument: Boolean(r.documentData),
               status: r.status as "PENDING" | "APPROVED" | "REJECTED",
               decidedAt: r.decidedAt ? r.decidedAt.toISOString() : null,
               decidedNote: r.decidedNote,

@@ -53,6 +53,7 @@ export default function EmployeeLeaveClient({
   const [reason, setReason] = useState("");
   const [leaveType, setLeaveType] = useState<"ANNUAL" | "SICK" | "NO_PAY">("ANNUAL");
   const [documentName, setDocumentName] = useState("");
+  const [documentData, setDocumentData] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [justSubmitted, setJustSubmitted] = useState(false);
@@ -85,6 +86,7 @@ export default function EmployeeLeaveClient({
           reason,
           leaveType: view.outsideCompany ? leaveType : "ANNUAL",
           documentName: view.outsideCompany && leaveType === "SICK" ? documentName : "",
+          documentData: view.outsideCompany && leaveType === "SICK" ? documentData : "",
         }),
       });
       const data = await res.json();
@@ -96,6 +98,7 @@ export default function EmployeeLeaveClient({
       setHalfDayPeriod("AM");
       setReason("");
       setDocumentName("");
+      setDocumentData("");
       setJustSubmitted(true);
     } catch (err: any) {
       setError(err.message);
@@ -267,7 +270,25 @@ export default function EmployeeLeaveClient({
                 type="file"
                 accept="image/*,.pdf"
                 className="input"
-                onChange={(e) => setDocumentName(e.target.files?.[0]?.name || "")}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) {
+                    setDocumentName("");
+                    setDocumentData("");
+                    return;
+                  }
+                  if (file.size > 8 * 1024 * 1024) {
+                    setError(t("That file is too large. Keep it under 8 MB."));
+                    e.target.value = "";
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    setDocumentName(file.name);
+                    setDocumentData(typeof reader.result === "string" ? reader.result : "");
+                  };
+                  reader.readAsDataURL(file);
+                }}
               />
               <p className="mt-1 text-xs text-ink-faint">
                 {documentName ? t("Attached: {name}", { name: documentName }) : t("Add a medical note, photo, or PDF.")}

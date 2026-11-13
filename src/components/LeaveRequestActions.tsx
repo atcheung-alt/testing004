@@ -57,6 +57,16 @@ function RequestRow({
         <LeaveStatusBadge status={request.status} />
       </div>
       {request.reason && <p className="text-xs text-ink-muted">{request.reason}</p>}
+      {request.hasDocument && (
+        <a
+          className="text-xs underline"
+          href={`/api/employees/${employeeId}/leave-requests/${request.id}/file`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t("Open {name}", { name: request.documentName || t("document") })}
+        </a>
+      )}
       {request.decidedNote && (
         <p className="text-xs text-ink-faint italic">{t("Note: {note}", { note: request.decidedNote })}</p>
       )}

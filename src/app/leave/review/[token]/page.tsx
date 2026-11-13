@@ -32,6 +32,7 @@ export default async function LeaveReviewPage({ params }: { params: { token: str
         endDate: request.endDate.toISOString(),
         reason: request.reason,
         documentName: request.documentName,
+        hasDocument: Boolean(request.documentData),
         status: request.status,
         decidedNote: request.decidedNote,
       }))}

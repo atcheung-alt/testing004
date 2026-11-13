@@ -41,6 +41,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       endDate: item.endDate.toISOString(),
       reason: item.reason,
       documentName: item.documentName,
+      hasDocument: Boolean(item.documentData),
       status: item.status,
       decidedNote: item.decidedNote,
     })),

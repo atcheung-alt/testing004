@@ -152,6 +152,8 @@ export type LeaveRequest = {
   isHalfDay: boolean;
   halfDayPeriod: string | null;
   reason: string;
+  documentName?: string | null;
+  hasDocument?: boolean;
   status: LeaveRequestStatus;
   submittedIp?: string | null;
   decidedAt?: string | null;

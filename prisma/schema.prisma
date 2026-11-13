@@ -949,8 +949,9 @@ model LeaveRequest {
   reason      String    @default("")
   // ANNUAL counts against the balance. SICK and NO_PAY do not.
   leaveType   String    @default("ANNUAL")
-  // File name of a sick-leave document. The file itself is not stored.
+  // Sick-leave document. documentData is a data URL so the line manager and staff can open the file.
   documentName String?
+  documentData String?
   status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
   submittedIp String?
   decidedAt   DateTime?
