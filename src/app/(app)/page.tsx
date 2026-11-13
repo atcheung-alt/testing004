@@ -12,7 +12,6 @@ import PageBar from "@/components/PageBar";
 import DashboardMonthSelect from "@/components/DashboardMonthSelect";
 import DashboardTrend from "@/components/DashboardTrend";
 import { getT } from "@/lib/i18n/server";
-import { currentInvoiceFilter, currentQuotationFilter } from "@/lib/documentAccess";
 import { hongKongDay } from "@/lib/commission";
 
 export const dynamic = "force-dynamic";
@@ -49,21 +48,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const chosen = chosenMonth(showTotal ? undefined : searchParams.month);
   const today = hongKongDay(new Date());
   const viewingCurrent = chosen.year === Number(today.slice(0, 4)) && chosen.month === Number(today.slice(5, 7)) - 1;
-  const [quotationFilter, invoiceFilter] = await Promise.all([currentQuotationFilter(), currentInvoiceFilter()]);
-  const quotationWhere = quotationFilter || undefined;
-  const invoiceWhere = invoiceFilter || undefined;
-  const expenseWhere = invoiceFilter ? { invoice: invoiceFilter } : undefined;
   const [quotations, invoices, recentQuotations, recentInvoices, monthFinance, allTime, trendMonths, recentExpenses] =
     await Promise.all([
-      prisma.quotation.findMany({ where: quotationWhere, select: { status: true, total: true } }),
-      prisma.invoice.findMany({ where: invoiceWhere, select: { status: true, total: true, dueDate: true } }),
-      prisma.quotation.findMany({ where: quotationWhere, orderBy: { createdAt: "desc" }, take: 5 }),
-      prisma.invoice.findMany({ where: invoiceWhere, orderBy: { createdAt: "desc" }, take: 6 }),
-      getMonthDashboard(chosen.year, chosen.month, invoiceFilter || undefined),
-      getAllTimeDashboard(invoiceFilter || undefined),
-      getTrendMonths(invoiceFilter || undefined),
+      prisma.quotation.findMany({ select: { status: true, total: true } }),
+      prisma.invoice.findMany({ select: { status: true, total: true, dueDate: true } }),
+      prisma.quotation.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+      prisma.invoice.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
+      getMonthDashboard(chosen.year, chosen.month),
+      getAllTimeDashboard(),
+      getTrendMonths(),
       prisma.invoiceExpense.findMany({
-        where: expenseWhere,
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { invoice: { select: { id: true, number: true, customerName: true } } },
