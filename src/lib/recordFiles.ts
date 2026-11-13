@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { findOrCreateFolder, isDriveConfigured, upsertDriveFile } from "@/lib/googleDrive";
+import { deleteDriveFile, findOrCreateFolder, isDriveConfigured, upsertDriveFile } from "@/lib/googleDrive";
 import { getEffectiveDriveFolderId } from "@/lib/appSettings";
 import { isValidEmail } from "@/lib/settings";
 
@@ -33,7 +33,6 @@ export async function saveSignedRecord(args: {
   const folderId = await findOrCreateFolder(FOLDER_NAME, root);
   const safeName = args.fileName.replace(/[\\/]/g, " ").trim() || "record";
   const saved = await upsertDriveFile({
-    fileId: args.existingFileId,
     name: `${args.number} - ${safeName}`,
     folderId,
     buffer: args.bytes,
@@ -44,6 +43,9 @@ export async function saveSignedRecord(args: {
     await prisma.invoice.update({ where: { id: args.id }, data });
   } else {
     await prisma.recruitmentAgreement.update({ where: { id: args.id }, data });
+  }
+  if (args.existingFileId && args.existingFileId !== saved.id) {
+    await deleteDriveFile(args.existingFileId).catch(() => undefined);
   }
   return data;
 }
