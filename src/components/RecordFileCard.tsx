@@ -39,9 +39,11 @@ export default function RecordFileCard({
 
   return (
     <div className="card p-5">
-      <h2 className="font-display text-lg font-semibold">Keep a file on this record</h2>
+      <h2 className="font-display text-lg font-semibold">Client&apos;s signed file</h2>
       <p className="text-sm text-ink-muted mt-1">
-        Use this when the client will not sign online. The file is saved in the Signed records folder. Open it to check it, or choose another file to replace it.
+        {fileUrl
+          ? "This file is in the Signed records folder. Open it to read it. Choose another file if this one should be replaced."
+          : "The client signed on paper, or sent a file, instead of signing on this page. Save that file here. It is kept in the Signed records folder."}
       </p>
       {fileUrl && (
         <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary mt-3">
@@ -49,7 +51,7 @@ export default function RecordFileCard({
         </a>
       )}
       <label className="btn-secondary mt-3 cursor-pointer">
-        {busy ? "Saving…" : fileUrl ? "Replace file" : "Choose a file"}
+        {busy ? "Saving…" : fileUrl ? "Replace with another file" : "Save the client's file"}
         <input
           type="file"
           className="hidden"
