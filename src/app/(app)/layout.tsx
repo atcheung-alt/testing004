@@ -4,6 +4,7 @@ import Sidebar from "@/components/Sidebar";
 import PageTransition from "@/components/PageTransition";
 import RequiredSetupGate from "@/components/RequiredSetupGate";
 import { getCurrentUser } from "@/lib/auth";
+import { ensureRecordColumns } from "@/lib/prisma";
 import { getEffectiveCompany, getSettings, getMissingRequiredSettings } from "@/lib/appSettings";
 import { canOpenPath, firstAllowedHref, isSuperAdmin, loadAccessGroups, pagesForPerson } from "@/lib/accessControl";
 import { getT } from "@/lib/i18n/server";
@@ -18,6 +19,7 @@ import { getT } from "@/lib/i18n/server";
 // requests to /login before they ever reach here — this check is a second,
 // server-rendered layer of defense.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  await ensureRecordColumns();
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");

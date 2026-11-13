@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Plus, ReceiptText, Download } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { formatCurrency, formatDate } from "@/lib/calculations";
 import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import { dateRangeFilter } from "@/lib/dateRange";
@@ -36,6 +36,7 @@ async function InvoiceList({
   kind?: string;
 }) {
   const t = getT();
+  await ensureRecordColumns();
   const wanted = kind === "event" ? "EVENT" : kind === "recruitment" ? "RECRUITMENT" : "";
   const invoices = await prisma.invoice.findMany({
     where: andFilters(

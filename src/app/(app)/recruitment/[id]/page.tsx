@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ExternalLink, FileDown } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { formatDateTime, formatDate } from "@/lib/calculations";
 import { isValidEmail } from "@/lib/settings";
 import { ensureRecruitmentSigningToken, recruitmentSigningUrlFromHeaders } from "@/lib/signing";
@@ -22,6 +22,7 @@ export const dynamic = "force-dynamic";
 
 export default async function RecruitmentDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
+  await ensureRecordColumns();
   const agreement = await prisma.recruitmentAgreement.findUnique({ where: { id: params.id } });
   if (!agreement) notFound();
 

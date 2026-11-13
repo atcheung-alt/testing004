@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ExternalLink } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { billingDefaultAmount, billingFormula, formatCurrency, formatDate, round2 } from "@/lib/calculations";
 import { getInvoiceDisplayStatus, normalizeInvoiceStatus, isOverdueInvoice } from "@/lib/invoiceStatus";
 import StatusBadge from "@/components/StatusBadge";
@@ -43,6 +43,7 @@ export const dynamic = "force-dynamic";
 
 export default async function InvoiceDetailPage({ params }: { params: { id: string } }) {
   const t = getT();
+  await ensureRecordColumns();
   if (!(await invoiceVisible(params.id))) notFound();
   const canModify = await invoiceCanModify(params.id);
   await ensureDefaultExpenseCategories();
@@ -456,8 +457,8 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
       <RecordFileCard
         kind="invoice"
         id={invoice.id}
-        fileName={invoice.recordFileName}
-        fileUrl={invoice.recordFileUrl}
+        fileName={invoice.recordFileName || null}
+        fileUrl={invoice.recordFileUrl || null}
       />
 
       {invoice.signatureData && (
