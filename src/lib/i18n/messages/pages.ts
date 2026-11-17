@@ -445,6 +445,12 @@ export const PAGE_MESSAGES: Record<string, string> = {
     "打開一列就能用。未打開時，每一列已寫明用途。",
   "Three areas. The line under each name says what it is for.":
     "三個範圍。名稱下面一行說明用途。",
+  "One job at a time. Pick Company, People, or Groups.": "一次做一件事。選擇公司、人員或組別。",
+  "Name, logo, and the expense list used on invoices.": "名稱、標誌，以及發票用的支出清單。",
+  "Who can sign in. Group decides the pages. Role and pay are for payroll.":
+    "誰可以登入。組別決定可開的頁。身份和出糧用於糧單。",
+  "Each group is a set of pages. Admin always has every page.":
+    "每個組別是一組頁面。管理員永遠可開每一頁。",
   "Company settings": "公司設定",
   "Set the company name, logo, expenses, and emails.": "設定公司名稱、標誌、支出和電郵。",
   "Who can sign in, and their pay and role.": "誰可以登入，以及出糧和身份。",

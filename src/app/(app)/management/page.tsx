@@ -16,7 +16,7 @@ export default async function ManagementPage() {
     <div>
       <PageBar
         title={t("Management")}
-        note={t("Three areas. The line under each name says what it is for.")}
+        note={t("One job at a time. Pick Company, People, or Groups.")}
       />
       <ManagementWorkspace />
     </div>

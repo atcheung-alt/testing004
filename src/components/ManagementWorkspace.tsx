@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, ChevronDown, Loader2, Plus, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 import AccessRequestQueue from "@/components/AccessRequestQueue";
@@ -48,52 +48,6 @@ function newGroupId() {
   return `group_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
 
-function Fold({
-  title,
-  summary,
-  open,
-  onToggle,
-  delay,
-  icon,
-  children,
-}: {
-  title: string;
-  summary: string;
-  open: boolean;
-  onToggle: () => void;
-  delay: string;
-  icon?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <section className="card p-5 animate-settle" style={{ animationDelay: delay }}>
-      <button
-        type="button"
-        className="flex w-full items-start justify-between gap-3 text-left"
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        <span className="min-w-0">
-          <span className="flex items-center gap-2">
-            {icon}
-            <h2 className="font-display text-lg font-semibold">{title}</h2>
-          </span>
-          <span className="mt-1 block text-sm font-normal text-ink-muted">{summary}</span>
-        </span>
-        <ChevronDown
-          size={16}
-          className={clsx("mt-1 text-ink-faint shrink-0 transition-transform duration-300", open && "rotate-180")}
-        />
-      </button>
-      <div className="mgmt-fold" data-open={open ? "true" : "false"}>
-        <div className="mgmt-fold-inner">
-          <div className={clsx("pt-4", open && "animate-fade-in")}>{children}</div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function ManagementWorkspace() {
   const t = useT();
   const [people, setPeople] = useState<Person[]>([]);
@@ -112,7 +66,7 @@ export default function ManagementWorkspace() {
   const [draftName, setDraftName] = useState("");
   const [query, setQuery] = useState("");
   const [openPersonId, setOpenPersonId] = useState<string | null>(null);
-  const [openSection, setOpenSection] = useState({ groups: false, people: false, company: false });
+  const [tab, setTab] = useState<"company" | "people" | "groups">("company");
 
   useEffect(() => {
     fetch("/api/access")
@@ -255,27 +209,39 @@ export default function ManagementWorkspace() {
         </div>
       )}
 
-      <Fold
-        title={t("Company settings")}
-        summary={t("Set the company name, logo, expenses, and emails.")}
-        open={openSection.company}
-        delay="0.02s"
-        onToggle={() => setOpenSection((current) => ({ ...current, company: !current.company }))}
-      >
-        <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-2">
+        {([
+          ["company", t("Company")],
+          ["people", `${t("People")} · ${people.length}`],
+          ["groups", `${t("Groups")} · ${groups.length}`],
+        ] as const).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            className={clsx("rounded-full border px-3 py-1.5 text-sm", tab === id ? "border-brand-500 bg-brand-500 text-white" : "border-line bg-surface text-ink-muted")}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "company" && (
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold">{t("Company")}</h2>
+        <p className="mt-1 text-sm text-ink-muted">{t("Name, logo, and the expense list used on invoices.")}</p>
+        <div className="mt-4 flex flex-col gap-4">
           <ExpenseCategoriesManager />
           <SettingsForm part="company" />
         </div>
-      </Fold>
+      </section>
+      )}
 
-      <Fold
-        title={t("People")}
-        summary={`${t("{count} People", { count: people.length })}${requests.length ? ` · ${t("{count} waiting", { count: requests.length })}` : ""}. ${t("Who can sign in, and their pay and role.")}`}
-        open={openSection.people}
-        delay="0.08s"
-        onToggle={() => setOpenSection((current) => ({ ...current, people: !current.people }))}
-      >
-        <div className="flex flex-col gap-4">
+      {tab === "people" && (
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold">{t("People")}</h2>
+        <p className="mt-1 text-sm text-ink-muted">{t("Who can sign in. Group decides the pages. Role and pay are for payroll.")}</p>
+        <div className="mt-4 flex flex-col gap-4">
             {requests.length > 0 && (
               <AccessRequestQueue
                 requests={requests}
@@ -412,17 +378,26 @@ export default function ManagementWorkspace() {
               </div>
             )}
         </div>
-      </Fold>
+      </section>
+      )}
 
-      <Fold
-        title={t("Group settings")}
-        summary={`${t("{count} Groups", { count: groups.length })}. ${t("Which pages each group can open.")}`}
-        open={openSection.groups}
-        delay="0.14s"
-        onToggle={() => setOpenSection((current) => ({ ...current, groups: !current.groups }))}
-      >
-        <div className="flex flex-col gap-4">
-            <div className="flex gap-2">
+      {tab === "groups" && (
+      <section className="card p-5">
+        <h2 className="font-display text-lg font-semibold">{t("Groups")}</h2>
+        <p className="mt-1 text-sm text-ink-muted">{t("Each group is a set of pages. Admin always has every page.")}</p>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
+            <div className="flex flex-col gap-2">
+            {groups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                className={clsx("rounded-xl px-3 py-2 text-left text-sm", selected?.id === group.id ? "bg-paper text-ink" : "hover:bg-paper")}
+                onClick={() => setSelectedId(group.id)}
+              >
+                {group.name} · {t("{count} People", { count: group.emails.length })}
+              </button>
+            ))}
+            <div className="mt-2 flex gap-2">
               <input
                 className="input"
                 placeholder={t("e.g. Finance")}
@@ -440,20 +415,9 @@ export default function ManagementWorkspace() {
             </div>
             {groups.length === 0 ? (
               <p className="text-sm text-ink-muted">{t("No groups yet. Everyone still has full access.")}</p>
-            ) : (
-              <select
-                className="input"
-                aria-label={t("Choose a group")}
-                value={selected?.id || ""}
-                onChange={(event) => setSelectedId(event.target.value)}
-              >
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name} · {t("{count} People", { count: group.emails.length })} · {t("{count} Pages", { count: group.pages.length })}
-                  </option>
-                ))}
-              </select>
-            )}
+            ) : null}
+            </div>
+            <div>
             {selected && (
               <div key={selected.id} className="animate-fade-in flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-end gap-3">
@@ -523,29 +487,24 @@ export default function ManagementWorkspace() {
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {pages.map((page) => {
                       const on = selected.pages.includes(page.id);
                       return (
-                        <button
-                          key={page.id}
-                          type="button"
-                          disabled={selected.id === adminGroupId}
-                          onClick={() => {
-                            if (selected.id === adminGroupId) return;
-                            updateSelected({
-                              pages: on ? selected.pages.filter((id) => id !== page.id) : [...selected.pages, page.id],
-                            });
-                          }}
-                          className={clsx(
-                            "rounded-full px-3 py-1 text-xs font-medium border transition-colors duration-200",
-                            on
-                              ? "bg-brand-500 border-brand-500 text-white"
-                              : "bg-surface border-line text-ink-muted hover:border-brand-500"
-                          )}
-                        >
+                        <label key={page.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={on}
+                            disabled={selected.id === adminGroupId}
+                            onChange={() => {
+                              if (selected.id === adminGroupId) return;
+                              updateSelected({
+                                pages: on ? selected.pages.filter((id) => id !== page.id) : [...selected.pages, page.id],
+                              });
+                            }}
+                          />
                           {t(page.label)}
-                        </button>
+                        </label>
                       );
                     })}
                   </div>
@@ -553,7 +512,9 @@ export default function ManagementWorkspace() {
               </div>
             )}
           </div>
-      </Fold>
+        </div>
+      </section>
+      )}
     </div>
   );
 }
