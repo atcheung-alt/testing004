@@ -19,6 +19,8 @@ export async function GET(_request: NextRequest, { params }: { params: { token: 
 }
 
 export async function POST(request: NextRequest, { params }: { params: { token: string } }) {
+  const { contractSignLinkExpired, ensureContractSignColumns } = await import("@/lib/employeeContract");
+  await ensureContractSignColumns();
   const contract = await prisma.employeeContract.findUnique({
     where: { signingToken: params.token },
     include: { employee: true },
@@ -32,8 +34,6 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (contract.signedAt) {
     return NextResponse.json({ error: "This contract has already been signed." }, { status: 409 });
   }
-  const { contractSignLinkExpired, ensureContractSignColumns } = await import("@/lib/employeeContract");
-  await ensureContractSignColumns();
   if (contractSignLinkExpired(contract)) {
     return NextResponse.json(
       { error: "This link has expired. The 3 days to sign have passed. Ask HR Plus to send the contract email again." },

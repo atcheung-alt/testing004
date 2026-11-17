@@ -23,6 +23,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const denied = await requireAdminApi();
   if (denied) return denied;
+  await ensureContractSignColumns();
 
   const body = await request.json().catch(() => ({}));
 

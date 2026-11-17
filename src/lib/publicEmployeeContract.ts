@@ -44,13 +44,13 @@ export type PublicEmployeeContractView = {
  * signing token itself is the access control.
  */
 export async function getPublicEmployeeContractView(token: string): Promise<PublicEmployeeContractView | null> {
+  await ensureContractSignColumns();
   const contract = await prisma.employeeContract.findUnique({
     where: { signingToken: token },
     include: { employee: { select: { name: true, employmentType: true } } },
   });
   if (!contract) return null;
 
-  await ensureContractSignColumns();
   await logClientView("employee", contract.employeeId);
 
   const locked = contract.status === "CANCELLED";

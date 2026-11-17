@@ -36,7 +36,7 @@ import EmployeeTimesheetCard from "@/components/EmployeeTimesheetCard";
 import { getT } from "@/lib/i18n/server";
 import OutsideLeaveCard from "@/components/OutsideLeaveCard";
 import { ensureOutsideLeaveColumns, isOutsideColleague } from "@/lib/outsideLeave";
-import { remindUnsignedContract } from "@/lib/employeeContract";
+import { ensureContractSignColumns, remindUnsignedContract } from "@/lib/employeeContract";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
   if (scope.mode === "deny") redirect("/hr/profile");
   if (!(await employeeVisibleById(params.id))) notFound();
   await ensureOutsideLeaveColumns();
+  await ensureContractSignColumns();
   const isAdmin = scope.mode === "company" || (!!user?.isAdmin && scope.mode === "all");
 
   // Two different Prisma queries, not one query with fields hidden in the
