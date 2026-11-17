@@ -1100,6 +1100,9 @@ model BookingEvent {
   // longer asked to type their own company on the public form (see
   // Booking below, which no longer carries a clientCompany field at all).
   companyName String
+  // Address used by "Email the company" on the staff event page. Empty until
+  // staff type it. Additive — older databases gain it with ALTER IF NOT EXISTS.
+  companyEmail String?
   // The first and last calendar day this event can have slots on — the
   // public page's date picker and the admin's per-day slot builder are both
   // bounded to this range. Equal for a single-day event.

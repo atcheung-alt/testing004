@@ -426,9 +426,13 @@ export function bookingConfirmedEmailContent(args: {
   slotLabel: string;
   companyName: string;
   cancelUrl: string;
+  manageUrl?: string;
 }) {
-  const { clientName, eventName, slotLabel, companyName, cancelUrl } = args;
+  const { clientName, eventName, slotLabel, companyName, cancelUrl, manageUrl } = args;
   const subject = `Booking confirmed — ${eventName}`;
+  const manageLines = manageUrl
+    ? `\nUse the manage link to see the list, change a time, or cancel:\n${manageUrl}\n`
+    : "";
   const body = `Dear ${clientName || "Customer"},
 
 Thank you for booking ${eventName} with ${companyName}. Your booking is confirmed for:
@@ -436,7 +440,7 @@ Thank you for booking ${eventName} with ${companyName}. Your booking is confirme
 ${slotLabel}
 
 You can add this to your calendar using the button below.
-
+${manageLines}
 If your plans change, you can cancel your booking yourself using the link below:
 ${cancelUrl}
 
@@ -445,6 +449,22 @@ We look forward to seeing you.
 ${companyName}`;
 
   return { subject, body };
+}
+
+/** The first email staff send from the event page: the public booking link,
+ *  asking the company to choose a time. */
+export function bookingInviteEmailContent(args: { eventName: string; companyName: string; bookingUrl: string }) {
+  const { eventName, companyName, bookingUrl } = args;
+  return {
+    subject: `Please book a time — ${eventName}`,
+    body: `Hello,
+
+${companyName} has opened booking for ${eventName}. Please open the link and choose a time.
+
+${bookingUrl}
+
+${companyName}`,
+  };
 }
 
 /** Subject + body for the automatic notice sent when a client submits a

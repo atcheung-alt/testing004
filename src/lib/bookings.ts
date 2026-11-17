@@ -83,6 +83,7 @@ export type BookingEventRecord = {
   name: string;
   description: string;
   companyName: string;
+  companyEmail: string | null;
   startDate: Date;
   endDate: Date;
   active: boolean;
@@ -92,7 +93,24 @@ export type BookingEventRecord = {
   updatedAt: Date;
 };
 
+let companyEmailColumnReady: Promise<void> | null = null;
+
+/** Adds BookingEvent.companyEmail on databases created before that column. */
+export function ensureBookingEventCompanyEmailColumn(): Promise<void> {
+  if (!companyEmailColumnReady) {
+    companyEmailColumnReady = prisma
+      .$executeRawUnsafe(`ALTER TABLE "BookingEvent" ADD COLUMN IF NOT EXISTS "companyEmail" TEXT`)
+      .then(() => undefined)
+      .catch((err) => {
+        companyEmailColumnReady = null;
+        throw err;
+      });
+  }
+  return companyEmailColumnReady;
+}
+
 export async function listBookingEvents(opts?: { activeOnly?: boolean }): Promise<BookingEventRecord[]> {
+  await ensureBookingEventCompanyEmailColumn();
   if (opts?.activeOnly) {
     return prisma.$queryRaw<BookingEventRecord[]>`
       SELECT * FROM "BookingEvent" WHERE "active" = true ORDER BY "startDate" ASC
@@ -104,6 +122,7 @@ export async function listBookingEvents(opts?: { activeOnly?: boolean }): Promis
 }
 
 export async function getBookingEvent(id: string): Promise<BookingEventRecord | null> {
+  await ensureBookingEventCompanyEmailColumn();
   const rows = await prisma.$queryRaw<BookingEventRecord[]>`
     SELECT * FROM "BookingEvent" WHERE "id" = ${id} LIMIT 1
   `;
@@ -187,6 +206,7 @@ export async function createBookingEvent(fields: {
   active?: boolean;
   requiresConfirmation?: boolean;
 }): Promise<BookingEventRecord> {
+  await ensureBookingEventCompanyEmailColumn();
   const id = randomUUID();
   const active = fields.active ?? true;
   const requiresConfirmation = fields.requiresConfirmation ?? false;
@@ -218,6 +238,14 @@ export async function updateBookingEvent(
         "requiresConfirmation" = ${fields.requiresConfirmation}, "updatedAt" = now()
     WHERE "id" = ${id}
     RETURNING *
+  `;
+  return rows[0] || null;
+}
+
+export async function setBookingEventCompanyEmail(id: string, companyEmail: string): Promise<BookingEventRecord | null> {
+  await ensureBookingEventCompanyEmailColumn();
+  const rows = await prisma.$queryRaw<BookingEventRecord[]>`
+    UPDATE "BookingEvent" SET "companyEmail" = ${companyEmail}, "updatedAt" = now() WHERE "id" = ${id} RETURNING *
   `;
   return rows[0] || null;
 }

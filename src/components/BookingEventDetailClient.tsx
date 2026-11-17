@@ -34,6 +34,7 @@ export type BookingEventInfo = {
   id: string;
   name: string;
   companyName: string;
+  companyEmail: string | null;
   description: string;
   startDate: string; // ISO
   endDate: string; // ISO
@@ -364,6 +365,28 @@ export default function BookingEventDetailClient({
   const [toggleBusy, setToggleBusy] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [companyEmail, setCompanyEmail] = useState(event.companyEmail || "");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailNote, setEmailNote] = useState<string | null>(null);
+
+  async function emailCompany() {
+    setEmailBusy(true);
+    setEmailNote(null);
+    try {
+      const res = await fetch(`/api/bookings/events/${event.id}/email-company`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyEmail }),
+      });
+      const data = await readJsonOrThrow(res);
+      setEvent({ ...event, companyEmail: data.companyEmail || companyEmail });
+      setEmailNote(t("Booking link sent to {email}", { email: data.companyEmail || companyEmail }));
+    } catch (err: any) {
+      setEmailNote(err?.message || t("Could not send the email."));
+    } finally {
+      setEmailBusy(false);
+    }
+  }
 
   function startEditing() {
     setEditName(event.name);
@@ -909,6 +932,18 @@ export default function BookingEventDetailClient({
                   title={t("Copy this event's public manage link — anyone with it can edit its details/slots and cancel or delete its bookings, without logging in")}
                 />
               )}
+              <input
+                type="email"
+                className="input h-9 w-52"
+                value={companyEmail}
+                onChange={(e) => setCompanyEmail(e.target.value)}
+                placeholder={t("Company email")}
+                aria-label={t("Company email")}
+              />
+              <button type="button" onClick={emailCompany} disabled={emailBusy} className="btn-secondary">
+                {emailBusy ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+                {t("Email the company")}
+              </button>
               <button type="button" onClick={toggleActive} disabled={toggleBusy} className="btn-secondary">
                 {toggleBusy && <Loader2 size={14} className="animate-spin" />}
                 {event.active ? t("Hide from public page") : t("Show on public page")}
@@ -930,6 +965,7 @@ export default function BookingEventDetailClient({
           </div>
         )}
         {deleteError && <p className="text-sm text-danger-600 mt-3">{deleteError}</p>}
+        {emailNote && <p className="text-sm text-ink-muted mt-3">{emailNote}</p>}
       </div>
 
       {/* Slots */}

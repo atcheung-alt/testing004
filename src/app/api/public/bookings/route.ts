@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp, bookingCancelUrlFor } from "@/lib/signing";
+import { getClientIp, bookingCancelUrlFor, manageBookingEventUrlFor } from "@/lib/signing";
 import { logActivity } from "@/lib/activity";
 import { sendDocumentEmail } from "@/lib/mailer";
 import { bookingConfirmedEmailContent, bookingPendingEmailContent } from "@/lib/settings";
@@ -8,6 +8,7 @@ import {
   bookingFieldsFrom,
   buildGoogleCalendarUrl,
   createBooking,
+  ensureBookingEventManageToken,
   formatSlotLabel,
   getBookingEvent,
   getSlot,
@@ -100,12 +101,14 @@ export async function POST(request: NextRequest) {
       const cancelUrl = bookingCancelUrlFor(booking.cancelToken, request);
       const companyName = company.shortName || company.name;
       const emailContentFor = isPending ? bookingPendingEmailContent : bookingConfirmedEmailContent;
+      const manageToken = isPending ? null : await ensureBookingEventManageToken(event.id);
       const { subject, body: emailBody } = emailContentFor({
         clientName: booking.clientName,
         eventName: event.name,
         slotLabel,
         companyName,
         cancelUrl,
+        ...(isPending || !manageToken ? {} : { manageUrl: manageBookingEventUrlFor(manageToken, request) }),
       });
       // Only a real, immediate confirmation gets a calendar invite — a
       // requiresConfirmation event's PENDING request has nothing to add to a

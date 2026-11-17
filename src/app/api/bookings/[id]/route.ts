@@ -3,13 +3,14 @@ import { logActivity } from "@/lib/activity";
 import { sendDocumentEmail } from "@/lib/mailer";
 import { bookingCancelledEmailContent, bookingConfirmedEmailContent, bookingRejectedEmailContent } from "@/lib/settings";
 import { getEffectiveCompany } from "@/lib/appSettings";
-import { bookingCancelUrlFor } from "@/lib/signing";
+import { bookingCancelUrlFor, manageBookingEventUrlFor } from "@/lib/signing";
 import {
   DECIDABLE_FROM_STATUS,
   VALID_BOOKING_STATUSES,
   buildGoogleCalendarUrl,
   countActiveBookingsForSlot,
   deleteBooking,
+  ensureBookingEventManageToken,
   formatSlotLabel,
   getBookingWithSlotAndEvent,
   getSlot,
@@ -123,12 +124,14 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
           // already got this email at submission time (see
           // POST /api/public/bookings), so this is that same "real"
           // confirmation notice, just sent once staff actually approve it.
+          const manageToken = await ensureBookingEventManageToken(existing.eventId);
           const { subject, body: emailBody } = bookingConfirmedEmailContent({
             clientName: existing.clientName,
             eventName: existing.eventName,
             slotLabel,
             companyName,
             cancelUrl: bookingCancelUrlFor(existing.cancelToken, request),
+            manageUrl: manageToken ? manageBookingEventUrlFor(manageToken, request) : undefined,
           });
           await sendDocumentEmail({
             to: existing.clientEmail,
