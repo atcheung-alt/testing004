@@ -131,7 +131,7 @@ export default function ManagementWorkspace() {
     const group = { id: newGroupId(), name, pages: pages.map((page) => page.id), emails: [] };
     setDraftName("");
     setSelectedId(group.id);
-    setOpenSection((current) => ({ ...current, groups: true }));
+    setTab("groups");
     persist([...groups, group]);
   }
 
