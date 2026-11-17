@@ -44,17 +44,8 @@ export default function OutsideLeaveCard({
   return (
     <div className="card p-5 flex flex-col gap-4">
       <div>
-        <h2 className="font-display text-lg font-semibold">Leave links</h2>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="rounded-xl bg-paper px-3 py-2.5">
-          <p className="font-semibold">1. Colleague</p>
-          <p className="text-sm text-ink-muted">They request annual leave, sick leave, or no-pay leave.</p>
-        </div>
-        <div className="rounded-xl bg-paper px-3 py-2.5">
-          <p className="font-semibold">2. Line manager</p>
-          <p className="text-sm text-ink-muted">They approve the request, or reject it with a reason.</p>
-        </div>
+        <h2 className="font-display text-lg font-semibold">Send the leave links</h2>
+        <p className="text-sm text-ink-muted mt-1">One email to the colleague, one email to the manager.</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>

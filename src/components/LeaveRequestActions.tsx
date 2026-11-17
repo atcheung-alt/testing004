@@ -45,6 +45,9 @@ function RequestRow({
     <div className="py-3 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-ink">
+          <span className="mr-2 inline-flex rounded-full border border-line px-2 py-0.5 text-xs font-semibold text-ink-muted">
+            {t(request.leaveType === "SICK" ? "Sick leave" : request.leaveType === "NO_PAY" ? "No-pay leave" : "Annual leave")}
+          </span>
           {formatDate(request.startDate)}
           {request.endDate !== request.startDate ? ` – ${formatDate(request.endDate)}` : ""}
           {request.isHalfDay && (
@@ -135,18 +138,29 @@ export default function LeaveRequestActions({
   requests: LeaveRequest[];
 }) {
   const router = useRouter();
-
   const t = useT();
+  const [open, setOpen] = useState(false);
+  const pending = requests.filter((r) => r.status === "PENDING").length;
 
   if (requests.length === 0) {
     return <p className="text-sm text-ink-muted">{t("No leave requests yet.")}</p>;
   }
 
   return (
-    <div className="flex flex-col divide-y divide-line">
-      {requests.map((r) => (
-        <RequestRow key={r.id} employeeId={employeeId} request={r} onDecided={() => router.refresh()} />
-      ))}
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-ink-muted">{t("{count} pending", { count: pending })}</p>
+        <button type="button" className="btn-secondary !py-1.5 !px-3 text-xs" onClick={() => setOpen((value) => !value)}>
+          {open ? t("Hide the list") : t("Show the list")}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-2 flex flex-col divide-y divide-line">
+          {requests.map((r) => (
+            <RequestRow key={r.id} employeeId={employeeId} request={r} onDecided={() => router.refresh()} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

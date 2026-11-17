@@ -151,6 +151,7 @@ export type LeaveRequest = {
   endDate: string;
   isHalfDay: boolean;
   halfDayPeriod: string | null;
+  leaveType?: string | null;
   reason: string;
   documentName?: string | null;
   hasDocument?: boolean;

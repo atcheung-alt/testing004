@@ -595,6 +595,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               endDate: r.endDate.toISOString(),
               isHalfDay: r.isHalfDay,
               halfDayPeriod: r.halfDayPeriod,
+              leaveType: r.leaveType,
               reason: r.reason,
               documentName: r.documentName,
               hasDocument: Boolean(r.documentData),
