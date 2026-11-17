@@ -42,7 +42,7 @@ export default function BookingEventListClient({ events }: { events: BookingEven
 
   return (
     <section className="booking-events">
-      <div className="w-full space-y-4 rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <div className="booking-event-list w-full space-y-4 rounded-xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-bold text-slate-900">{t("Events")}</h2>
           <p className="text-xs font-medium text-slate-400">

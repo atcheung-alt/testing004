@@ -200,14 +200,14 @@ function WeekRow({
         const shown = onDay.filter((s) => s.lane < MAX_LANES);
         const extra = hiddenByDay[i];
         return (
-          <div key={i} className={clsx("flex min-h-[96px] flex-col rounded-2xl bg-[#f7f5fc] p-2", !inMonth && "opacity-40")}>
+          <div key={i} className={clsx("booking-day flex min-h-[96px] flex-col rounded-2xl bg-[#f7f5fc] p-2", !inMonth && "opacity-40")}>
             <span
               className={clsx(
                 "mb-1 inline-flex font-semibold",
                 today_
                   ? "h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[11px] text-white"
                   : inMonth
-                    ? "text-slate-800"
+                    ? "booking-num text-slate-800"
                     : "text-slate-400"
               )}
             >
@@ -330,7 +330,7 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
   });
 
   return (
-    <div className="w-full space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div className="booking-calendar w-full space-y-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-6">
           <button
@@ -342,21 +342,21 @@ export default function BookingEventsCalendar({ events }: { events: BookingEvent
             {collapsed ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronUp size={16} className="text-slate-400" />}
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">{monthLabel}</h2>
           </button>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
+          <div className="booking-legend flex items-center gap-2 text-xs font-semibold text-slate-900">
             <span className="rounded-full bg-[#eadcff] px-3 py-1">{t("Booking")}</span>
             <span className="rounded-full bg-[#ffe4cc] px-3 py-1">{t("Invoice job")}</span>
           </div>
         </div>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <button type="button" onClick={goToday} className="rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
+            <button type="button" onClick={goToday} className="booking-nav rounded-2xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">
               {t("Today")}
             </button>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={goPrevMonth} aria-label={t("Previous month")} className="booking-nav rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
                 <ChevronLeft size={16} />
               </button>
-              <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={goNextMonth} aria-label={t("Next month")} className="booking-nav rounded-2xl border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50">
                 <ChevronRight size={16} />
               </button>
             </div>

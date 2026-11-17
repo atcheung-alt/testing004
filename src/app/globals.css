@@ -320,6 +320,48 @@ html[data-theme="dark"] .theme-logo-dark {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+  html[data-theme="dark"] .solid-page .card,
+  html[data-theme="dark"] .booking-calendar,
+  html[data-theme="dark"] .booking-event-list {
+    background-color: #1d1e28 !important;
+    border-color: #2a2c3a;
+    color: #f3f4f6;
+  }
+  html[data-theme="dark"] .booking-day {
+    background-color: #242634 !important;
+  }
+  html[data-theme="dark"] .booking-calendar h2,
+  html[data-theme="dark"] .booking-calendar .booking-legend,
+  html[data-theme="dark"] .booking-num,
+  html[data-theme="dark"] .booking-nav {
+    color: #f3f4f6 !important;
+  }
+  html[data-theme="dark"] .booking-nav {
+    border-color: #2a2c3a;
+    background-color: transparent;
+  }
+  @media (prefers-color-scheme: dark) {
+    html[data-theme="auto"] .solid-page .card,
+    html[data-theme="auto"] .booking-calendar,
+    html[data-theme="auto"] .booking-event-list {
+      background-color: #1d1e28 !important;
+      border-color: #2a2c3a;
+      color: #f3f4f6;
+    }
+    html[data-theme="auto"] .booking-day {
+      background-color: #242634 !important;
+    }
+    html[data-theme="auto"] .booking-calendar h2,
+    html[data-theme="auto"] .booking-calendar .booking-legend,
+    html[data-theme="auto"] .booking-num,
+    html[data-theme="auto"] .booking-nav {
+      color: #f3f4f6 !important;
+    }
+    html[data-theme="auto"] .booking-nav {
+      border-color: #2a2c3a;
+      background-color: transparent;
+    }
+  }
   .sticky-filters {
     position: sticky;
     top: 0;
