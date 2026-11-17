@@ -60,6 +60,44 @@ function SignedSummary({
   );
 }
 
+function ContractText({ text }: { text: string }) {
+  const parts = text.split(/\*\*(.+?)\*\*/g);
+  return (
+    <>
+      {parts.map((part, index) =>
+        index % 2 === 1 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>
+      )}
+    </>
+  );
+}
+
+/** The stored contract uses § and ** as layout marks for the PDF. The signing page shows the words only. */
+function ContractTerms({ terms }: { terms: string }) {
+  let clause = 0;
+  return (
+    <>
+      {terms.split(/\n\n+/).map((block, index) => {
+        const trimmed = block.trim();
+        if (!trimmed) return null;
+        if (trimmed.startsWith("§")) {
+          clause += 1;
+          return (
+            <p key={index} className="text-sm text-ink">
+              <span className="font-semibold">{clause}. </span>
+              <ContractText text={trimmed.slice(1)} />
+            </p>
+          );
+        }
+        return (
+          <p key={index} className="text-sm text-ink whitespace-pre-line">
+            <ContractText text={trimmed} />
+          </p>
+        );
+      })}
+    </>
+  );
+}
+
 export default function EmployeeContractSigningClient({
   token,
   initial,
@@ -171,8 +209,8 @@ export default function EmployeeContractSigningClient({
         </div>
       </div>
 
-      <div className="card p-5 sm:p-6">
-        <p className="text-sm text-ink whitespace-pre-line max-h-[500px] overflow-y-auto">{view.terms}</p>
+      <div className="card p-5 sm:p-6 max-h-[500px] overflow-y-auto flex flex-col gap-3">
+        <ContractTerms terms={view.terms} />
       </div>
 
       {view.signable ? (
