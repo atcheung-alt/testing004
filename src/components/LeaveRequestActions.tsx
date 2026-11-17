@@ -139,8 +139,18 @@ export default function LeaveRequestActions({
 }) {
   const router = useRouter();
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const pending = requests.filter((r) => r.status === "PENDING").length;
+  const [filter, setFilter] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const counts = {
+    PENDING: requests.filter((r) => r.status === "PENDING").length,
+    APPROVED: requests.filter((r) => r.status === "APPROVED").length,
+    REJECTED: requests.filter((r) => r.status === "REJECTED").length,
+  };
+  const visible = requests.filter((r) => r.status === filter);
+  const choices = [
+    ["PENDING", "Pending"],
+    ["APPROVED", "Approved"],
+    ["REJECTED", "Rejected"],
+  ] as const;
 
   if (requests.length === 0) {
     return <p className="text-sm text-ink-muted">{t("No leave requests yet.")}</p>;
@@ -148,15 +158,28 @@ export default function LeaveRequestActions({
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-ink-muted">{t("{count} pending", { count: pending })}</p>
-        <button type="button" className="btn-secondary !py-1.5 !px-3 text-xs" onClick={() => setOpen((value) => !value)}>
-          {open ? t("Hide the list") : t("Show the list")}
-        </button>
+      <div className="grid grid-cols-3 gap-2">
+        {choices.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFilter(value)}
+            className={
+              filter === value
+                ? "rounded-xl border border-brand-500 bg-brand-50 px-2 py-2 text-center"
+                : "rounded-xl border border-line px-2 py-2 text-center"
+            }
+          >
+            <span className="block text-lg font-semibold text-ink">{counts[value]}</span>
+            <span className="block text-xs text-ink-muted">{t(label)}</span>
+          </button>
+        ))}
       </div>
-      {open && (
+      {visible.length === 0 ? (
+        <p className="mt-3 text-sm text-ink-muted">{t("None in this list.")}</p>
+      ) : (
         <div className="mt-2 flex flex-col divide-y divide-line">
-          {requests.map((r) => (
+          {visible.map((r) => (
             <RequestRow key={r.id} employeeId={employeeId} request={r} onDecided={() => router.refresh()} />
           ))}
         </div>
