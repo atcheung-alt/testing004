@@ -653,9 +653,12 @@ export default function PublicBookingManagerClient({
         ) : (
           <div className="flex flex-col gap-4">
             {slotGroups.map(([dateStr, group]) => (
-              <div key={dateStr}>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5">{formatDateLabel(dateStr)}</p>
-                <div className="flex flex-col divide-y divide-line rounded-xl border border-line overflow-hidden">
+              <details key={dateStr} className="rounded-xl border border-line overflow-hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
+                  <span className="text-sm font-semibold text-ink">{formatDateLabel(dateStr)}</span>
+                  <span className="text-xs text-ink-muted">{t("{count} times", { count: group.length })}</span>
+                </summary>
+                <div className="flex flex-col divide-y divide-line border-t border-line">
                   {group.map((s) => {
                     const action = slotAction[s.id];
                     return (
@@ -682,7 +685,7 @@ export default function PublicBookingManagerClient({
                     );
                   })}
                 </div>
-              </div>
+              </details>
             ))}
           </div>
         )}
