@@ -385,6 +385,17 @@ export default function InvoiceExpensesCard({
             onClick={() => fileInputRef.current?.click()}
             disabled={files.length >= MAX_FILES}
             className="btn-ghost"
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={async (event) => {
+              event.preventDefault();
+              setError(null);
+              try {
+                const picked = await pickFiles(event.dataTransfer.files, files.length);
+                if (picked) setFiles((prev) => [...prev, ...picked]);
+              } catch {
+                setError(t("Could not read one of the selected files."));
+              }
+            }}
           >
             <Paperclip size={14} /> {t("Attach receipts")}
           </button>

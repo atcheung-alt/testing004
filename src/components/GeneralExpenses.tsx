@@ -67,6 +67,15 @@ export default function GeneralExpenses({
   const [notes, setNotes] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileData, setFileData] = useState("");
+  function readReceipt(file: File | null | undefined) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFileName(file.name);
+      setFileData(String(reader.result || ""));
+    };
+    reader.readAsDataURL(file);
+  }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [removingId, setRemovingId] = useState("");
@@ -282,16 +291,7 @@ export default function GeneralExpenses({
         </div>
         <div>
           <label className="label">{t("Receipt")}</label>
-          <input className="input" type="file" accept="image/*,.pdf" onChange={(event) => {
-            const file = event.target.files && event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => {
-              setFileName(file.name);
-              setFileData(String(reader.result || ""));
-            };
-            reader.readAsDataURL(file);
-          }} />
+          <input className="input" type="file" accept="image/*,.pdf" onChange={(event) => readReceipt(event.target.files && event.target.files[0])} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); readReceipt(event.dataTransfer.files && event.dataTransfer.files[0]); }} />
         </div>
         <div className="md:col-span-2">
           <label className="label">{t("Notes")}</label>

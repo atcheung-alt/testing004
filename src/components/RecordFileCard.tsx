@@ -19,6 +19,7 @@ export default function RecordFileCard({
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [over, setOver] = useState(false);
   const url = kind === "invoice" ? `/api/invoices/${id}/record` : `/api/recruitment/${id}/record`;
   const place = kind === "invoice" ? "this invoice" : "this recruitment agreement";
   const shownName = fileName || "file";
@@ -71,7 +72,12 @@ export default function RecordFileCard({
             Open {shownName}
           </a>
         )}
-        <label className="btn-secondary cursor-pointer">
+        <label
+          className={`btn-secondary cursor-pointer ${over ? "border-brand-500" : ""}`}
+          onDragOver={(event) => { event.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(event) => { event.preventDefault(); setOver(false); void upload(event.dataTransfer.files?.[0]); }}
+        >
           {busy ? "Saving…" : fileUrl ? "Replace with another file" : "Save the client's file"}
           <input
             type="file"
