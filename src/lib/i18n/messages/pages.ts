@@ -71,6 +71,13 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Revenue uses the onboarding date, then the recognise date, then the invoice date in {month}. The expenses bar is the total recorded on the Expenses page in {month}.":
     "收入先按入職日，再按確認發票日，最後按發票日期計入{month}。開支長條是{month}在開支頁記錄的總額。",
   Outstanding: "未收帳款",
+  "Open now": "現正未完成",
+  "Collected this month": "本月已收",
+  "Logged this month": "本月已記錄",
+  Logged: "已記錄",
+  "Still to collect": "仍未收取",
+  "Open all": "全部打開",
+  "No rejected bookings.": "沒有已拒絕的預約。",
   Overdue: "逾期",
   "Recent Quotations": "最近的報價單",
   "View All": "查看全部",

@@ -343,6 +343,7 @@ export default function BookingEventDetailClient({
   const t = useT();
   const [event, setEvent] = useState(initialEvent);
   const [slots, setSlots] = useState(() => sortSlots(initialSlots));
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
   const [bookings, setBookings] = useState(initialBookings);
   const [modalBooking, setModalBooking] = useState<BookingItem | null>(null);
   const [guestName, setGuestName] = useState("");
@@ -1103,10 +1104,13 @@ export default function BookingEventDetailClient({
         ) : (
           <div className="flex flex-col gap-4">
             {slotGroups.map(([dateStr, group]) => (
-              <details key={dateStr} className="rounded-xl border border-line overflow-hidden">
+              <details key={dateStr} className="rounded-xl border border-line overflow-hidden" open={openDays[dateStr] || undefined} onToggle={(event) => setOpenDays((current) => ({ ...current, [dateStr]: event.currentTarget.open }))}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
                   <span className="text-sm font-semibold text-ink">{formatDateLabel(dateStr)}</span>
-                  <span className="text-xs text-ink-muted">{t("{count} times", { count: group.length })}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs text-ink-muted">{t("{count} times", { count: group.length })}</span>
+                    <button type="button" className="text-xs font-medium text-brand-600" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setOpenDays((current) => ({ ...current, [dateStr]: true })); }}>{t("Open all")}</button>
+                  </span>
                 </summary>
                 <div className="flex flex-col divide-y divide-line border-t border-line">
                   {group.map((s) => {

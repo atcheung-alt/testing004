@@ -5,8 +5,6 @@ import clsx from "clsx";
 import {
   AlertCircle,
   Ban,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   Mail,
   Pencil,
@@ -244,6 +242,7 @@ export default function PublicBookingManagerClient({
   const t = useT();
   const [event, setEvent] = useState(initialEvent);
   const [slots, setSlots] = useState(() => sortSlots(initialSlots));
+  const [openDays, setOpenDays] = useState<Record<string, boolean>>({});
   const [bookings, setBookings] = useState(initialBookings);
   const [modalBooking, setModalBooking] = useState<ManagedBookingItem | null>(null);
 
@@ -418,7 +417,21 @@ export default function PublicBookingManagerClient({
         .sort((a, b) => (a.slotDate === b.slotDate ? b.slotStartTime.localeCompare(a.slotStartTime) : b.slotDate.localeCompare(a.slotDate))),
     [bookings]
   );
-  const [showCancelled, setShowCancelled] = useState(false);
+  const pendingBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => b.status === "PENDING")
+        .sort((a, b) => (a.slotDate === b.slotDate ? a.slotStartTime.localeCompare(b.slotStartTime) : a.slotDate.localeCompare(b.slotDate))),
+    [bookings]
+  );
+  const rejectedBookings = useMemo(
+    () =>
+      bookings
+        .filter((b) => b.status === "REJECTED")
+        .sort((a, b) => (a.slotDate === b.slotDate ? b.slotStartTime.localeCompare(a.slotStartTime) : b.slotDate.localeCompare(a.slotDate))),
+    [bookings]
+  );
+  const [listView, setListView] = useState<"pending" | "confirmed" | "cancelled" | "rejected">("pending");
 
   function BookingRow({ b }: { b: ManagedBookingItem }) {
     const t = useT();
@@ -653,10 +666,13 @@ export default function PublicBookingManagerClient({
         ) : (
           <div className="flex flex-col gap-4">
             {slotGroups.map(([dateStr, group]) => (
-              <details key={dateStr} className="rounded-xl border border-line overflow-hidden">
+              <details key={dateStr} className="rounded-xl border border-line overflow-hidden" open={openDays[dateStr] || undefined} onToggle={(event) => setOpenDays((current) => ({ ...current, [dateStr]: event.currentTarget.open }))}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 [&::-webkit-details-marker]:hidden">
                   <span className="text-sm font-semibold text-ink">{formatDateLabel(dateStr)}</span>
-                  <span className="text-xs text-ink-muted">{t("{count} times", { count: group.length })}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-xs text-ink-muted">{t("{count} times", { count: group.length })}</span>
+                    <button type="button" className="text-xs font-medium text-brand-600" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setOpenDays((current) => ({ ...current, [dateStr]: true })); }}>{t("Open all")}</button>
+                  </span>
                 </summary>
                 <div className="flex flex-col divide-y divide-line border-t border-line">
                   {group.map((s) => {
@@ -691,42 +707,40 @@ export default function PublicBookingManagerClient({
         )}
       </div>
 
-      {/* Confirmed bookings */}
       <div className="card p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Confirmed Bookings")}</h2>
-          {confirmedBookings.length > 0 && <span className="stamp border-brand-500 text-brand-600 bg-brand-50">{confirmedBookings.length}</span>}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {(
+            [
+              ["pending", pendingBookings, "Pending", "No pending requests right now."],
+              ["confirmed", confirmedBookings, "Confirmed", "Nothing confirmed yet."],
+              ["cancelled", cancelledBookings, "Cancelled", "No cancelled bookings."],
+              ["rejected", rejectedBookings, "Rejected", "No rejected bookings."],
+            ] as const
+          ).map(([id, rows, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setListView(id)}
+              className={clsx("rounded-xl border px-3 py-2 text-left", listView === id ? "border-brand-600 bg-brand-50" : "border-line bg-paper")}
+            >
+              <span className="block text-lg font-semibold text-ink">{rows.length}</span>
+              <span className="block text-xs text-ink-muted">{t(label)}</span>
+            </button>
+          ))}
         </div>
-        {confirmedBookings.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("Nothing confirmed yet.")}</p>
-        ) : (
-          <div className="flex flex-col divide-y divide-line">
-            {confirmedBookings.map((b) => (
-              <BookingRow key={b.id} b={b} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Cancelled */}
-      <div className="card p-4 sm:p-5">
-        <button type="button" onClick={() => setShowCancelled((v) => !v)} className="flex items-center justify-between gap-3 w-full text-left">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Cancelled Bookings")}</h2>
-          <div className="flex items-center gap-2 shrink-0">
-            {cancelledBookings.length > 0 && <span className="stamp border-ink-faint text-ink-faint">{cancelledBookings.length}</span>}
-            {showCancelled ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}
-          </div>
-        </button>
-        {showCancelled &&
-          (cancelledBookings.length === 0 ? (
-            <p className="text-sm text-ink-muted mt-3">{t("No cancelled bookings.")}</p>
+        {(() => {
+          const rows = listView === "pending" ? pendingBookings : listView === "confirmed" ? confirmedBookings : listView === "cancelled" ? cancelledBookings : rejectedBookings;
+          const empty = listView === "pending" ? "No pending requests right now." : listView === "confirmed" ? "Nothing confirmed yet." : listView === "cancelled" ? "No cancelled bookings." : "No rejected bookings.";
+          return rows.length === 0 ? (
+            <p className="text-sm text-ink-muted mt-3">{t(empty)}</p>
           ) : (
-            <div className="flex flex-col divide-y divide-line mt-3">
-              {cancelledBookings.map((b) => (
+            <div className="flex flex-col divide-y divide-line mt-2">
+              {rows.map((b) => (
                 <BookingRow key={b.id} b={b} />
               ))}
             </div>
-          ))}
+          );
+        })()}
       </div>
 
       {modalBooking && (

@@ -103,13 +103,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           label={t("Invoices")}
           value={formatCurrency(scope.revenue)}
           amount={scope.revenue}
-          detail={t("{count} Invoices", { count: scope.invoiceCount })}
+          detail={showTotal ? t("{count} Invoices", { count: scope.invoiceCount }) : t("Open now")}
           icon={ReceiptText}
         />
         <StatCard
           label={t("Paid")}
           value={formatCurrency(scope.paid)}
           amount={scope.paid}
+          detail={showTotal ? t("Collected") : t("Collected this month")}
           icon={TrendingUp}
           accent="accent"
         />
@@ -117,7 +118,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           label={t("Expenses")}
           value={formatCurrency(scope.expenses)}
           amount={scope.expenses}
-          detail={t("Logged against invoices")}
+          detail={showTotal ? t("Logged") : t("Logged this month")}
           icon={Wallet}
           accent="danger"
         />
@@ -125,6 +126,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           label={t("Outstanding")}
           value={formatCurrency(scope.outstanding)}
           amount={scope.outstanding}
+          detail={t("Still to collect")}
           icon={AlertTriangle}
           accent="accent"
         />
