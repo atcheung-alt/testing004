@@ -90,6 +90,18 @@ export function formatTimeRangeLabel(startTime: string, durationMins: number): s
   return `${formatTimeLabel(startTime)} – ${formatTimeLabel(addMinutesToTime(startTime, durationMins))}`;
 }
 
+/** Start times a row of appointments would create. A leftover partial slot is left out. */
+export function previewSlotStarts(startTime: string, endTime: string, durationMins: number): string[] {
+  const start = minutesOf(startTime);
+  const end = minutesOf(endTime);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || durationMins < 1 || end <= start) return [];
+  const times: string[] = [];
+  for (let cursor = start; cursor + durationMins <= end; cursor += durationMins) {
+    times.push(`${String(Math.floor(cursor / 60)).padStart(2, "0")}:${String(cursor % 60).padStart(2, "0")}`);
+  }
+  return times;
+}
+
 /** "24/08/2026" — the app's standard DD/MM/YYYY date format. */
 export function formatDateLabel(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;

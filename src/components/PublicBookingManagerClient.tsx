@@ -25,6 +25,7 @@ import {
   MAX_SLOT_QUOTA,
   formatDateLabel,
   formatTimeRangeLabel,
+  previewSlotStarts,
   readJsonOrThrow,
   type BookingStatus,
 } from "@/lib/bookingFormat";
@@ -307,6 +308,10 @@ export default function PublicBookingManagerClient({
   const [addEndTime, setAddEndTime] = useState("17:00");
   const [addDuration, setAddDuration] = useState(DEFAULT_SLOT_DURATION_MINUTES);
   const [addQuota, setAddQuota] = useState(1);
+  const previewStarts = useMemo(
+    () => (addMode === "single" ? [addStartTime] : previewSlotStarts(addStartTime, addEndTime, addDuration)),
+    [addMode, addStartTime, addEndTime, addDuration]
+  );
   const [addBusy, setAddBusy] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -537,7 +542,8 @@ export default function PublicBookingManagerClient({
 
       {/* Slots */}
       <div className="card p-5 sm:p-6 flex flex-col gap-5">
-        <h2 className="font-display text-lg font-semibold text-ink">{t("Time Slots")}</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t("Add times people can book")}</h2>
+        <p className="text-sm text-ink-muted -mt-3">{t("Pick one way. The preview shows the exact times before you add them.")}</p>
 
         <form onSubmit={submitAddSlot} className="rounded-xl border border-line p-4 flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -549,8 +555,8 @@ export default function PublicBookingManagerClient({
                 addMode === "single" ? "border-brand-600 bg-brand-50" : "border-line bg-surface hover:bg-paper"
               )}
             >
-              <span className="block text-sm font-medium text-ink">{t("One time")}</span>
-              <span className="block text-xs text-ink-muted mt-0.5">{t("Add a single appointment on this day.")}</span>
+              <span className="block text-sm font-medium text-ink">{t("One appointment")}</span>
+              <span className="block text-xs text-ink-muted mt-0.5">{t("Example: only 9:00–10:00.")}</span>
             </button>
             <button
               type="button"
@@ -560,9 +566,9 @@ export default function PublicBookingManagerClient({
                 addMode === "bulk" ? "border-brand-600 bg-brand-50" : "border-line bg-surface hover:bg-paper"
               )}
             >
-              <span className="block text-sm font-medium text-ink">{t("Repeat until")}</span>
+              <span className="block text-sm font-medium text-ink">{t("A row of appointments")}</span>
               <span className="block text-xs text-ink-muted mt-0.5">
-                {t("Add the same length of appointment from the start time until the end time.")}
+                {t("Example: 9:00–10:00, then 10:00–11:00, until 12:00.")}
               </span>
             </button>
           </div>
@@ -581,24 +587,24 @@ export default function PublicBookingManagerClient({
               />
             </div>
             <div>
-              <label className="label">{t("Start time")}</label>
+              <label className="label">{t("First appointment starts")}</label>
               <BookingTimeField value={addStartTime} onChange={setAddStartTime} />
             </div>
             {addMode === "bulk" && (
               <div>
-                <label className="label">{t("End time")}</label>
+                <label className="label">{t("Last appointment ends by")}</label>
                 <BookingTimeField value={addEndTime} onChange={setAddEndTime} />
               </div>
             )}
           </div>
 
           <div className="max-w-[220px]">
-            <label className="label">{t("How long is each appointment?")}</label>
+            <label className="label">{t("Each appointment lasts")}</label>
             <BookingDurationField value={addDuration} onChange={setAddDuration} />
           </div>
 
           <div className="max-w-xs">
-            <label className="label">{t("How many people can book each time?")}</label>
+            <label className="label">{t("People per time")}</label>
             <input
               type="number"
               className="input"
@@ -616,6 +622,25 @@ export default function PublicBookingManagerClient({
               <span>{t(addError)}</span>
             </div>
           )}
+
+          <div className="rounded-xl bg-paper px-3 py-3">
+            <p className="text-sm font-medium text-ink">
+              {addMode === "single" || previewStarts.length === 1
+                ? t("This will add 1 time")
+                : t("This will add {count} times", { count: previewStarts.length })}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {previewStarts.length === 0 ? (
+                <p className="text-xs text-ink-muted">{t("Choose an end time after the start.")}</p>
+              ) : (
+                previewStarts.map((start) => (
+                  <span key={start} className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-900">
+                    {formatTimeRangeLabel(start, addDuration)}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
 
           <button type="submit" disabled={addBusy} className="btn-primary self-start">
             {addBusy ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />}
