@@ -103,7 +103,7 @@ export function ensureBookingEventCompanyEmailColumn(): Promise<void> {
       .then(() => undefined)
       .catch((err) => {
         companyEmailColumnReady = null;
-        throw err;
+        console.error("[bookings] could not add companyEmail", err);
       });
   }
   return companyEmailColumnReady;

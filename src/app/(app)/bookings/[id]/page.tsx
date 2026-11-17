@@ -37,7 +37,7 @@ export default async function BookingEventDetailPage({ params }: { params: { id:
         id: event.id,
         name: event.name,
         companyName: event.companyName,
-        companyEmail: event.companyEmail,
+        companyEmail: event.companyEmail ?? null,
         description: event.description,
         startDate: event.startDate.toISOString(),
         endDate: event.endDate.toISOString(),
