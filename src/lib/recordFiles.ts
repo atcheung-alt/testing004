@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { deleteDriveFile, findOrCreateFolder, isDriveConfigured, upsertDriveFile } from "@/lib/googleDrive";
+import { deleteDriveFile, findOrCreateFolder, isDriveConfigured, listDriveFilesNamed, upsertDriveFile } from "@/lib/googleDrive";
 import { getEffectiveDriveFolderId } from "@/lib/appSettings";
 import { isValidEmail } from "@/lib/settings";
 
@@ -33,6 +33,7 @@ export async function saveSignedRecord(args: {
   const folderId = await findOrCreateFolder(FOLDER_NAME, root);
   const safeName = args.fileName.replace(/[\\/]/g, " ").trim() || "record";
   const saved = await upsertDriveFile({
+    fileId: args.existingFileId,
     name: `${args.number} - ${safeName}`,
     folderId,
     buffer: args.bytes,
@@ -51,19 +52,29 @@ export async function saveSignedRecord(args: {
       data: current?.status === "SENT" ? { ...data, status: "SIGNED", signedAt: new Date() } : data,
     });
   }
-  if (args.existingFileId && args.existingFileId !== saved.id) {
-    await deleteDriveFile(args.existingFileId).catch(() => undefined);
-  }
+  await removeOtherSignedCopies(folderId, args.number, saved.id);
   return data;
+}
+
+/** Keep a single Drive file for this document number. */
+async function removeOtherSignedCopies(folderId: string, number: string, keepId: string | null) {
+  const copies = await listDriveFilesNamed(folderId, number);
+  for (const copy of copies) {
+    if (copy.id !== keepId) await deleteDriveFile(copy.id);
+  }
 }
 
 /** Remove the saved client file from the document, then from Drive. */
 export async function deleteSignedRecord(args: {
   kind: "invoice" | "recruitment";
   id: string;
+  number: string;
   fileId: string | null;
 }) {
+  const root = await getEffectiveDriveFolderId();
+  const folderId = root ? await findOrCreateFolder(FOLDER_NAME, root) : null;
   if (args.fileId) await deleteDriveFile(args.fileId);
+  if (folderId) await removeOtherSignedCopies(folderId, args.number, null);
   const data = { recordFileId: null, recordFileUrl: null, recordFileName: null };
   if (args.kind === "invoice") {
     await prisma.invoice.update({ where: { id: args.id }, data });

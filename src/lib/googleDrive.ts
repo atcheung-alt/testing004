@@ -124,14 +124,36 @@ export type UpsertedDriveFile = { id: string; webViewLink: string };
 /** Remove one file this account created. A missing file is treated as already gone. */
 export async function deleteDriveFile(fileId: string): Promise<void> {
   const headers = await authHeaders();
-  const res = await fetch(`${DRIVE_API}/files/${encodeURIComponent(fileId)}?${SHARED_DRIVE_PARAMS}`, {
-    method: "DELETE",
-    headers,
-  });
+  const url = `${DRIVE_API}/files/${encodeURIComponent(fileId)}?${SHARED_DRIVE_PARAMS}`;
+  const res = await fetch(url, { method: "DELETE", headers });
   if (res.status === 404 || res.status === 204) return;
+  if (res.status === 403) {
+    const trash = await fetch(`${url}&fields=id`, {
+      method: "PATCH",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ trashed: true }),
+    });
+    if (trash.ok || trash.status === 404) return;
+    throw new Error(`Drive file delete failed (${trash.status}): ${await trash.text()}`);
+  }
   if (!res.ok) {
     throw new Error(`Drive file delete failed (${res.status}): ${await res.text()}`);
   }
+}
+
+/** Files in one folder whose name contains this document number. */
+export async function listDriveFilesNamed(folderId: string, number: string): Promise<{ id: string }[]> {
+  const headers = await authHeaders();
+  const q = `'${escapeQueryValue(folderId)}' in parents and trashed = false and name contains '${escapeQueryValue(number)}'`;
+  const res = await fetch(
+    `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive&${SHARED_DRIVE_PARAMS}&corpora=allDrives`,
+    { headers }
+  );
+  if (!res.ok) {
+    throw new Error(`Drive file lookup failed (${res.status}): ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data.files || [];
 }
 
 /**

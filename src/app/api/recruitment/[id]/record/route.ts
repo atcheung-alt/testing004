@@ -35,11 +35,11 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
   if (!(await getCurrentUser())) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   const agreement = await prisma.recruitmentAgreement.findUnique({
     where: { id: params.id },
-    select: { id: true, recordFileId: true },
+    select: { id: true, number: true, recordFileId: true },
   });
   if (!agreement) return NextResponse.json({ error: "Not found." }, { status: 404 });
   try {
-    await deleteSignedRecord({ kind: "recruitment", id: agreement.id, fileId: agreement.recordFileId });
+    await deleteSignedRecord({ kind: "recruitment", id: agreement.id, number: agreement.number, fileId: agreement.recordFileId });
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || "The file could not be deleted." }, { status: 400 });
