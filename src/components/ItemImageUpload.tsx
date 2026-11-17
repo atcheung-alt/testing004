@@ -43,7 +43,7 @@ export default function ItemImageUpload({
   const t = useT();
   const [over, setOver] = useState(false);
 
-  async function useFile(file: File | undefined) {
+  async function applyFile(file: File | undefined) {
     if (!file) return;
     try {
       onChange(await fileToResizedDataUrl(file));
@@ -55,7 +55,7 @@ export default function ItemImageUpload({
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file
-    await useFile(file);
+    await applyFile(file);
   }
 
   function onDragOver(e: React.DragEvent) {
@@ -66,7 +66,7 @@ export default function ItemImageUpload({
   function onDrop(e: React.DragEvent) {
     e.preventDefault();
     setOver(false);
-    void useFile(e.dataTransfer.files?.[0]);
+    void applyFile(e.dataTransfer.files?.[0]);
   }
 
   return (
