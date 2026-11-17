@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import { useT } from "@/lib/i18n/client";
 
@@ -41,16 +41,32 @@ export default function ItemImageUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const t = useT();
+  const [over, setOver] = useState(false);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file
+  async function useFile(file: File | undefined) {
     if (!file) return;
     try {
       onChange(await fileToResizedDataUrl(file));
     } catch {
       // silently ignore invalid files
     }
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    await useFile(file);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setOver(true);
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setOver(false);
+    void useFile(e.dataTransfer.files?.[0]);
   }
 
   return (
@@ -68,8 +84,11 @@ export default function ItemImageUpload({
           <img
             src={imageData}
             alt={t("Item")}
-            className="w-16 h-16 object-cover rounded-md border border-line cursor-pointer"
+            className={`w-16 h-16 object-cover rounded-md border cursor-pointer ${over ? "border-brand-500" : "border-line"}`}
             onClick={() => inputRef.current?.click()}
+            onDragOver={onDragOver}
+            onDragLeave={() => setOver(false)}
+            onDrop={onDrop}
             title={t("Click to replace image")}
           />
           <button
@@ -87,7 +106,10 @@ export default function ItemImageUpload({
           onClick={() => inputRef.current?.click()}
           aria-label={t("Upload item image")}
           title={t("Upload item image")}
-          className="w-16 h-16 flex flex-col items-center justify-center gap-0.5 rounded-md border border-dashed border-line text-ink-faint hover:text-brand-600 hover:border-brand-500/60 transition-colors"
+          className={`w-16 h-16 flex flex-col items-center justify-center gap-0.5 rounded-md border border-dashed text-ink-faint hover:text-brand-600 hover:border-brand-500/60 transition-colors ${over ? "border-brand-500 text-brand-600" : "border-line"}`}
+          onDragOver={onDragOver}
+          onDragLeave={() => setOver(false)}
+          onDrop={onDrop}
         >
           <ImagePlus size={18} />
           <span className="text-[10px] leading-none">{t("Image")}</span>
