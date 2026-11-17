@@ -109,23 +109,38 @@ export function ensureBookingEventCompanyEmailColumn(): Promise<void> {
   return companyEmailColumnReady;
 }
 
-export async function listBookingEvents(opts?: { activeOnly?: boolean }): Promise<BookingEventRecord[]> {
-  await ensureBookingEventCompanyEmailColumn();
-  if (opts?.activeOnly) {
-    return prisma.$queryRaw<BookingEventRecord[]>`
-      SELECT * FROM "BookingEvent" WHERE "active" = true ORDER BY "startDate" ASC
-    `;
+const BOOKING_EVENT_COLUMNS = `"id", "name", "description", "companyName", "companyEmail", "startDate", "endDate", "active", "requiresConfirmation", "manageToken", "createdAt", "updatedAt"`;
+
+function missingCompanyEmailColumn(err: unknown): boolean {
+  return /companyEmail/i.test(String((err as { message?: string })?.message || err));
+}
+
+async function readBookingEvents(sql: string, ...params: string[]): Promise<BookingEventRecord[]> {
+  try {
+    return await prisma.$queryRawUnsafe<BookingEventRecord[]>(sql, ...params);
+  } catch (err) {
+    if (!missingCompanyEmailColumn(err)) throw err;
+    await ensureBookingEventCompanyEmailColumn();
+    return prisma.$queryRawUnsafe<BookingEventRecord[]>(sql, ...params);
   }
-  return prisma.$queryRaw<BookingEventRecord[]>`
-    SELECT * FROM "BookingEvent" ORDER BY "startDate" DESC
-  `;
+}
+
+export async function listBookingEvents(opts?: { activeOnly?: boolean }): Promise<BookingEventRecord[]> {
+  if (opts?.activeOnly) {
+    return readBookingEvents(
+      `SELECT ${BOOKING_EVENT_COLUMNS} FROM "BookingEvent" WHERE "active" = true ORDER BY "startDate" ASC`
+    );
+  }
+  return readBookingEvents(
+    `SELECT ${BOOKING_EVENT_COLUMNS} FROM "BookingEvent" ORDER BY "startDate" DESC`
+  );
 }
 
 export async function getBookingEvent(id: string): Promise<BookingEventRecord | null> {
-  await ensureBookingEventCompanyEmailColumn();
-  const rows = await prisma.$queryRaw<BookingEventRecord[]>`
-    SELECT * FROM "BookingEvent" WHERE "id" = ${id} LIMIT 1
-  `;
+  const rows = await readBookingEvents(
+    `SELECT ${BOOKING_EVENT_COLUMNS} FROM "BookingEvent" WHERE "id" = $1 LIMIT 1`,
+    id
+  );
   return rows[0] || null;
 }
 
@@ -134,9 +149,10 @@ export async function getBookingEvent(id: string): Promise<BookingEventRecord | 
  *  URL at all). Returns null for both "no such token" and "token not
  *  generated yet" alike, which the page treats identically as a 404. */
 export async function getBookingEventByManageToken(manageToken: string): Promise<BookingEventRecord | null> {
-  const rows = await prisma.$queryRaw<BookingEventRecord[]>`
-    SELECT * FROM "BookingEvent" WHERE "manageToken" = ${manageToken} LIMIT 1
-  `;
+  const rows = await readBookingEvents(
+    `SELECT ${BOOKING_EVENT_COLUMNS} FROM "BookingEvent" WHERE "manageToken" = $1 LIMIT 1`,
+    manageToken
+  );
   return rows[0] || null;
 }
 
