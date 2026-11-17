@@ -579,6 +579,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
           <OutsideLeaveCard
             employeeId={employee.id}
             defaultColleagueEmail={employee.email || employee.personalEmail || employee.companyEmail || ""}
+            defaultManagerName={employee.lineManagerName || ""}
             defaultManagerEmail={employee.lineManagerEmail || ""}
           />
         )}

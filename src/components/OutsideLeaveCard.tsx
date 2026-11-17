@@ -6,13 +6,16 @@ import { Loader2, Mail } from "lucide-react";
 export default function OutsideLeaveCard({
   employeeId,
   defaultColleagueEmail,
+  defaultManagerName,
   defaultManagerEmail,
 }: {
   employeeId: string;
   defaultColleagueEmail: string;
+  defaultManagerName: string;
   defaultManagerEmail: string;
 }) {
   const [colleagueEmail, setColleagueEmail] = useState(defaultColleagueEmail);
+  const [lineManagerName, setLineManagerName] = useState(defaultManagerName);
   const [lineManagerEmail, setLineManagerEmail] = useState(defaultManagerEmail);
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -26,7 +29,7 @@ export default function OutsideLeaveCard({
       const res = await fetch(`/api/employees/${employeeId}/outside-leave`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ colleagueEmail, lineManagerEmail }),
+        body: JSON.stringify({ colleagueEmail, lineManagerName, lineManagerEmail }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "The emails could not be sent.");
@@ -53,10 +56,14 @@ export default function OutsideLeaveCard({
           <p className="text-sm text-ink-muted">They approve the request, or reject it with a reason.</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="label">Colleague email</label>
           <input className="input" value={colleagueEmail} onChange={(e) => setColleagueEmail(e.target.value)} />
+        </div>
+        <div>
+          <label className="label">Line manager name</label>
+          <input className="input" value={lineManagerName} onChange={(e) => setLineManagerName(e.target.value)} />
         </div>
         <div>
           <label className="label">Line manager email</label>

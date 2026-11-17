@@ -25,6 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const body = await request.json().catch(() => ({}));
   const colleagueEmail = String(body.colleagueEmail || "").trim();
+  const lineManagerName = String(body.lineManagerName || "").trim();
   const lineManagerEmail = String(body.lineManagerEmail || "").trim();
   const leaveToken = await ensureLeaveToken(employee.id);
   const managerToken = await ensureLeaveManagerToken(employee.id);
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     await sendOutsideLeaveLinks({
       employeeId: employee.id,
       colleagueEmail,
+      lineManagerName,
       lineManagerEmail,
       colleagueUrl,
       managerUrl,

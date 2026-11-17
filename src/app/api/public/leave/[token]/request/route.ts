@@ -76,6 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
     try {
       await emailManagerAboutLeaveRequest({
         employeeId: employee.id,
+        lineManagerName: employee.lineManagerName || "",
         lineManagerEmail: employee.lineManagerEmail,
         employeeName: employee.name,
         leaveLabel: OUTSIDE_LEAVE_LABELS[leaveType],

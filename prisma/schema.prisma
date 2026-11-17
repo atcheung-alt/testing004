@@ -779,6 +779,7 @@ model Employee {
   // Outside colleagues (company is not HR Plus) cannot sign in. Staff email
   // their leave link and a separate link to the line manager.
   lineManagerEmail String?
+  lineManagerName  String?
   leaveManagerToken String? @unique
 
   // --- MPF enrollment -------------------------------------------------------

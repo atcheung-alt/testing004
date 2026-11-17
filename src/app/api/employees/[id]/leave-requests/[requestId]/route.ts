@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import { logActivity } from "@/lib/activity";
+import { notifyColleagueOfLeaveDecision } from "@/lib/outsideLeave";
 
 // Staff can only decide a request one way or the other from here — moving
 // it back to PENDING isn't a supported action (see VALID_LEAVE_STATUSES in
@@ -23,7 +24,19 @@ export async function PATCH(
 
   const existing = await prisma.leaveRequest.findUnique({
     where: { id: params.requestId },
-    include: { employee: { select: { id: true, name: true } } },
+    include: {
+      employee: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          personalEmail: true,
+          companyEmail: true,
+          lineManagerName: true,
+          company: { select: { name: true } },
+        },
+      },
+    },
   });
   if (!existing || existing.employeeId !== params.id) {
     return NextResponse.json({ error: "Leave request not found." }, { status: 404 });
@@ -41,6 +54,14 @@ export async function PATCH(
     where: { id: params.requestId },
     data: { status: body.status, decidedAt: new Date(), decidedNote },
   });
+  try {
+    await notifyColleagueOfLeaveDecision(existing.employee, { ...leaveRequest, decidedNote }, body.status === "APPROVED");
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "The decision was saved, but the email to the colleague could not be sent." },
+      { status: 502 }
+    );
+  }
 
   await logActivity({
     documentType: "employee",
