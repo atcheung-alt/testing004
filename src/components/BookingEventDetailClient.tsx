@@ -7,8 +7,6 @@ import {
   AlertCircle,
   Ban,
   Check,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   Mail,
   Pencil,
@@ -767,7 +765,7 @@ export default function BookingEventDetailClient({
         .sort((a, b) => (a.slotDate === b.slotDate ? b.slotStartTime.localeCompare(a.slotStartTime) : b.slotDate.localeCompare(a.slotDate))),
     [bookings]
   );
-  const [showCancelled, setShowCancelled] = useState(false);
+  const [listView, setListView] = useState<"pending" | "confirmed" | "cancelled" | "rejected">("pending");
   const rejectedBookings = useMemo(
     () =>
       bookings
@@ -775,7 +773,6 @@ export default function BookingEventDetailClient({
         .sort((a, b) => (a.slotDate === b.slotDate ? b.slotStartTime.localeCompare(a.slotStartTime) : b.slotDate.localeCompare(a.slotDate))),
     [bookings]
   );
-  const [showRejected, setShowRejected] = useState(false);
 
   function BookingRow({ b }: { b: BookingItem }) {
     const t = useT();
@@ -1284,102 +1281,88 @@ export default function BookingEventDetailClient({
         <button className="btn-primary sm:col-span-2 justify-self-start" type="submit" disabled={guestBusy}>{guestBusy ? t("Saving…") : t("Add this guest")}</button>
       </form>
 
-      {/* Pending requests */}
       <div className="card p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Pending Requests")}</h2>
-          {pendingBookings.length > 0 && (
-            <span className="stamp border-amber-500 text-amber-600 bg-amber-50">{pendingBookings.length}</span>
-          )}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {(
+            [
+              ["pending", pendingBookings.length, "Pending"],
+              ["confirmed", confirmedBookings.length, "Confirmed"],
+              ["cancelled", cancelledBookings.length, "Cancelled"],
+              ["rejected", rejectedBookings.length, "Rejected"],
+            ] as const
+          ).map(([id, count, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setListView(id)}
+              className={clsx(
+                "rounded-xl border px-3 py-2 text-left",
+                listView === id ? "border-brand-600 bg-brand-50" : "border-line bg-paper"
+              )}
+            >
+              <span className="block text-lg font-semibold text-ink">{count}</span>
+              <span className="block text-xs text-ink-muted">{t(label)}</span>
+            </button>
+          ))}
         </div>
-        {pendingBookings.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("No pending requests right now.")}</p>
-        ) : (
-          <div className="flex flex-col divide-y divide-line">
-            {pendingBookings.map((b) => {
-              const busy = quickActionId === b.id;
-              return (
-                <div key={b.id} className="flex flex-col gap-1.5 py-2.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <button type="button" onClick={() => setModalBooking(b)} className="min-w-0 text-left hover:opacity-70 transition-opacity">
-                      <p className="text-sm font-medium text-ink truncate">
-                        {formatDateLabel(b.slotDate)} · {formatTimeRangeLabel(b.slotStartTime, b.slotDurationMins)} · {b.clientName}
-                      </p>
-                      <p className="text-xs text-ink-muted truncate">{[b.clientEmail, b.clientPhone].filter(Boolean).join(" · ") || t("No email")}</p>
-                    </button>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button type="button" onClick={() => quickConfirm(b.id)} disabled={busy} className="btn-primary !py-1.5 !px-3 text-xs">
-                        {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                        {t("Confirm")}
+        {listView === "pending" &&
+          (pendingBookings.length === 0 ? (
+            <p className="text-sm text-ink-muted mt-3">{t("No pending requests right now.")}</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-line mt-2">
+              {pendingBookings.map((b) => {
+                const busy = quickActionId === b.id;
+                return (
+                  <div key={b.id} className="flex flex-col gap-1.5 py-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <button type="button" onClick={() => setModalBooking(b)} className="min-w-0 text-left hover:opacity-70 transition-opacity">
+                        <p className="text-sm font-medium text-ink truncate">
+                          {formatDateLabel(b.slotDate)} · {formatTimeRangeLabel(b.slotStartTime, b.slotDurationMins)} · {b.clientName}
+                        </p>
+                        <p className="text-xs text-ink-muted truncate">{[b.clientEmail, b.clientPhone].filter(Boolean).join(" · ") || t("No email")}</p>
                       </button>
-                      <button type="button" onClick={() => quickReject(b)} disabled={busy} className="btn-secondary !py-1.5 !px-3 text-xs">
-                        {busy ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
-                        {t("Reject")}
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button type="button" onClick={() => quickConfirm(b.id)} disabled={busy} className="btn-primary !py-1.5 !px-3 text-xs">
+                          {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                          {t("Confirm")}
+                        </button>
+                        <button type="button" onClick={() => quickReject(b)} disabled={busy} className="btn-secondary !py-1.5 !px-3 text-xs">
+                          {busy ? <Loader2 size={13} className="animate-spin" /> : <X size={13} />}
+                          {t("Reject")}
+                        </button>
+                      </div>
                     </div>
+                    {quickActionError?.id === b.id && <p className="text-xs text-danger-600">{quickActionError.message}</p>}
                   </div>
-                  {quickActionError?.id === b.id && <p className="text-xs text-danger-600">{quickActionError.message}</p>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Confirmed bookings */}
-      <div className="card p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Confirmed Bookings")}</h2>
-          {confirmedBookings.length > 0 && (
-            <span className="stamp border-brand-500 text-brand-600 bg-brand-50">{confirmedBookings.length}</span>
-          )}
-        </div>
-        {confirmedBookings.length === 0 ? (
-          <p className="text-sm text-ink-muted">{t("Nothing confirmed yet.")}</p>
-        ) : (
-          <div className="flex flex-col divide-y divide-line">
-            {confirmedBookings.map((b) => (
-              <BookingRow key={b.id} b={b} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Cancelled */}
-      <div className="card p-4 sm:p-5">
-        <button type="button" onClick={() => setShowCancelled((v) => !v)} className="flex items-center justify-between gap-3 w-full text-left">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Cancelled Bookings")}</h2>
-          <div className="flex items-center gap-2 shrink-0">
-            {cancelledBookings.length > 0 && <span className="stamp border-ink-faint text-ink-faint">{cancelledBookings.length}</span>}
-            {showCancelled ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}
-          </div>
-        </button>
-        {showCancelled &&
+                );
+              })}
+            </div>
+          ))}
+        {listView === "confirmed" &&
+          (confirmedBookings.length === 0 ? (
+            <p className="text-sm text-ink-muted mt-3">{t("Nothing confirmed yet.")}</p>
+          ) : (
+            <div className="flex flex-col divide-y divide-line mt-2">
+              {confirmedBookings.map((b) => (
+                <BookingRow key={b.id} b={b} />
+              ))}
+            </div>
+          ))}
+        {listView === "cancelled" &&
           (cancelledBookings.length === 0 ? (
             <p className="text-sm text-ink-muted mt-3">{t("No cancelled bookings.")}</p>
           ) : (
-            <div className="flex flex-col divide-y divide-line mt-3">
+            <div className="flex flex-col divide-y divide-line mt-2">
               {cancelledBookings.map((b) => (
                 <BookingRow key={b.id} b={b} />
               ))}
             </div>
           ))}
-      </div>
-
-      {/* Rejected */}
-      <div className="card p-4 sm:p-5">
-        <button type="button" onClick={() => setShowRejected((v) => !v)} className="flex items-center justify-between gap-3 w-full text-left">
-          <h2 className="font-display text-lg font-semibold text-ink">{t("Rejected Requests")}</h2>
-          <div className="flex items-center gap-2 shrink-0">
-            {rejectedBookings.length > 0 && <span className="stamp border-ink-faint text-ink-faint">{rejectedBookings.length}</span>}
-            {showRejected ? <ChevronUp size={16} className="text-ink-faint" /> : <ChevronDown size={16} className="text-ink-faint" />}
-          </div>
-        </button>
-        {showRejected &&
+        {listView === "rejected" &&
           (rejectedBookings.length === 0 ? (
             <p className="text-sm text-ink-muted mt-3">{t("No rejected requests.")}</p>
           ) : (
-            <div className="flex flex-col divide-y divide-line mt-3">
+            <div className="flex flex-col divide-y divide-line mt-2">
               {rejectedBookings.map((b) => (
                 <BookingRow key={b.id} b={b} />
               ))}
