@@ -57,12 +57,12 @@ html[data-theme="light"] {
     radial-gradient(900px 420px at 12% -10%, rgba(90, 130, 168, 0.28), transparent 60%),
     radial-gradient(700px 380px at 100% 0%, rgba(92, 78, 140, 0.22), transparent 55%),
     linear-gradient(180deg, #161b26 0%, #10141c 42%, #0d1218 100%);
-  --color-paper: 20 21 23;
-  --color-surface: 30 31 34;
-  --color-ink: 236 236 238;
-  --color-ink-muted: 162 163 168;
-  --color-ink-faint: 112 113 118;
-  --color-line: 48 49 53;
+  --color-paper: 22 23 31;
+  --color-surface: 29 30 40;
+  --color-ink: 243 244 246;
+  --color-ink-muted: 156 163 175;
+  --color-ink-faint: 107 114 128;
+  --color-line: 42 44 58;
   --color-brand-50: 24 39 65;
   --color-brand-500: 91 134 255;
   --color-brand-600: 130 166 255;
@@ -98,12 +98,12 @@ html[data-theme="dark"] {
      border), so keeping THESE neutral is what actually fixes "the whole
      page is too blue." Brand/cyan/accent below stay saturated on purpose —
      they're accent colors, meant to still read as color. */
-  --color-paper: 20 21 23;
-  --color-surface: 30 31 34;
-  --color-ink: 236 236 238;
-  --color-ink-muted: 162 163 168;
-  --color-ink-faint: 112 113 118;
-  --color-line: 48 49 53;
+  --color-paper: 22 23 31;
+  --color-surface: 29 30 40;
+  --color-ink: 243 244 246;
+  --color-ink-muted: 156 163 175;
+  --color-ink-faint: 107 114 128;
+  --color-line: 42 44 58;
 
   --color-brand-50: 24 39 65;
   --color-brand-100: 30 50 90;
@@ -131,12 +131,12 @@ html[data-theme="dark"] {
    under "auto", which is the point. */
 @media (prefers-color-scheme: dark) {
   html[data-theme="auto"] {
-    --color-paper: 20 21 23;
-    --color-surface: 30 31 34;
-    --color-ink: 236 236 238;
-    --color-ink-muted: 162 163 168;
-    --color-ink-faint: 112 113 118;
-    --color-line: 48 49 53;
+    --color-paper: 22 23 31;
+    --color-surface: 29 30 40;
+    --color-ink: 243 244 246;
+    --color-ink-muted: 156 163 175;
+    --color-ink-faint: 107 114 128;
+    --color-line: 42 44 58;
 
     --color-brand-50: 24 39 65;
     --color-brand-100: 30 50 90;
