@@ -8,6 +8,7 @@ import { ensureEmployeeContractSigningToken, employeeContractSigningUrlFor } fro
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
+import { isOutsideColleague } from "@/lib/outsideLeave";
 import { pdfLanguageFromBody, pdfLanguageLabel, pdfLanguageSuffix } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
@@ -24,10 +25,20 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },
-    include: { contract: true },
+    include: { contract: true, company: { select: { name: true } } },
   });
   if (!employee || !employee.contract) {
     return NextResponse.json({ error: "This employee has no contract yet." }, { status: 404 });
+  }
+
+  if (
+    isOutsideColleague(employee.company?.name) &&
+    !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail)
+  ) {
+    return NextResponse.json(
+      { error: "Fill in the colleague email, line manager name, and line manager email before sending the contract." },
+      { status: 409 }
+    );
   }
 
   const pdfLanguage = pdfLanguageFromBody(body.pdfLanguage);

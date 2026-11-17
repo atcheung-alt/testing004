@@ -21,6 +21,8 @@ export function ensureOutsideLeaveColumns() {
     columnsReady = (async () => {
       await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "lineManagerEmail" TEXT`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "lineManagerName" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "leaveColleagueEmail" TEXT`);
+      await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "leaveLinksSentAt" TIMESTAMP(3)`);
       await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "leaveManagerToken" TEXT`);
       await prisma.$executeRawUnsafe(
         `CREATE UNIQUE INDEX IF NOT EXISTS "Employee_leaveManagerToken_key" ON "Employee"("leaveManagerToken")`
@@ -102,7 +104,12 @@ export async function sendOutsideLeaveLinks({
   if (!managerToken) throw new Error("This employee record was not found.");
   await prisma.employee.update({
     where: { id: employeeId },
-    data: { lineManagerEmail, lineManagerName: managerName },
+    data: {
+      lineManagerEmail,
+      lineManagerName: managerName,
+      leaveColleagueEmail: colleagueEmail.trim(),
+      leaveLinksSentAt: new Date(),
+    },
   });
 
   const fromAddress = "HR Plus <contact@hrplus.info>";
@@ -123,6 +130,56 @@ export async function sendOutsideLeaveLinks({
     body: `Hi ${managerName},\n\nUse this link to approve or reject leave for ${employeeName}. A rejection needs a reason.\n\n${managerUrl}`,
     signingUrl: managerUrl,
     ctaLabel: "Review leave",
+  });
+}
+
+export async function saveOutsideLeaveContacts({
+  employeeId,
+  colleagueEmail,
+  lineManagerName,
+  lineManagerEmail,
+}: {
+  employeeId: string;
+  colleagueEmail: string;
+  lineManagerName: string;
+  lineManagerEmail: string;
+}) {
+  const managerName = lineManagerName.trim();
+  const colleague = colleagueEmail.trim();
+  if (!managerName) throw new Error("Enter the line manager's name.");
+  if (!isValidEmail(colleague) || !isValidEmail(lineManagerEmail)) {
+    throw new Error("Enter a valid email for the colleague and the line manager.");
+  }
+  await ensureOutsideLeaveColumns();
+  await prisma.employee.update({
+    where: { id: employeeId },
+    data: { lineManagerEmail, lineManagerName: managerName, leaveColleagueEmail: colleague },
+  });
+}
+
+export async function sendStoredOutsideLeaveLinks(employeeId: string) {
+  await ensureOutsideLeaveColumns();
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    include: { company: { select: { name: true } } },
+  });
+  if (!employee || !isOutsideColleague(employee.company?.name) || employee.leaveLinksSentAt) return;
+  const colleagueEmail = employee.leaveColleagueEmail || employee.email || employee.personalEmail || "";
+  if (!employee.lineManagerName || !employee.lineManagerEmail || !colleagueEmail) return;
+  const { ensureLeaveToken } = await import("@/lib/signing");
+  const leaveToken = await ensureLeaveToken(employee.id);
+  const managerToken = await ensureLeaveManagerToken(employee.id);
+  if (!leaveToken || !managerToken) return;
+  const colleagueUrl = leaveUrlFromHeaders(leaveToken);
+  const managerUrl = colleagueUrl.replace(/\/leave\/[^/]+$/, `/leave/review/${managerToken}`);
+  await sendOutsideLeaveLinks({
+    employeeId: employee.id,
+    colleagueEmail,
+    lineManagerName: employee.lineManagerName,
+    lineManagerEmail: employee.lineManagerEmail,
+    colleagueUrl,
+    managerUrl,
+    employeeName: employee.name,
   });
 }
 

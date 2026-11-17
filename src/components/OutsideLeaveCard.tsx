@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Mail } from "lucide-react";
 
 export default function OutsideLeaveCard({
@@ -8,18 +8,34 @@ export default function OutsideLeaveCard({
   defaultColleagueEmail,
   defaultManagerName,
   defaultManagerEmail,
+  alreadySent = false,
 }: {
   employeeId: string;
   defaultColleagueEmail: string;
   defaultManagerName: string;
   defaultManagerEmail: string;
+  alreadySent?: boolean;
 }) {
   const [colleagueEmail, setColleagueEmail] = useState(defaultColleagueEmail);
   const [lineManagerName, setLineManagerName] = useState(defaultManagerName);
   const [lineManagerEmail, setLineManagerEmail] = useState(defaultManagerEmail);
   const [sending, setSending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(alreadySent ? "Already sent. The colleague and the line manager have their links." : null);
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const colleague = colleagueEmail.trim();
+    const manager = lineManagerName.trim();
+    const managerEmail = lineManagerEmail.trim();
+    if (!colleague.includes("@") || !manager || !managerEmail.includes("@")) return;
+    const handle = setTimeout(() => {
+      fetch(`/api/employees/${employeeId}/outside-leave`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ colleagueEmail: colleague, lineManagerName: manager, lineManagerEmail: managerEmail, saveOnly: true }),
+      }).catch(() => undefined);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [colleagueEmail, lineManagerName, lineManagerEmail, employeeId]);
 
   async function send() {
     setSending(true);
@@ -33,7 +49,7 @@ export default function OutsideLeaveCard({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "The emails could not be sent.");
-      setMessage("Sent. The colleague can request leave. The line manager can approve or reject it.");
+      setMessage("Already sent. The colleague and the line manager have their links.");
     } catch (err: any) {
       setError(err.message);
     } finally {

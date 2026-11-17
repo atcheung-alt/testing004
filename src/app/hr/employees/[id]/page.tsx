@@ -393,7 +393,13 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
               )}
             </div>
 
-            {!contract && (() => {
+            {!contract && isOutsideColleague(employee.company?.name) && !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail) && (
+              <p className="text-sm text-amber-600">
+                {t("Fill in the colleague email, line manager name, and line manager email before creating the contract.")}
+              </p>
+            )}
+
+            {!contract && !(isOutsideColleague(employee.company?.name) && !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail)) && (() => {
               const issues = getContractPrerequisiteIssues(employee);
               return issues.length > 0 ? (
                 <div className="flex flex-col gap-2">
@@ -429,6 +435,9 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
                     <Pencil size={15} /> {t("Edit")}
                   </Link>
                   <DownloadPdfButton url={`/api/employees/${employee.id}/contract/pdf`} />
+                  {isOutsideColleague(employee.company?.name) && !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail) ? (
+                    <p className="text-sm text-amber-600 w-full">{t("Fill in the three leave-link boxes before sending the contract.")}</p>
+                  ) : (
                   <SendEmailButton
                     kind="employees"
                     id={employee.id}
@@ -441,6 +450,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
                     )}
                     emailValid={isValidEmail(contractEmail)}
                   />
+                  )}
                 </div>
               </div>
             )}
@@ -578,9 +588,10 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
         {isOutsideColleague(employee.company?.name) && (
           <OutsideLeaveCard
             employeeId={employee.id}
-            defaultColleagueEmail={employee.email || employee.personalEmail || employee.companyEmail || ""}
+            defaultColleagueEmail={employee.leaveColleagueEmail || employee.email || employee.personalEmail || employee.companyEmail || ""}
             defaultManagerName={employee.lineManagerName || ""}
             defaultManagerEmail={employee.lineManagerEmail || ""}
+            alreadySent={Boolean(employee.leaveLinksSentAt)}
           />
         )}
 

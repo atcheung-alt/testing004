@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { canManageEmployee } from "@/lib/documentAccess";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { getContractPrerequisiteIssues } from "@/lib/employees";
+import { isOutsideColleague } from "@/lib/outsideLeave";
 import EmployeeContractForm from "@/components/EmployeeContractForm";
 import { getT } from "@/lib/i18n/server";
 
@@ -14,7 +15,7 @@ export default async function EmployeeContractPage({ params }: { params: { id: s
 
   const employee = await prisma.employee.findUnique({
     where: { id: params.id },
-    include: { contract: true },
+    include: { contract: true, company: { select: { name: true } } },
   });
   if (!employee) notFound();
 
@@ -30,6 +31,14 @@ export default async function EmployeeContractPage({ params }: { params: { id: s
   // still reachable directly by URL — so a brand-new contract still can't
   // be started here until those same checks pass. Editing an existing
   // draft is never blocked this way, since that draft already exists.
+  if (
+    !employee.contract &&
+    isOutsideColleague(employee.company?.name) &&
+    !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail)
+  ) {
+    redirect(`/hr/employees/${employee.id}`);
+  }
+
   if (!employee.contract) {
     const issues = getContractPrerequisiteIssues(employee);
     if (issues.length > 0) {

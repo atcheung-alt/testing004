@@ -780,6 +780,8 @@ model Employee {
   // their leave link and a separate link to the line manager.
   lineManagerEmail String?
   lineManagerName  String?
+  leaveColleagueEmail String?
+  leaveLinksSentAt DateTime?
   leaveManagerToken String? @unique
 
   // --- MPF enrollment -------------------------------------------------------

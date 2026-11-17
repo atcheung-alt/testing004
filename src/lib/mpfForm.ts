@@ -3,6 +3,9 @@ import path from "path";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateSigningToken, resolveBaseUrl } from "@/lib/signing";
+import { sendDocumentEmail } from "@/lib/mailer";
+import { isValidEmail } from "@/lib/settings";
+import { logActivity } from "@/lib/activity";
 
 export const MPF_VIDEO_URL = "https://youtu.be/oLe1339j_KA?si=DwA2AEQvFidn0sgx";
 export const MPF_APP_STORE_URL = "https://apps.apple.com/hk/app/%E7%A9%8D%E9%87%91%E6%98%93-empf/id6480176219";
@@ -149,4 +152,38 @@ export function mpfEmailHtml(name: string, doneUrl: string, uploadUrl: string): 
     </ol>
     <p style="margin:4px 0 0;color:#66708A;font-size:13px;">Please watch this video on how to register, manage, and check your MPF account: <a href="${MPF_VIDEO_URL}" style="color:#3D63E0;">register, manage, and check your MPF</a></p>
     ${emailButton(uploadUrl, "Upload Individual eMPF Form")}`;
+}
+
+/** Emails the Individual eMPF Form once. A later call does nothing if it was already sent. */
+export async function sendMpfFormToEmployee(employeeId: string, request?: NextRequest | Request) {
+  await ensureMpfFormColumns();
+  const employee = await prisma.employee.findUnique({ where: { id: employeeId } });
+  if (!employee) return { ok: false as const, error: "Employee not found." };
+  if (employee.mpfFormSentAt || employee.mpfFormCompletedAt) return { ok: true as const, skipped: true };
+  const to = (employee.personalEmail || employee.email || "").trim();
+  if (!isValidEmail(to)) return { ok: false as const, error: "This employee has no email address." };
+  const token = await ensureMpfFormToken(employee.id);
+  if (!token) return { ok: false as const, error: "Employee not found." };
+  const form = readIndividualEmpfForm();
+  const doneUrl = mpfDoneUrlFor(token, request);
+  const uploadUrl = mpfFormUrlFor(token, request);
+  await sendDocumentEmail({
+    to,
+    subject: "Individual eMPF Form",
+    body: mpfEmailBody(employee.name, doneUrl, uploadUrl),
+    htmlBody: mpfEmailHtml(employee.name, doneUrl, uploadUrl),
+    attachment: { filename: MPF_FORM_FILENAME, content: form },
+    hrSignature: true,
+  });
+  await prisma.employee.update({
+    where: { id: employee.id },
+    data: { mpfFormSentAt: new Date() },
+  });
+  await logActivity({
+    documentType: "employee",
+    documentId: employee.id,
+    type: "EMAIL_SENT",
+    description: `Individual eMPF Form emailed to ${to}`,
+  });
+  return { ok: true as const, to };
 }

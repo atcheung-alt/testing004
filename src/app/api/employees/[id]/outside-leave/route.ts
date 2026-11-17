@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { employeeVisibleById } from "@/lib/documentAccess";
 import { leaveUrlFromHeaders } from "@/lib/signing";
 import { ensureLeaveToken } from "@/lib/signing";
-import { ensureLeaveManagerToken, isOutsideColleague, sendOutsideLeaveLinks } from "@/lib/outsideLeave";
+import { ensureLeaveManagerToken, isOutsideColleague, saveOutsideLeaveContacts, sendOutsideLeaveLinks } from "@/lib/outsideLeave";
 
 export const runtime = "nodejs";
 
@@ -34,6 +34,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
   const colleagueUrl = leaveUrlFromHeaders(leaveToken);
   const managerUrl = colleagueUrl.replace(/\/leave\/[^/]+$/, `/leave/review/${managerToken}`);
+
+  if (body.saveOnly) {
+    try {
+      await saveOutsideLeaveContacts({ employeeId: employee.id, colleagueEmail, lineManagerName, lineManagerEmail });
+    } catch (error: any) {
+      return NextResponse.json({ error: error.message || "Could not save the leave contacts." }, { status: 400 });
+    }
+    return NextResponse.json({ ok: true, saved: true });
+  }
 
   try {
     await sendOutsideLeaveLinks({
