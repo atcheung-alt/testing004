@@ -32,6 +32,14 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
   if (contract.signedAt) {
     return NextResponse.json({ error: "This contract has already been signed." }, { status: 409 });
   }
+  const { contractSignLinkExpired, ensureContractSignColumns } = await import("@/lib/employeeContract");
+  await ensureContractSignColumns();
+  if (contractSignLinkExpired(contract)) {
+    return NextResponse.json(
+      { error: "This link has expired. The 3 days to sign have passed. Ask HR Plus to send the contract email again." },
+      { status: 410 }
+    );
+  }
 
   const body = await request.json().catch(() => ({}));
   const signerName = typeof body.signerName === "string" ? body.signerName.trim() : "";

@@ -9,6 +9,9 @@ import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
 import { extraAttachmentsFrom } from "@/lib/emailAttachments";
 import { logActivity } from "@/lib/activity";
 import { isOutsideColleague } from "@/lib/outsideLeave";
+import { getCurrentUser } from "@/lib/auth";
+import { ensureContractSignColumns } from "@/lib/employeeContract";
+import { formatDate } from "@/lib/calculations";
 import { pdfLanguageFromBody, pdfLanguageLabel, pdfLanguageSuffix } from "@/lib/pdf/language";
 
 export const runtime = "nodejs";
@@ -66,13 +69,19 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
+  const signBy = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  const writtenBody =
+    body.body ||
+    `Hi ${employee.name},\n\nPlease review and sign your ${documentTitle.toLowerCase()} using the button below.`;
+  const emailBody = writtenBody.includes("within 3 days")
+    ? writtenBody
+    : `${writtenBody}\n\nPlease sign within 3 days, by ${formatDate(signBy)}. After that this link stops working.`;
+
   try {
     await sendDocumentEmail({
       to,
       subject: body.subject?.trim() || `Your ${documentTitle.toLowerCase()} with us`,
-      body:
-        body.body ||
-        `Hi ${employee.name},\n\nPlease review and sign your ${documentTitle.toLowerCase()} using the button below.`,
+      body: emailBody,
       attachment: {
         filename: `${employee.name.replace(/\s+/g, "-")}-contract${pdfLanguageSuffix(pdfLanguage)}.pdf`,
         content: built.buffer,
@@ -96,8 +105,18 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     description: `Contract emailed to ${to} (${pdfLanguageLabel(pdfLanguage)})`,
   });
 
-  if (employee.contract.status === "DRAFT") {
-    await prisma.employeeContract.update({ where: { id: employee.contract.id }, data: { status: "SENT" } });
+  if (employee.contract.status === "DRAFT" || employee.contract.status === "SENT") {
+    await ensureContractSignColumns();
+    const sender = await getCurrentUser();
+    await prisma.employeeContract.update({
+      where: { id: employee.contract.id },
+      data: {
+        status: "SENT",
+        sentForSignatureAt: new Date(),
+        signatureReminderSentAt: null,
+        sentByEmail: sender?.email || employee.contract.sentByEmail,
+      },
+    });
   }
 
   return NextResponse.json({ success: true, to, signingUrl });

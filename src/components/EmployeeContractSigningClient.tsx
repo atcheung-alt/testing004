@@ -213,7 +213,11 @@ export default function EmployeeContractSigningClient({
         <ContractTerms terms={view.terms} />
       </div>
 
-      {view.signable ? (
+      {view.expired ? (
+        <div className="card p-5 sm:p-6 bg-amber-50 text-amber-700">
+          {t("This link has expired. The 3 days to sign have passed. Ask HR Plus to send the contract email again.")}
+        </div>
+      ) : view.signable ? (
         <div className="card p-5 sm:p-6 flex flex-col gap-4">
           <div className="flex items-center gap-2 text-sm text-ink-muted">
             <ShieldCheck size={16} className="text-brand-500" />

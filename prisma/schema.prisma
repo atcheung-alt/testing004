@@ -899,6 +899,12 @@ model EmployeeContract {
   workSchedule     String?   // free text, e.g. "Mon-Fri, 9:30am-6:30pm"
 
   status           String    @default("DRAFT") // DRAFT | SENT | SIGNED | VERIFIED | CANCELLED
+  // Set each time the contract email is sent. The public link lasts 3 days
+  // from this moment. sentByEmail is the staff account that sent it, so the
+  // unsigned reminder goes back to that person.
+  sentForSignatureAt DateTime?
+  sentByEmail        String?
+  signatureReminderSentAt DateTime?
 
   // Online signing — mirrors RecruitmentAgreement's signing fields.
   signingToken     String?   @unique

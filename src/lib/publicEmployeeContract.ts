@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getEffectiveCompany } from "@/lib/appSettings";
 import { logClientView } from "@/lib/activity";
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
+import { contractSignLinkExpired, ensureContractSignColumns } from "@/lib/employeeContract";
 
 export type PublicEmployeeContractView = {
   id: string;
@@ -19,6 +20,7 @@ export type PublicEmployeeContractView = {
   workSchedule: string | null;
   signed: boolean;
   signable: boolean;
+  expired: boolean;
   signerName: string | null;
   signedAt: string | null;
   // Alternative to a drawn signature — see signedDocumentData on the
@@ -48,9 +50,11 @@ export async function getPublicEmployeeContractView(token: string): Promise<Publ
   });
   if (!contract) return null;
 
+  await ensureContractSignColumns();
   await logClientView("employee", contract.employeeId);
 
   const locked = contract.status === "CANCELLED";
+  const expired = contractSignLinkExpired(contract);
   const company = await getEffectiveCompany();
 
   return {
@@ -65,7 +69,8 @@ export async function getPublicEmployeeContractView(token: string): Promise<Publ
     workLocation: contract.workLocation,
     workSchedule: contract.workSchedule,
     signed: Boolean(contract.signedAt),
-    signable: !locked && !contract.signedAt,
+    signable: !locked && !contract.signedAt && !expired,
+    expired,
     signerName: contract.signerName,
     signedAt: contract.signedAt ? contract.signedAt.toISOString() : null,
     signedDocumentName: contract.signedDocumentName,

@@ -36,6 +36,7 @@ import EmployeeTimesheetCard from "@/components/EmployeeTimesheetCard";
 import { getT } from "@/lib/i18n/server";
 import OutsideLeaveCard from "@/components/OutsideLeaveCard";
 import { ensureOutsideLeaveColumns, isOutsideColleague } from "@/lib/outsideLeave";
+import { remindUnsignedContract } from "@/lib/employeeContract";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,13 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
         select: { ...EMPLOYEE_STAFF_SELECT, leaveRequests: { orderBy: { createdAt: "desc" } } },
       })) as any); // deliberately narrower shape for non-admins — see EMPLOYEE_STAFF_SELECT
   if (!employee) notFound();
+  if (employee.contract?.status === "SENT") {
+    try {
+      await remindUnsignedContract(employee.contract.id);
+    } catch (error) {
+      console.error("[contract sign reminder]", error);
+    }
+  }
 
   const token = await ensureLeaveToken(employee.id);
   const leaveUrl = token ? leaveUrlFromHeaders(token) : null;
@@ -457,7 +465,11 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
 
             {contract && contract.status === "SENT" && (
               <div className="flex flex-col gap-3">
-                <p className="text-sm text-ink-muted">{t("Sent — waiting for {name} to sign.", { name: employee.name })}</p>
+                <p className="text-sm text-ink-muted">
+                  {contract.sentForSignatureAt && Date.now() > new Date(contract.sentForSignatureAt).getTime() + 3 * 24 * 60 * 60 * 1000
+                    ? t("The 3 days have passed. Send the email again so {name} can sign.", { name: employee.name })
+                    : t("Sent — waiting for {name} to sign. The link lasts 3 days.", { name: employee.name })}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   <DownloadPdfButton url={`/api/employees/${employee.id}/contract/pdf`} />
                   {contractSigningUrl && (
