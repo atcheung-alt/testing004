@@ -67,6 +67,7 @@ export default function GeneralExpenses({
   const [notes, setNotes] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileData, setFileData] = useState("");
+  const [receiptOver, setReceiptOver] = useState(false);
   function readReceipt(file: File | null | undefined) {
     if (!file) return;
     const reader = new FileReader();
@@ -291,7 +292,26 @@ export default function GeneralExpenses({
         </div>
         <div>
           <label className="label">{t("Receipt")}</label>
-          <input className="input" type="file" accept="image/*,.pdf" onChange={(event) => readReceipt(event.target.files && event.target.files[0])} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); readReceipt(event.dataTransfer.files && event.dataTransfer.files[0]); }} />
+          <div
+            className={receiptOver ? "rounded-xl outline outline-2 outline-brand-500" : ""}
+            onDragEnter={(event) => { event.preventDefault(); setReceiptOver(true); }}
+            onDragOver={(event) => { event.preventDefault(); setReceiptOver(true); }}
+            onDragLeave={() => setReceiptOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setReceiptOver(false);
+              const file = event.dataTransfer.files && event.dataTransfer.files[0];
+              const input = event.currentTarget.querySelector("input");
+              if (input && file) {
+                const transfer = new DataTransfer();
+                transfer.items.add(file);
+                input.files = transfer.files;
+              }
+              readReceipt(file);
+            }}
+          >
+            <input className="input" type="file" accept="image/*,.pdf" onChange={(event) => readReceipt(event.target.files && event.target.files[0])} />
+          </div>
         </div>
         <div className="md:col-span-2">
           <label className="label">{t("Notes")}</label>
