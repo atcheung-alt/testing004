@@ -166,35 +166,11 @@ function hrEmailSignatureText(companyName: string): string {
 
 /** Professional email signature, appended to outgoing messages. */
 export function emailSignatureHtml(company: Company): string {
-  const c = company.contact;
-  return `
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:28px;border-collapse:collapse;">
-      <tr>
-        <td style="width:3px;background-color:${BRAND.brand500};background-image:${BRAND.gradient};border-radius:2px;"></td>
-        <td style="padding-left:14px;font-size:13px;line-height:1.6;color:${BRAND.inkMuted};">
-          <strong style="font-size:14px;color:${BRAND.ink};">${company.shortName || company.name}</strong><br/>
-          <span>${c.name}${c.title ? " — " + c.title : ""}</span><br/>
-          ${c.tel ? `<span>Tel: ${c.tel}</span><br/>` : ""}
-          ${c.email ? `<span>Email: <a href="mailto:${c.email}" style="color:${BRAND.brand600};text-decoration:none;">${c.email}</a></span><br/>` : ""}
-          <span style="color:${BRAND.inkFaint};font-size:12px;">${company.name}</span>
-        </td>
-      </tr>
-    </table>`;
+  return hrEmailSignatureHtml(company.name);
 }
 
 export function emailSignatureText(company: Company): string {
-  const c = company.contact;
-  return [
-    "",
-    "--",
-    company.shortName || company.name,
-    `${c.name}${c.title ? " — " + c.title : ""}`,
-    c.tel ? `Tel: ${c.tel}` : "",
-    c.email ? `Email: ${c.email}` : "",
-    company.name,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  return hrEmailSignatureText(company.name);
 }
 
 function deskEmailSignatureHtml(companyName: string): string {
