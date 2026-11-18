@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { onboardingDocumentError } from "@/lib/employees";
 import { isDriveConfigured } from "@/lib/googleDrive";
-import { ensureEmploymentContractFolder } from "@/lib/driveSync";
+import { ensureEmployeeDriveFolder } from "@/lib/driveSync";
 import { upsertDriveFile } from "@/lib/googleDrive";
 import { parseDataUrl } from "@/lib/mailer";
 import { logActivity } from "@/lib/activity";
@@ -37,8 +37,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!parsed) return NextResponse.json({ error: "Please attach the contract." }, { status: 400 });
 
   try {
-    const folderId = await ensureEmploymentContractFolder(employee.id);
-    if (!folderId) return NextResponse.json({ error: "Could not find this employee's Employment Contract folder." }, { status: 404 });
+    const folderId = await ensureEmployeeDriveFolder(employee.id);
+    if (!folderId) return NextResponse.json({ error: "Could not find this employee's folder." }, { status: 404 });
     const file = await upsertDriveFile({
       fileId: employee.contractFileDriveFileId || undefined,
       name: `Contract file.${EXTENSIONS[parsed.contentType] || "pdf"}`,
