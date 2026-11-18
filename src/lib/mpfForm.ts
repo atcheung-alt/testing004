@@ -42,6 +42,7 @@ export function ensureMpfFormColumns(): Promise<void> {
   columnsReady ??= (async () => {
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormToken" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormSentAt" TIMESTAMP(3)`);
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfEmailDueAt" TIMESTAMP(3)`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormDriveFileId" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormDriveUrl" TEXT`);
     await prisma.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfFormCompletedAt" TIMESTAMP(3)`);
@@ -186,4 +187,41 @@ export async function sendMpfFormToEmployee(employeeId: string, request?: NextRe
     description: `Individual eMPF Form emailed to ${to}`,
   });
   return { ok: true as const, to };
+}
+
+/** After onboarding is signed, the MPF email waits one month. */
+export async function scheduleMpfEmail(employeeId: string) {
+  await ensureMpfFormColumns();
+  const due = new Date();
+  due.setMonth(due.getMonth() + 1);
+  await prisma.$executeRaw`
+    UPDATE "Employee"
+    SET "mpfEmailDueAt" = ${due}
+    WHERE "id" = ${employeeId}
+      AND "mpfFormSentAt" IS NULL
+      AND "mpfFormCompletedAt" IS NULL
+      AND "mpfEmailDueAt" IS NULL
+  `;
+}
+
+/** Sends MPF emails whose one-month wait has passed. */
+export async function sendDueMpfEmails() {
+  await ensureMpfFormColumns();
+  const due = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "Employee"
+    WHERE "mpfEmailDueAt" IS NOT NULL
+      AND "mpfEmailDueAt" <= NOW()
+      AND "mpfFormSentAt" IS NULL
+      AND "mpfFormCompletedAt" IS NULL
+  `;
+  let sent = 0;
+  for (const row of due) {
+    try {
+      const result = await sendMpfFormToEmployee(row.id);
+      if (result.ok && !("skipped" in result && result.skipped)) sent += 1;
+    } catch (err) {
+      console.error("[mpf email] scheduled send failed", row.id, err);
+    }
+  }
+  return sent;
 }

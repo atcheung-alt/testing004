@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { getManualOnboardingCompletionIssues } from "@/lib/employees";
 import { logActivity } from "@/lib/activity";
+import { scheduleMpfEmail } from "@/lib/mpfForm";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -76,6 +77,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     where: { id: employee.id },
     data: { onboardingCompletedAt: new Date() },
   });
+
+  try {
+    await scheduleMpfEmail(employee.id);
+  } catch (err) {
+    console.error("[onboarding] could not schedule the MPF email", err);
+  }
 
   await logActivity({
     documentType: "employee",

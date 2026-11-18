@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/calculations";
 import { computeLeaveBalance } from "@/lib/employees";
 import { ensureOutsideLeaveColumns } from "@/lib/outsideLeave";
 import LeaveReviewClient from "@/components/LeaveReviewClient";
+import { getEffectiveCompany } from "@/lib/appSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export default async function LeaveReviewPage({ params }: { params: { token: str
     include: { leaveRequests: { orderBy: { createdAt: "desc" } }, company: { select: { name: true } } },
   });
   if (!employee) notFound();
+  const companyProfile = await getEffectiveCompany();
   const balance = computeLeaveBalance(employee.annualLeaveDays, employee.startDate, employee.leaveRequests);
 
   return (
@@ -36,6 +38,8 @@ export default async function LeaveReviewPage({ params }: { params: { token: str
         status: request.status,
         decidedNote: request.decidedNote,
       }))}
+      logoData={companyProfile.logoData}
+      logoDataDark={companyProfile.logoDataDark}
     />
   );
 }

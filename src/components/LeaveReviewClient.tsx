@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatDate } from "@/lib/calculations";
+import CompanyLogo from "@/components/CompanyLogo";
 
 type Item = {
   id: string;
@@ -30,6 +31,8 @@ export default function LeaveReviewClient({
   annualLeaveLeft,
   startDate,
   initial,
+  logoData,
+  logoDataDark,
 }: {
   token: string;
   employeeName: string;
@@ -39,6 +42,8 @@ export default function LeaveReviewClient({
   annualLeaveLeft: number;
   startDate: string;
   initial: Item[];
+  logoData?: string | null;
+  logoDataDark?: string | null;
 }) {
   const [items, setItems] = useState(initial);
   const [rejecting, setRejecting] = useState<string | null>(null);
@@ -93,6 +98,10 @@ export default function LeaveReviewClient({
   return (
     <div className="outside-leave-page">
     <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-4">
+      <div className="flex items-center justify-end gap-2">
+        {logoData ? <CompanyLogo logoData={logoData} logoDataDark={logoDataDark} name="HR Plus" className="h-9 object-contain" /> : null}
+        <span className="font-display text-lg font-semibold text-ink">HR Plus</span>
+      </div>
       <h1 className="font-display text-3xl font-medium">Leave to review</h1>
       <p className="text-sm text-ink-muted">For the line manager of {employeeName}</p>
       <div className="card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">

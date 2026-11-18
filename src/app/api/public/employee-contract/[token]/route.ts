@@ -8,8 +8,6 @@ import { COMPANY } from "@/lib/company";
 import { buildEmployeeContractPdf } from "@/lib/pdf/build";
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
 import { sendStoredOutsideLeaveLinks } from "@/lib/outsideLeave";
-import { sendMpfFormToEmployee } from "@/lib/mpfForm";
-
 export async function GET(_request: NextRequest, { params }: { params: { token: string } }) {
   const view = await getPublicEmployeeContractView(params.token);
   if (!view) {
@@ -147,11 +145,6 @@ ${COMPANY.name}`,
     console.error("[employee contract sign] confirmation email failed", err);
   }
 
-  try {
-    await sendMpfFormToEmployee(contract.employeeId, request);
-  } catch (err) {
-    console.error("[employee contract sign] MPF email failed", err);
-  }
   try {
     await sendStoredOutsideLeaveLinks(contract.employeeId);
   } catch (err) {

@@ -6,6 +6,7 @@ import { getPublicEmployeeOnboardingView } from "@/lib/publicEmployeeOnboarding"
 import { isDriveConfigured } from "@/lib/googleDrive";
 import { uploadEmployeeOnboardingDocument } from "@/lib/driveSync";
 import { parseDataUrl } from "@/lib/mailer";
+import { scheduleMpfEmail } from "@/lib/mpfForm";
 
 export const dynamic = "force-dynamic";
 
@@ -155,6 +156,12 @@ export async function POST(request: NextRequest, { params }: { params: { token: 
       { error: "Could not save your details. Please try again in a moment." },
       { status: 500 }
     );
+  }
+
+  try {
+    await scheduleMpfEmail(employee.id);
+  } catch (err) {
+    console.error("[onboarding] could not schedule the MPF email", err);
   }
 
   await logActivity({

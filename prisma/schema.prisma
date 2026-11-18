@@ -799,6 +799,7 @@ model Employee {
   // these two fields are the link used by Open on the MPF page.
   mpfFormToken       String?   @unique
   mpfFormSentAt      DateTime?
+  mpfEmailDueAt      DateTime?
   mpfFormDriveFileId String?
   mpfFormDriveUrl    String?
   // Set when the employee confirms they finished on the eMPF app or website.
