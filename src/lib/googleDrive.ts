@@ -196,6 +196,18 @@ export async function listDriveFilesNamed(folderId: string, number: string): Pro
  * above; personal "My Drive" folders will fail with storageQuotaExceeded no
  * matter how they're shared with the service account.
  */
+/** True only when this file is still active and already inside the given folder. */
+export async function driveFileIsInFolder(fileId: string, folderId: string): Promise<boolean> {
+  const headers = await authHeaders();
+  const res = await fetch(
+    `${DRIVE_API}/files/${fileId}?fields=trashed,parents&${SHARED_DRIVE_PARAMS}`,
+    { headers }
+  );
+  if (!res.ok) return false;
+  const data = await res.json();
+  return data.trashed !== true && Array.isArray(data.parents) && data.parents.includes(folderId);
+}
+
 export async function upsertDriveFile(args: {
   fileId?: string | null;
   name: string;

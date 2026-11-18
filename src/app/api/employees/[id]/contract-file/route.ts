@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { onboardingDocumentError } from "@/lib/employees";
-import { isDriveConfigured } from "@/lib/googleDrive";
+import { driveFileIsInFolder, isDriveConfigured, upsertDriveFile } from "@/lib/googleDrive";
 import { ensureEmployeeDriveFolder } from "@/lib/driveSync";
-import { upsertDriveFile } from "@/lib/googleDrive";
 import { parseDataUrl } from "@/lib/mailer";
 import { logActivity } from "@/lib/activity";
 import { ensureRecordColumns } from "@/lib/prisma";
@@ -39,8 +38,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   try {
     const folderId = await ensureEmployeeDriveFolder(employee.id);
     if (!folderId) return NextResponse.json({ error: "Could not find this employee's folder." }, { status: 404 });
+    const existingId = employee.contractFileDriveFileId || "";
+    const reuseId = existingId && (await driveFileIsInFolder(existingId, folderId)) ? existingId : undefined;
     const file = await upsertDriveFile({
-      fileId: employee.contractFileDriveFileId || undefined,
+      fileId: reuseId,
       name: `Contract file.${EXTENSIONS[parsed.contentType] || "pdf"}`,
       folderId,
       buffer: parsed.buffer,
