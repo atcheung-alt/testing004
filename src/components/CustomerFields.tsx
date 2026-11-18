@@ -41,13 +41,20 @@ function ClientPicker({
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = customers.filter((c) => c.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const filtered = customers.filter((c) => {
+    const needle = search.trim().toLowerCase();
+    if (!needle) return true;
+    const contacts = Array.isArray(c.contacts) ? c.contacts : [];
+    return [c.name, ...contacts.flatMap((contact) => [contact.name, contact.email])]
+      .filter(Boolean)
+      .some((part) => String(part).toLowerCase().includes(needle));
+  });
 
   return (
     <Portal>
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-brand-950/30 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative w-full max-w-lg card p-6 max-h-[85vh] flex flex-col animate-scale-in">
+      <div className="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden card p-6 animate-scale-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-semibold">{t("Choose from Client Library")}</h2>
           <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink" aria-label={t("Close")}>
@@ -79,30 +86,38 @@ function ClientPicker({
               />
             </div>
 
-            <div className="flex-1 overflow-y-auto -mx-2 px-2 flex flex-col gap-1">
+            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-2 -mx-2">
               {filtered.length === 0 ? (
                 <p className="text-sm text-ink-faint py-6 text-center">{t("No clients match “{search}”.", { search })}</p>
               ) : (
-                filtered.map((c) => (
-                  <div key={c.id} className="rounded-lg overflow-hidden">
+                filtered.map((c) => {
+                  const contacts = Array.isArray(c.contacts) ? c.contacts : [];
+                  return (
+                  <div key={c.id} className="rounded-lg">
                     <button
                       type="button"
-                      onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                      className="w-full flex items-center gap-3 px-2 py-2 hover:bg-paper transition-colors text-left"
+                      onClick={() => {
+                        if (contacts.length <= 1) {
+                          onPick(c, contacts[0] || { id: c.id, name: "", email: "" });
+                          return;
+                        }
+                        setExpandedId(expandedId === c.id ? null : c.id);
+                      }}
+                      className="flex w-full items-center gap-3 px-2 py-2 text-left hover:bg-paper"
                     >
                       <Building2 size={16} className="text-ink-faint shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">{c.name}</p>
-                        <p className="text-xs text-ink-muted truncate">
-                          {c.contacts.length === 1
-                            ? t("{count} Contact", { count: c.contacts.length })
-                            : t("{count} Contacts", { count: c.contacts.length })}
+                        <p className="truncate text-sm font-medium">{c.name}</p>
+                        <p className="truncate text-xs text-ink-muted">
+                          {contacts.length === 1
+                            ? contacts[0].name || contacts[0].email || t("{count} Contact", { count: 1 })
+                            : t("{count} Contacts", { count: contacts.length })}
                         </p>
                       </div>
                     </button>
-                    {expandedId === c.id && (
-                      <div className="pl-8 pb-1 flex flex-col gap-0.5">
-                        {c.contacts.map((contact) => (
+                    {expandedId === c.id && contacts.length > 1 && (
+                      <div className="flex flex-col gap-0.5 pb-1 pl-8">
+                        {contacts.map((contact) => (
                           <button
                             key={contact.id}
                             type="button"
@@ -123,7 +138,8 @@ function ClientPicker({
                       </div>
                     )}
                   </div>
-                ))
+                );
+                })
               )}
             </div>
           </>
