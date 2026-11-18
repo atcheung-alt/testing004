@@ -26,6 +26,8 @@ export function ensureRecordColumns() {
         await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
         await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
         await ddl.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfEmailDueAt" TIMESTAMP(3)`);
+        await ddl.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "contractFileDriveFileId" TEXT`);
+        await ddl.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "contractFileDriveUrl" TEXT`);
       } finally {
         await ddl.$disconnect();
       }

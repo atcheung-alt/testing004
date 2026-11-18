@@ -362,6 +362,8 @@ export const PAGE_MESSAGES: Record<string, string> = {
   "Or fill in the following to mark onboarding complete manually:": "或填妥以下資料，以手動標記入職完成：",
   ", ": "、",
   "Employee hasn't completed onboarding yet": "員工尚未完成入職",
+  "Drop the contract here, or click to choose a file": "把合約拖到這裡，或按一下選擇檔案",
+  "Open Contract file": "開啟 Contract file",
   "Job title": "職稱",
   "Pay rate": "薪酬率",
   "Salary or pay rate": "薪金或薪酬率",

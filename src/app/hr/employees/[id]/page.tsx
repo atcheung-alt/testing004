@@ -18,6 +18,7 @@ import { getActivityTimeline } from "@/lib/activity";
 import { mpfReminderFor } from "@/lib/payroll";
 import { getCurrentUser } from "@/lib/auth";
 import { employeeScopeFor, employeeVisibleById } from "@/lib/documentAccess";
+import ContractDriveUpload from "@/components/ContractDriveUpload";
 import DeleteButton from "@/components/DeleteButton";
 import CopySigningLinkButton from "@/components/CopySigningLinkButton";
 import DownloadPdfButton from "@/components/DownloadPdfButton";
@@ -401,6 +402,7 @@ export default async function EmployeeDetailPage({ params }: { params: { id: str
                 </span>
               )}
             </div>
+            <ContractDriveUpload employeeId={employee.id} fileUrl={employee.contractFileDriveUrl} />
 
             {!contract && isOutsideColleague(employee.company?.name) && !(employee.leaveColleagueEmail && employee.lineManagerName && employee.lineManagerEmail) && (
               <p className="text-sm text-amber-600">

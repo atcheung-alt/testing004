@@ -677,9 +677,6 @@ type ContractPrerequisiteInput = {
  */
 export function getContractPrerequisiteIssues(employee: ContractPrerequisiteInput): string[] {
   const issues: string[] = [];
-  if (!employee.onboardingCompletedAt) {
-    issues.push("Employee hasn't completed onboarding yet");
-  }
   if (!employee.title.trim()) {
     issues.push("Job title");
   }
