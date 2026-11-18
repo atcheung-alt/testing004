@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { computeLeaveBalance, requestDuration } from "@/lib/employees";
 import { logClientView } from "@/lib/activity";
 import { getEffectiveCompany } from "@/lib/appSettings";
@@ -48,6 +48,7 @@ export type PublicEmployeeLeaveView = {
  * control, exactly like Quotation.signingToken.
  */
 export async function getPublicEmployeeLeaveView(token: string): Promise<PublicEmployeeLeaveView | null> {
+  await ensureRecordColumns();
   await ensureOutsideLeaveColumns();
   const employee = await prisma.employee.findUnique({
     where: { leaveToken: token },

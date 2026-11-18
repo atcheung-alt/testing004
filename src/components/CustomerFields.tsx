@@ -235,7 +235,7 @@ export default function CustomerFields({
         <button
           type="button"
           className="btn-secondary"
-          disabled={savingClient || !value.customerName.trim()}
+          disabled={savingClient || !(value.customerName || "").trim()}
           onClick={async () => {
             setSavingClient(true);
             setClientError("");

@@ -10,11 +10,6 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
-prisma.$use(async (params, next) => {
-  await ensureRecordColumns();
-  return next(params);
-});
-
 /** Add the signed-record columns once, on a separate connection. */
 export function ensureRecordColumns() {
   if (!globalForPrisma.recordColumns) {

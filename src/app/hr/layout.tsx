@@ -4,7 +4,7 @@ import MpfNotificationPopup from "@/components/MpfNotificationPopup";
 import PageTransition from "@/components/PageTransition";
 import { getCurrentUser } from "@/lib/auth";
 import { getEffectiveCompany, getSettings } from "@/lib/appSettings";
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { mpfReminderFor } from "@/lib/payroll";
 import { canOpenPath, firstAllowedHref, isSuperAdmin, loadAccessGroups, pagesForPerson } from "@/lib/accessControl";
 import { employeeScopeFor } from "@/lib/documentAccess";
@@ -58,6 +58,7 @@ async function loadMpfAlerts() {
 }
 
 export default async function HrLayout({ children }: { children: React.ReactNode }) {
+  await ensureRecordColumns();
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login");

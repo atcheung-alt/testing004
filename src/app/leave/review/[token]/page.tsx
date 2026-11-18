@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { ensureRecordColumns, prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/calculations";
 import { computeLeaveBalance } from "@/lib/employees";
 import { ensureOutsideLeaveColumns } from "@/lib/outsideLeave";
@@ -9,6 +9,7 @@ import { getEffectiveCompany } from "@/lib/appSettings";
 export const dynamic = "force-dynamic";
 
 export default async function LeaveReviewPage({ params }: { params: { token: string } }) {
+  await ensureRecordColumns();
   await ensureOutsideLeaveColumns();
   const employee = await prisma.employee.findUnique({
     where: { leaveManagerToken: params.token },
