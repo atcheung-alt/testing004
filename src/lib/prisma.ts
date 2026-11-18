@@ -10,6 +10,11 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+prisma.$use(async (params, next) => {
+  await ensureRecordColumns();
+  return next(params);
+});
+
 /** Add the signed-record columns once, on a separate connection. */
 export function ensureRecordColumns() {
   if (!globalForPrisma.recordColumns) {
@@ -25,6 +30,7 @@ export function ensureRecordColumns() {
         await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileId" TEXT`);
         await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileUrl" TEXT`);
         await ddl.$executeRawUnsafe(`ALTER TABLE "RecruitmentAgreement" ADD COLUMN IF NOT EXISTS "recordFileName" TEXT`);
+        await ddl.$executeRawUnsafe(`ALTER TABLE "Employee" ADD COLUMN IF NOT EXISTS "mpfEmailDueAt" TIMESTAMP(3)`);
       } finally {
         await ddl.$disconnect();
       }
