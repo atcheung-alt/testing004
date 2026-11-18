@@ -119,6 +119,36 @@ export async function findOrCreateFolder(
   return created.id;
 }
 
+/** An existing folder with this exact name. Does not create one. */
+export async function findExistingFolder(name: string, parentId?: string | null): Promise<string | null> {
+  const headers = await authHeaders();
+  const parentClause = parentId ? ` and '${escapeQueryValue(parentId)}' in parents` : "";
+  const q = `name = '${escapeQueryValue(name)}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false${parentClause}`;
+  const listRes = await fetch(
+    `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive&${SHARED_DRIVE_PARAMS}&corpora=allDrives`,
+    { headers }
+  );
+  if (!listRes.ok) {
+    throw new Error(`Drive folder lookup failed (${listRes.status}): ${await listRes.text()}`);
+  }
+  const listData = await listRes.json();
+  return listData.files?.[0]?.id || null;
+}
+
+export async function listChildFolders(parentId: string): Promise<{ id: string; name: string }[]> {
+  const headers = await authHeaders();
+  const q = `'${escapeQueryValue(parentId)}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  const listRes = await fetch(
+    `${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=200&spaces=drive&${SHARED_DRIVE_PARAMS}&corpora=allDrives`,
+    { headers }
+  );
+  if (!listRes.ok) {
+    throw new Error(`Drive folder lookup failed (${listRes.status}): ${await listRes.text()}`);
+  }
+  const listData = await listRes.json();
+  return listData.files || [];
+}
+
 export type UpsertedDriveFile = { id: string; webViewLink: string };
 
 /** Remove one file this account created. A missing file is treated as already gone. */

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { buildQuotationPdf, buildInvoicePdf, buildReceiptPdf, buildEmployeeContractPdf, buildPayslipPdf } from "@/lib/pdf/build";
-import { isDriveConfigured, findOrCreateFolder, upsertDriveFile } from "@/lib/googleDrive";
+import { isDriveConfigured, findExistingFolder, findOrCreateFolder, listChildFolders, upsertDriveFile } from "@/lib/googleDrive";
 import { getEffectiveDriveFolderId } from "@/lib/appSettings";
 import { EMPLOYMENT_TYPE_LABELS } from "@/lib/employees";
 import { contractDocumentTitleFor } from "@/lib/employeeContractTerms";
@@ -205,6 +205,30 @@ export async function ensureEmployeeDriveFolder(employeeId: string): Promise<str
   await prisma.employee.update({ where: { id: employee.id }, data: { driveFolderId: folderId } });
 
   return folderId;
+}
+
+/** The person's folder inside HR / Employment Contract. */
+export async function ensureEmploymentContractFolder(employeeId: string): Promise<string | null> {
+  const employee = await prisma.employee.findUnique({
+    where: { id: employeeId },
+    select: { name: true },
+  });
+  if (!employee) return null;
+  const rootFolderId = await getEffectiveDriveFolderId();
+  const contractRoot =
+    (await findExistingFolder("Employment Contract", rootFolderId)) ||
+    (await findExistingFolder("Employment Contract")) ||
+    (await findOrCreateFolder("Employment Contract", rootFolderId));
+  const name = (employee.name || "").trim().toLowerCase();
+  const children = await listChildFolders(contractRoot);
+  const match =
+    children.find((folder) => folder.name.trim().toLowerCase() === name) ||
+    children.find((folder) => {
+      const folderName = folder.name.toLowerCase();
+      return name && (folderName.includes(name) || name.includes(folderName));
+    });
+  if (match) return match.id;
+  return findOrCreateFolder(sanitizeFolderName(employee.name || "Unnamed"), contractRoot);
 }
 
 /**

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminApi } from "@/lib/auth";
 import { onboardingDocumentError } from "@/lib/employees";
 import { isDriveConfigured } from "@/lib/googleDrive";
-import { uploadEmployeeOnboardingDocument } from "@/lib/driveSync";
+import { ensureEmploymentContractFolder } from "@/lib/driveSync";
+import { upsertDriveFile } from "@/lib/googleDrive";
 import { parseDataUrl } from "@/lib/mailer";
 import { logActivity } from "@/lib/activity";
 import { ensureRecordColumns } from "@/lib/prisma";
@@ -36,13 +37,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (!parsed) return NextResponse.json({ error: "Please attach the contract." }, { status: 400 });
 
   try {
-    const file = await uploadEmployeeOnboardingDocument(
-      employee.id,
-      "Contract file",
-      EXTENSIONS[parsed.contentType] || "pdf",
-      parsed.buffer,
-      employee.contractFileDriveFileId
-    );
+    const folderId = await ensureEmploymentContractFolder(employee.id);
+    if (!folderId) return NextResponse.json({ error: "Could not find this employee's Employment Contract folder." }, { status: 404 });
+    const file = await upsertDriveFile({
+      fileId: employee.contractFileDriveFileId || undefined,
+      name: `Contract file.${EXTENSIONS[parsed.contentType] || "pdf"}`,
+      folderId,
+      buffer: parsed.buffer,
+    });
     await prisma.employee.update({
       where: { id: employee.id },
       data: { contractFileDriveFileId: file.id, contractFileDriveUrl: file.webViewLink },
