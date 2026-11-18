@@ -11,16 +11,17 @@ import { useT } from "@/lib/i18n/client";
 
 function CompanyHeader({ company }: { company: PublicEmployeeLeaveView["company"] }) {
   return (
-    <div className="mb-2 flex items-center justify-end gap-2">
+    <div className="mb-2 flex items-center justify-end gap-3">
       {company.logoData ? (
         <CompanyLogo
           logoData={company.logoData}
           logoDataDark={company.logoDataDark}
           name={company.name}
-          className="h-9 object-contain"
+          className="h-7 object-contain"
         />
       ) : null}
-      <span className="font-display text-lg font-semibold text-ink">HR Plus</span>
+      <span className="h-4 w-px bg-line" />
+      <span className="font-display text-base font-semibold text-ink">HR Plus</span>
     </div>
   );
 }

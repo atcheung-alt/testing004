@@ -98,9 +98,10 @@ export default function LeaveReviewClient({
   return (
     <div className="outside-leave-page">
     <div className="max-w-2xl mx-auto px-4 py-10 flex flex-col gap-4">
-      <div className="flex items-center justify-end gap-2">
-        {logoData ? <CompanyLogo logoData={logoData} logoDataDark={logoDataDark} name="HR Plus" className="h-9 object-contain" /> : null}
-        <span className="font-display text-lg font-semibold text-ink">HR Plus</span>
+      <div className="flex items-center justify-end gap-3">
+        {logoData ? <CompanyLogo logoData={logoData} logoDataDark={logoDataDark} name="HR Plus" className="h-7 object-contain" /> : null}
+        <span className="h-4 w-px bg-line" />
+        <span className="font-display text-base font-semibold text-ink">HR Plus</span>
       </div>
       <h1 className="font-display text-3xl font-medium">Leave to review</h1>
       <p className="text-sm text-ink-muted">For the line manager of {employeeName}</p>
