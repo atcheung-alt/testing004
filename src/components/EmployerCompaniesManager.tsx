@@ -63,12 +63,8 @@ export default function EmployerCompaniesManager({ companies }: { companies: Emp
   }
 
   async function remove(company: EmployerCompanyOption) {
-    const message = company.employeeCount
-      ? t("Remove {name}? Its {count} employees stay on file, under No company.", {
-          name: company.name,
-          count: company.employeeCount,
-        })
-      : t("Remove {name}?", { name: company.name });
+    if (company.employeeCount > 0) return;
+    const message = t("Remove {name}?", { name: company.name });
     if (!window.confirm(message)) return;
     setBusy(company.id);
     setError(null);
@@ -115,15 +111,17 @@ export default function EmployerCompaniesManager({ companies }: { companies: Emp
             >
               {busy === company.id ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
             </button>
-            <button
-              type="button"
-              className="text-ink-faint hover:text-danger-500 shrink-0"
-              aria-label={t("Remove {name}", { name: company.name })}
-              onClick={() => remove(company)}
-              disabled={busy === company.id}
-            >
-              <Trash2 size={15} />
-            </button>
+            {company.employeeCount === 0 && (
+              <button
+                type="button"
+                className="text-ink-faint hover:text-danger-500 shrink-0"
+                aria-label={t("Remove {name}", { name: company.name })}
+                onClick={() => remove(company)}
+                disabled={busy === company.id}
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
           </div>
         ))}
       </div>

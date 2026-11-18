@@ -41,10 +41,19 @@ export async function DELETE(_request: NextRequest, { params }: { params: { id: 
   const denied = await requireAdminApi();
   if (denied) return denied;
 
-  const existing = await prisma.employerCompany.findUnique({ where: { id: params.id } });
+  const existing = await prisma.employerCompany.findUnique({
+    where: { id: params.id },
+    include: { _count: { select: { employees: true } } },
+  });
   if (!existing) return NextResponse.json({ error: "Company not found." }, { status: 404 });
   if (isInternalCompanyName(existing.name)) {
     return NextResponse.json({ error: "HR Plus is the internal company and cannot be changed." }, { status: 400 });
+  }
+  if (existing._count.employees > 0) {
+    return NextResponse.json(
+      { error: "This company still has people in the HR system, so it cannot be deleted." },
+      { status: 400 }
+    );
   }
 
   await prisma.employerCompany.delete({ where: { id: params.id } });

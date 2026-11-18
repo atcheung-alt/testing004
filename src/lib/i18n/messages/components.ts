@@ -714,6 +714,8 @@ export const COMPONENT_MESSAGES: Record<string, string> = {
     "下方員工名單按這些公司分組。可在這裡改名，或在員工列的公司選單調動。",
   "Remove {name}? Its {count} employees stay on file, under No company.":
     "移除 {name}？其 {count} 位員工紀錄會保留，並歸入「未分組公司」。",
+  "This company still has people in the HR system, so it cannot be deleted.":
+    "這間公司在 HR 系統仍有員工，所以不能刪除。",
   "{count} people": "{count} 人",
   "Save company name": "儲存公司名稱",
   "New company name": "新公司名稱",
