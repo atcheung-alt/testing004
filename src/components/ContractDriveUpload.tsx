@@ -45,17 +45,36 @@ export default function ContractDriveUpload({
 
   return (
     <div className="mt-4">
-      <label
-        className={`block cursor-pointer rounded-xl border border-dashed px-3 py-4 text-center text-sm text-ink-muted ${over ? "border-brand-500 text-brand-600" : "border-line"}`}
-        onDragEnter={(event) => { event.preventDefault(); setOver(true); }}
-        onDragOver={(event) => { event.preventDefault(); setOver(true); }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(event) => { event.preventDefault(); void save(event.dataTransfer.files && event.dataTransfer.files[0]); }}
-      >
-        {busy ? t("Saving…") : t("Drop the contract here, or click to choose a file")}
-        <input className="hidden" type="file" accept="image/*,.pdf" onChange={(event) => void save(event.target.files && event.target.files[0])} />
-      </label>
-      {url ? <a className="mt-2 inline-block text-sm text-brand-600" href={url} target="_blank" rel="noreferrer">{t("Open Contract file")}</a> : null}
+      {url ? (
+        <div
+          className={`rounded-xl border px-3 py-3 ${over ? "border-brand-500" : "border-emerald-300 bg-emerald-50"}`}
+          onDragEnter={(event) => { event.preventDefault(); setOver(true); }}
+          onDragOver={(event) => { event.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(event) => { event.preventDefault(); void save(event.dataTransfer.files && event.dataTransfer.files[0]); }}
+        >
+          <p className="text-sm font-semibold text-ink">{t("Contract file")}</p>
+          <p className="mt-1 text-sm text-emerald-700">{busy ? t("Saving…") : t("Uploaded. This is the file in Drive.")}</p>
+          <a className="mt-2 inline-block text-sm text-brand-600" href={url} target="_blank" rel="noreferrer">{t("Open Contract file")}</a>
+          <div>
+            <label className="btn-secondary mt-2 inline-flex cursor-pointer">
+              {t("Replace contract file")}
+              <input className="hidden" type="file" accept="image/*,.pdf" onChange={(event) => void save(event.target.files && event.target.files[0])} />
+            </label>
+          </div>
+        </div>
+      ) : (
+        <label
+          className={`block cursor-pointer rounded-xl border border-dashed px-3 py-4 text-center text-sm text-ink-muted ${over ? "border-brand-500 text-brand-600" : "border-line"}`}
+          onDragEnter={(event) => { event.preventDefault(); setOver(true); }}
+          onDragOver={(event) => { event.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(event) => { event.preventDefault(); void save(event.dataTransfer.files && event.dataTransfer.files[0]); }}
+        >
+          {busy ? t("Saving…") : t("Drop the contract here, or click to choose a file")}
+          <input className="hidden" type="file" accept="image/*,.pdf" onChange={(event) => void save(event.target.files && event.target.files[0])} />
+        </label>
+      )}
       {error ? <p className="mt-2 text-sm text-danger-500">{error}</p> : null}
     </div>
   );
