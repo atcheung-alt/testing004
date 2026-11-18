@@ -5,6 +5,7 @@ import { Search, X, Building2, UserRound, Library } from "lucide-react";
 import Portal from "@/components/Portal";
 import type { CustomerDetails } from "@/types";
 import { useT } from "@/lib/i18n/client";
+import { saveClientToLibrary } from "@/lib/saveClient";
 
 export function emptyCustomer(): CustomerDetails {
   return {
@@ -136,14 +137,18 @@ function ClientPicker({
 export default function CustomerFields({
   value,
   onChange,
-  showContactAndPhone = true,
+  showContact = true,
+  showPhone = true,
 }: {
   value: CustomerDetails;
   onChange: (value: CustomerDetails) => void;
-  /** Invoices still collect a contact person and phone; quotations don't. */
-  showContactAndPhone?: boolean;
+  showContact?: boolean;
+  showPhone?: boolean;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [savingClient, setSavingClient] = useState(false);
+  const [clientNote, setClientNote] = useState("");
+  const [clientError, setClientError] = useState("");
   const t = useT();
 
   function set(patch: Partial<CustomerDetails>) {
@@ -181,7 +186,7 @@ export default function CustomerFields({
             onChange={(e) => set({ customerName: e.target.value })}
           />
         </div>
-        {showContactAndPhone && (
+        {showContact && (
           <div>
             <label className="label">{t("Contact person")}</label>
             <input
@@ -203,7 +208,7 @@ export default function CustomerFields({
             onChange={(e) => set({ customerEmail: e.target.value })}
           />
         </div>
-        {showContactAndPhone && (
+        {showPhone && (
           <div>
             <label className="label">{t("Phone")}</label>
             <input
@@ -224,6 +229,36 @@ export default function CustomerFields({
             onChange={(e) => set({ customerAddress: e.target.value })}
           />
         </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="btn-secondary"
+          disabled={savingClient || !value.customerName.trim()}
+          onClick={async () => {
+            setSavingClient(true);
+            setClientError("");
+            setClientNote("");
+            try {
+              const result = await saveClientToLibrary({
+                company: value.customerName,
+                contactName: value.customerContact || "",
+                email: value.customerEmail || "",
+                address: value.customerAddress || "",
+              });
+              setClientNote(result === "exists" ? t("This client is already on the Clients page.") : t("Saved. Clients now lists this company and person."));
+            } catch (err: any) {
+              setClientError(t(err.message));
+            } finally {
+              setSavingClient(false);
+            }
+          }}
+        >
+          {savingClient ? t("Saving…") : t("Save client")}
+        </button>
+        {clientNote ? <p className="text-sm text-emerald-600">{clientNote}</p> : null}
+        {clientError ? <p className="text-sm text-danger-500">{clientError}</p> : null}
       </div>
 
       {pickerOpen && <ClientPicker onPick={handlePick} onClose={() => setPickerOpen(false)} />}

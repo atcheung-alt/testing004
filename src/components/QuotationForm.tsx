@@ -241,7 +241,7 @@ export default function QuotationForm({
 
       <div className="card p-5" ref={customerSectionRef}>
         <h2 className="font-display text-lg font-semibold mb-4">{t("Company Information")}</h2>
-        <CustomerFields value={customer} onChange={setCustomer} showContactAndPhone={false} />
+        <CustomerFields value={customer} onChange={setCustomer} showPhone={false} />
       </div>
 
       <div className="card p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">

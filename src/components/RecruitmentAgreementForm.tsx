@@ -19,6 +19,7 @@ import {
 } from "@/lib/recruitmentTerms";
 import SaveRecruitmentTemplateButton from "@/components/SaveRecruitmentTemplateButton";
 import { useT } from "@/lib/i18n/client";
+import { saveClientToLibrary } from "@/lib/saveClient";
 
 export type RecruitmentAgreementFormData = {
   id: string;
@@ -143,6 +144,8 @@ export default function RecruitmentAgreementForm({
   const t = useT();
   const router = useRouter();
   const [companyName, setCompanyName] = useState(agreement?.companyName || preset?.companyName || "");
+  const [savingClient, setSavingClient] = useState(false);
+  const [clientNote, setClientNote] = useState("");
   const [companyEmail, setCompanyEmail] = useState(agreement?.companyEmail || preset?.companyEmail || "");
   const [templateName, setTemplateName] = useState(preset?.name || "");
   const [agreementDate, setAgreementDate] = useState(toDateInput(agreement?.createdAt));
@@ -408,6 +411,28 @@ export default function RecruitmentAgreementForm({
               onChange={(e) => setCompanyEmail(e.target.value)}
               required
             />
+          </div>
+          <div className="sm:col-span-2 flex items-center gap-3">
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={savingClient || !companyName.trim()}
+              onClick={async () => {
+                setSavingClient(true);
+                setClientNote("");
+                try {
+                  const result = await saveClientToLibrary({ company: companyName, email: companyEmail });
+                  setClientNote(result === "exists" ? t("This client is already on the Clients page.") : t("Saved. Clients now lists this company and person."));
+                } catch (err: any) {
+                  setClientNote(t(err.message));
+                } finally {
+                  setSavingClient(false);
+                }
+              }}
+            >
+              {savingClient ? t("Saving…") : t("Save client")}
+            </button>
+            {clientNote ? <p className="text-sm text-ink-muted">{clientNote}</p> : null}
           </div>
           <div>
             <label className="label">{t("Agreement date *")}</label>
