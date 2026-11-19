@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import GeneralExpenses from "@/components/GeneralExpenses";
 import { currentInvoiceFilter } from "@/lib/documentAccess";
-import { ensureGeneralExpenseTable, ensureInvoiceExpenseOwnerColumn, listGeneralExpenses } from "@/lib/generalExpense";
+import { ensureGeneralExpenseTable, ensureInvoiceExpenseOwnerColumn, listGeneralExpenseReceipts, listGeneralExpenses } from "@/lib/generalExpense";
 import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/accessControl";
 
@@ -19,6 +19,11 @@ export default async function ExpensesPage() {
         id: true,
         number: true,
         customerName: true,
+        customerContact: true,
+        customerEmail: true,
+        customerPhone: true,
+        title: true,
+        poNumber: true,
         total: true,
         status: true,
       },
@@ -39,6 +44,7 @@ export default async function ExpensesPage() {
     }),
     listGeneralExpenses(),
   ]);
+  const extraReceipts = await listGeneralExpenseReceipts(general.map((expense) => expense.id));
   const history = [
     ...general.map((expense) => ({
       id: expense.id,
@@ -51,6 +57,13 @@ export default async function ExpensesPage() {
       link: expense.invoiceNumber || "General",
       invoiceId: invoices.find((invoice) => invoice.number === expense.invoiceNumber)?.id || "",
       receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
+      receipts: [
+        ...(expense.fileName ? [{ href: `/api/general-expenses/${expense.id}`, name: expense.fileName }] : []),
+        ...(extraReceipts.get(expense.id) || []).map((file) => ({
+          href: `/api/general-expenses/${expense.id}/receipts/${file.id}`,
+          name: file.fileName,
+        })),
+      ],
       canDelete: admin || Boolean(session && expense.createdBy === session.userId),
     })),
     ...expenses.map((expense) => ({
@@ -66,6 +79,10 @@ export default async function ExpensesPage() {
       receiptHref: expense.documents[0]
         ? `/api/invoices/${expense.invoice.id}/expenses/${expense.id}/documents/${expense.documents[0].id}`
         : "",
+      receipts: expense.documents.map((file) => ({
+        href: `/api/invoices/${expense.invoice.id}/expenses/${expense.id}/documents/${file.id}`,
+        name: file.fileName,
+      })),
       canDelete: admin || Boolean(session && expense.createdBy === session.userId),
     })),
   ].sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -76,6 +93,11 @@ export default async function ExpensesPage() {
           id: invoice.id,
           number: invoice.number,
           customerName: invoice.customerName,
+          customerContact: invoice.customerContact || "",
+          customerEmail: invoice.customerEmail || "",
+          customerPhone: invoice.customerPhone || "",
+          title: invoice.title || "",
+          poNumber: invoice.poNumber || "",
           total: invoice.total,
         }))}
         history={history}

@@ -10,6 +10,7 @@ export type ExpenseDocumentRef = {
   id: string;
   fileName: string;
   mimeType: string;
+  href?: string;
 };
 
 export type InvoiceExpense = {
@@ -252,7 +253,7 @@ export default function InvoiceExpensesCard({
                       <li key={doc.id} className="flex items-center gap-2 text-sm">
                         <FileText size={14} className="text-ink-faint shrink-0" />
                         <a
-                          href={`/api/invoices/${invoiceId}/expenses/${e.id}/documents/${doc.id}`}
+                          href={doc.href || `/api/invoices/${invoiceId}/expenses/${e.id}/documents/${doc.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="truncate text-brand-600 hover:underline"

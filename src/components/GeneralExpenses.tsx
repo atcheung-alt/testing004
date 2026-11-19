@@ -12,12 +12,6 @@ function invoiceLabel(invoice?: { number: string; customerName: string; total: n
   return `${invoice.number} — ${invoice.customerName} (${formatCurrency(invoice.total)})`;
 }
 
-function issuedDate(iso: string) {
-  const [year, month, day] = iso.split("-");
-  if (!year || !month || !day) return iso;
-  return `${day}/${month}/${year}`;
-}
-
 import { expenseCodes } from "@/lib/expenseCodes";
 
 const CATEGORIES = [
@@ -42,6 +36,7 @@ export type HistoryRow = {
   link: string;
   invoiceId: string;
   receiptHref: string;
+  receipts?: { href: string; name: string }[];
   canDelete: boolean;
 };
 
@@ -49,7 +44,7 @@ export default function GeneralExpenses({
   invoices,
   history,
 }: {
-  invoices: { id: string; number: string; customerName: string; total: number }[];
+  invoices: { id: string; number: string; customerName: string; customerContact?: string; customerEmail?: string; customerPhone?: string; title?: string; poNumber?: string; total: number }[];
   history: HistoryRow[];
 }) {
   const t = useT();
@@ -58,24 +53,22 @@ export default function GeneralExpenses({
   const [category, setCategory] = useState(CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState("");
   const [amount, setAmount] = useState("");
-  const [spentAt, setSpentAt] = useState("");
   const [vendor, setVendor] = useState("");
   const [invoiceId, setInvoiceId] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceQuery, setInvoiceQuery] = useState("");
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [notes, setNotes] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [fileData, setFileData] = useState("");
+  const [files, setFiles] = useState<{ fileName: string; fileData: string }[]>([]);
   const [receiptOver, setReceiptOver] = useState(false);
-  function readReceipt(file: File | null | undefined) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      setFileName(file.name);
-      setFileData(String(reader.result || ""));
-    };
-    reader.readAsDataURL(file);
+  function readReceipts(list: FileList | File[] | null | undefined) {
+    Array.from(list || []).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFiles((current) => current.length >= 5 ? current : [...current, { fileName: file.name, fileData: String(reader.result || "") }]);
+      };
+      reader.readAsDataURL(file);
+    });
   }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -120,11 +113,9 @@ export default function GeneralExpenses({
           name,
           category: savedCategory,
           amount,
-          spentAt,
           vendor,
           notes,
-          fileName,
-          fileData,
+          files,
           invoiceId: invoiceId || null,
           invoiceNumber: invoiceId ? invoiceNumber : "",
           expenseType: invoiceId ? "INVOICE" : "GENERAL",
@@ -140,8 +131,7 @@ export default function GeneralExpenses({
       setInvoiceQuery("");
       setCustomCategory("");
       setNotes("");
-      setFileName("");
-      setFileData("");
+      setFiles([]);
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -172,8 +162,8 @@ export default function GeneralExpenses({
   }
 
   function exportCsv(list: HistoryRow[]) {
-    const header = ["Code", "Date", "Expense", "Category", "Vendor", "Amount", "Link", "Receipt"];
-    const body = list.map((row) => [codes.get(`${row.source}-${row.id}`) || "", row.date, row.name, row.category, row.vendor, String(row.amount), row.link, row.receiptHref]);
+    const header = ["Code", "Expense", "Category", "Vendor", "Amount", "Link", "Receipt"];
+    const body = list.map((row) => [codes.get(`${row.source}-${row.id}`) || "", row.name, row.category, row.vendor, String(row.amount), row.link, (row.receipts || []).map((file) => file.name).join("; ")]);
     const csv = [header, ...body].map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -256,10 +246,6 @@ export default function GeneralExpenses({
           <input className="input" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
         </div>
         <div>
-          <label className="label">{t("Date")}</label>
-          <input className="input" type="date" value={spentAt} onChange={(e) => setSpentAt(e.target.value)} />
-        </div>
-        <div>
           <label className="label">{t("Vendor / Payee")}</label>
           <input className="input" value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder={t("Optional")} />
         </div>
@@ -281,7 +267,7 @@ export default function GeneralExpenses({
               {invoices.filter((invoice) => {
                 const q = invoiceQuery.trim().toLowerCase();
                 if (!q) return true;
-                return `${invoice.number} ${invoice.customerName}`.toLowerCase().includes(q);
+                return `${invoice.number} ${invoice.customerName} ${invoice.customerContact || ""} ${invoice.customerEmail || ""} ${invoice.customerPhone || ""} ${invoice.title || ""} ${invoice.poNumber || ""}`.toLowerCase().includes(q);
               }).map((invoice) => (
                 <button type="button" key={invoice.id} className="block w-full px-3 py-2 text-left text-sm hover:bg-paper" onMouseDown={() => { setInvoiceId(invoice.id); setInvoiceNumber(invoice.number); setInvoiceQuery(""); setInvoiceOpen(false); }}>
                   {invoiceLabel(invoice)}
@@ -300,17 +286,18 @@ export default function GeneralExpenses({
             onDrop={(event) => {
               event.preventDefault();
               setReceiptOver(false);
-              const file = event.dataTransfer.files && event.dataTransfer.files[0];
+              const dropped = event.dataTransfer.files;
               const input = event.currentTarget.querySelector("input");
-              if (input && file) {
+              if (input && dropped && dropped.length) {
                 const transfer = new DataTransfer();
-                transfer.items.add(file);
+                Array.from(dropped).forEach((file) => transfer.items.add(file));
                 input.files = transfer.files;
               }
-              readReceipt(file);
+              readReceipts(dropped);
             }}
           >
-            <input className="input" type="file" accept="image/*,.pdf" onChange={(event) => readReceipt(event.target.files && event.target.files[0])} />
+            <input className="input" type="file" multiple accept="image/*,.pdf" onChange={(event) => { readReceipts(event.target.files); }} />
+            {files.length ? <p className="mt-1 text-xs text-ink-muted">{files.map((file) => file.fileName).join(", ")}</p> : null}
           </div>
         </div>
         <div className="md:col-span-2">
@@ -346,8 +333,6 @@ export default function GeneralExpenses({
               <p className="text-xs text-ink-muted truncate mt-0.5">
                 {row.name}
                 {" · "}
-                {t("Issued")} {issuedDate(row.date)}
-                {" · "}
                 {row.category}
               </p>
               <p className="text-xs text-ink-faint truncate mt-0.5">{row.vendor || "\u00a0"}</p>
@@ -357,9 +342,9 @@ export default function GeneralExpenses({
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Amount")}</p>
                 <p className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</p>
               </div>
-              {row.receiptHref ? (
-                <a className="text-sm text-brand-600 hover:underline" href={row.receiptHref} target="_blank" rel="noopener noreferrer">{t("View receipt")}</a>
-              ) : null}
+              {(row.receipts && row.receipts.length ? row.receipts : row.receiptHref ? [{ href: row.receiptHref, name: t("View receipt") }] : []).map((file) => (
+                <a key={file.href} className="text-sm text-brand-600 hover:underline" href={file.href} target="_blank" rel="noopener noreferrer">{file.name}</a>
+              ))}
               {row.canDelete && askId === row.id ? (
                 <span className="inline-flex items-center gap-2">
                   <button type="button" className="btn-danger" disabled={removingId === row.id} onClick={() => remove(row)}>

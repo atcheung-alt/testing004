@@ -185,7 +185,7 @@ async function MoneyList({
       href: `/invoices/${expense.invoice.id}`,
       title: codes.get(`invoice-${expense.id}`) || expense.category,
       subtitle: expense.category === "Others" ? expense.label || t("Others") : t(expense.category),
-      detail: `${expense.invoice.number} · ${expense.invoice.customerName} · ${formatDate(expense.createdAt)}`,
+      detail: `${expense.invoice.number} · ${expense.invoice.customerName}`,
       amount: expense.amount,
       expenseId: expense.id,
       invoiceId: expense.invoice.id,
@@ -196,7 +196,6 @@ async function MoneyList({
     })),
     ...(view === "receipts" ? [] : generals).filter((expense) => inRange(expense.spentAt.toISOString().slice(0, 10))).map((expense) => {
       const linked = Boolean(expense.invoiceNumber);
-      const when = formatDate(expense.spentAt);
       return {
         key: `general-${expense.id}`,
         when: expense.spentAt,
@@ -205,8 +204,8 @@ async function MoneyList({
         title: codes.get(`general-${expense.id}`) || expense.name || t("General"),
         subtitle: expense.name || t("General"),
         detail: linked
-          ? `${expense.invoiceNumber} · ${expense.vendor || "—"} · ${when}`
-          : [when, expense.vendor].filter(Boolean).join(" · "),
+          ? `${expense.invoiceNumber} · ${expense.vendor || "—"}`
+          : expense.vendor || "",
         amount: expense.amount,
       };
     }),

@@ -78,7 +78,7 @@ export default function ExpenseWorkspace({
     const q = invoiceQuery.trim().toLowerCase();
     const pool = q
       ? invoices.filter((invoice) =>
-          [invoice.number, invoice.customerName, invoice.title, invoice.poNumber, invoice.issueLabel]
+          [invoice.number, invoice.customerName, invoice.customerEmail, invoice.title, invoice.poNumber, invoice.issueLabel]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()

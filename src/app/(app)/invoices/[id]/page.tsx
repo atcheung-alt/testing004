@@ -356,6 +356,15 @@ export default async function InvoiceDetailPage({ params }: { params: { id: stri
             amount: expense.amount,
             source: "general" as const,
             receiptHref: expense.fileName ? `/api/general-expenses/${expense.id}` : "",
+            documents: [
+              ...(expense.fileName ? [{ id: "main", fileName: expense.fileName, mimeType: "", href: `/api/general-expenses/${expense.id}` }] : []),
+              ...expense.receipts.map((file) => ({
+                id: file.id,
+                fileName: file.fileName,
+                mimeType: "",
+                href: `/api/general-expenses/${expense.id}/receipts/${file.id}`,
+              })),
+            ],
           })),
         ]}
       />

@@ -40,6 +40,17 @@ export async function ensureGeneralExpenseTable(): Promise<void> {
   await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ALTER COLUMN "invoiceId" DROP NOT NULL`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ADD COLUMN IF NOT EXISTS "expenseType" TEXT NOT NULL DEFAULT 'GENERAL'`);
   await prisma.$executeRawUnsafe(`ALTER TABLE "GeneralExpense" ADD COLUMN IF NOT EXISTS "createdBy" TEXT NOT NULL DEFAULT ''`);
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "GeneralExpenseReceipt" (
+      "id" TEXT PRIMARY KEY,
+      "expenseId" TEXT NOT NULL,
+      "fileName" TEXT NOT NULL,
+      "mimeType" TEXT NOT NULL DEFAULT '',
+      "fileData" TEXT NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "GeneralExpenseReceipt_expenseId_idx" ON "GeneralExpenseReceipt"("expenseId")`);
 }
 
 export async function ensureInvoiceExpenseOwnerColumn(): Promise<void> {
@@ -61,13 +72,15 @@ const lightSelect = {
   createdBy: true,
 } as const;
 
-export async function generalExpensesForInvoice(invoiceId: string, invoiceNumber: string): Promise<{ id: string; name: string; category: string; amount: number; fileName: string }[]> {
+export async function generalExpensesForInvoice(invoiceId: string, invoiceNumber: string): Promise<{ id: string; name: string; category: string; amount: number; fileName: string; receipts: { id: string; fileName: string }[] }[]> {
   try {
-    return await prisma.generalExpense.findMany({
+    const rows = await prisma.generalExpense.findMany({
       where: { OR: [{ invoiceId }, { invoiceNumber }] },
       orderBy: { spentAt: "desc" },
       select: { id: true, name: true, category: true, amount: true, fileName: true },
     });
+    const extra = await listGeneralExpenseReceipts(rows.map((row) => row.id));
+    return rows.map((row) => ({ ...row, receipts: extra.get(row.id) || [] }));
   } catch {
     return [];
   }
@@ -96,6 +109,26 @@ export async function generalExpenseSums(invoices: { id: string; number: string 
     return sums;
   }
   return sums;
+}
+
+export async function listGeneralExpenseReceipts(expenseIds: string[]): Promise<Map<string, { id: string; fileName: string }[]>> {
+  const grouped = new Map<string, { id: string; fileName: string }[]>();
+  if (!expenseIds.length) return grouped;
+  try {
+    const rows = await prisma.generalExpenseReceipt.findMany({
+      where: { expenseId: { in: expenseIds } },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, expenseId: true, fileName: true },
+    });
+    for (const row of rows) {
+      const list = grouped.get(row.expenseId) || [];
+      list.push({ id: row.id, fileName: row.fileName });
+      grouped.set(row.expenseId, list);
+    }
+  } catch {
+    return grouped;
+  }
+  return grouped;
 }
 
 export async function listGeneralExpenses(): Promise<GeneralExpenseRow[]> {
