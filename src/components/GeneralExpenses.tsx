@@ -44,7 +44,7 @@ export default function GeneralExpenses({
   invoices,
   history,
 }: {
-  invoices: { id: string; number: string; customerName: string; customerContact?: string; customerEmail?: string; customerPhone?: string; title?: string; poNumber?: string; total: number }[];
+  invoices: { id: string; number: string; customerName: string; customerContact?: string; customerEmail?: string; customerPhone?: string; title?: string; poNumber?: string; detail?: string; total: number }[];
   history: HistoryRow[];
 }) {
   const t = useT();
@@ -267,10 +267,11 @@ export default function GeneralExpenses({
               {invoices.filter((invoice) => {
                 const q = invoiceQuery.trim().toLowerCase();
                 if (!q) return true;
-                return `${invoice.number} ${invoice.customerName} ${invoice.customerContact || ""} ${invoice.customerEmail || ""} ${invoice.customerPhone || ""} ${invoice.title || ""} ${invoice.poNumber || ""}`.toLowerCase().includes(q);
+                return `${invoice.number} ${invoice.customerName} ${invoice.customerContact || ""} ${invoice.customerEmail || ""} ${invoice.customerPhone || ""} ${invoice.title || ""} ${invoice.poNumber || ""} ${invoice.detail || ""}`.toLowerCase().includes(q);
               }).map((invoice) => (
                 <button type="button" key={invoice.id} className="block w-full px-3 py-2 text-left text-sm hover:bg-paper" onMouseDown={() => { setInvoiceId(invoice.id); setInvoiceNumber(invoice.number); setInvoiceQuery(""); setInvoiceOpen(false); }}>
-                  {invoiceLabel(invoice)}
+                  <span className="block">{invoiceLabel(invoice)}</span>
+                  {invoice.detail ? <span className="block text-xs text-ink-muted">{invoice.detail}</span> : null}
                 </button>
               ))}
             </div>

@@ -4,6 +4,8 @@ import { currentInvoiceFilter } from "@/lib/documentAccess";
 import { ensureGeneralExpenseTable, ensureInvoiceExpenseOwnerColumn, listGeneralExpenseReceipts, listGeneralExpenses } from "@/lib/generalExpense";
 import { getCurrentUser } from "@/lib/auth";
 import { isSuperAdmin } from "@/lib/accessControl";
+import { formatDate } from "@/lib/calculations";
+import { loadClientSources } from "@/lib/clientSource";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +26,10 @@ export default async function ExpensesPage() {
         customerPhone: true,
         title: true,
         poNumber: true,
+        issueDate: true,
         total: true,
         status: true,
+        items: { select: { name: true }, orderBy: { sortOrder: "asc" } },
       },
       orderBy: { issueDate: "desc" },
       take: 400,
@@ -44,6 +48,7 @@ export default async function ExpensesPage() {
     }),
     listGeneralExpenses(),
   ]);
+  const sources = await loadClientSources(invoices.map((invoice) => invoice.id));
   const extraReceipts = await listGeneralExpenseReceipts(general.map((expense) => expense.id));
   const history = [
     ...general.map((expense) => ({
@@ -98,6 +103,11 @@ export default async function ExpensesPage() {
           customerPhone: invoice.customerPhone || "",
           title: invoice.title || "",
           poNumber: invoice.poNumber || "",
+          detail: [
+            `Issued ${formatDate(invoice.issueDate)}`,
+            sources.get(invoice.id) || "",
+            invoice.items.map((item) => item.name).filter(Boolean).join(", "),
+          ].filter(Boolean).join(" · "),
           total: invoice.total,
         }))}
         history={history}
