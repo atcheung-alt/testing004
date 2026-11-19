@@ -321,7 +321,7 @@ export default function GeneralExpenses({
           const invoiceTied = row.source === "invoice" || Boolean(row.invoiceId);
           const code = codes.get(`${row.source}-${row.id}`) || "";
           return (
-          <div key={`${row.source}-${row.id}`} className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-5 hover:bg-paper">
+          <div key={`${row.source}-${row.id}`} className="grid grid-cols-1 items-center gap-3 px-4 py-5 hover:bg-paper md:grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,14rem)_auto] md:px-5">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-sm font-medium">{code}</span>
@@ -338,14 +338,16 @@ export default function GeneralExpenses({
               </p>
               <p className="text-xs text-ink-faint truncate mt-0.5">{row.vendor || "\u00a0"}</p>
             </div>
-            <div className="flex items-center gap-4 shrink-0">
-              <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Amount")}</p>
-                <p className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</p>
-              </div>
+            <div className="text-right">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{t("Amount")}</p>
+              <p className="font-mono text-sm font-medium text-ink">{formatCurrency(row.amount)}</p>
+            </div>
+            <div className="flex min-w-0 flex-col">
               {(row.receipts && row.receipts.length ? row.receipts : row.receiptHref ? [{ href: row.receiptHref, name: t("View receipt") }] : []).map((file) => (
-                <a key={file.href} className="text-sm text-brand-600 hover:underline" href={file.href} target="_blank" rel="noopener noreferrer">{file.name}</a>
+                <a key={file.href} className="truncate text-sm text-brand-600 hover:underline" href={file.href} target="_blank" rel="noopener noreferrer" title={file.name}>{file.name}</a>
               ))}
+            </div>
+            <div className="justify-self-end">
               {row.canDelete && askId === row.id ? (
                 <span className="inline-flex items-center gap-2">
                   <button type="button" className="btn-danger" disabled={removingId === row.id} onClick={() => remove(row)}>
